@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Sleeve & Shelf logo" width="120">
+</p>
+
 # Sleeve & Shelf
 
 Sleeve & Shelf is a self-hosted web application that organizes a vinyl record collection across physical storage (cabinets and shelves), based on musical kinship, artist era, and available shelf space.
