@@ -52,14 +52,12 @@ features = [
   # "toc.integrate",
 ]
 
-# logo = "assets/logo.png"
+[project.theme.icon]
+logo = "lucide/smile"
 
-# [project.theme.icon]
-# logo = "lucide/smile"
-
-# [project.theme.font]
-# text = "Inter"
-# code = "Jetbrains Mono"
+[project.theme.font]
+text = "Inter"
+code = "Jetbrains Mono"
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme)"
