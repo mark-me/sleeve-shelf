@@ -12,9 +12,7 @@ repo_url = "https://github.com/mark-me/sleeve-shelf"
 repo_name = "mark-me/sleeve-shelf"
 edit_uri = "edit/main/docs-site/docs/"
 
-nav = [
-  { "Home" = "index.md" },
-]
+nav = [{ "Home" = "index.md" }]
 
 # extra_css = ["stylesheets/extra.css"]
 # extra_javascript = ["javascripts/extra.js"]
@@ -22,7 +20,8 @@ nav = [
 [project.theme]
 # variant = "classic"
 # custom_dir = "overrides"
-# favicon = "images/favicon.png"
+logo = "images/logo.png"
+favicon = "images/favicon.ico"
 language = "en"
 features = [
   "announce.dismiss",
