@@ -19,6 +19,7 @@
 - Proposal is fully adjustable by hand (move between shelves, reorder)
 - Onboarding wizard for first-time setup
 - No album covers — the standard Discogs CSV export does not include cover URLs, and cover art is out of scope for the Phase 1 API enrichment (kept for Phase 2, see below)
+- **Browse/Search screen**: a dedicated main-nav screen for browsing the collection digitally, in *crate-digging* mode — it follows the actual physical order (cabinet → shelf → position) from the current placement, i.e. scrolling through it mirrors flipping through the real shelves. Includes search by artist and album (title-only search; no tracklist data is fetched, so song-level search is out of scope for Phase 1 — see Phase 3)
 
 ### Phase 2 — Ongoing management
 - **Live/ongoing** Discogs API integration: the one-time enrichment already happens in Phase 1 — Phase 2 extends this to keep the collection in sync (new purchases, changed collection data) rather than only at first import
@@ -30,7 +31,7 @@
 
 ### Phase 3 — Refinement
 - Further refinement of musical kinship, independent of Discogs style tags
-- Search and filter functionality
+- Song-level search: fetch and store tracklist data per release (via the Discogs API) so the Browse/Search screen (Phase 1) can also match on song titles
 - Possibly later: other media formats (CD, etc.)
 
 ### Non-functional requirements
@@ -137,13 +138,14 @@ Strictly linear flow on first use; once completed, the regular application is fr
 ### Main navigation (after the wizard)
 - **Dashboard** — overview: number of records, cabinets/shelves, last saved version
 - **Layout** — core screen (see below)
+- **Browse/Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1). This supersedes the earlier decision to have no separate "Collection" nav item — that assumption no longer holds now that browsing/search is its own dedicated feature, not just a detail drill-down from Layout
 - **Storage structure** — manage cabinets/shelves
 - **Alias groups** — management screen
 - **Location rules** — management screen
 - **Showcase** — manage top-loaders/samples (phase 2)
 - **Versions** — saved layouts, with the option to restore
 
-No separate main-nav item for "Collection" — album/artist detail is reached by clicking an artist/era band in the Layout screen.
+Album/artist detail is still reachable both from Layout (clicking an artist/era band) and from Browse/Search.
 
 ### Layout screen (core)
 - One tab/dropdown per location (room); within a location, all cabinets in that room are stacked underneath one another
@@ -151,6 +153,11 @@ No separate main-nav item for "Collection" — album/artist detail is reached by
 - Plain text in phase 1 (artist, era band, record count); album covers are only added in phase 2 (affects display only, not the data model)
 - Drag-and-drop (e.g. via SortableJS) between or within shelves adjusts order/placement
 - Clickable through to album/artist detail from an artist/era band
+
+### Browse/Search screen
+- Crate-digging mode: renders the collection in physical order (cabinet → shelf → position within shelf), based on the current `Placement` data — scrolling through it mirrors flipping through the real shelves
+- Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3)
+- Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
 
 ## Open questions
 - **Vinyl detection edge cases**: a straightforward regex on the `Format` field (matching `LP`/`7"`/`10"`/`12"`, with an optional quantity prefix like `2x`) correctly classifies most releases, but edge cases remain unresolved — e.g. `"LP + 12\""` (a vinyl release bundled with a bonus 12", clearly vinyl), `"Box + 7xCD"` (a box set, not vinyl), and similar mixed-format strings. The exact rule for these combinations still needs to be defined
