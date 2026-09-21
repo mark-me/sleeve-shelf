@@ -1,6 +1,6 @@
 # Requirements — Sleeve & Shelf
 
-*As of: September 19, 2026*
+*As of: September 21, 2026*
 
 **Sleeve & Shelf** is a self-hosted, open-source Python Flask web application (Bootstrap + JavaScript) that organizes a vinyl collection (~1,190 vinyl titles out of ~1,455 tracked releases on Discogs) across a record cabinet, based on musical kinship, artist era, and physical shelf space.
 
@@ -10,7 +10,7 @@
 
 ### Phase 1 — MVP
 
-- CSV import of a Discogs export; vinyl is detected by parsing the free-text `Format` field (tokens such as `LP`, `7"`, `10"`, `12"`, optionally prefixed with a quantity like `2x`) — there is no simple `Format == "Vinyl"` check
+- CSV import of a Discogs export; vinyl is detected by parsing the free-text `Format` field (tokens such as `LP`, `7"`, `10"`, `12"`, optionally prefixed with a quantity like `2x`) — there is no simple `Format == "Vinyl"` check. Whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is a configurable setting, not a hardcoded rule — see Configuration
 - **Discogs API enrichment during import**: for each vinyl release, fetch its styles and `master_id` from the release endpoint, then fetch the original release year from the master endpoint — required because the CSV export provides neither (see [Sorting logic](#sorting-logic)). This needs its own wizard step to configure the personal access token, moved up from Phase 2 into Phase 1
 - Enrichment results (styles, master ID, original year) are cached locally per `release_id`/`master_id` so re-running the wizard or re-importing doesn't repeat already-fetched API calls
 - Manage storage structure: cabinets and shelves (width in cm, type top-loader/front-loader, layer top/bottom, reachability score, showcase flag for top-loaders)
@@ -35,6 +35,7 @@
 
 - Further refinement of musical kinship, independent of Discogs style tags
 - Song-level search: fetch and store tracklist data per release (via the Discogs API) so the Browse/Search screen (Phase 1) can also match on song titles
+- Additional language catalogs (e.g. Dutch) — the MVP ships `en` only, but is structured (Flask-Babel) so this is adding a catalog, not a rebuild
 - Possibly later: other media formats (CD, etc.)
 
 ### Non-functional requirements
@@ -48,6 +49,7 @@
 - The Discogs personal access token is a credential: it lives only in `config.yaml` (git-ignored, never committed) and is never shown in full in the UI once set (see Configuration)
 - **Light and dark theme**: follows the device's system preference by default, with a manual toggle to override it. The preference is remembered per device (browser-local), not synced across devices or stored in `config.yaml`
 - **Responsive / mobile-friendly**: the whole app is usable on a phone, but this matters most for the Browse/Search screen (see UI) — browsing is something you'd realistically do standing in front of the actual shelves, phone in hand
+- **Language**: English is the primary and only shipped language for the MVP. Multi-language support is not needed now but is a real option for a later phase, so the MVP is built i18n-ready from the start (see Architecture) rather than retrofitted later. Discogs data itself (styles, genres) stays in English regardless of UI locale — that's external source data, not app copy, and isn't part of this requirement
 
 ## Sorting logic
 
@@ -127,7 +129,7 @@
 2. **Domain**: the entities above, as plain domain objects, independent of storage
 3. **Sorting engine**: pure logic in small, self-contained steps (determining dominant style, co-occurrence clustering, computing era bands, placement/width allocation) — operates on domain objects, with no knowledge of the database or web layer
 4. **Persistence**: storage of all entities, independent of the sorting engine
-5. **Web**: Flask routes/blueprints + Bootstrap/JS templates, including the onboarding wizard. Light/dark theming uses Bootstrap 5.3's built-in `data-bs-theme` attribute rather than a custom theming layer — the toggle just switches that attribute and writes the choice to browser-local storage
+5. **Web**: Flask routes/blueprints + Bootstrap/JS templates, including the onboarding wizard. Light/dark theming uses Bootstrap 5.3's built-in `data-bs-theme` attribute rather than a custom theming layer — the toggle just switches that attribute and writes the choice to browser-local storage. UI copy goes through Flask-Babel (`gettext`/`_()`) from the start, with only an `en` catalog shipped in the MVP — this is the i18n-readiness the Language requirement calls for: adding a second language later means adding a `.po` catalog, not restructuring templates
 6. **Confirmation layer**: a separate piece of logic that tracks proposals requiring confirmation (new style assignment, new location rule)
 
 ### Storage: files (JSON/CSV), no database
@@ -150,7 +152,10 @@
 ### Configuration
 
 - `config.yaml`, read and written with plain PyYAML — not through the DuckDB layer above, since this is scalar application settings, not queryable collection data
-- Holds: the width-estimation constants (base width, 180-gram surcharge, gatefold surcharge — see Sorting logic §3) and the Discogs personal access token
+- Holds:
+  - The width-estimation constants (base width, 180-gram surcharge, gatefold surcharge — see Sorting logic §3)
+  - The Discogs personal access token
+  - `count_bonus_discs_as_vinyl` (bool, default `true`) — whether a "bonus disc" bundle such as `"CD + LP"` is treated as vinyl during import (see Phase 1); defaults to the current any-segment-matches behavior, but is a setting rather than a hardcoded rule, since it's genuinely a judgment call
 - Editable from a dedicated **Settings** screen in the web app (see UI), in addition to being written once by the onboarding wizard (Phase 1, step 4) when the token is first configured
 - **Never committed to version control** — `config.yaml` is git-ignored, since it holds a credential. The Settings screen shows the API token masked (last 4 characters only), with a "replace" action rather than displaying it in full
 
@@ -203,7 +208,16 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 - Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
 
+### Detail screen (artist/album)
+
+- Reachable from both Layout and Browse/Search (clicking an artist/era band or a search result)
+- Shows the dominant style with its confirmation status, and an action to correct it
+- Shows an active location rule for the artist/alias group, if any
+- Shows each era band's albums (title, original release year, current shelf)
+- **Width confirmation action**: for an album with `manual_width_cm` unset (compound/box format — see Sorting logic §3), the screen surfaces the fallback estimate and lets the user enter the real width by hand. This is the actual place the "Openstaande bevestigingen" width flag (Dashboard) resolves to — Settings only holds the global constants, not per-album overrides
+- Action to move the album/artist to a different shelf
+
 ## Open questions
 
-- **Vinyl detection edge case**: a "bonus disc" bundle such as `"CD + LP"` (a CD release with a small vinyl extra) currently counts as vinyl under the any-segment-matches rule, same as a genuine multi-LP release. Worth confirming this is the intended behavior, since the primary medium there is arguably the CD
+- **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements
