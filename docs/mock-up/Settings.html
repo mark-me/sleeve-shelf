@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Instellingen</title>
+<title>Settings</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 body{margin:0;font-family:'IBM Plex Sans',sans-serif;background:#FAF7F2;color:#211E1A}
@@ -26,25 +26,25 @@ button{font-family:'IBM Plex Sans',sans-serif}
   </div>
   <nav style="display:flex;flex-direction:column;gap:4px;">
     <a href="Main.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Dashboard</a>
-<a href="Indeling.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Indeling</a>
-<a href="Bladeren.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Bladeren / Zoeken</a>
-<a href="Opbergstructuur.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Opbergstructuur</a>
-<a href="AliasGroepen.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Alias-groepen</a>
-<a href="LocatieRegels.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Locatie-regels</a>
+<a href="Layout.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Layout</a>
+<a href="Browse.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Browse / Search</a>
+<a href="Storage.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Storage</a>
+<a href="AliasGroups.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Alias Groups</a>
+<a href="LocationRules.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Location Rules</a>
 <a href="Showcase.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Showcase</a>
-<a href="Versies.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Versies</a>
-<a href="Instellingen.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:rgba(232,163,61,0.14);color:#E8A33D;font-size:15px;font-weight:600;">Instellingen</a>
+<a href="Versions.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Versions</a>
+<a href="Settings.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:rgba(232,163,61,0.14);color:#E8A33D;font-size:15px;font-weight:600;">Settings</a>
   </nav>
   <div style="margin-top:auto;padding:14px;background:rgba(255,255,255,0.06);border-radius:10px;">
-    <div style="color:#E8A33D;font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;">Laatst bewaard</div>
-    <div style="color:#fff;font-size:14px;margin-top:4px;">3 dagen geleden</div>
+    <div style="color:#E8A33D;font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;">Last saved</div>
+    <div style="color:#fff;font-size:14px;margin-top:4px;">3 days ago</div>
   </div>
 </div>
 <div style="flex:1;min-width:0;height:900px;overflow-y:auto;box-sizing:border-box;padding:40px 48px;display:flex;flex-direction:column;gap:28px;">
 
 <div>
-  <h1 style="font-size:28px;">Instellingen</h1>
-  <p style="margin:6px 0 0;color:#847C6C;font-size:14px;">Opgeslagen in <code>config.yaml</code> &mdash; niet in de collectie-data</p>
+  <h1 style="font-size:28px;">Settings</h1>
+  <p style="margin:6px 0 0;color:#847C6C;font-size:14px;">Stored in <code>config.yaml</code> &mdash; not in the collection data</p>
 </div>
 
 <div style="background:#FFFFFF;border:1px solid #E4DFD6;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:18px;max-width:520px;">
@@ -53,34 +53,43 @@ button{font-family:'IBM Plex Sans',sans-serif}
     <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Personal access token</label>
     <div style="display:flex;gap:10px;align-items:center;">
       <input type="text" value="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;wXQ2" disabled style="flex:1;height:40px;border:1px solid #E4DFD6;border-radius:8px;padding:0 12px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;box-sizing:border-box;background:#FAF7F2;color:#847C6C;">
-      <button style="height:40px;padding:0 16px;border-radius:8px;border:1px solid #E4DFD6;background:#FFFFFF;font-size:13px;font-weight:600;">Vervangen</button>
+      <button style="height:40px;padding:0 16px;border-radius:8px;border:1px solid #E4DFD6;background:#FFFFFF;font-size:13px;font-weight:600;">Replace</button>
     </div>
-    <div style="font-size:12px;color:#847C6C;margin-top:4px;">Oorspronkelijk ingesteld tijdens de wizard. Alleen de laatste 4 tekens worden getoond.</div>
+    <div style="font-size:12px;color:#847C6C;margin-top:4px;">Originally set during the wizard. Only the last 4 characters are shown.</div>
   </div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+    <div>
+      <div style="font-size:13px;font-weight:600;">Count bonus discs as vinyl</div>
+      <div style="font-size:12px;color:#847C6C;margin-top:2px;max-width:380px;">Treats a bundle like &ldquo;CD + LP&rdquo; as vinyl during import. Off = only count releases that are vinyl throughout.</div>
+    </div>
+    <div style="width:44px;height:24px;border-radius:999px;background:#1E293B;position:relative;flex-shrink:0;">
+      <div style="width:20px;height:20px;border-radius:999px;background:#fff;position:absolute;top:2px;right:2px;"></div>
+    </div>
+    </div>
 </div>
 
 <div style="background:#FFFFFF;border:1px solid #E4DFD6;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:18px;max-width:520px;">
-  <h2 style="font-size:16px;">Breedte-schatting</h2>
-  <p style="margin:0;font-size:13px;color:#847C6C;">Gebruikt om de breedte van een &ldquo;simpel&rdquo; format (geen boxset/samengestelde release) te schatten &mdash; zie Sorteerlogica.</p>
+  <h2 style="font-size:16px;">Width estimation</h2>
+  <p style="margin:0;font-size:13px;color:#847C6C;">Used to estimate the width of a &ldquo;simple&rdquo; format (no boxset/compound release) &mdash; see Sorting logic.</p>
   <div>
-    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Basisbreedte per schijf</label>
+    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Base width per disc</label>
     <input type="text" value="0.5" style="width:280px;height:40px;border:1px solid #E4DFD6;border-radius:8px;padding:0 12px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;box-sizing:border-box;background:#FFFFFF;">
-    <div style="font-size:12px;color:#847C6C;margin-top:4px;">cm &middot; standaardgewicht 12&Prime; LP, enkele hoes</div>
+    <div style="font-size:12px;color:#847C6C;margin-top:4px;">cm &middot; standard-weight 12&Prime; LP, single sleeve</div>
     </div>
   <div>
-    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Toeslag 180 gram</label>
+    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">180-gram surcharge</label>
     <input type="text" value="0.15" style="width:280px;height:40px;border:1px solid #E4DFD6;border-radius:8px;padding:0 12px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;box-sizing:border-box;background:#FFFFFF;">
-    <div style="font-size:12px;color:#847C6C;margin-top:4px;">cm per schijf</div>
+    <div style="font-size:12px;color:#847C6C;margin-top:4px;">cm per disc</div>
     </div>
   <div>
-    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Toeslag gatefold</label>
+    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Gatefold surcharge</label>
     <input type="text" value="0.2" style="width:280px;height:40px;border:1px solid #E4DFD6;border-radius:8px;padding:0 12px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;box-sizing:border-box;background:#FFFFFF;">
     <div style="font-size:12px;color:#847C6C;margin-top:4px;">cm per release</div>
     </div>
 </div>
 
 <div>
-  <button style="height:44px;padding:0 22px;border-radius:8px;background:#1E293B;color:#fff;font-size:14px;font-weight:600;border:none;">Opslaan</button>
+  <button style="height:44px;padding:0 22px;border-radius:8px;background:#1E293B;color:#fff;font-size:14px;font-weight:600;border:none;">Save</button>
 </div>
 
 </div>

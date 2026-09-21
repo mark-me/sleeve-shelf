@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Bladeren / Zoeken — zoekresultaten</title>
+<title>Browse / Search — search results</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 body{margin:0;font-family:'IBM Plex Sans',sans-serif;background:#FAF7F2;color:#211E1A}
@@ -26,33 +26,33 @@ button{font-family:'IBM Plex Sans',sans-serif}
   </div>
   <nav style="display:flex;flex-direction:column;gap:4px;">
     <a href="Main.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Dashboard</a>
-<a href="Indeling.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Indeling</a>
-<a href="Bladeren.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:rgba(232,163,61,0.14);color:#E8A33D;font-size:15px;font-weight:600;">Bladeren / Zoeken</a>
-<a href="Opbergstructuur.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Opbergstructuur</a>
-<a href="AliasGroepen.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Alias-groepen</a>
-<a href="LocatieRegels.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Locatie-regels</a>
+<a href="Layout.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Layout</a>
+<a href="Browse.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:rgba(232,163,61,0.14);color:#E8A33D;font-size:15px;font-weight:600;">Browse / Search</a>
+<a href="Storage.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Storage</a>
+<a href="AliasGroups.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Alias Groups</a>
+<a href="LocationRules.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Location Rules</a>
 <a href="Showcase.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Showcase</a>
-<a href="Versies.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Versies</a>
-<a href="Instellingen.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Instellingen</a>
+<a href="Versions.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Versions</a>
+<a href="Settings.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Settings</a>
   </nav>
   <div style="margin-top:auto;padding:14px;background:rgba(255,255,255,0.06);border-radius:10px;">
-    <div style="color:#E8A33D;font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;">Laatst bewaard</div>
-    <div style="color:#fff;font-size:14px;margin-top:4px;">3 dagen geleden</div>
+    <div style="color:#E8A33D;font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;">Last saved</div>
+    <div style="color:#fff;font-size:14px;margin-top:4px;">3 days ago</div>
   </div>
 </div>
 <div style="flex:1;min-width:0;height:900px;overflow-y:auto;box-sizing:border-box;padding:40px 48px;display:flex;flex-direction:column;gap:28px;">
 
 <div>
-  <h1 style="font-size:28px;">Bladeren / Zoeken</h1>
-  <p style="margin:6px 0 0;color:#847C6C;font-size:14px;">Zoekresultaten &mdash; springt over kasten en vakken heen, los van de crate-digging-volgorde</p>
+  <h1 style="font-size:28px;">Browse / Search</h1>
+  <p style="margin:6px 0 0;color:#847C6C;font-size:14px;">Search results &mdash; jumps across cabinets and shelves, independent of crate-digging order</p>
 </div>
 
 <div style="display:flex;gap:12px;align-items:center;">
-  <label for="search" style="position:absolute;left:-9999px;">Zoek op artiest of album</label>
+  <label for="search" style="position:absolute;left:-9999px;">Search by artist or album</label>
   <input id="search" type="text" value="bowie" style="flex:1;height:46px;border:1px solid #1E293B;border-radius:10px;padding:0 16px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;box-sizing:border-box;background:#FFFFFF;">
 </div>
 
-<div style="font-size:13px;color:#847C6C;">4 resultaten voor &ldquo;bowie&rdquo;</div>
+<div style="font-size:13px;color:#847C6C;">4 results for &ldquo;bowie&rdquo;</div>
 
 <div style="background:#FFFFFF;border:1px solid #E4DFD6;border-radius:12px;overflow:hidden;">
   <a href="Detail.html" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E4DFD6;">
@@ -60,32 +60,32 @@ button{font-family:'IBM Plex Sans',sans-serif}
       <span style="font-size:14px;font-weight:600;color:#211E1A;">David Bowie</span>
       <span style="font-size:13px;color:#847C6C;">&ldquo;Heroes&rdquo; &middot; 1977</span>
     </div>
-    <span style="font-size:12px;color:#847C6C;text-align:right;">Extra kast &middot; Vak 1</span>
+    <span style="font-size:12px;color:#847C6C;text-align:right;">Extra cabinet &middot; Shelf 1</span>
     </a>
   <a href="Detail.html" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E4DFD6;">
     <div style="display:flex;flex-direction:column;gap:2px;">
       <span style="font-size:14px;font-weight:600;color:#211E1A;">David Bowie</span>
       <span style="font-size:13px;color:#847C6C;">Low &middot; 1977</span>
     </div>
-    <span style="font-size:12px;color:#847C6C;text-align:right;">Extra kast &middot; Vak 1</span>
+    <span style="font-size:12px;color:#847C6C;text-align:right;">Extra cabinet &middot; Shelf 1</span>
     </a>
   <a href="Detail.html" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E4DFD6;">
     <div style="display:flex;flex-direction:column;gap:2px;">
       <span style="font-size:14px;font-weight:600;color:#211E1A;">David Bowie</span>
       <span style="font-size:13px;color:#847C6C;">The Rise and Fall of Ziggy Stardust &middot; 1972</span>
     </div>
-    <span style="font-size:12px;color:#847C6C;text-align:right;">Hoofdkast &middot; Vak 2, boven</span>
+    <span style="font-size:12px;color:#847C6C;text-align:right;">Main cabinet &middot; Shelf 2, top row</span>
     </a>
   <a href="Detail.html" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E4DFD6;">
     <div style="display:flex;flex-direction:column;gap:2px;">
       <span style="font-size:14px;font-weight:600;color:#211E1A;">David Bowie</span>
       <span style="font-size:13px;color:#847C6C;">Space Oddity &middot; 1969</span>
     </div>
-    <span style="font-size:12px;color:#847C6C;text-align:right;">Hoofdkast &middot; Vak 2, boven</span>
+    <span style="font-size:12px;color:#847C6C;text-align:right;">Main cabinet &middot; Shelf 2, top row</span>
     </a>
 </div>
 
-<div style="font-size:12px;color:#847C6C;">Een resultaat aanklikken opent het artiest/album-detail &mdash; vandaar kun je ook direct naar de fysieke locatie in Indeling springen.</div>
+<div style="font-size:12px;color:#847C6C;">Clicking a result opens the artist/album detail &mdash; from there you can also jump straight to its physical location in Layout.</div>
 
 </div>
 </div>

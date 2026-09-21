@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="nl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Bladeren / Zoeken</title>
+<title>Browse / Search</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 body{margin:0;font-family:'IBM Plex Sans',sans-serif;background:#FAF7F2;color:#211E1A}
@@ -26,45 +26,45 @@ button{font-family:'IBM Plex Sans',sans-serif}
   </div>
   <nav style="display:flex;flex-direction:column;gap:4px;">
     <a href="Main.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Dashboard</a>
-<a href="Indeling.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Indeling</a>
-<a href="Bladeren.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:rgba(232,163,61,0.14);color:#E8A33D;font-size:15px;font-weight:600;">Bladeren / Zoeken</a>
-<a href="Opbergstructuur.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Opbergstructuur</a>
-<a href="AliasGroepen.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Alias-groepen</a>
-<a href="LocatieRegels.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Locatie-regels</a>
+<a href="Layout.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Layout</a>
+<a href="Browse.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:rgba(232,163,61,0.14);color:#E8A33D;font-size:15px;font-weight:600;">Browse / Search</a>
+<a href="Storage.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Storage</a>
+<a href="AliasGroups.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Alias Groups</a>
+<a href="LocationRules.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Location Rules</a>
 <a href="Showcase.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Showcase</a>
-<a href="Versies.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Versies</a>
-<a href="Instellingen.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Instellingen</a>
+<a href="Versions.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Versions</a>
+<a href="Settings.html" style="display:flex;align-items:center;height:44px;padding:0 20px;border-radius:8px;background:transparent;color:#CBD5E1;font-size:15px;font-weight:500;">Settings</a>
   </nav>
   <div style="margin-top:auto;padding:14px;background:rgba(255,255,255,0.06);border-radius:10px;">
-    <div style="color:#E8A33D;font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;">Laatst bewaard</div>
-    <div style="color:#fff;font-size:14px;margin-top:4px;">3 dagen geleden</div>
+    <div style="color:#E8A33D;font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;">Last saved</div>
+    <div style="color:#fff;font-size:14px;margin-top:4px;">3 days ago</div>
   </div>
 </div>
 <div style="flex:1;min-width:0;height:900px;overflow-y:auto;box-sizing:border-box;padding:40px 48px;display:flex;flex-direction:column;gap:28px;">
 
 <div>
-  <h1 style="font-size:28px;">Bladeren / Zoeken</h1>
-  <p style="margin:6px 0 0;color:#847C6C;font-size:14px;">Digitaal bladeren in de volgorde van je echte kasten &mdash; crate digging</p>
+  <h1 style="font-size:28px;">Browse / Search</h1>
+  <p style="margin:6px 0 0;color:#847C6C;font-size:14px;">Digitally browse in the order of your actual cabinets &mdash; crate digging</p>
 </div>
 
 <div style="display:flex;gap:12px;align-items:center;">
-  <label for="search" style="position:absolute;left:-9999px;">Zoek op artiest of album</label>
-  <input id="search" type="text" placeholder="Zoek op artiest of album&hellip;" style="flex:1;height:46px;border:1px solid #E4DFD6;border-radius:10px;padding:0 16px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;box-sizing:border-box;background:#FFFFFF;">
+  <label for="search" style="position:absolute;left:-9999px;">Search by artist or album</label>
+  <input id="search" type="text" placeholder="Search by artist or album&hellip;" style="flex:1;height:46px;border:1px solid #E4DFD6;border-radius:10px;padding:0 16px;font-size:14px;font-family:'IBM Plex Sans',sans-serif;box-sizing:border-box;background:#FFFFFF;">
 </div>
 
 <div style="display:flex;align-items:center;justify-content:space-between;background:#FFFFFF;border:1px solid #E4DFD6;border-radius:10px;padding:12px 18px;">
   <div style="font-size:13px;color:#847C6C;">
-    <a href="Indeling.html" style="color:#847C6C;">Woonkamer</a> &rsaquo; Hoofdkast &rsaquo; <strong style="color:#211E1A;">Vak 3, bovenste laag</strong>
-    <span style="margin-left:8px;color:#E8A33D;font-weight:600;">&middot; goed bereikbaar</span>
+    <a href="Layout.html" style="color:#847C6C;">Living room</a> &rsaquo; Main cabinet &rsaquo; <strong style="color:#211E1A;">Shelf 3, top row</strong>
+    <span style="margin-left:8px;color:#E8A33D;font-weight:600;">&middot; easy to reach</span>
   </div>
   <div style="display:flex;gap:8px;">
-    <button style="height:36px;padding:0 16px;border-radius:8px;border:1px solid #E4DFD6;background:#FFFFFF;font-size:13px;font-weight:600;">&larr; Vorig vak</button>
-    <button style="height:36px;padding:0 16px;border-radius:8px;border:1px solid #E4DFD6;background:#FFFFFF;font-size:13px;font-weight:600;">Volgend vak &rarr;</button>
+    <button style="height:36px;padding:0 16px;border-radius:8px;border:1px solid #E4DFD6;background:#FFFFFF;font-size:13px;font-weight:600;">&larr; Previous shelf</button>
+    <button style="height:36px;padding:0 16px;border-radius:8px;border:1px solid #E4DFD6;background:#FFFFFF;font-size:13px;font-weight:600;">Next shelf &rarr;</button>
   </div>
 </div>
 
 <div style="background:#FFFFFF;border:1px solid #E4DFD6;border-radius:12px;overflow:hidden;">
-  <div style="padding:10px 16px;background:#FAF7F2;font-size:12px;font-weight:600;color:#847C6C;text-transform:uppercase;letter-spacing:0.04em;">Nick Cave &middot; midden (1994&ndash;2001)</div>
+  <div style="padding:10px 16px;background:#FAF7F2;font-size:12px;font-weight:600;color:#847C6C;text-transform:uppercase;letter-spacing:0.04em;">Nick Cave &middot; middle (1994&ndash;2001)</div>
   <a href="Detail.html" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E4DFD6;">
     <div style="display:flex;flex-direction:column;gap:2px;">
       <span style="font-size:14px;font-weight:600;color:#211E1A;">Nick Cave &amp; The Bad Seeds</span>
@@ -79,7 +79,7 @@ button{font-family:'IBM Plex Sans',sans-serif}
     </div>
     <span style="font-size:11px;font-weight:600;color:#1E293B;background:rgba(30,41,59,0.08);padding:4px 10px;border-radius:999px;">Post-Punk</span>
     </a>
-  <div style="padding:10px 16px;background:#FAF7F2;font-size:12px;font-weight:600;color:#847C6C;text-transform:uppercase;letter-spacing:0.04em;">Nick Cave &middot; laat (2004&ndash;2019)</div>
+  <div style="padding:10px 16px;background:#FAF7F2;font-size:12px;font-weight:600;color:#847C6C;text-transform:uppercase;letter-spacing:0.04em;">Nick Cave &middot; late (2004&ndash;2019)</div>
   <a href="Detail.html" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E4DFD6;">
     <div style="display:flex;flex-direction:column;gap:2px;">
       <span style="font-size:14px;font-weight:600;color:#211E1A;">Nick Cave &amp; The Bad Seeds</span>
@@ -92,7 +92,7 @@ button{font-family:'IBM Plex Sans',sans-serif}
       <span style="font-size:14px;font-weight:600;color:#211E1A;">Nick Cave &amp; The Bad Seeds</span>
       <span style="font-size:13px;color:#847C6C;">Ghosteen &middot; 2019</span>
     </div>
-    <span style="font-size:11px;font-weight:600;color:#1E293B;background:rgba(30,41,59,0.08);padding:4px 10px;border-radius:999px;">Post-Punk (voorstel) (voorstel)</span>
+    <span style="font-size:11px;font-weight:600;color:#1E293B;background:rgba(30,41,59,0.08);padding:4px 10px;border-radius:999px;">Post-Punk (proposed) (proposed)</span>
     </a>
   <div style="padding:10px 16px;background:#FAF7F2;font-size:12px;font-weight:600;color:#847C6C;text-transform:uppercase;letter-spacing:0.04em;">Nina Simone</div>
   <a href="Detail.html" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #E4DFD6;">
@@ -104,7 +104,7 @@ button{font-family:'IBM Plex Sans',sans-serif}
     </a>
 </div>
 
-<div style="font-size:12px;color:#847C6C;">Liedjes-zoeken volgt in een latere fase &mdash; dat vraagt tracklist-data die nu nog niet wordt opgehaald.</div>
+<div style="font-size:12px;color:#847C6C;">Song-level search comes in a later phase &mdash; that needs tracklist data that isn&rsquo;t fetched yet.</div>
 
 </div>
 </div>
