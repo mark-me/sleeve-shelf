@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Sleeve & Shelf logo" width="120">
+  <img src="assets/banner.png" alt="Sleeve & Shelf" width="100%">
 </p>
 
 # Sleeve & Shelf
