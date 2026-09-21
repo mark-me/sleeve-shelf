@@ -61,6 +61,12 @@
 
 ### 3. Physical placement
 - Shelf width in cm determines how many records fit
+- Each album's estimated width is computed from its `Format` tokens (the same ones already parsed for vinyl detection — see Phase 1), not a single fixed default:
+  - Base width: **0.5 cm** per disc (standard-weight 12" LP, single sleeve)
+  - 180-gram surcharge: **+0.15 cm** per disc where the format includes `180`
+  - Gatefold surcharge: **+0.2 cm** per release where the format includes `Gat` (applied once per release, not per disc — a gatefold sleeve folds around all its discs)
+  - Disc count comes from the existing quantity prefix (e.g. `2xLP` → 2 discs)
+  - These figures are a starting assumption, not measured — expect to tune them once real placements are compared against actual shelf space
 - A style cluster may span adjacent shelves within the same cabinet if it doesn't fit on one shelf
 - Reachability only plays a role through the explicit, manually configured location rules — not as a general rule for popular/frequently-picked artists
 
@@ -74,7 +80,7 @@
 **Core entities**
 - **Artist**: id, name, Discogs artist ID (optional), alias_group_id (nullable)
 - **AliasGroup**: id, label — links multiple Artists treated as related-but-separate projects
-- **Album**: id, artist_id, title, Discogs `release_id` (from CSV), Discogs `master_id` (fetched), original release year (fetched via master), width (cm), list of styles (fetched via release), cover_url (empty until phase 2)
+- **Album**: id, artist_id, title, Discogs `release_id` (from CSV), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, and other qualifiers), computed width (cm, derived from `format_tokens` — see Sorting logic §3), list of styles (fetched via release), cover_url (empty until phase 2)
 - **Style**: id, name (from Discogs)
 
 **Discogs enrichment cache** (avoids re-fetching on every import/wizard run)
@@ -161,3 +167,4 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 
 ## Open questions
 - **Vinyl detection edge cases**: a straightforward regex on the `Format` field (matching `LP`/`7"`/`10"`/`12"`, with an optional quantity prefix like `2x`) correctly classifies most releases, but edge cases remain unresolved — e.g. `"LP + 12\""` (a vinyl release bundled with a bonus 12", clearly vinyl), `"Box + 7xCD"` (a box set, not vinyl), and similar mixed-format strings. The exact rule for these combinations still needs to be defined
+- **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption — to be tuned against real shelf measurements
