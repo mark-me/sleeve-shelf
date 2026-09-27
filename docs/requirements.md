@@ -1,6 +1,6 @@
 # Requirements — Sleeve & Shelf
 
-*As of: September 21, 2026*
+*As of: September 19, 2026*
 
 **Sleeve & Shelf** is a self-hosted, open-source Python Flask web application (Bootstrap + JavaScript) that organizes a vinyl collection (~1,190 vinyl titles out of ~1,455 tracked releases on Discogs) across a record cabinet, based on musical kinship, artist era, and physical shelf space.
 
@@ -21,6 +21,7 @@
 - Onboarding wizard for first-time setup
 - No album covers — the standard Discogs CSV export does not include cover URLs, and cover art is out of scope for the Phase 1 API enrichment (kept for Phase 2, see below)
 - **Browse/Search screen**: a dedicated main-nav screen for browsing the collection digitally, in *crate-digging* mode — it follows the actual physical order (cabinet → shelf → position) from the current placement, i.e. scrolling through it mirrors flipping through the real shelves. Includes search by artist and album (title-only search; no tracklist data is fetched, so song-level search is out of scope for Phase 1 — see Phase 3)
+- **Initial load**: an alternate, one-time path to seed the layout from an already-worked-out spreadsheet (columns: Location, Shelf, Capacity, Cluster, Era band, Artist year, Artist, Title), instead of generating a fresh proposal from scratch — see [Initial load](#initial-load)
 
 ### Phase 2 — Ongoing management
 
@@ -61,6 +62,7 @@
 - An artist always stays together as a whole — never split across clusters
 - Style clusters are ordered relative to each other based on co-occurrence: styles that frequently appear together for artists with multiple albums in the collection are placed closer to one another
 - Alias/project groups are treated as separate units within the cluster of their own dominant style
+- An artist whose catalog spans too many styles to meaningfully cluster (e.g. a prolific artist covering several genres) can be manually confirmed as **its own standalone cluster** instead of a Discogs style — the same manual-override mechanism as correcting a dominant style (`ArtistStyleAssignment`), just pointing at the artist itself rather than a style
 
 ### 2. Era bands per artist
 
@@ -94,7 +96,7 @@
 
 ## Data model
 
-**Core entities**
+### Core entities
 
 - **Artist**: id, name, Discogs artist ID (optional), alias_group_id (nullable)
 - **AliasGroup**: id, label — links multiple Artists treated as related-but-separate projects
@@ -106,20 +108,21 @@
 - **ReleaseEnrichment**: release_id, styles, master_id, fetched_at
 - **MasterEnrichment**: master_id, original_release_year, fetched_at
 
-**Sorting/clustering**
+### Sorting / clustering
 
 - **ArtistStyleAssignment**: artist_id, style_id (dominant style), confirmed (bool) — distinguishes a proposed dominant style from a confirmed one
 - **StyleClusterOrder**: the computed (co-occurrence) ordering of styles — can be recomputed on the fly, doesn't need to be persisted
 
-**Storage structure**
+### Storage structure
 
 - **Cabinet**: id, name, location (room)
 - **Shelf**: id, cabinet_id, width (cm), type (top-/front-loader), layer, reachability score, is_showcase (bool)
-- **LocationRule**: id, target (artist_id, alias_group_id, or style_id), mandatory cabinet_id, note — always created manually
+- **LocationRule**: id, target (`artist_id`, `alias_group_id`, `style_id`, **or `album_id`**), mandatory cabinet_id, note — always created manually. The `album_id` level is a specific-title exception: it detaches one release from its artist's normal placement (breaking the "artist stays together" rule in Sorting logic §1) without affecting the rest of that artist's catalog — needed for cases like a single boxset or compilation that lives in external storage while the rest of the artist stays in the main cabinet
 
-**Placement**
+### Placement
 
-- **Placement**: unit (artist_id or alias-member), shelf_id, order position within the shelf, source (algorithm proposal vs. manually overridden)
+- **Placement**: unit (artist_id or alias-member), shelf_id, order position within the shelf, source (algorithm proposal vs. manually overridden) — this is the one, canonical location; an album/artist has exactly one Placement, consuming shelf width (see Sorting logic §3)
+- **ShowcaseFeature**: shelf_id (must reference a shelf with `is_showcase = true`), album_id or artist_id currently featured there. This is a **pointer to an existing Placement, not a placement of its own** — a showcase slot shows a sample "borrowed" from wherever that artist/album's real Placement already is, so it consumes no shelf width and isn't counted in any cabinet's capacity twice
 
 ## Architecture, storage, and deployment
 
@@ -177,6 +180,17 @@ Strictly linear flow on first use; once completed, the regular application is fr
 7. **First sorting proposal** — all style assignments are bulk-accepted, the full proposal (including placement) is shown immediately, individually correctable
 8. **Save** — explicit action; the first version lands in `placements/`
 
+## Initial load
+
+An alternate entry point to steps 6–8 of the onboarding wizard: instead of generating a fresh sorting proposal, seed the layout directly from a spreadsheet the user has already worked out elsewhere. This is a one-time bootstrap, not a permanent alternative to the sorting engine — a later re-sort can still produce a different result.
+
+- **Input**: a spreadsheet with one row per album-copy: Location, Shelf, Capacity, Cluster, Era band, Artist year, Artist, Title
+- **Cabinet/Shelf creation**: unique (Location, Shelf) pairs become Cabinets/Shelves, with Capacity as the shelf width
+- **Matching to enriched Discogs data**: the spreadsheet has no `release_id` — each (Artist, Title) row is matched by fuzzy string matching against the already-imported, API-enriched Album records (see Phase 1), to pull in `release_id`, styles, original year, and width. Matches below a confidence threshold are queued for manual confirmation rather than guessed — same non-blocking pattern as other confirmations (see Sorting logic §4): the row is still loaded (so Browse/Search works immediately), with the uncertain match flagged
+- **Topladers / showcase rows**: rows whose Location is a showcase cabinet are not created as a second Placement for that album — they become a `ShowcaseFeature` pointing at the album's real Placement elsewhere in the sheet (see Data model), so capacity isn't double-counted
+- **Cluster and Era band columns are stored as-is** as the initial (manually curated) values — they don't have to match what the sorting engine's own logic (Sorting logic §1–2) would currently produce; re-running the proposal generator later is expected to diverge from this snapshot
+- **Overflow**: rows that don't fit anywhere (an explicit "not yet placed" list in the source spreadsheet) are loaded as unplaced albums — visible in a dedicated list, not silently dropped, so they can be resolved later (mark as external, free up shelf space, etc.)
+
 ## UI / screen layout
 
 ### Main navigation (after the wizard)
@@ -190,6 +204,7 @@ Strictly linear flow on first use; once completed, the regular application is fr
 - **Showcase** — manage top-loaders/samples (phase 2)
 - **Versions** — saved layouts, with the option to restore
 - **Settings** — edit `config.yaml`: width-estimation constants and the Discogs API token (masked, with a replace action)
+- **Unplaced albums** — surfaces albums that don't fit anywhere in the current storage structure (see Initial load), so they can be resolved rather than silently dropped
 
 Album/artist detail is still reachable both from Layout (clicking an artist/era band) and from Browse/Search.
 
@@ -221,3 +236,5 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements
+- **Original-year tie-break heuristic**: the initial-load spreadsheet (see Initial load) uses a more refined rule than the current spec — the title's own year wins only if it looks plausible *and* is within 20 years of the artist's start year, otherwise the artist's year wins. Worth adopting in the sorting engine itself (Sorting logic §2) rather than only in the one-time import, but not yet decided
+- **Curated cluster taxonomy**: the initial-load data uses hand-refined cluster names (e.g. splitting "Jazz" into Bebop/Hard Bop/Cool/Swing/Modal) rather than raw Discogs styles. Whether the sorting engine's own clustering (Sorting logic §1) should move toward this level of curation, or stay purely Discogs-style-driven, is a Phase 3 question
