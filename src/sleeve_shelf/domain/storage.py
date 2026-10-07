@@ -27,19 +27,24 @@ class Cabinet:
 
     id: int
     name: str
-    location: str
+    location: str | None = None
 
 
 @dataclass(slots=True)
 class Shelf:
-    """A shelf within a cabinet; its width determines how many records fit."""
+    """A shelf within a cabinet; its width determines how many records fit.
+
+    Shelves seeded by the initial load only have a name; the physical
+    attributes stay None until completed in the storage structure.
+    """
 
     id: int
     cabinet_id: int
-    width_cm: float
-    type: ShelfType
-    layer: ShelfLayer
-    reachability_score: int
+    name: str
+    width_cm: float | None = None
+    type: ShelfType | None = None
+    layer: ShelfLayer | None = None
+    reachability_score: int | None = None
     is_showcase: bool = False
 
     def __post_init__(self) -> None:

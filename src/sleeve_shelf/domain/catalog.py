@@ -71,14 +71,18 @@ class FormatTokens:
 
 @dataclass(slots=True)
 class Album:
-    """A vinyl release owned in the collection."""
+    """A vinyl release owned in the collection.
+
+    An album seeded by the initial load has only artist and title; the Discogs
+    fields stay None until it is matched to a release.
+    """
 
     id: int
     artist_id: int
     title: str
-    release_id: int
-    format_tokens: FormatTokens
-    computed_width_cm: float
+    release_id: int | None = None
+    format_tokens: FormatTokens | None = None
+    computed_width_cm: float | None = None
     master_id: int | None = None
     original_release_year: int | None = None
     manual_width_cm: float | None = None
@@ -88,7 +92,7 @@ class Album:
     cover_url: str | None = None
 
     @property
-    def width_cm(self) -> float:
+    def width_cm(self) -> float | None:
         """The width used for placement: the manual value overrides the computed one."""
         if self.manual_width_cm is not None:
             return self.manual_width_cm

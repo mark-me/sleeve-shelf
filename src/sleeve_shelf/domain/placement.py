@@ -13,6 +13,7 @@ class UnitType(StrEnum):
 class PlacementSource(StrEnum):
     ALGORITHM = "algorithm"
     MANUAL = "manual"
+    INITIAL_LOAD = "initial_load"
 
 
 @dataclass(slots=True)
