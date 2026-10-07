@@ -208,6 +208,14 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 - Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
 
+### Clusters screen
+- A searchable list of all Clusters, sorted by album count (descending) by default — makes both the big, already-meaningful clusters and the small single-style ones (the easiest merge candidates) easy to spot
+- Each row shows: Cluster name, the Style(s) currently mapped to it (as chips), and counts (artists, albums)
+- **Merging**: select 2+ clusters via checkboxes → a contextual "Merge N clusters" action appears → a dialog lets you pick which existing name to keep (defaulting to the one with the most albums) or type a new name, with a preview of the combined style/artist/album counts → confirming repoints every affected Style's `cluster_id` to the surviving cluster and removes the merged-away cluster rows. Any artist assignment (confirmed or not) pointing at a merged-away cluster is repointed automatically — this doesn't go through the new-shift confirmation flow (Sorting logic §4), since merging is itself the user's confirmed action
+- **Un-merging / fine-tuning**: expanding a cluster row shows its member Styles individually, each with a "Move to cluster&hellip;" action (move to an existing cluster, or remove it to re-form its own standalone cluster) — this is how a Style gets taken back out of a merge, so no separate undo mechanism is needed
+- **Renaming**: inline, on any cluster row, independent of merging
+- Purely a taxonomy action — it relabels/regroups Styles and Clusters, but does not itself move any physical Placement. Regenerating a sorting proposal is what applies the new grouping to the actual layout
+
 ### Detail screen (artist/album)
 - Reachable from both Layout and Browse/Search (clicking an artist/era band or a search result)
 - Shows the dominant cluster with its confirmation status, and an action to correct it
@@ -219,4 +227,3 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 ## Open questions
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements
-- **Clusters screen interaction**: merging several Styles into one Cluster (see Sorting logic §1, UI) needs a concrete interaction design — e.g. a multi-select of Styles with a "merge into" action — not yet designed in detail
