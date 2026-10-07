@@ -1,0 +1,95 @@
+"""Collection entities: artists, albums, and the style/cluster taxonomy."""
+
+from dataclasses import dataclass, field
+
+
+@dataclass(slots=True)
+class AliasGroup:
+    """Links multiple artists treated as related-but-separate projects."""
+
+    id: int
+    label: str
+
+
+@dataclass(slots=True)
+class Artist:
+    """An artist in the collection, optionally a member of an alias group."""
+
+    id: int
+    name: str
+    discogs_artist_id: int | None = None
+    alias_group_id: int | None = None
+
+
+@dataclass(slots=True)
+class Cluster:
+    """A user-curated grouping of styles, decoupled from the Discogs taxonomy."""
+
+    id: int
+    name: str
+
+
+@dataclass(slots=True)
+class Style:
+    """A Discogs style, mapped to the cluster it belongs to."""
+
+    id: int
+    name: str
+    cluster_id: int
+
+
+@dataclass(frozen=True, slots=True)
+class WidthConstants:
+    """Width-estimation figures in cm, as configured in config.yaml."""
+
+    base_per_disc: float
+    surcharge_180_gram_per_disc: float
+    surcharge_gatefold: float
+
+
+@dataclass(frozen=True, slots=True)
+class FormatTokens:
+    """What was parsed from the free-text Format field of the Discogs CSV."""
+
+    disc_count: int = 1
+    is_180_gram: bool = False
+    is_gatefold: bool = False
+    is_compound: bool = False
+    qualifiers: tuple[str, ...] = ()
+
+    def estimated_width_cm(self, constants: WidthConstants) -> float:
+        """Estimate the shelf width; compound formats only get the rough fallback."""
+        width = self.disc_count * constants.base_per_disc
+        if self.is_compound:
+            return width
+        if self.is_180_gram:
+            width += self.disc_count * constants.surcharge_180_gram_per_disc
+        if self.is_gatefold:
+            width += constants.surcharge_gatefold
+        return width
+
+
+@dataclass(slots=True)
+class Album:
+    """A vinyl release owned in the collection."""
+
+    id: int
+    artist_id: int
+    title: str
+    release_id: int
+    format_tokens: FormatTokens
+    computed_width_cm: float
+    master_id: int | None = None
+    original_release_year: int | None = None
+    manual_width_cm: float | None = None
+    width_confirmed: bool = True
+    style_ids: list[int] = field(default_factory=list)
+    era_band_id: int | None = None
+    cover_url: str | None = None
+
+    @property
+    def width_cm(self) -> float:
+        """The width used for placement: the manual value overrides the computed one."""
+        if self.manual_width_cm is not None:
+            return self.manual_width_cm
+        return self.computed_width_cm

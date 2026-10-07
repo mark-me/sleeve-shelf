@@ -91,6 +91,7 @@
   - Until set, a rough fallback (disc count × base width, no surcharges) is used so the album can still be placed — non-blocking, following the same pattern as unconfirmed style assignments (see §4)
   - The album is flagged in "Openstaande bevestigingen" (Dashboard) as needing a manually confirmed width
 - A style cluster may span adjacent shelves within the same cabinet if it doesn't fit on one shelf
+- The era band is the smallest unit the proposal places as a whole: an artist that doesn't fit on one shelf continues on the adjacent shelf at an era-band boundary (see Placement in Data model)
 - Reachability only plays a role through the explicit, manually configured location rules — not as a general rule for popular/frequently-picked artists
 
 ### 4. Stability and confirmation
@@ -101,11 +102,136 @@
 
 ## Data model
 
+Overview of the persisted entities and their relations; the lists below are authoritative for the details. Solid lines are plain foreign keys. Dashed lines are either polymorphic references (a LocationRule target, a Placement or ShowcaseFeature unit — each row points at exactly one of the connected entities) or lookups by Discogs ID into the enrichment cache. ClusterOrder is left out: it is computed on the fly and not persisted.
+
+```mermaid
+erDiagram
+    AliasGroup |o--o{ Artist : "groups"
+    Artist ||--o{ Album : "has"
+    Artist ||--o{ EraBand : "is split into"
+    EraBand |o--o{ Album : "contains"
+    Album }o--o{ Style : "tagged with"
+    Cluster ||--o{ Style : "groups"
+    Artist ||--o| ArtistClusterAssignment : "has dominant cluster"
+    Cluster |o--o{ ArtistClusterAssignment : "assigned to"
+    Cabinet ||--o{ Shelf : "has"
+    Cabinet ||--o{ LocationRule : "mandatory cabinet of"
+    Shelf ||--o{ Placement : "holds"
+    Shelf ||--o{ ShowcaseFeature : "showcases"
+
+    Artist |o..o{ LocationRule : "target"
+    AliasGroup |o..o{ LocationRule : "target"
+    Cluster |o..o{ LocationRule : "target"
+    Album |o..o{ LocationRule : "target"
+
+    Artist |o..o| Placement : "unit"
+    EraBand |o..o| Placement : "unit"
+    Album |o..o| Placement : "unit"
+
+    Artist |o..o{ ShowcaseFeature : "unit"
+    Album |o..o{ ShowcaseFeature : "unit"
+
+    ReleaseEnrichment |o..o{ Album : "release_id"
+    MasterEnrichment |o..o{ Album : "master_id"
+    MasterEnrichment |o..o{ ReleaseEnrichment : "master_id"
+
+    Artist {
+        int id PK
+        string name
+        int discogs_artist_id "optional"
+        int alias_group_id FK "nullable"
+    }
+    AliasGroup {
+        int id PK
+        string label
+    }
+    Album {
+        int id PK
+        int artist_id FK
+        string title
+        int release_id "Discogs, from CSV"
+        int master_id "Discogs, fetched"
+        int original_release_year "fetched via master"
+        object format_tokens "parsed from CSV Format"
+        float computed_width_cm
+        float manual_width_cm "nullable, overrides computed"
+        bool width_confirmed
+        list style_ids FK
+        int era_band_id FK "nullable"
+        string cover_url "empty until phase 2"
+    }
+    Style {
+        int id PK
+        string name "from Discogs"
+        int cluster_id FK
+    }
+    Cluster {
+        int id PK
+        string name
+    }
+    ArtistClusterAssignment {
+        int artist_id PK, FK
+        int cluster_id FK "null = artist is its own standalone cluster"
+        bool confirmed
+    }
+    EraBand {
+        int id PK
+        int artist_id FK
+        string label "early/middle/late, or as loaded"
+        int position "order within the artist"
+        string source "algorithm or initial load"
+    }
+    Cabinet {
+        int id PK
+        string name
+        string location "room"
+    }
+    Shelf {
+        int id PK
+        int cabinet_id FK
+        float width_cm
+        string type "top-loader or front-loader"
+        string layer "top or bottom"
+        int reachability_score
+        bool is_showcase "top-loaders only"
+    }
+    LocationRule {
+        int id PK
+        string target_type "artist, alias group, cluster or album"
+        int target_id FK
+        int cabinet_id FK
+        string note
+    }
+    Placement {
+        string unit_type "artist, era band or album"
+        int unit_id FK
+        int shelf_id FK
+        int position "order within the shelf"
+        string source "algorithm or manual"
+    }
+    ShowcaseFeature {
+        int shelf_id FK "showcase shelf"
+        string unit_type "artist or album"
+        int unit_id FK
+    }
+    ReleaseEnrichment {
+        int release_id PK
+        list styles "style names"
+        int master_id
+        datetime fetched_at
+    }
+    MasterEnrichment {
+        int master_id PK
+        int original_release_year
+        datetime fetched_at
+    }
+```
+
 **Core entities**
 
 - **Artist**: id, name, Discogs artist ID (optional), alias_group_id (nullable)
 - **AliasGroup**: id, label — links multiple Artists treated as related-but-separate projects
-- **Album**: id, artist_id, title, Discogs `release_id` (from CSV), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), cover_url (empty until phase 2)
+- **Album**: id, artist_id, title, Discogs `release_id` (from CSV), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), cover_url (empty until phase 2)
 - **Style**: id, name (from Discogs), `cluster_id` — the Cluster this Style belongs to; auto-assigned to a new same-named Cluster the first time the Style is seen, user-remappable afterward (see Sorting logic §1)
 - **Cluster**: id, name — a user-curated display/grouping layer, decoupled from Discogs' own style taxonomy; starts 1:1 with Styles, can be renamed or have several Styles merged into it via the Clusters screen (see UI)
 
@@ -117,6 +243,7 @@
 **Sorting/clustering**
 
 - **ArtistClusterAssignment**: artist_id, cluster_id (dominant cluster — either derived from the artist's most common Style's Cluster, or a standalone cluster pointing at the artist itself), confirmed (bool) — distinguishes a proposed dominant cluster from a confirmed one
+- **EraBand**: id, artist_id, label, position (order of the band within the artist's timeline), source (algorithm vs. initial load) — one band of an artist's discography (see Sorting logic §2); albums point at their band via `era_band_id`. The label is free text: the sorting engine produces early/middle/late (or a single band for a single-album artist), while an initial load stores the spreadsheet's own labels as-is (e.g. "1990s" — see [Initial load](#initial-load)). Each artist has its own bands, so alias-group members are never merged into a single timeline. Unlike ClusterOrder, era bands are persisted: bands seeded by an initial load can't be recomputed, and regenerating a proposal replaces them with algorithm-computed ones
 - **ClusterOrder**: the computed (co-occurrence) ordering of clusters — can be recomputed on the fly, doesn't need to be persisted
 
 **Storage structure**
@@ -127,7 +254,7 @@
 
 **Placement**
 
-- **Placement**: unit (artist_id or alias-member), shelf_id, order position within the shelf, source (algorithm proposal vs. manually overridden) — this is the one, canonical location; an album/artist has exactly one Placement, consuming shelf width (see Sorting logic §3)
+- **Placement**: unit (`artist_id` — including an alias-group member —, `era_band_id`, or `album_id`), shelf_id, order position within the shelf, source (algorithm proposal vs. manually overridden) — this is the one, canonical location; an album/artist has exactly one Placement, consuming shelf width (see Sorting logic §3). The most specific unit wins: an album's location is its own Placement if it has one (album-level location rule or manual move), otherwise that of its EraBand, otherwise that of its artist. Placing per era band is what lets one artist continue onto the next shelf at a band boundary, and what the Layout screen shows and drags (artist / era band)
 - **ShowcaseFeature**: shelf_id (must reference a shelf with `is_showcase = true`), album_id or artist_id currently featured there. This is a **pointer to an existing Placement, not a placement of its own** — a showcase slot shows a sample "borrowed" from wherever that artist/album's real Placement already is, so it consumes no shelf width and isn't counted in any cabinet's capacity twice
 
 ## Architecture, storage, and deployment
@@ -145,7 +272,7 @@
 
 **Master data** (overwritable, no history needed):
 
-- `artists.json`, `alias_groups.json`, `albums.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `style_assignments.json`, `discogs_cache.json` (release/master enrichment cache — see Data model)
+- `artists.json`, `alias_groups.json`, `albums.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `style_assignments.json`, `era_bands.json`, `discogs_cache.json` (release/master enrichment cache — see Data model)
 
 **Layout with history**:
 
@@ -195,7 +322,7 @@ An alternate entry point to steps 6–8 of the onboarding wizard: instead of gen
 - **Matching to enriched Discogs data**: the spreadsheet has no `release_id` — each (Artist, Title) row is matched by fuzzy string matching against the already-imported, API-enriched Album records (see Phase 1), to pull in `release_id`, styles, original year, and width. Matches below a confidence threshold are queued for manual confirmation rather than guessed — same non-blocking pattern as other confirmations (see Sorting logic §4): the row is still loaded (so Browse/Search works immediately), with the uncertain match flagged
 - **Topladers / showcase rows**: rows whose Location is a showcase cabinet are not created as a second Placement for that album — they become a `ShowcaseFeature` pointing at the album's real Placement elsewhere in the sheet (see Data model), so capacity isn't double-counted
 - **The Cluster column seeds the `Cluster` entity directly** (see Data model) — each distinct value becomes a Cluster, and the Styles of the matched albums are mapped to it. This is a natural fit: the spreadsheet's curated cluster names are exactly what the Clusters screen (see UI) lets the user build by hand later — initial load just bootstraps it from work already done
-- **The Era band column is stored as the initial per-artist era-band label** — it doesn't have to match what the sorting engine's own logic (Sorting logic §2) would currently produce (e.g. this data uses decade labels like "1990s" rather than computed early/middle/late bands); re-running the proposal generator later is expected to diverge from this snapshot
+- **The Era band column is stored as the initial per-artist era-band label** — each distinct (Artist, Era band) value becomes an `EraBand` with source "initial load" (see Data model), and the row's album is linked to it. It doesn't have to match what the sorting engine's own logic (Sorting logic §2) would currently produce (e.g. this data uses decade labels like "1990s" rather than computed early/middle/late bands); re-running the proposal generator later is expected to diverge from this snapshot
 - **Overflow**: rows that don't fit anywhere (an explicit "not yet placed" list in the source spreadsheet) are loaded as unplaced albums — visible in a dedicated list, not silently dropped, so they can be resolved later (mark as external, free up shelf space, etc.)
 
 ## UI / screen layout
