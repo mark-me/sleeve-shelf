@@ -5,7 +5,7 @@ import io
 import pytest
 from openpyxl import Workbook
 
-from sleeve_shelf import create_app
+from sleeve_shelf import create_app, main
 
 
 def _workbook(layout_rows, unplaced=()) -> io.BytesIO:
@@ -126,3 +126,14 @@ def test_cross_site_posts_are_rejected(client):
     response = client.post("/setup/confirm", headers={"Sec-Fetch-Site": "cross-site"})
 
     assert response.status_code == 403
+
+
+def test_workbook_can_be_loaded_from_the_command_line(tmp_path, monkeypatch, capsys):
+    workbook = tmp_path / "layout.xlsx"
+    workbook.write_bytes(_workbook(LAYOUT).getvalue())
+    monkeypatch.setenv("SLEEVE_SHELF_DATA_DIR", str(tmp_path / "data"))
+
+    main(["load", str(workbook)])
+
+    assert "Loaded 3 albums on 2 shelves" in capsys.readouterr().out
+    assert "Kind Of Blue" in create_app().test_client().get("/browse?shelf=2").text

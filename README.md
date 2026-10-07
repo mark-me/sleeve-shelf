@@ -28,6 +28,12 @@ Then open <http://127.0.0.1:5000> and upload your workbook (see `docs/import_exa
 | `SLEEVE_SHELF_HOST` | `127.0.0.1` | Set to `0.0.0.0` to reach the app from a phone on the same network |
 | `SLEEVE_SHELF_PORT` | `5000` | Port to listen on |
 
+If your browser can't upload the file (some managed machines block uploads), load it from the command line instead — the running app picks it up straight away:
+
+```sh
+uv run python -m sleeve_shelf load path/to/layout.xlsx
+```
+
 Run the tests with `uv run python -m pytest`.
 
 ## Planned tech stack
