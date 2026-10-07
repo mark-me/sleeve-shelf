@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Import') }}{% endblock %}
+{% block nav %}{% if has_collection %}{{ super() }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 640px;">
+  <h1>{{ _('Upload your layout') }}</h1>
+  <p class="ss-muted mt-2">{{ _('An Excel workbook (.xlsx) with your cabinet layout. You get a preview before anything is loaded.') }}</p>
+
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+  {% if has_collection %}
+  <div class="ss-alert mt-3">{{ _('A collection is already loaded. Loading a new workbook replaces all of it.') }}</div>
+  {% endif %}
+
+  <form class="ss-card mt-4" method="post" action="{{ url_for('setup.upload') }}" enctype="multipart/form-data">
+    <div class="ss-card-body">
+      <label for="workbook" class="form-label fw-semibold">{{ _('Workbook') }}</label>
+      <input id="workbook" class="form-control" type="file" name="workbook" accept=".xlsx" required>
+      <button class="ss-button ss-button-primary mt-3" type="submit">{{ _('Upload and preview') }}</button>
+    </div>
+  </form>
+
+  <div class="ss-card mt-4">
+    <div class="ss-card-body">
+      <h2>{{ _('What the workbook should contain') }}</h2>
+      <ul class="mt-3 mb-0">
+        <li>{{ _('A sheet “Kastindeling” with one row per album, in the order the albums stand on the shelf. Columns: Locatie, Vak, Cluster, Era-band (artiest), Artiest, Titel. Formaat, Aantal schijven and Sorteerjaar (origineel) are used when present.') }}</li>
+        <li>{{ _('Optionally a sheet “Vakoverzicht” listing every shelf (Locatie, Vak, Toegankelijkheid), including empty ones.') }}</li>
+        <li>{{ _('Optionally a sheet “Nog niet geplaatst” with albums that have no spot yet (Cluster, Artiest, Titel).') }}</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

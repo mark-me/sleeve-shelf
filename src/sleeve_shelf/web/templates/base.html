@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · Sleeve &amp; Shelf</title>
+  <script src="{{ url_for('static', filename='theme.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+<div class="ss-shell">
+  <header class="ss-sidebar">
+    <div class="ss-brand-row">
+      <a class="ss-brand" href="{{ url_for('index') }}">
+        <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="4" y="52" width="56" height="7" rx="2.5" fill="#E8A33D"/>
+          <rect x="9" y="12" width="34" height="34" rx="4" fill="#E8A33D"/>
+          <circle cx="44" cy="24" r="15" fill="#FAF7F2"/>
+          <circle cx="44" cy="24" r="3.5" fill="#E8A33D"/>
+        </svg>
+        Sleeve &amp; Shelf
+      </a>
+      <button class="ss-menu-button d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="{{ _('Open menu') }}">
+        <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect width="18" height="2" rx="1" fill="#fff"/><rect y="6" width="18" height="2" rx="1" fill="#fff"/><rect y="12" width="18" height="2" rx="1" fill="#fff"/></svg>
+      </button>
+    </div>
+    <nav id="main-nav" class="ss-nav collapse d-lg-flex">
+      {% block nav %}
+      <a href="{{ url_for('browse.browse') }}" class="{{ 'active' if request.endpoint == 'browse.browse' }}">{{ _('Browse / Search') }}</a>
+      <a href="{{ url_for('browse.unplaced') }}" class="{{ 'active' if request.endpoint == 'browse.unplaced' }}">{{ _('Unplaced albums') }}</a>
+      <a href="{{ url_for('setup.upload_form') }}" class="{{ 'active' if request.blueprint == 'setup' }}">{{ _('Import') }}</a>
+      {% endblock %}
+      <button class="ss-theme-toggle" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
+    </nav>
+  </header>
+  <main class="ss-main">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

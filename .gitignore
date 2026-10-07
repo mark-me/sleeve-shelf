@@ -218,3 +218,6 @@ __marimo__/
 .streamlit/secrets.toml
 
 docs-site/site
+# Sleeve & Shelf collection data and configuration
+/data/
+config.yaml

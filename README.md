@@ -10,7 +10,25 @@ It's built for collectors who track their collection on [Discogs](https://www.di
 
 ## Status
 
-This project is currently in the requirements/design phase — no code has been written yet. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
+Phase 1a is in progress: you can load a worked-out cabinet layout from an Excel workbook and browse or search it in physical shelf order. Generating a layout (Phase 1b) is not built yet. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
+
+## Running it
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```sh
+uv run python -m sleeve_shelf
+```
+
+Then open <http://127.0.0.1:5000> and upload your workbook (see `docs/import_example.xlsx` for the expected shape).
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `SLEEVE_SHELF_DATA_DIR` | `data` | Where the collection is stored as JSON files |
+| `SLEEVE_SHELF_HOST` | `127.0.0.1` | Set to `0.0.0.0` to reach the app from a phone on the same network |
+| `SLEEVE_SHELF_PORT` | `5000` | Port to listen on |
+
+Run the tests with `uv run python -m pytest`.
 
 ## Planned tech stack
 

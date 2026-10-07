@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Welcome') }}{% endblock %}
+{% block nav %}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 640px;">
+  <h1>{{ _('Welcome to Sleeve & Shelf') }}</h1>
+  <p class="ss-muted mt-2">{{ _('Browse your record collection in the order it actually stands on your shelves — handy when you are in front of the cabinet, phone in hand.') }}</p>
+
+  <div class="ss-card mt-4">
+    <div class="ss-card-body">
+      <h2>{{ _('One step to get started') }}</h2>
+      <p class="mt-2">{{ _('Upload the Excel workbook in which you worked out your cabinet layout. Sleeve & Shelf reads your cabinets, shelves and albums from it; nothing else needs to be set up.') }}</p>
+      <a class="ss-button ss-button-primary" href="{{ url_for('setup.upload_form') }}">{{ _('Upload your layout') }}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Unplaced albums') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page">
+  <h1>{{ _('Unplaced albums') }}</h1>
+  <p class="ss-muted mt-1">{{ _('Albums that have no spot on a shelf yet.') }}</p>
+
+  {% if albums %}
+  <div class="ss-card">
+    {% for album in albums %}
+    <div class="ss-row" id="album-{{ album.album_id }}">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ album.artist }}</span>
+        <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+      </div>
+      {% if album.cluster %}<span class="ss-chip">{{ album.cluster }}</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('Every album has a place on a shelf.') }}</div></div>
+  {% endif %}
+</div>
+{% endblock %}

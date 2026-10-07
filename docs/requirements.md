@@ -285,7 +285,7 @@ erDiagram
 
 **Master data** (overwritable, no history needed):
 
-- `artists.json`, `alias_groups.json`, `albums.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `style_assignments.json`, `era_bands.json`, `discogs_cache.json` (release/master enrichment cache — see Data model)
+- `artists.json`, `alias_groups.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_cache.json` (release/master enrichment cache — see Data model)
 
 **Layout with history**:
 
@@ -296,6 +296,7 @@ erDiagram
 
 - The persistence layer uses DuckDB (`read_json_auto()` / `COPY ... TO '...json'`) to read and write the JSON files via SQL, instead of Python's `json` module — queries, joins, and aggregations (e.g. dominant-style determination, style co-occurrence, era-band spread) run as SQL against the JSON files
 - DuckDB operates directly on the plain JSON files; there is no separate `.duckdb` database file
+- Each file is a JSON array with one object per line, written with an explicit column schema per entity — readable and diffable by hand. Saving an entity rewrites its whole file (written to a temporary file first, then swapped in)
 - **Explicitly out of scope**: Parquet and Delta Lake. At this scale (a single user, a personal collection, a handful of saved layouts) their benefit — avoiding full-copy storage across many versions — doesn't apply, while their cost (binary, non-diffable files; extra complexity) works directly against the project's goal of keeping the data human-readable and inspectable. The full-JSON-snapshot-per-save approach stays as is
 
 ### Configuration
@@ -345,7 +346,7 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
   - `Vakoverzicht` (optional) — one row per shelf: `Locatie`, `Vak`, and `Toegankelijkheid`. Lists every shelf, including empty ones
   - `Nog niet geplaatst` (optional) — albums without a spot: `Cluster`, `Artiest`, `Titel`, `Aantal schijven`
   - A missing required sheet or column stops the upload with a message naming what is missing
-- **Re-upload replaces everything**: in Phase 1a a new upload discards all previously loaded data and loads the workbook afresh — there is no merging. Correcting the layout means correcting the workbook and uploading it again
+- **Re-upload replaces everything**: in Phase 1a a new upload discards all previously loaded data and loads the workbook afresh — there is no merging. Saved versions in `placements/` are discarded too, since they refer to albums that no longer exist; the fresh load is saved as the new first version. Correcting the layout means correcting the workbook and uploading it again
 - **Artists and albums**: each distinct `Artiest` value becomes an Artist, each row an Album — two rows with the same artist and title are two copies, so two Albums. From the row the Album also takes its `format_tokens` (`Formaat` plus `Aantal schijven`) and its original release year (`Sorteerjaar (origineel)`; `0` means unknown). `release_id`, styles, and width stay empty until the Discogs matching below
 - **Cabinet/Shelf creation**: each distinct `Locatie` becomes a Cabinet, each (`Locatie`, `Vak`) pair a Shelf named after `Vak`, in the order of `Vakoverzicht` (then any pair that only occurs in `Kastindeling`). The reachability score is the leading number of `Toegankelijkheid`. Room, shelf type, layer, and width in cm are not in the workbook and stay empty until completed in the storage-structure step of Phase 1b. `Capaciteit` is not loaded: it counts LP-units rather than cm, and in the example it is derived from the contents rather than measured (see Open questions)
 - **Placement**: each `Kastindeling` row becomes an album-level Placement on its shelf (source "initial load"), with the row order within a shelf as the position — the loaded layout mirrors the workbook exactly, which is what Browse/Search then follows
@@ -386,7 +387,8 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 ### Browse/Search screen
 
 - Crate-digging mode: renders the collection in physical order (cabinet → shelf → position within shelf), based on the current `Placement` data — scrolling through it mirrors flipping through the real shelves
-- Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3)
+- One shelf at a time, with previous/next shelf and a shelf picker to jump straight to any shelf. Within a shelf the albums are grouped under a heading per cluster and era band (the artist's dominant cluster), each row showing artist, title, and original year
+- Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked — the Detail screen it will eventually open arrives in Phase 1b
 - Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
 
@@ -410,8 +412,13 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 
 ## Open questions
 
-- **Shelf capacity after an initial load**: the workbook's `Capaciteit` and `Breedte-eenheden` count LP-units (1 for a single LP, 1.4 for a double), not cm, and are not loaded. Shelf widths in cm therefore have to be measured and entered in Phase 1b — or the app should learn to work in LP-units instead. Not needed for Browse/Search
-- **Initial-load `Jaar artiest` column**: not loaded. It is the key the workbook was sorted on within an era band, and it is not strictly per artist (in the example five artists have two different values). The row order already preserves the resulting sequence; whether the value itself is worth keeping is undecided
-
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements
+
+### Parked after the Phase 1a initial load
+
+Not blocking Phase 1a; set aside to be addressed later.
+
+- **`Overflow` and `Nieuwe koffer` locations**: the workbook lists these under `Kastindeling`, so they are loaded as ordinary Cabinets and show up as locations in Browse/Search. Neither is a real, existing storage spot (overflow is a proposal to give away, the cases are yet to be bought) — whether they should appear in the Unplaced albums list instead is undecided
+- **Shelf capacity after an initial load**: the workbook's `Capaciteit` and `Breedte-eenheden` count LP-units (1 for a single LP, 1.4 for a double), not cm, and are not loaded. Shelf widths in cm therefore have to be measured and entered in Phase 1b — or the app should learn to work in LP-units instead. Not needed for Browse/Search
+- **Initial-load `Jaar artiest` column**: not loaded. It is the key the workbook was sorted on within an era band, and it is not strictly per artist (in the example five artists have two different values). The row order already preserves the resulting sequence; whether the value itself is worth keeping is undecided

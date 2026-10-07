@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Preview') }}{% endblock %}
+{% block nav %}{% if has_collection %}{{ super() }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 760px;">
+  <h1>{{ _('Preview') }}</h1>
+  <p class="ss-muted mt-2">{{ _('This is what was found in the workbook. Nothing has been loaded yet.') }}</p>
+
+  <div class="ss-stats mt-3">
+    <div class="ss-stat"><div class="ss-stat-number">{{ album_count }}</div><div class="ss-stat-label">{{ _('albums') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ artist_count }}</div><div class="ss-stat-label">{{ _('artists') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ cluster_count }}</div><div class="ss-stat-label">{{ _('clusters') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ shelf_count }}</div><div class="ss-stat-label">{{ _('shelves') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ unplaced_count }}</div><div class="ss-stat-label">{{ _('unplaced albums') }}</div></div>
+  </div>
+
+  {% if has_collection %}
+  <div class="ss-alert mt-3">{{ _('Loading this workbook replaces the collection that is loaded now.') }}</div>
+  {% endif %}
+
+  <form class="d-flex gap-2 mt-3" method="post" action="{{ url_for('setup.confirm') }}">
+    <button class="ss-button ss-button-primary" type="submit">{{ _('Load this layout') }}</button>
+    <a class="ss-button" href="{{ url_for('setup.upload_form') }}">{{ _('Choose another file') }}</a>
+  </form>
+
+  <div class="ss-card mt-4">
+    {% for cabinet in cabinets %}
+    <div class="ss-group">{{ cabinet.name }}</div>
+    {% for shelf in cabinet.shelves %}
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ shelf.name }}</span>
+      <span class="ss-row-place">{{ ngettext('%(num)d album', '%(num)d albums', shelf.albums) }}</span>
+    </div>
+    {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
