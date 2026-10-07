@@ -1,0 +1,15 @@
+# Keep the build context to what the image needs: pyproject.toml, uv.lock, README.md and src/.
+.git
+.github
+.venv
+.vscode
+__pycache__
+*.py[cod]
+.pytest_cache
+data
+config.yaml
+assets
+docker
+docs
+docs-site
+tests

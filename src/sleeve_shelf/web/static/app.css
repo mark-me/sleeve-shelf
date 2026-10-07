@@ -111,6 +111,14 @@ h2 { font-size: 1.15rem; margin: 0; }
 
 .ss-nav .ss-theme-toggle { margin-top: 12px; }
 
+.ss-version {
+  padding: 8px 4px 0;
+  color: #8B93A6;
+  font-size: 0.72rem;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
 .ss-main {
   padding: 0 0 24px;
   min-width: 0;

@@ -33,6 +33,7 @@
       <a href="{{ url_for('setup.upload_form') }}" class="{{ 'active' if request.blueprint == 'setup' }}">{{ _('Import') }}</a>
       {% endblock %}
       <button class="ss-theme-toggle" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
+      <div class="ss-version">{{ _('Version %(version)s', version=config.VERSION) }}</div>
     </nav>
   </header>
   <main class="ss-main">

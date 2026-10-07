@@ -22,6 +22,8 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app = Flask(__name__, template_folder="web/templates", static_folder="web/static")
     app.config["DATA_DIR"] = _data_dir(data_dir)
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
+    # Set by the Docker image build; a local run has no version.
+    app.config["VERSION"] = os.environ.get("SLEEVE_SHELF_VERSION", "dev")
     Babel(app, default_locale="en")
 
     app.register_blueprint(setup.blueprint)

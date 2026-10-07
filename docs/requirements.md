@@ -312,7 +312,13 @@ erDiagram
 ### Deployment
 
 - Self-hosted, deployed via Docker containers
-- File storage (JSON) mounted as a volume, so data persists outside the container
+- File storage (JSON) mounted as a volume, so data persists outside the container: the image keeps all data in `/data` and listens on port 5000
+- The image (`docker/Dockerfile`) is built and published to the GitHub Container Registry (`ghcr.io/mark-me/sleeve-shelf`) by a GitHub Actions workflow, which first runs the test suite:
+  - push to `test` → `:test`, amd64 only (a quick build for trying things out)
+  - push to `main` → `:main` and `:latest`, amd64 + arm64
+  - a release tag `vX.Y.Z` on `main` → `:X.Y.Z`, amd64 + arm64
+  - every image is also tagged with its short commit SHA
+- The build stamps the image with a version, shown in the app's navigation: `X.Y.Z` for a release, `X.Y.Z+main.<commits since release>.<sha>` on `main`, `X.Y.Z+test.<sha>` on `test`
 
 ## Onboarding wizard
 

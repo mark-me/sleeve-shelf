@@ -1,0 +1,23 @@
+# Sleeve & Shelf — the latest build of the test branch, for trying changes out.
+#
+#   docker compose -f docker-compose.test.yml up -d
+#
+# Then open http://<host>:5001
+#
+# Uses its own port, container name, and volume, so it runs next to the
+# production container (docker-compose.yml) without touching its data.
+
+services:
+  sleeve-shelf-test:
+    image: ghcr.io/mark-me/sleeve-shelf:test
+    # The :test tag moves with every push, so fetch it again on each start.
+    pull_policy: always
+    container_name: sleeve-shelf-test
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    volumes:
+      - sleeve-shelf-test-data:/data
+
+volumes:
+  sleeve-shelf-test-data:

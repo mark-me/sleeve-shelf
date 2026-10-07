@@ -1,0 +1,21 @@
+# Sleeve & Shelf — production: a released version.
+#
+#   docker compose -f docker-compose.yml up -d
+#
+# Then open http://<host>:5000
+
+services:
+  sleeve-shelf:
+    # Pin the release you want to run; see the published versions at
+    # https://github.com/mark-me/sleeve-shelf/pkgs/container/sleeve-shelf
+    image: ghcr.io/mark-me/sleeve-shelf:0.1.0
+    container_name: sleeve-shelf
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # The collection (JSON files) lives here and survives upgrades.
+      - sleeve-shelf-data:/data
+
+volumes:
+  sleeve-shelf-data:
