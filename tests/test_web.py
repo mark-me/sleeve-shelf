@@ -137,3 +137,69 @@ def test_workbook_can_be_loaded_from_the_command_line(tmp_path, monkeypatch, cap
 
     assert "Loaded 3 albums on 2 shelves" in capsys.readouterr().out
     assert "Kind Of Blue" in create_app().test_client().get("/browse?shelf=2").text
+
+
+def test_storage_lists_cabinets_with_how_full_each_shelf_is(client):
+    _load(client)
+
+    page = client.get("/storage/").text
+
+    assert "Kast" in page
+    assert "/storage/shelves/1" in page and "/storage/shelves/2" in page
+    # A shelf holding albums cannot be removed.
+    assert "/storage/shelves/1/delete" not in page
+
+
+def test_cabinets_and_shelves_can_be_added_edited_and_removed(client):
+    _load(client)
+
+    client.post("/storage/cabinets/new", data={"name": "Koffer", "location": "Zolder"})
+    assert "Zolder" in client.get("/storage/").text
+
+    created = client.post(
+        "/storage/cabinets/2/shelves/new",
+        data={"name": "links", "width_cm": "38,5", "type": "top_loader", "layer": "top",
+              "reachability_score": "1", "is_showcase": "on"},
+    )
+    assert created.status_code == 302
+    page = client.get("/storage/").text
+    assert "38.5 cm" in page and "Top-loader" in page
+    # The new, empty shelf shows up in Browse as a stop.
+    assert "Koffer &rsaquo; links (0)" in client.get("/browse").text
+
+    client.post("/storage/shelves/3", data={"name": "rechts", "width_cm": "", "type": "", "layer": ""})
+    form = client.get("/storage/shelves/3").text
+    assert 'value="rechts"' in form
+
+    # A cabinet with shelves stays; once the shelf is gone it can go too.
+    client.post("/storage/cabinets/2/delete")
+    assert "Koffer" in client.get("/storage/").text
+    client.post("/storage/shelves/3/delete")
+    client.post("/storage/cabinets/2/delete")
+    assert "Koffer" not in client.get("/storage/").text
+
+
+def test_shelf_input_is_validated(client):
+    _load(client)
+
+    response = client.post(
+        "/storage/shelves/1",
+        data={"name": "", "width_cm": "wide", "type": "front_loader", "reachability_score": "1.5",
+              "is_showcase": "on"},
+    )
+
+    assert response.status_code == 400
+    for message in ("Give the shelf a name", "The width has to be", "Reachability has to be",
+                    "Only a top-loader"):
+        assert message in response.text
+    assert 'value="wide"' in response.text
+
+
+def test_a_shelf_holding_albums_cannot_be_removed(client):
+    _load(client)
+
+    response = client.post("/storage/shelves/1/delete", follow_redirects=True)
+
+    assert "still holds albums" in response.text
+    assert "Nénette Et Boni" in client.get("/browse?shelf=1").text
+    assert client.get("/storage/shelves/99").status_code == 404

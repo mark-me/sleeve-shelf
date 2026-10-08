@@ -9,6 +9,7 @@ from flask_babel import gettext as _
 from openpyxl.utils.exceptions import InvalidFileException
 
 from sleeve_shelf.collection import replace_collection
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.ingestion.initial_load import InitialLoad, load_initial_layout
 from sleeve_shelf.web.context import get_store, has_collection
 
@@ -23,8 +24,9 @@ def _pending_path() -> Path:
 
 def _read(path: Path) -> InitialLoad:
     """Load the workbook, turning anything unreadable into a message for the user."""
+    settings = load_settings(current_app.config["DATA_DIR"])
     try:
-        return load_initial_layout(path)
+        return load_initial_layout(path, settings.base_width_cm)
     except (InvalidFileException, BadZipFile, KeyError, OSError) as error:
         raise ValueError(_("This file could not be read as an Excel workbook (.xlsx).")) from error
 
@@ -88,7 +90,8 @@ def confirm():
         return _upload_error(str(error))
     finally:
         pending.unlink(missing_ok=True)
-    replace_collection(get_store(), load)
+    settings = load_settings(current_app.config["DATA_DIR"])
+    replace_collection(get_store(), load, settings.width_constants)
     return redirect(url_for("browse.browse"))
 
 

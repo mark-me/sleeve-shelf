@@ -308,3 +308,40 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 
 .ss-stat-number { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.5rem; font-weight: 700; }
 .ss-stat-label { font-size: 0.78rem; color: var(--ss-muted); }
+
+/* Storage: cabinets with their shelves. */
+.ss-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ss-border);
+}
+
+.ss-button-small { min-height: 36px; padding: 0 14px; font-size: 0.82rem; }
+
+.ss-table { width: 100%; font-size: 0.875rem; }
+
+.ss-table th {
+  padding: 10px 16px;
+  background: var(--ss-bg);
+  color: var(--ss-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.ss-table td { padding: 12px 16px; border-top: 1px solid var(--ss-border); white-space: nowrap; }
+.ss-table a, .ss-link-button { color: var(--ss-accent); font-weight: 600; text-decoration: none; }
+.ss-link-button { margin-left: 12px; padding: 0; border: none; background: none; }
+.ss-over { color: #D9534F; font-weight: 600; }
+
+.form-control, .form-select {
+  background-color: var(--ss-surface);
+  border-color: var(--ss-border);
+  color: var(--ss-text);
+}

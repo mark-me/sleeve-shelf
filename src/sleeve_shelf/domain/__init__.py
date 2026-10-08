@@ -15,7 +15,11 @@ from sleeve_shelf.domain.clustering import (
     EraBand,
     EraBandSource,
 )
-from sleeve_shelf.domain.enrichment import MasterEnrichment, ReleaseEnrichment
+from sleeve_shelf.domain.enrichment import (
+    MasterEnrichment,
+    MatchProposal,
+    ReleaseEnrichment,
+)
 from sleeve_shelf.domain.placement import (
     Placement,
     PlacementSource,
@@ -45,6 +49,7 @@ __all__ = [
     "LocationRule",
     "LocationRuleTarget",
     "MasterEnrichment",
+    "MatchProposal",
     "Placement",
     "PlacementSource",
     "ReleaseEnrichment",

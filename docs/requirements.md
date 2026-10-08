@@ -68,30 +68,28 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 
 ### 1. Clustering by musical kinship (cluster)
 
-- Style tags are not present in the Discogs CSV export — they are fetched per release from the Discogs API during import (see Phase 1)
-- Raw Discogs styles are not used as clusters directly. Each Style belongs to a user-curated **Cluster** (see Data model) — a display/grouping layer decoupled from Discogs' own taxonomy:
-  - When a Style is seen for the first time, it's auto-assigned its own same-named Cluster (1:1) — the app works immediately with no upfront curation required
-  - The user can later merge several related Styles into one Cluster (e.g. combining the Discogs styles "Post-Punk", "New Wave", and "Art Rock" into a single "Post-Punk / New Wave / Art Rock" cluster) or rename a Cluster, via the Clusters screen (see UI)
-  - This is mostly a **merge** operation, not a split — Discogs' style taxonomy is already fairly granular (e.g. Jazz alone has separate styles like Bop, Hard Bop, Cool, Swing, Modal), so curation is about grouping related granular styles into one browsable cluster, not subdividing a single style
-- Each artist gets one dominant Cluster, based on the most albums in that Cluster (via their Styles) within the collection
-- In case of a tie: the Cluster of the earliest album (original release year) is decisive
+This section and §2 follow the logic of the layout the collection is actually sorted by — the workbook behind the initial load (see [Initial load](#initial-load)). It replaces the earlier design, in which Discogs styles defined the clusters and each artist got its own early/middle/late bands.
+
+- A **Cluster** is a curated group of artists that belong together by sound (e.g. "Jazz: Hard Bop", "Slowcore / Lo-fi Indiefolk") — not a Discogs style. Clusters are named and maintained by the user, via the Clusters screen (see UI)
+- **Each artist belongs to exactly one Cluster** (`ArtistClusterAssignment`, see Data model). The assignments seeded by the initial load count as confirmed
+- An artist whose catalogue spans too much to share a cluster forms **a cluster of its own** (in the example: Tom Waits, Nick Cave)
+- **Artist families stay together**: an artist's other billings and side projects (e.g. "Chet Baker", "Chet Baker Quartet", and "Chet Baker & Crew"; "Nick Cave & The Bad Seeds" and "Grinderman") share one cluster and stand next to each other. This is what alias groups are for (see Data model); the workbook does not name the families, so after an initial load they still have to be set up (see Open questions)
+- **Discogs styles propose, they do not define.** Style tags are not in the Discogs CSV export — they are fetched per release from the Discogs API (see Phase 1b). Each Style is mapped to the Cluster that most of the artists carrying it were curated into; a Style none of them carries starts as a Cluster of its own, named after it. For an artist without a cluster (a new purchase), the Cluster most of its albums' Styles point to is proposed — in case of a tie the Cluster of the earliest album — and stays a proposal until confirmed (see §4)
 - An artist always stays together as a whole — never split across clusters — **except** via an explicit album-level location rule (see Data model), which detaches one specific title without affecting the rest of the artist's catalog
-- Clusters are ordered relative to each other based on co-occurrence: clusters that frequently appear together for artists with multiple albums in the collection are placed closer to one another
-- Alias/project groups are treated as separate units within the cluster of their own dominant Cluster
-- An artist whose catalog spans too many styles to meaningfully cluster (e.g. a prolific artist covering several genres) can be manually confirmed as **its own standalone cluster**, not tied to any Style — the same manual-override mechanism as correcting a dominant cluster (`ArtistClusterAssignment`), just pointing at the artist itself
+- **Clusters stand in a curated order**, not a computed one: related clusters follow each other across the shelves (e.g. the Jazz clusters, the Singer-Songwriter clusters). After an initial load this is the sequence in which the clusters occur in the loaded layout
 
-### 2. Era bands per artist
+### 2. Era bands and the order within a cluster
 
-- The CSV's `Released` field is the year of the specific pressing owned, not the original release year (confirmed example: the 1980 reissue of David Bowie's *Space Oddity*, originally released 1969, is listed as `1980` in the export). The original release year is fetched via the Discogs API: release → `master_id` → master's year
-- **Year sanity check**: the master-year lookup isn't always reliable (e.g. for compilations). The artist's start year is the earliest confirmed original-release-year among their own albums (self-referential, no extra data source needed). For each album: if `|album's master year − artist's start year| > 20`, the artist's start year is used for era-band placement instead of the album's own master year
-- Dynamic per artist: early/middle/late based on the spread of release years (original release year, after the sanity check above) within that artist's discography in the collection — not fixed decades
-- An artist with a single album gets a single band (no early/middle/late split)
-- Alias groups: each project gets its own era breakdown, not merged into a single timeline
-- Alphabetical by album title within each era band
+- **Original release year.** The CSV's `Released` field is the year of the specific pressing owned, not the original release year (confirmed example: the 1980 reissue of David Bowie's *Space Oddity*, originally released 1969, is listed as `1980` in the export). The original release year is fetched via the Discogs API: release → `master_id` → master's year; a release without a master is its own only version, so its year is the original
+- **A confirmed year is never overwritten.** A year that was looked up or corrected by hand (in the workbook: every `Jaarbron` other than "Discogs-jaar …" and "Onbekend") is marked confirmed on the album and survives enrichment; an unconfirmed year is replaced by the master's year
+- **Artist start year**: the year the artist began (`Artist.start_year`), taken from the workbook's `Jaar artiest` (the lowest value when the rows differ). Discogs does not supply it; for an artist that is not in the workbook, the earliest original year among its own albums stands in until corrected by hand
+- **Era bands are fixed decades of the artist's start year**: before 1960, 1960s, 1970s, 1980s, 1990s, 2000s, 2010s, 2020s and later, and unknown. An artist's whole catalogue sits in the artist's band, so reissues and late albums don't scatter an artist over the cluster
+- **Order within a cluster**: by era band, oldest first and unknown last → within a band by artist family, alphabetically → within a family by original release year, unknown first → by title
+- The workbook's notes mention one further rule, for artists without a known start year: an album's own year decides when it looks reliable and lies no more than 20 years from the artist's start, otherwise the artist's year decides. How this carries over to the engine is still open (see Open questions)
 
 ### 3. Physical placement
 
-- Shelf width in cm determines how many records fit
+- Shelf width in cm determines how many records fit. After an initial load the width is an **estimate**: the workbook's capacity in LP-units × the base width per disc (see below) — to be corrected per shelf once measured
 - Each album's estimated width is computed from its `Format` tokens (the same ones already parsed for vinyl detection — see Phase 1), but only for a **simple** format string — one with no `+` and no `Box` token:
   - Base width: **0.5 cm** per disc (standard-weight 12" LP, single sleeve)
   - 180-gram surcharge: **+0.15 cm** per disc where the format includes `180`
@@ -102,15 +100,16 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
   - `manual_width_cm` on the album (see Data model) holds the real width, set by hand
   - Until set, a rough fallback (disc count × base width, no surcharges) is used so the album can still be placed — non-blocking, following the same pattern as unconfirmed style assignments (see §4)
   - The album is flagged in "Openstaande bevestigingen" (Dashboard) as needing a manually confirmed width
-- A style cluster may span adjacent shelves within the same cabinet if it doesn't fit on one shelf
+- A cluster may span adjacent shelves within the same cabinet if it doesn't fit on one shelf
 - The era band is the smallest unit the proposal places as a whole: an artist that doesn't fit on one shelf continues on the adjacent shelf at an era-band boundary (see Placement in Data model)
 - Reachability only plays a role through the explicit, manually configured location rules — not as a general rule for popular/frequently-picked artists
 
 ### 4. Stability and confirmation
 
-- Any shift of an artist to a different style cluster (triggered by new purchases) is always presented for confirmation first — never applied silently
+- Any shift of an artist to a different cluster (triggered by new purchases) is always presented for confirmation first — never applied silently
 - The same applies to suggested new location rules: always requiring confirmation, never automatic
-- **Exception during first-time setup (wizard)**: for the very first layout of the full collection, all style assignments are automatically bulk-accepted (individually confirming ~1089 assignments isn't workable); the user corrects individual ones afterward as needed
+- **A generated proposal never replaces the current layout by itself.** It is kept next to the current layout until the user accepts it; until then Browse/Search keeps following the current layout, and rejecting the proposal leaves everything as it was
+- **Exception during first-time setup (wizard)**: for the very first layout of the full collection, all cluster assignments are automatically bulk-accepted (individually confirming them all isn't workable); the user corrects individual ones afterward as needed
 
 ## Data model
 
@@ -146,12 +145,14 @@ erDiagram
     ReleaseEnrichment |o..o{ Album : "release_id"
     MasterEnrichment |o..o{ Album : "master_id"
     MasterEnrichment |o..o{ ReleaseEnrichment : "master_id"
+    Album ||--o| MatchProposal : "proposed for"
 
     Artist {
         int id PK
         string name
         int discogs_artist_id "optional"
         int alias_group_id FK "nullable"
+        int start_year "nullable"
     }
     AliasGroup {
         int id PK
@@ -171,6 +172,7 @@ erDiagram
         list style_ids FK
         int era_band_id FK "nullable"
         string cover_url "empty until phase 2"
+        bool original_year_confirmed
     }
     Style {
         int id PK
@@ -189,7 +191,7 @@ erDiagram
     EraBand {
         int id PK
         int artist_id FK
-        string label "early/middle/late, or as loaded"
+        string label "decade band"
         int position "order within the artist"
         string source "algorithm or initial load"
     }
@@ -231,7 +233,15 @@ erDiagram
         int release_id PK
         list styles "style names"
         int master_id
+        int year
         datetime fetched_at
+    }
+    MatchProposal {
+        int album_id FK
+        int release_id
+        string artist
+        string title
+        float score
     }
     MasterEnrichment {
         int master_id PK
@@ -242,22 +252,23 @@ erDiagram
 
 **Core entities**
 
-- **Artist**: id, name, Discogs artist ID (optional), alias_group_id (nullable)
+- **Artist**: id, name, Discogs artist ID (optional), alias_group_id (nullable), `start_year` (nullable — the year the artist began, which decides its era band; see Sorting logic §2)
 - **AliasGroup**: id, label — links multiple Artists treated as related-but-separate projects
-- **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), cover_url (empty until phase 2)
-- **Style**: id, name (from Discogs), `cluster_id` — the Cluster this Style belongs to; auto-assigned to a new same-named Cluster the first time the Style is seen, user-remappable afterward (see Sorting logic §1)
-- **Cluster**: id, name — a user-curated display/grouping layer, decoupled from Discogs' own style taxonomy; starts 1:1 with Styles, can be renamed or have several Styles merged into it via the Clusters screen (see UI)
+- **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), cover_url (empty until phase 2), `original_year_confirmed` (bool — true when the year is known to be the original rather than a pressing's, so enrichment leaves it alone; see Sorting logic §2)
+- **Style**: id, name (from Discogs), `cluster_id` — the Cluster this Style points to; set the first time the Style is seen, user-remappable afterward (see Sorting logic §1)
+- **Cluster**: id, name — a user-curated group of artists, decoupled from Discogs' own style taxonomy (see Sorting logic §1); seeded by the initial load, can be renamed or merged via the Clusters screen (see UI)
 
 **Discogs enrichment cache** (avoids re-fetching on every import/wizard run)
 
-- **ReleaseEnrichment**: release_id, styles, master_id, fetched_at
+- **ReleaseEnrichment**: release_id, styles, master_id, year (the release's own year — the original year when there is no master), fetched_at
 - **MasterEnrichment**: master_id, original_release_year, fetched_at
+- **MatchProposal**: album_id, release_id, artist and title of that release, score — an uncertain link between a loaded album and a Discogs release, waiting for confirmation (see [Initial load](#initial-load)); not a cache record, but it lives alongside them
 
 **Sorting/clustering**
 
-- **ArtistClusterAssignment**: artist_id, cluster_id (dominant cluster — either derived from the artist's most common Style's Cluster, or a standalone cluster pointing at the artist itself), confirmed (bool) — distinguishes a proposed dominant cluster from a confirmed one
-- **EraBand**: id, artist_id, label, position (order of the band within the artist's timeline), source (algorithm vs. initial load) — one band of an artist's discography (see Sorting logic §2); albums point at their band via `era_band_id`. The label is free text: the sorting engine produces early/middle/late (or a single band for a single-album artist), while an initial load stores the spreadsheet's own labels as-is (e.g. "1990s" — see [Initial load](#initial-load)). Each artist has its own bands, so alias-group members are never merged into a single timeline. Unlike ClusterOrder, era bands are persisted: bands seeded by an initial load can't be recomputed, and regenerating a proposal replaces them with algorithm-computed ones
-- **ClusterOrder**: the computed (co-occurrence) ordering of clusters — can be recomputed on the fly, doesn't need to be persisted
+- **ArtistClusterAssignment**: artist_id, cluster_id (the artist's cluster — curated, or proposed from its albums' Styles; or a standalone cluster pointing at the artist itself), confirmed (bool) — distinguishes a proposed dominant cluster from a confirmed one
+- **EraBand**: id, artist_id, label, position (order of the band within the artist's timeline), source (algorithm vs. initial load) — one band of an artist's discography (see Sorting logic §2); albums point at their band via `era_band_id`. The label is the decade band (e.g. "1990s" — see Sorting logic §2); an initial load stores the workbook's own labels as-is. Era bands are persisted, so the bands seeded by an initial load are kept until a proposal is accepted
+- **ClusterOrder**: the curated sequence of the clusters (see Sorting logic §1). How it is stored is still open (see Open questions); until then it is read off the current layout
 
 **Storage structure**
 
@@ -276,7 +287,7 @@ erDiagram
 
 1. **Ingestion**: a spreadsheet loader for the initial load (Phase 1a — see [Initial load](#initial-load)), a CSV parser (detects vinyl by parsing the `Format` field) and a Discogs API client (fetches styles + original release year per release/master, used for import-time enrichment from Phase 1 onward, and for ongoing sync from Phase 2) — all produce the same internal Album/Artist structure
 2. **Domain**: the entities above, as plain domain objects, independent of storage
-3. **Sorting engine**: pure logic in small, self-contained steps (determining dominant cluster, co-occurrence clustering, computing era bands, placement/width allocation) — operates on domain objects, with no knowledge of the database or web layer
+3. **Sorting engine**: pure logic in small, self-contained steps (proposing a cluster for an artist, deriving era bands, ordering within a cluster, placement/width allocation) — operates on domain objects, with no knowledge of the database or web layer
 4. **Persistence**: storage of all entities, independent of the sorting engine
 5. **Web**: Flask routes/blueprints + Bootstrap/JS templates, including the onboarding wizard. Light/dark theming uses Bootstrap 5.3's built-in `data-bs-theme` attribute rather than a custom theming layer — the toggle just switches that attribute and writes the choice to browser-local storage. UI copy goes through Flask-Babel (`gettext`/`_()`) from the start, with only an `en` catalog shipped in the MVP — this is the i18n-readiness the Language requirement calls for: adding a second language later means adding a `.po` catalog, not restructuring templates
 6. **Confirmation layer**: a separate piece of logic that tracks proposals requiring confirmation (new style assignment, new location rule)
@@ -285,7 +296,7 @@ erDiagram
 
 **Master data** (overwritable, no history needed):
 
-- `artists.json`, `alias_groups.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_cache.json` (release/master enrichment cache — see Data model)
+- `artists.json`, `alias_groups.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_releases.json` and `discogs_masters.json` (the enrichment cache — see Data model), `match_proposals.json`
 
 **Layout with history**:
 
@@ -301,9 +312,9 @@ erDiagram
 
 ### Configuration
 
-- `config.yaml`, read and written with plain PyYAML — not through the DuckDB layer above, since this is scalar application settings, not queryable collection data
+- `config.yaml`, kept in the data directory next to the JSON files, read and written with plain PyYAML — not through the DuckDB layer above, since this is scalar application settings, not queryable collection data
 - Holds:
-  - The width-estimation constants (base width, 180-gram surcharge, gatefold surcharge — see Sorting logic §3)
+  - The width-estimation constants (base width, 180-gram surcharge, gatefold surcharge — see Sorting logic §3); the base width also turns the workbook's LP-unit capacity into an estimated shelf width
   - The Discogs personal access token
   - `count_bonus_discs_as_vinyl` (bool, default `true`) — whether a "bonus disc" bundle such as `"CD + LP"` is treated as vinyl during import (see Phase 1); defaults to the current any-segment-matches behavior, but is a setting rather than a hardcoded rule, since it's genuinely a judgment call
 - Editable from a dedicated **Settings** screen in the web app (see UI), in addition to being written once by the onboarding wizard (Phase 1b, Discogs API enrichment step) when the token is first configured
@@ -340,7 +351,7 @@ Started from the regular app once the user wants a generated layout. A user with
 4. **Match loaded albums** (only after an initial load) — the albums from the spreadsheet are matched to the imported Discogs releases; uncertain matches are listed for confirmation (see [Initial load](#initial-load))
 5. **Alias/project groups** (optional, may be left empty)
 6. **Location rules** (optional, may be left empty)
-7. **First sorting proposal** — all style assignments are bulk-accepted, the full proposal (including placement) is shown immediately, individually correctable. After an initial load this is optional: the loaded layout stays in place until the user chooses to replace it with a proposal
+7. **First sorting proposal** — all cluster assignments are bulk-accepted, the full proposal (including placement) is shown immediately, individually correctable. After an initial load this is optional: the loaded layout stays in place until the user chooses to replace it with a proposal
 8. **Save** — explicit action; the version lands in `placements/`
 
 ## Initial load
@@ -348,18 +359,18 @@ Started from the regular app once the user wants a generated layout. A user with
 The first thing a new installation does (Phase 1a): seed the collection and its layout directly from a spreadsheet the user has already worked out elsewhere, so the app is browsable without any Discogs data. This is a one-time bootstrap, not a permanent alternative to the sorting engine — a later re-sort (Phase 1b) can still produce a different result.
 
 - **Input**: an XLSX workbook in the shape of `docs/import_example.xlsx`, with Dutch sheet and column names. It is the only source in Phase 1a — no Discogs export and no API access needed. Three sheets are read; any other sheet (e.g. `Toelichting`) is ignored:
-  - `Kastindeling` (required) — one row per album-copy. Required columns: `Locatie`, `Vak`, `Cluster`, `Era-band (artiest)`, `Artiest`, `Titel`. Optional, used when present: `Formaat`, `Aantal schijven`, `Sorteerjaar (origineel)`. All other columns are ignored (`Inhoud van dit vak`, `Capaciteit`, `Jaar artiest`, `Label`, `Jaar (Discogs)`, `Jaarbron`, `Breedte-eenheden`, `Opmerking`)
-  - `Vakoverzicht` (optional) — one row per shelf: `Locatie`, `Vak`, and `Toegankelijkheid`. Lists every shelf, including empty ones
+  - `Kastindeling` (required) — one row per album-copy. Required columns: `Locatie`, `Vak`, `Cluster`, `Era-band (artiest)`, `Artiest`, `Titel`. Optional, used when present: `Formaat`, `Aantal schijven`, `Sorteerjaar (origineel)`, `Jaarbron`, `Jaar artiest`, `Capaciteit`. All other columns are ignored (`Inhoud van dit vak`, `Label`, `Jaar (Discogs)`, `Breedte-eenheden`, `Opmerking`)
+  - `Vakoverzicht` (optional) — one row per shelf: `Locatie`, `Vak`, `Capaciteit`, and `Toegankelijkheid`. Lists every shelf, including empty ones
   - `Nog niet geplaatst` (optional) — albums without a spot: `Cluster`, `Artiest`, `Titel`, `Aantal schijven`
   - A missing required sheet or column stops the upload with a message naming what is missing
 - **Re-upload replaces everything**: in Phase 1a a new upload discards all previously loaded data and loads the workbook afresh — there is no merging. Saved versions in `placements/` are discarded too, since they refer to albums that no longer exist; the fresh load is saved as the new first version. Correcting the layout means correcting the workbook and uploading it again
-- **Artists and albums**: each distinct `Artiest` value becomes an Artist, each row an Album — two rows with the same artist and title are two copies, so two Albums. From the row the Album also takes its `format_tokens` (`Formaat` plus `Aantal schijven`) and its original release year (`Sorteerjaar (origineel)`; `0` means unknown). `release_id`, styles, and width stay empty until the Discogs matching below
-- **Cabinet/Shelf creation**: each distinct `Locatie` becomes a Cabinet, each (`Locatie`, `Vak`) pair a Shelf named after `Vak`, in the order of `Vakoverzicht` (then any pair that only occurs in `Kastindeling`). The reachability score is the leading number of `Toegankelijkheid`. Room, shelf type, layer, and width in cm are not in the workbook and stay empty until completed in the storage-structure step of Phase 1b. `Capaciteit` is not loaded: it counts LP-units rather than cm, and in the example it is derived from the contents rather than measured (see Open questions)
+- **Artists and albums**: each distinct `Artiest` value becomes an Artist, each row an Album — two rows with the same artist and title are two copies, so two Albums. From the row the Album also takes its `format_tokens` (`Formaat` plus `Aantal schijven`) and its original release year (`Sorteerjaar (origineel)`; `0` means unknown), confirmed or not according to `Jaarbron` (see Sorting logic §2). Its width is estimated from the format right away (see Sorting logic §3). The Artist takes its start year from `Jaar artiest`. `release_id` and styles stay empty until the Discogs matching below
+- **Cabinet/Shelf creation**: each distinct `Locatie` becomes a Cabinet, each (`Locatie`, `Vak`) pair a Shelf named after `Vak`, in the order of `Vakoverzicht` (then any pair that only occurs in `Kastindeling`). The reachability score is the leading number of `Toegankelijkheid`. The shelf width is estimated from `Capaciteit`, which counts LP-units rather than cm: units × the base width per disc from the settings (see Sorting logic §3). Room, shelf type, and layer are not in the workbook and stay empty until completed in the storage-structure step of Phase 1b
 - **Placement**: each `Kastindeling` row becomes an album-level Placement on its shelf (source "initial load"), with the row order within a shelf as the position — the loaded layout mirrors the workbook exactly, which is what Browse/Search then follows
-- **Matching to enriched Discogs data (Phase 1b)**: the spreadsheet has no `release_id`. Once the Discogs export has been imported and enriched, each loaded album is matched on (Artist, Title) by fuzzy string matching against the imported releases, to pull in `release_id`, styles, original year, and width. Matches below a confidence threshold are queued for manual confirmation rather than guessed — same non-blocking pattern as other confirmations (see Sorting logic §4): the album stays loaded and browsable, with the uncertain match flagged
+- **Matching to the Discogs export (Phase 1b)**: the spreadsheet has no `release_id`. Importing the Discogs export links each loaded album to the vinyl release with the same artist and title (ignoring case and spacing); two pressings of one title are told apart by their format. For an album left without a release, the most similar remaining release is only **proposed** (`MatchProposal`, see Data model) and has to be confirmed by hand — same non-blocking pattern as other confirmations (see Sorting logic §4): the album stays loaded and browsable. Vinyl releases in the export that no loaded album accounts for become new albums without a placement, visible under Unplaced albums. Non-vinyl releases are skipped. Importing the same export again changes nothing
 - **Topladers are ordinary locations**: in the workbook an album sits in exactly one place — the rows under `Topladers` do not also appear on another shelf — so they are loaded as normal Placements, not as a `ShowcaseFeature`. Showcase features (a sample borrowed from a Placement elsewhere, see Data model) only come into play with showcase management in Phase 2
-- **The Cluster column seeds the `Cluster` entity directly** (see Data model) — each distinct value becomes a Cluster, and each artist gets a confirmed `ArtistClusterAssignment` to the Cluster of its rows (the most frequent one if they differ). Once the albums are matched to Discogs in Phase 1b, their Styles are mapped to these Clusters instead of each getting a new same-named one. This is a natural fit: the spreadsheet's curated cluster names are exactly what the Clusters screen (see UI) lets the user build by hand later — initial load just bootstraps it from work already done
-- **The Era band column is stored as the initial per-artist era-band label** — each distinct (Artist, Era band) value becomes an `EraBand` with source "initial load" (see Data model), and the row's album is linked to it. It doesn't have to match what the sorting engine's own logic (Sorting logic §2) would currently produce (e.g. this data uses decade labels like "1990s" rather than computed early/middle/late bands); re-running the proposal generator later is expected to diverge from this snapshot
+- **The Cluster column seeds the `Cluster` entity directly** (see Data model) — each distinct value becomes a Cluster, and each artist gets a confirmed `ArtistClusterAssignment` to the Cluster of its rows (the most frequent one if they differ). Once the albums are matched to Discogs and enriched in Phase 1b, their Styles are mapped to these Clusters (see Sorting logic §1). This is a natural fit: the spreadsheet's curated cluster names are exactly what the Clusters screen (see UI) lets the user build by hand later — initial load just bootstraps it from work already done
+- **The Era band column is stored as the initial per-artist era-band label** — each distinct (Artist, Era band) value becomes an `EraBand` with source "initial load" (see Data model), and the row's album is linked to it. The workbook's decade labels ("voor 1960", "1990s", …) are the same bands the sorting engine works with (see Sorting logic §2)
 - **Unplaced albums**: the rows of the `Nog niet geplaatst` sheet are loaded as Albums without a Placement — visible in a dedicated list, not silently dropped, so they can be resolved later (mark as external, free up shelf space, etc.). Locations such as `Overflow` or a not-yet-bought `Nieuwe koffer` are named in `Kastindeling` and are therefore loaded as ordinary Cabinets, exactly as the workbook has them
 
 ## UI / screen layout
@@ -373,7 +384,7 @@ Phase 1a ships only **Browse/Search** and **Unplaced albums**; the other items a
 - **Browse/Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1). This supersedes the earlier decision to have no separate "Collection" nav item — that assumption no longer holds now that browsing/search is its own dedicated feature, not just a detail drill-down from Layout
 - **Storage structure** — manage cabinets/shelves
 - **Alias groups** — management screen
-- **Clusters** — rename a cluster, or merge several Styles into one cluster (see Sorting logic §1 and Data model); not part of the wizard — Clusters start out 1:1 with Styles and work unmodified, curation happens here at the user's own pace
+- **Clusters** — rename a cluster, or merge several Styles into one cluster (see Sorting logic §1 and Data model); not part of the wizard — the clusters seeded by the initial load work unmodified, curation happens here at the user's own pace
 - **Location rules** — management screen
 - **Showcase** — manage top-loaders/samples (phase 2)
 - **Versions** — saved layouts, with the option to restore
@@ -398,6 +409,14 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 - Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
 
+### Storage structure screen
+
+- Lists every cabinet (name and room) with its shelves: name, type, row, width, filled width, number of albums, reachability, and showcase flag
+- Cabinets and shelves can be added and edited. A shelf is edited on its own page: name, width in cm, type (top-/front-loader), row (top/bottom), reachability (a whole number, 1 being the easiest to reach), and showcase — which only a top-loader can be. Type, row, width, and reachability may be left empty when not known yet
+- **Filled width** is the summed width of the albums standing on the shelf; when it exceeds the shelf width it is marked. After an initial load the shelf widths are estimates (see Sorting logic §3), so this mark mostly says the estimate needs measuring
+- A shelf can only be removed once it holds no albums, a cabinet once it has no shelves — nothing is ever unplaced as a side effect of tidying the structure
+- New cabinets and shelves are added at the end; changing their order is not possible yet (see Open questions)
+
 ### Clusters screen
 
 - A searchable list of all Clusters, sorted by album count (descending) by default — makes both the big, already-meaningful clusters and the small single-style ones (the easiest merge candidates) easy to spot
@@ -419,12 +438,27 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 ## Open questions
 
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
-- **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements
+- **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
 
-### Parked after the Phase 1a initial load
+### To settle before the sorting engine (Phase 1b)
 
-Not blocking Phase 1a; set aside to be addressed later.
+- **Artist families**: the workbook keeps an artist's billings and side projects together but does not name the families. They have to become alias groups — proposed from the artist names (one name contained in another) and confirmed by hand, or entered by hand entirely
+- **Storing the cluster order**: the sequence of the clusters is curated, but has no place in the data model yet (a position on Cluster is the obvious candidate)
+- **Start year of an artist that is not in the workbook**: the earliest original year among its albums is a stand-in; whether that is good enough, and where it gets corrected, is open
+- **The 20-year rule**: the workbook's notes describe when an album's own year decides instead of the artist's (see Sorting logic §2); it is not verified how the workbook applied it, so it is not part of the engine yet
+- **Singles and EPs**: the Discogs export contains vinyl the workbook leaves out (7" and 12" singles, 10" EPs, recent purchases). They are imported as unplaced albums; whether singles belong in the layout at all is undecided
+- **Re-uploading the workbook in Phase 1b**: a new upload still replaces everything, including Discogs links, styles, and — once they exist — alias groups and location rules. It needs a gentler variant before those are in use
+- **Clusters screen**: its description (see UI) still assumes clusters are merged Styles. Now that a cluster is a curated group of artists, the screen has to be about moving artists between clusters and re-pointing Styles; to be redesigned
+- **Order of cabinets and shelves**: Browse/Search and the engine walk the cabinets and shelves in the order they were created. A new shelf therefore always comes last within its cabinet; reordering needs an explicit position
+- **Confirming a proposed match**: proposals are stored, but there is no screen yet to accept or reject one
 
+### Parked from Phase 1a
+
+Not blocking; set aside to be addressed later.
+
+- **Docker image never built**: the Dockerfile, the workflow, and the Compose examples have not been run — the first build is the first push to `main` or `test`
+- **Upload blocked in the browser**: on a managed laptop the workbook upload fails in the browser (`ERR_FAILED`) before it reaches the app; cause unknown. Loading from the command line is the workaround
+- **Screens not seen**: the light theme, the upload and preview pages, and the collapsed menu on a phone have only been exercised by tests
+- **No translation catalogue yet**: all copy goes through Flask-Babel, but no `.po` catalogue has been extracted
+- **Topladers as a rotating sample**: the workbook's notes describe the top-loaders as a sample borrowed from the artists' real spot, yet its rows list those albums only there. They are loaded as ordinary placements (see [Initial load](#initial-load)); turning them into showcase features is open
 - **`Overflow` and `Nieuwe koffer` locations**: the workbook lists these under `Kastindeling`, so they are loaded as ordinary Cabinets and show up as locations in Browse/Search. Neither is a real, existing storage spot (overflow is a proposal to give away, the cases are yet to be bought) — whether they should appear in the Unplaced albums list instead is undecided
-- **Shelf capacity after an initial load**: the workbook's `Capaciteit` and `Breedte-eenheden` count LP-units (1 for a single LP, 1.4 for a double), not cm, and are not loaded. Shelf widths in cm therefore have to be measured and entered in Phase 1b — or the app should learn to work in LP-units instead. Not needed for Browse/Search
-- **Initial-load `Jaar artiest` column**: not loaded. It is the key the workbook was sorted on within an era band, and it is not strictly per artist (in the example five artists have two different values). The row order already preserves the resulting sequence; whether the value itself is worth keeping is undecided

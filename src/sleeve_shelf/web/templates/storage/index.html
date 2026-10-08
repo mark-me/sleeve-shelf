@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Storage') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
+    <div>
+      <h1>{{ _('Storage') }}</h1>
+      <p class="ss-muted mb-0 mt-1">{{ _('Cabinets and shelves — width in cm determines how many records fit') }}</p>
+    </div>
+    <a class="ss-button ss-button-primary" href="{{ url_for('storage.new_cabinet') }}">+ {{ _('Add cabinet') }}</a>
+  </div>
+
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+
+  {% if not cabinets %}
+  <div class="ss-card mt-4"><div class="ss-card-body ss-muted">{{ _('There are no cabinets yet.') }}</div></div>
+  {% endif %}
+
+  {% for entry in cabinets %}
+  <section class="ss-card mt-4">
+    <div class="ss-card-head">
+      <div>
+        <h2>{{ entry.cabinet.name }}</h2>
+        <div class="ss-muted small">{{ entry.cabinet.location or _('Room not set') }}</div>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="ss-button ss-button-small" href="{{ url_for('storage.edit_cabinet', cabinet_id=entry.cabinet.id) }}">{{ _('Edit') }}</a>
+        <a class="ss-button ss-button-small" href="{{ url_for('storage.new_shelf', cabinet_id=entry.cabinet.id) }}">+ {{ _('Add shelf') }}</a>
+        {% if not entry.shelves %}
+        <form method="post" action="{{ url_for('storage.delete_cabinet', cabinet_id=entry.cabinet.id) }}">
+          <button class="ss-button ss-button-small" type="submit">{{ _('Remove') }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% if entry.shelves %}
+    <div class="table-responsive">
+      <table class="ss-table">
+        <thead>
+          <tr>
+            <th>{{ _('Shelf') }}</th>
+            <th>{{ _('Type') }}</th>
+            <th>{{ _('Row') }}</th>
+            <th class="text-end">{{ _('Width') }}</th>
+            <th class="text-end">{{ _('Filled') }}</th>
+            <th class="text-end">{{ _('Albums') }}</th>
+            <th class="text-end">{{ _('Reachability') }}</th>
+            <th>{{ _('Showcase') }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in entry.shelves %}
+          {% set shelf = row.shelf %}
+          <tr>
+            <td class="fw-semibold">{{ shelf.name }}</td>
+            <td>{% if shelf.type == 'top_loader' %}{{ _('Top-loader') }}{% elif shelf.type == 'front_loader' %}{{ _('Front-loader') }}{% else %}&mdash;{% endif %}</td>
+            <td>{% if shelf.layer == 'top' %}{{ _('Top') }}{% elif shelf.layer == 'bottom' %}{{ _('Bottom') }}{% else %}&mdash;{% endif %}</td>
+            <td class="text-end">{% if shelf.width_cm is not none %}{{ '%.1f' | format(shelf.width_cm) }} cm{% else %}&mdash;{% endif %}</td>
+            <td class="text-end {{ 'ss-over' if shelf.width_cm is not none and row.filled_cm > shelf.width_cm }}">{{ '%.1f' | format(row.filled_cm) }} cm</td>
+            <td class="text-end">{{ row.albums }}</td>
+            <td class="text-end">{{ shelf.reachability_score if shelf.reachability_score is not none else '—' }}</td>
+            <td>{% if shelf.is_showcase %}<span class="ss-chip">{{ _('Yes') }}</span>{% else %}&mdash;{% endif %}</td>
+            <td class="text-end text-nowrap">
+              <a href="{{ url_for('storage.edit_shelf', shelf_id=shelf.id) }}">{{ _('Edit') }}</a>
+              {% if not row.albums %}
+              <form class="d-inline" method="post" action="{{ url_for('storage.delete_shelf', shelf_id=shelf.id) }}">
+                <button class="ss-link-button" type="submit">{{ _('Remove') }}</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="ss-card-body ss-muted">{{ _('This cabinet has no shelves yet.') }}</div>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  <p class="ss-muted small mt-3 mb-0">{{ _('A filled width above the shelf width is marked. Widths taken from the workbook are estimates until you measure the shelf. A shelf can be removed once it is empty, a cabinet once it has no shelves.') }}</p>
+</div>
+{% endblock %}

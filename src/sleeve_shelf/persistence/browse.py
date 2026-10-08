@@ -63,6 +63,19 @@ class BrowseQueries:
         )
         return [ShelfSummary(*row) for row in rows]
 
+    def shelf_fill(self) -> dict[int, tuple[int, float]]:
+        """Per shelf that holds anything: the number of albums and their summed width in cm."""
+        rows = self._store.query(
+            f"""
+            {self._located_albums()}
+            SELECT shelf_id, count(*), coalesce(sum(width_cm), 0)
+            FROM located
+            WHERE shelf_id IS NOT NULL
+            GROUP BY shelf_id
+            """
+        )
+        return {shelf_id: (count, width) for shelf_id, count, width in rows}
+
     def shelf_albums(self, shelf_id: int) -> list[AlbumRow]:
         """The albums on one shelf, in the order they stand there."""
         return self._albums("WHERE shelf_id = ?", [shelf_id])
@@ -106,7 +119,8 @@ class BrowseQueries:
                        album.original_release_year AS year, cluster.name AS cluster,
                        era_band.label AS era_band, shelf.id AS shelf_id,
                        cabinet.id AS cabinet_id, cabinet.name AS cabinet, shelf.name AS shelf,
-                       coalesce(own.position, band.position, whole.position) AS position
+                       coalesce(own.position, band.position, whole.position) AS position,
+                       coalesce(album.manual_width_cm, album.computed_width_cm) AS width_cm
                 FROM {relation(Album)} AS album
                 JOIN {relation(Artist)} AS artist ON artist.id = album.artist_id
                 LEFT JOIN {relation(EraBand)} AS era_band ON era_band.id = album.era_band_id

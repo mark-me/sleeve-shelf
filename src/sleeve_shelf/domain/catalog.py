@@ -19,6 +19,7 @@ class Artist:
     name: str
     discogs_artist_id: int | None = None
     alias_group_id: int | None = None
+    start_year: int | None = None
 
 
 @dataclass(slots=True)
@@ -90,6 +91,8 @@ class Album:
     style_ids: list[int] = field(default_factory=list)
     era_band_id: int | None = None
     cover_url: str | None = None
+    # False while the year may still be that of the pressing rather than the original.
+    original_year_confirmed: bool = False
 
     @property
     def width_cm(self) -> float | None:

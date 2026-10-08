@@ -34,6 +34,17 @@ If your browser can't upload the file (some managed machines block uploads), loa
 uv run python -m sleeve_shelf load path/to/layout.xlsx
 ```
 
+### Linking the collection to Discogs
+
+Until the wizard has screens for it, this runs from the command line. Put your Discogs personal access token in `config.yaml` inside the data directory (`discogs_token: ...`; the file is git-ignored), then:
+
+```sh
+uv run python -m sleeve_shelf import-discogs path/to/discogs-collection.csv
+uv run python -m sleeve_shelf enrich
+```
+
+The first links the loaded albums to the releases in your Discogs export and adds vinyl that is new. The second fetches styles and original release years; it takes roughly a second and a half per lookup, and can be stopped and restarted without fetching anything twice.
+
 ### With Docker
 
 ```sh

@@ -5,6 +5,7 @@ import os
 import shutil
 from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field, is_dataclass
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -20,11 +21,15 @@ from sleeve_shelf.domain import (
     EraBand,
     EraBandSource,
     FormatTokens,
+    MasterEnrichment,
+    MatchProposal,
     Placement,
     PlacementSource,
+    ReleaseEnrichment,
     Shelf,
     ShelfLayer,
     ShelfType,
+    Style,
     UnitType,
 )
 
@@ -72,6 +77,7 @@ _TABLES: dict[type, _Table] = {
             "name": "VARCHAR",
             "discogs_artist_id": "INTEGER",
             "alias_group_id": "INTEGER",
+            "start_year": "INTEGER",
         },
     ),
     ArtistClusterAssignment: _Table(
@@ -108,8 +114,37 @@ _TABLES: dict[type, _Table] = {
             "style_ids": "INTEGER[]",
             "era_band_id": "INTEGER",
             "cover_url": "VARCHAR",
+            "original_year_confirmed": "BOOLEAN",
         },
         {"format_tokens": _format_tokens},
+    ),
+    Style: _Table(
+        "styles.json", {"id": "INTEGER", "name": "VARCHAR", "cluster_id": "INTEGER"}
+    ),
+    ReleaseEnrichment: _Table(
+        "discogs_releases.json",
+        {
+            "release_id": "INTEGER",
+            "styles": "VARCHAR[]",
+            "master_id": "INTEGER",
+            "fetched_at": "TIMESTAMP",
+            "year": "INTEGER",
+        },
+        {"styles": tuple},
+    ),
+    MasterEnrichment: _Table(
+        "discogs_masters.json",
+        {"master_id": "INTEGER", "original_release_year": "INTEGER", "fetched_at": "TIMESTAMP"},
+    ),
+    MatchProposal: _Table(
+        "match_proposals.json",
+        {
+            "album_id": "INTEGER",
+            "release_id": "INTEGER",
+            "artist": "VARCHAR",
+            "title": "VARCHAR",
+            "score": "DOUBLE",
+        },
     ),
     Placement: _Table(
         "placement_current.json",
@@ -129,6 +164,8 @@ def _encode(value: Any) -> Any:
     """Turn a domain value into something DuckDB can bind as a parameter."""
     if isinstance(value, Enum):
         return value.value
+    if isinstance(value, datetime):
+        return value.isoformat(sep=" ")
     if is_dataclass(value):
         return {key: _encode(item) for key, item in asdict(value).items()}
     if isinstance(value, (list, tuple)):
