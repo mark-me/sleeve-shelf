@@ -2,7 +2,16 @@
 
 from flask import Blueprint, redirect, render_template, url_for
 
-from sleeve_shelf.domain import Album, Cabinet, Cluster, Placement, Shelf, UnitType
+from sleeve_shelf.domain import (
+    Album,
+    Cabinet,
+    Cluster,
+    LocationRule,
+    Placement,
+    ReleaseEnrichment,
+    Shelf,
+    UnitType,
+)
 from sleeve_shelf.proposal import has_proposal, takes_part
 from sleeve_shelf.versions import list_versions
 from sleeve_shelf.web.context import get_store, has_collection
@@ -38,13 +47,29 @@ def index():
         "unplaced": url_for("browse.unplaced"),
     }
     waiting = [{"count": counts[kind], "kind": kind, "url": url} for kind, url in urls.items()]
+    cluster_count = len(store.load(Cluster))
+    fetched = {release.release_id for release in store.load(ReleaseEnrichment)}
+    to_fetch = len({a.release_id for a in albums if a.release_id is not None} - fetched)
+    unmeasured = sum(1 for s in shelves if not s.width_cm and not s.is_showcase)
+    # The way to a new layout, in the order of the menu. "open" counts what is left
+    # to do in a step; a step with "info" has nothing to count and is never ticked off.
+    steps = [
+        {"kind": "discogs", "url": url_for("discogs.index"), "open": counts["matches"] + to_fetch},
+        {"kind": "families", "url": urls["families"], "open": counts["families"]},
+        {"kind": "artists", "url": urls["artists"], "open": counts["artists"]},
+        {"kind": "clusters", "url": url_for("clusters.index"), "info": cluster_count},
+        {"kind": "storage", "url": urls["overfull"], "open": unmeasured + counts["overfull"]},
+        {"kind": "rules", "url": url_for("rules.index"), "info": len(store.load(LocationRule))},
+        {"kind": "proposal", "url": url_for("proposal.index"), "info": int(has_proposal(store))},
+    ]
     return render_template(
         "dashboard/index.html",
         album_count=len(sorted_albums),
         placed_count=len(placed),
         single_count=len(albums) - len(sorted_albums),
         artist_count=len(sorted_artists),
-        cluster_count=len(store.load(Cluster)),
+        cluster_count=cluster_count,
+        steps=steps,
         cabinet_count=len(store.load(Cabinet)),
         shelf_count=len(shelves),
         waiting=[item for item in waiting if item["count"]],

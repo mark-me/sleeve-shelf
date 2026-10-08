@@ -104,6 +104,25 @@ h2 { font-size: 1.15rem; margin: 0; }
 .ss-nav a:hover { color: #fff; }
 .ss-nav a { justify-content: space-between; gap: 8px; }
 
+/* The steps towards a new layout on the Dashboard. */
+.ss-steps { margin-bottom: 0; padding: 0; list-style: none; }
+.ss-steps li { border-bottom: 1px solid var(--ss-border); }
+.ss-steps li:last-child { border-bottom: none; }
+.ss-steps .ss-row { justify-content: flex-start; gap: 14px; border-bottom: none; }
+.ss-step-number {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ss-chip);
+  color: var(--ss-chip-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 28px;
+  text-align: center;
+}
+.ss-step-done { background: var(--ss-accent); color: #1E293B; }
+
 /* The menu in groups, in the order the app is used. */
 .ss-nav-group {
   margin-top: 14px;

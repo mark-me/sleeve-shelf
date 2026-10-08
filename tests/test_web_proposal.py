@@ -370,6 +370,16 @@ def test_dashboard_sums_up_and_lists_what_is_waiting(client):
     assert "1 LP without a place" in page
     assert "The current layout is saved." in page
     assert "no longer in your Discogs collection" not in page
+    # The steps towards a new layout, each with what is left to do.
+    steps = page[page.index('id="steps"'):page.index("Last saved version")]
+    titles = ["Bring the collection up to date", "Go through the suggested artist families",
+              "Check the cluster and start year of your artists", "Put the clusters in the order",
+              "Measure your shelves", "Pin what has to stand", "Generate a proposal"]
+    assert [steps.index(title) for title in titles] == sorted(steps.index(title) for title in titles)
+    assert "1 to do" in steps and "done" in steps and "not generated" in steps
+    client.post("/proposal/generate")
+    assert "waiting for you" in client.get("/dashboard/").text
+    client.post("/proposal/discard")
 
     store = JsonStore(client.application.config["DATA_DIR"])
     albums = store.load(Album)

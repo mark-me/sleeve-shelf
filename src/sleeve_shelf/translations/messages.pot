@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 00:53+0200\n"
+"POT-Creation-Date: 2026-10-09 01:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -71,6 +71,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/families.py
 msgid "Choose an artist from the list."
+msgstr ""
+
+#: src/sleeve_shelf/web/pwa.py
+msgid "Your vinyl collection, in the order of your shelves."
 msgstr ""
 
 #: src/sleeve_shelf/web/rules.py
@@ -764,6 +768,99 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Nothing is waiting for a decision."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Towards a new layout"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "The steps from your collection to a sorted layout, in the order of the menu. None is compulsory: a proposal can be generated at any time, and changes nothing until you accept it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Bring the collection up to date"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Go through the suggested artist families"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Check the cluster and start year of your artists"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Put the clusters in the order of your shelves"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Measure your shelves"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Pin what has to stand in a certain cabinet"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Generate a proposal, adjust it, and accept it"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Sync with Discogs, fetch styles and original years, and confirm the matches."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "The cluster decides where an artist stands, the start year in which era band."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Clusters follow each other across the shelves in this order."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "A proposal skips a shelf without a width, and fills the others by the width you give."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Optional: bind a cluster, family, artist or album to a cabinet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "The proposal sits next to your shelves until you accept it; adjust it by hand in Layout."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "%(num)d to do"
+msgid_plural "%(num)d to do"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "done"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "%(num)d cluster"
+msgid_plural "%(num)d clusters"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "%(num)d rule"
+msgid_plural "%(num)d rules"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "waiting for you"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "not generated"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
