@@ -57,6 +57,46 @@
   <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('Nothing is waiting for a decision.') }}</div></div>
   {% endif %}
 
+  <h2 class="mt-5" id="steps">{{ _('Towards a new layout') }}</h2>
+  <p class="ss-muted mt-1">{{ _('The steps from your collection to a sorted layout, in the order of the menu. None is compulsory: a proposal can be generated at any time, and changes nothing until you accept it.') }}</p>
+  <ol class="ss-card ss-steps mt-3">
+    {% for step in steps %}
+    <li>
+      <a class="ss-row" href="{{ step.url }}">
+        <span class="ss-step-number {{ 'ss-step-done' if step.open is defined and not step.open }}" aria-hidden="true">{% if step.open is defined and not step.open %}&#10003;{% else %}{{ loop.index }}{% endif %}</span>
+        <div class="ss-row-text">
+          <span class="ss-row-artist">
+            {% if step.kind == 'discogs' %}{{ _('Bring the collection up to date') }}
+            {% elif step.kind == 'families' %}{{ _('Go through the suggested artist families') }}
+            {% elif step.kind == 'artists' %}{{ _('Check the cluster and start year of your artists') }}
+            {% elif step.kind == 'clusters' %}{{ _('Put the clusters in the order of your shelves') }}
+            {% elif step.kind == 'storage' %}{{ _('Measure your shelves') }}
+            {% elif step.kind == 'rules' %}{{ _('Pin what has to stand in a certain cabinet') }}
+            {% else %}{{ _('Generate a proposal, adjust it, and accept it') }}{% endif %}
+          </span>
+          <span class="ss-row-title">
+            {% if step.kind == 'discogs' %}{{ _('Sync with Discogs, fetch styles and original years, and confirm the matches.') }}
+            {% elif step.kind == 'families' %}{{ _('Families decide which artists stand together.') }}
+            {% elif step.kind == 'artists' %}{{ _('The cluster decides where an artist stands, the start year in which era band.') }}
+            {% elif step.kind == 'clusters' %}{{ _('Clusters follow each other across the shelves in this order.') }}
+            {% elif step.kind == 'storage' %}{{ _('A proposal skips a shelf without a width, and fills the others by the width you give.') }}
+            {% elif step.kind == 'rules' %}{{ _('Optional: bind a cluster, family, artist or album to a cabinet.') }}
+            {% else %}{{ _('The proposal sits next to your shelves until you accept it; adjust it by hand in Layout.') }}{% endif %}
+          </span>
+        </div>
+        <span class="ss-chip">
+          {% if step.open is defined %}
+            {% if step.open %}{{ ngettext('%(num)d to do', '%(num)d to do', step.open) }}{% else %}{{ _('done') }}{% endif %}
+          {% elif step.kind == 'clusters' %}{{ ngettext('%(num)d cluster', '%(num)d clusters', step.info) }}
+          {% elif step.kind == 'rules' %}{{ ngettext('%(num)d rule', '%(num)d rules', step.info) }}
+          {% elif step.info %}{{ _('waiting for you') }}
+          {% else %}{{ _('not generated') }}{% endif %}
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ol>
+
   <h2 class="mt-5">{{ _('Last saved version') }}</h2>
   <div class="ss-card mt-3">
     <a class="ss-row" href="{{ url_for('versions.index') }}">
