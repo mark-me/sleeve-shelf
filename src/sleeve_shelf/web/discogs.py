@@ -19,9 +19,19 @@ from sleeve_shelf.collection import (
     confirm_match,
     import_discogs_collection,
     reject_match,
+    remove_departed_album,
 )
 from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.domain import Album, Artist, MatchProposal, ReleaseEnrichment
+from sleeve_shelf.domain import (
+    Album,
+    Artist,
+    Cabinet,
+    MatchProposal,
+    Placement,
+    ReleaseEnrichment,
+    Shelf,
+    UnitType,
+)
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError, collection_items
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem, read_collection
 from sleeve_shelf.web.context import get_store
@@ -217,3 +227,40 @@ def accept_match(album_id: int):
 def decline_match(album_id: int):
     reject_match(get_store(), album_id, load_settings(_data_dir()).width_constants)
     return redirect(url_for("discogs.index") + "#matches")
+
+
+@blueprint.route("/gone/<int:album_id>/remove", methods=["GET", "POST"])
+def remove_gone(album_id: int):
+    """Ask before removing an album that left the Discogs collection, then remove it."""
+    store = get_store()
+    album = next((a for a in store.load(Album) if a.id == album_id and a.left_discogs), None)
+    if album is None:
+        return redirect(url_for("discogs.index") + "#gone")
+    if request.method == "POST":
+        remove_departed_album(store, album_id)
+        return redirect(url_for("discogs.index") + "#gone")
+    artists = {artist.id: artist.name for artist in store.load(Artist)}
+    return render_template(
+        "discogs/remove.html",
+        album=album,
+        artist=artists.get(album.artist_id, ""),
+        place=_place(album_id),
+    )
+
+
+def _place(album_id: int) -> str | None:
+    """Cabinet and shelf an album stands on by its own placement, if any."""
+    store = get_store()
+    placement = next(
+        (
+            p
+            for p in store.load(Placement)
+            if p.unit_type is UnitType.ALBUM and p.unit_id == album_id
+        ),
+        None,
+    )
+    shelf = placement and next((s for s in store.load(Shelf) if s.id == placement.shelf_id), None)
+    if not shelf:
+        return None
+    cabinet = next((c.name for c in store.load(Cabinet) if c.id == shelf.cabinet_id), "")
+    return f"{cabinet} · {shelf.name}"

@@ -124,9 +124,10 @@
         <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=entry.album.artist_id) }}">{{ entry.artist }}</a>
         <span class="ss-row-title">{{ entry.album.title }}</span>
       </div>
+      <a class="ss-button ss-button-small flex-shrink-0" href="{{ url_for('discogs.remove_gone', album_id=entry.album.id) }}">{{ _('Remove…') }}</a>
     </div>
     {% endfor %}
-    <div class="ss-card-body ss-muted small">{{ _('The last sync or import did not find these releases. The albums are kept; the artist shows where each stands. The list is renewed with every sync.') }}</div>
+    <div class="ss-card-body ss-muted small">{{ _('The last sync or import did not find these releases. An album is only removed when you choose Remove and confirm; until then it stays where it is, and it is listed here again after every sync.') }}</div>
   </section>
   {% endif %}
 </div>

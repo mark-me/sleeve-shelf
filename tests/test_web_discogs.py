@@ -10,12 +10,20 @@ from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
     Artist,
+    Cabinet,
+    LocationRule,
+    LocationRuleTarget,
+    Placement,
+    PlacementSource,
+    Shelf,
+    UnitType,
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
 )
 from sleeve_shelf.ingestion.discogs_api import DiscogsError
 from sleeve_shelf.persistence import JsonStore
+from sleeve_shelf.versions import list_versions
 
 EXPORT = (
     "Catalog#,Artist,Title,Label,Format,Rating,Released,release_id\n"
@@ -256,3 +264,50 @@ def test_sync_reports_when_discogs_cannot_be_reached(app, client):
 
     assert response.status_code == 502
     assert "Discogs could not be reached" in response.text
+
+
+def test_an_album_that_left_discogs_is_only_removed_after_confirming(app, client):
+    client.post("/discogs/token", data={"token": "secret"})
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+    store = _store(app)
+    store.save(Cabinet, [Cabinet(1, "Kast")])
+    store.save(Shelf, [Shelf(1, 1, "a")])
+    store.save(
+        Placement,
+        [
+            Placement(UnitType.ALBUM, 1, 1, 0, PlacementSource.MANUAL),
+            Placement(UnitType.ALBUM, 3, 1, 1, PlacementSource.MANUAL),
+        ],
+    )
+    store.save(LocationRule, [LocationRule(1, LocationRuleTarget.ALBUM, 3, 1)])
+    app.config["DISCOGS_CLIENT_FACTORY"] = type(
+        "Sold", (_Client,), {"collection": lambda self: COLLECTION[:1]}
+    )
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+
+    # An album that is still in the collection cannot be removed this way.
+    assert client.post("/discogs/gone/1/remove").status_code == 302
+    assert len(_store(app).load(Album)) == 3
+
+    assert "/discogs/gone/3/remove" in client.get("/discogs/").text
+    question = client.get("/discogs/gone/3/remove").text
+    assert "Remove this album?" in question and "Prayers On Fire" in question
+    assert "Kast · a" in question
+    # Asking changes nothing, and neither does another sync: the question returns.
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+    assert len(_store(app).load(Album)) == 3
+    assert "/discogs/gone/3/remove" in client.get("/discogs/").text
+
+    assert client.post("/discogs/gone/3/remove").status_code == 302
+
+    store = _store(app)
+    assert [album.id for album in store.load(Album)] == [1, 2]
+    assert [placement.unit_id for placement in store.load(Placement)] == [1]
+    assert store.load(LocationRule) == []
+    # The layout from before the removal is kept as a version; the artist stays.
+    assert [(v.label, v.album_count) for v in list_versions(store)] == [("before removing an album", 2)]
+    assert store.load(Artist)[-1].name == "The Birthday Party"
+    assert 'id="gone"' not in client.get("/discogs/").text

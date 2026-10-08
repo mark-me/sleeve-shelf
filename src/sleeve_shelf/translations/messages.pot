@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 00:07+0200\n"
+"POT-Creation-Date: 2026-10-09 00:15+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -243,6 +243,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/discogs/preview.html
+#: src/sleeve_shelf/web/templates/discogs/remove.html
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Cancel"
@@ -265,6 +266,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/browse/results.html
+#: src/sleeve_shelf/web/templates/discogs/remove.html
 msgid "Unplaced"
 msgstr ""
 
@@ -733,7 +735,7 @@ msgid "Without a release there are no styles or original year from Discogs."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Sold, or removed on Discogs? They still stand in the layout."
+msgid "Sold, or removed on Discogs? They still stand in the layout until you remove them."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -935,7 +937,11 @@ msgid "No longer in your Discogs collection"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "The last sync or import did not find these releases. The albums are kept; the artist shows where each stands. The list is renewed with every sync."
+msgid "Remove…"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "The last sync or import did not find these releases. An album is only removed when you choose Remove and confirm; until then it stays where it is, and it is listed here again after every sync."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1005,7 +1011,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "They are kept as they are, on their shelf, and listed on the Discogs screen and the Dashboard: nothing is removed."
+msgid "They are kept as they are, on their shelf, and listed on the Discogs screen and the Dashboard. There you can remove one, after confirming."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html
@@ -1015,6 +1021,22 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/discogs/preview.html
 #: src/sleeve_shelf/web/templates/setup/upload.html
 msgid "Import"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/remove.html
+msgid "Remove album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/remove.html
+msgid "Remove this album?"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/remove.html
+msgid "Its release is no longer in your Discogs collection. Removing takes the album out of the app and off its shelf; this cannot be undone here."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/remove.html
+msgid "The layout as it is now is saved as a version first. If you still own the record, cancel: it stays where it is, and the question returns with the next sync."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html

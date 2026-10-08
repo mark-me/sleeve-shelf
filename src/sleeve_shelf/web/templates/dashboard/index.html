@@ -45,7 +45,7 @@
           {% elif item.kind == 'artists' %}{{ _('They are sorted on a proposed cluster or a year taken from their albums.') }}
           {% elif item.kind == 'widths' %}{{ _('Measure them and enter the real width; until then they count as loose discs.') }}
           {% elif item.kind == 'unlinked' %}{{ _('Without a release there are no styles or original year from Discogs.') }}
-          {% elif item.kind == 'gone' %}{{ _('Sold, or removed on Discogs? They still stand in the layout.') }}
+          {% elif item.kind == 'gone' %}{{ _('Sold, or removed on Discogs? They still stand in the layout until you remove them.') }}
           {% elif item.kind == 'overfull' %}{{ _('The shelf width is an estimate, or the shelf really is too full.') }}
           {% else %}{{ _('Place them by hand in Layout, or generate a proposal.') }}{% endif %}
         </span>

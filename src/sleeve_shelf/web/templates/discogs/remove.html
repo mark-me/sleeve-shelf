@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Remove album') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 560px;">
+  <h1>{{ _('Remove this album?') }}</h1>
+
+  <div class="ss-card mt-4">
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ artist }}</span>
+        <span class="ss-row-title">{{ album.title }}{% if album.format_tokens %} &middot; {{ album.format_tokens.qualifiers | join(', ') }}{% endif %}</span>
+      </div>
+      <span class="ss-row-place">{% if place %}{{ place }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
+    </div>
+    <div class="ss-card-body">
+      <p>{{ _('Its release is no longer in your Discogs collection. Removing takes the album out of the app and off its shelf; this cannot be undone here.') }}</p>
+      <p class="ss-muted small">{{ _('The layout as it is now is saved as a version first. If you still own the record, cancel: it stays where it is, and the question returns with the next sync.') }}</p>
+      <form class="d-flex gap-2" method="post">
+        <button class="ss-button ss-button-primary" type="submit">{{ _('Remove album') }}</button>
+        <a class="ss-button" href="{{ url_for('discogs.index') }}#gone">{{ _('Cancel') }}</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
