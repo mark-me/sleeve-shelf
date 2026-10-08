@@ -43,11 +43,12 @@ def _blocks(rows: list[AlbumRow]) -> list[dict]:
     return [
         {
             "artist": artist,
+            "artist_id": artist_id,
             "cluster": albums[0].cluster,
             "era_band": albums[0].era_band,
             "albums": albums,
         }
-        for (_, artist), group in groupby(rows, key=lambda row: (row.artist_id, row.artist))
+        for (artist_id, artist), group in groupby(rows, key=lambda row: (row.artist_id, row.artist))
         if (albums := list(group))
     ]
 

@@ -226,6 +226,8 @@ def test_layout_shows_shelves_as_blocks_per_artist(client):
     assert 'data-shelf="1"' in page and 'data-list="0"' in page
     # Chet Baker's two albums stand together and form one block; Art Blakey is single.
     assert 'data-albums="1,2"' in page and 'data-albums="3"' in page
+    # A block's name leads to its artist.
+    assert 'class="ss-block-name" href="/artists/1"' in page
     assert "every move is saved at once" in page
 
 

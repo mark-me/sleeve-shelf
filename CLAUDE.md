@@ -9,7 +9,8 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 `docs/requirements.md` is the source of truth for scope, sorting logic, data model, and every screen. Read it before changing behavior. Its last section, **Open questions**, lists what is undecided and what was deliberately parked.
 
 - **Phase 1a (load a layout, browse, search)** is built.
-- **Phase 1b (Discogs, sorting proposal, management screens)** is built except for the items under Open questions.
+- **Phase 1b (Discogs, sorting proposal, management screens)** is built; nothing of it is left open.
+- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and four parked points from 1a (screens never looked at, no translation catalogue, top-loaders as a rotating sample, the `Overflow` and `Nieuwe koffer` locations).
 - Phase 2 and 3 are not started.
 
 ## Commands
@@ -61,7 +62,7 @@ When trying something out on real data, work on a copy of `data/` (point `SLEEVE
 
 - **Requirements move with the code.** Every change in behavior is reflected in `docs/requirements.md` in the same piece of work: the relevant section, the data model if entities changed, and the Open questions list (remove what is settled, add what is newly open).
 - **Decisions are Mark's.** When the requirements leave something open, say what the options are and recommend one. Record his decision in the requirements. Choices made without asking are reported as such.
-- **Sorting follows Mark's real shelves.** The sorting logic was rewritten to match his workbook, and was checked against it. When a rule is unclear, test it against `docs/import_example.xlsx` rather than reasoning from first principles.
+- **Sorting follows Mark's real shelves.** The sorting logic was rewritten to match his workbook, and was checked against it. When a rule is unclear, test it against `docs/import_example.xlsx` and the loaded collection rather than reasoning from first principles — that is how the workbook's 20-year rule was found to contradict its own layout and left out (see Sorting logic §2).
 - **Nothing is moved or lost silently.** A proposal sits next to the current layout until accepted; a later workbook upload changes only the layout; a shelf can only be removed when empty; changing the layout by hand keeps a version to go back to. Keep new features in that spirit.
 - **Tests accompany every feature.** They live in `tests/`, use real files in `tmp_path`, and drive the web layer through Flask's test client.
 - **Say what was and wasn't verified.** Report which screens were actually looked at and which are covered by tests only. Screenshots can be taken with headless Chrome against a server on a spare port; interactions such as dragging have not been exercised in a real browser.

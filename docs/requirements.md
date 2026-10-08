@@ -86,7 +86,7 @@ This section and §2 follow the logic of the layout the collection is actually s
 - **Artist start year**: the year the artist began (`Artist.start_year`), taken from the workbook's `Jaar artiest` (the lowest value when the rows differ). Discogs does not supply it; for an artist that is not in the workbook, the earliest original year among its own albums is the starting value. The user can always overwrite it, and is offered a link to look the artist up (Wikipedia) to verify. A family takes the earliest start year among its members
 - **Era bands are fixed decades of the artist's start year**: before 1960, 1960s, 1970s, 1980s, 1990s, 2000s, 2010s, 2020s and later, and unknown. An artist's whole catalogue sits in the artist's band, so reissues and late albums don't scatter an artist over the cluster
 - **Order within a cluster**: by era band, oldest first and unknown last → within a band by unit (a family, or an artist on its own), alphabetically by name as written (so "The Stooges" sorts under T) → within a unit by original release year, unknown last → by title
-- The workbook's notes mention one further rule, for artists without a known start year: an album's own year decides when it looks reliable and lies no more than 20 years from the artist's start, otherwise the artist's year decides. How this carries over to the engine is still open (see Open questions)
+- **The workbook's 20-year rule is not applied.** The workbook's notes describe letting an album's own year decide its band when that year looks reliable and lies within 20 years of the artist's start. Applied literally to this collection it would scatter 389 albums of 250 artists over other bands than their artist's (Tom Waits over the 1970s and 1980s, for instance) — against both the rule above that an artist's catalogue stays in one band and the workbook's own layout, where all but two artists have a single band. For an artist without a known start year the albums already decide, through the earliest original year
 
 ### 3. Physical placement
 
@@ -414,7 +414,7 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 - **Which layout**: the screen adjusts the shelves as they are, or — when there is a proposal — the proposal, with a switch between the two. Adjusting the proposal changes nothing on the shelves until it is accepted; moved albums are marked as placed by hand
 - A move that would lose or duplicate an album (the page being out of date, for instance) is refused and the screen asks to reload
 - **One tab per room**: cabinets are grouped by the room set for them under Storage, one tab per room in the order the rooms first occur; cabinets without a room share a tab. With a single room there are no tabs. The tray of unplaced LPs is shown in every room
-- Not built yet: clicking through from a block to the artist
+- The artist's name on a block opens that artist (see Artists screen)
 
 ### Dashboard
 
@@ -518,10 +518,6 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
-
-### To settle before the sorting engine (Phase 1b)
-
-- **The 20-year rule**: the workbook's notes describe when an album's own year decides instead of the artist's (see Sorting logic §2); it is not verified how the workbook applied it, so it is not part of the engine yet
 
 ### Parked from Phase 1a
 

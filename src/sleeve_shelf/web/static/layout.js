@@ -76,14 +76,12 @@
     const block = button.closest(".ss-block");
     const ids = block.dataset.albums.split(",");
     const titles = button.dataset.titles.split("|");
-    const artist = block.querySelector(".ss-block-name").textContent;
+    const link = block.querySelector(".ss-block-name");
     ids.forEach(function (id, index) {
       const single = document.createElement("li");
       single.className = "ss-block";
       single.dataset.albums = id;
-      const name = document.createElement("span");
-      name.className = "ss-block-name";
-      name.textContent = artist;
+      const name = link.cloneNode(true);
       const title = document.createElement("span");
       title.className = "ss-block-title";
       title.textContent = titles[index] || "";
