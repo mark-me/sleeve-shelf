@@ -1,6 +1,6 @@
 # Requirements — Sleeve & Shelf
 
-*As of: October 7, 2026*
+*As of: October 8, 2026*
 
 **Sleeve & Shelf** is a self-hosted, open-source Python Flask web application (Bootstrap + JavaScript) that organizes a vinyl collection (~1,190 vinyl titles out of ~1,455 tracked releases on Discogs) across a record cabinet, based on musical kinship, artist era, and physical shelf space.
 
@@ -297,7 +297,7 @@ erDiagram
 2. **Domain**: the entities above, as plain domain objects, independent of storage
 3. **Sorting engine**: pure logic in small, self-contained steps (proposing a cluster for an artist, deriving era bands, ordering within a cluster, placement/width allocation) — operates on domain objects, with no knowledge of the database or web layer
 4. **Persistence**: storage of all entities, independent of the sorting engine
-5. **Web**: Flask routes/blueprints + Bootstrap/JS templates, including the onboarding wizard. Light/dark theming uses Bootstrap 5.3's built-in `data-bs-theme` attribute rather than a custom theming layer — the toggle just switches that attribute and writes the choice to browser-local storage. UI copy goes through Flask-Babel (`gettext`/`_()`) from the start, with only an `en` catalog shipped in the MVP — this is the i18n-readiness the Language requirement calls for: adding a second language later means adding a `.po` catalog, not restructuring templates
+5. **Web**: Flask routes/blueprints + Bootstrap/JS templates, including the onboarding wizard. Light/dark theming uses Bootstrap 5.3's built-in `data-bs-theme` attribute rather than a custom theming layer — the toggle just switches that attribute and writes the choice to browser-local storage. UI copy goes through Flask-Babel (`gettext`/`_()`) from the start, with only an `en` catalog shipped in the MVP — this is the i18n-readiness the Language requirement calls for: adding a second language later means adding a `.po` catalog, not restructuring templates. The catalogues live in `src/sleeve_shelf/translations/`: `messages.pot` is the template extracted from the code and templates (sources listed in `babel.cfg`), `en/LC_MESSAGES/messages.po` the English catalogue — left untranslated, since the copy in the code is already English. A test fails when the template no longer matches the copy in the code
 6. **Confirmation layer**: a separate piece of logic that tracks proposals requiring confirmation (new style assignment, new location rule)
 
 ### Storage: files (JSON/CSV), no database
@@ -377,7 +377,7 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 - **Cabinet/Shelf creation**: each distinct `Locatie` becomes a Cabinet, each (`Locatie`, `Vak`) pair a Shelf named after `Vak`, in the order of `Vakoverzicht` (then any pair that only occurs in `Kastindeling`). The reachability score is the leading number of `Toegankelijkheid`. The shelf width is estimated from `Capaciteit`, which counts LP-units rather than cm: units × the base width per disc from the settings (see Sorting logic §3). Room, shelf type, and layer are not in the workbook and stay empty until completed in the storage-structure step of Phase 1b
 - **Placement**: each `Kastindeling` row becomes an album-level Placement on its shelf (source "initial load"), with the row order within a shelf as the position — the loaded layout mirrors the workbook exactly, which is what Browse/Search then follows
 - **Matching to the Discogs export (Phase 1b)**: the spreadsheet has no `release_id`. Importing the Discogs export links each loaded album to the vinyl release with the same artist and title (ignoring case and spacing); two pressings of one title are told apart by their format. For an album left without a release, the most similar remaining release is only **proposed** (`MatchProposal`, see Data model) and has to be confirmed by hand — same non-blocking pattern as other confirmations (see Sorting logic §4): the album stays loaded and browsable. Vinyl releases in the export that no loaded album accounts for become new albums without a placement, visible under Unplaced albums. Non-vinyl releases are skipped. Importing the same export again changes nothing
-- **Topladers are ordinary locations**: in the workbook an album sits in exactly one place — the rows under `Topladers` do not also appear on another shelf — so they are loaded as normal Placements, not as a `ShowcaseFeature`. Showcase features (a sample borrowed from a Placement elsewhere, see Data model) only come into play with showcase management in Phase 2
+- **Topladers are ordinary locations**: in the workbook an album sits in exactly one place — the rows under `Topladers` do not also appear on another shelf — so they are loaded as normal Placements, not as a `ShowcaseFeature`. Of the `Topladers` shelves only `a` and `b` are meant as rotating samples; `c` is an ordinary shelf. Showcase features (a sample borrowed from a Placement elsewhere, see Data model) only come into play with showcase management in Phase 2
 - **The Cluster column seeds the `Cluster` entity directly** (see Data model) — each distinct value becomes a Cluster, and each artist gets a confirmed `ArtistClusterAssignment` to the Cluster of its rows (the most frequent one if they differ). Once the albums are matched to Discogs and enriched in Phase 1b, their Styles are mapped to these Clusters (see Sorting logic §1). This is a natural fit: the spreadsheet's curated cluster names are exactly what the Clusters screen (see UI) lets the user build by hand later — initial load just bootstraps it from work already done
 - **The Era band column is stored as the initial per-artist era-band label** — each distinct (Artist, Era band) value becomes an `EraBand` with source "initial load" (see Data model), and the row's album is linked to it. The workbook's decade labels ("voor 1960", "1990s", …) are the same bands the sorting engine works with (see Sorting logic §2)
 - **Unplaced albums**: the rows of the `Nog niet geplaatst` sheet are loaded as Albums without a Placement — visible in a dedicated list, not silently dropped, so they can be resolved later (mark as external, free up shelf space, etc.). Locations such as `Overflow` or a not-yet-bought `Nieuwe koffer` are named in `Kastindeling` and are therefore loaded as ordinary Cabinets, exactly as the workbook has them
@@ -386,7 +386,7 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 
 ### Main navigation (after the wizard)
 
-Phase 1a ships only **Browse/Search** and **Unplaced albums**; the other items arrive with Phase 1b unless marked otherwise.
+All items below are built with Phase 1 (1a and 1b), except where a later phase is marked.
 
 - **Dashboard** — overview and open confirmations (see below)
 - **Layout** — core screen (see below)
@@ -426,7 +426,7 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 
 - Crate-digging mode: renders the collection in physical order (cabinet → shelf → position within shelf), based on the current `Placement` data — scrolling through it mirrors flipping through the real shelves
 - One shelf at a time, with previous/next shelf and a shelf picker to jump straight to any shelf. Within a shelf the albums are grouped under a heading per cluster and era band (the artist's dominant cluster), each row showing artist, title, and original year
-- Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked — the Detail screen it will eventually open arrives in Phase 1b
+- Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked, or to the Unplaced albums list when it has no spot. The artist name on a shelf row opens that artist (see Artists screen)
 - Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
 
@@ -447,7 +447,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Browse the proposal**: the proposal can be walked shelf by shelf exactly like the real shelves in Browse/Search, under a notice that it is the proposal; search stays on the current layout
 - **Do not fit**: the albums no shelf had room for, marking those that stand on a shelf now
 - **Accept**, **Generate again** (after changing families, clusters, storage, or widths), and **Discard**
-- Adjusting the proposal by hand — moving albums between and within shelves — is the Layout screen, which is not built yet
+- Adjusting the proposal by hand — moving albums between and within shelves — is done on the Layout screen, switched to the proposal (see Layout screen)
 
 ### Artists screen
 
@@ -523,7 +523,6 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 Not blocking; set aside to be addressed later.
 
-- **Screens not seen**: the light theme, the upload and preview pages, and the collapsed menu on a phone have only been exercised by tests
-- **No translation catalogue yet**: all copy goes through Flask-Babel, but no `.po` catalogue has been extracted
-- **Topladers as a rotating sample**: the workbook's notes describe the top-loaders as a sample borrowed from the artists' real spot, yet its rows list those albums only there. They are loaded as ordinary placements (see [Initial load](#initial-load)); turning them into showcase features is open
+- **Screens not seen**: the upload and preview pages have only been exercised by tests. The light theme and the collapsed menu on a phone were looked at and approved (2026-10-08)
+- **Topladers as a rotating sample**: decided (2026-10-08) that only shelves `a` and `b` of `Topladers` are rotating samples; shelf `c` is an ordinary shelf. The workbook lists the albums on `a` and `b` only there, without the real spot they are borrowed from, so they are still loaded as ordinary placements (see [Initial load](#initial-load)). Turning them into showcase features — and giving those albums their real spot — is open, and belongs with showcase management in Phase 2
 - **`Overflow` and `Nieuwe koffer` locations**: the workbook lists these under `Kastindeling`, so they are loaded as ordinary Cabinets and show up as locations in Browse/Search. Neither is a real, existing storage spot (overflow is a proposal to give away, the cases are yet to be bought) — whether they should appear in the Unplaced albums list instead is undecided

@@ -54,6 +54,7 @@ cover/
 # Translations
 *.mo
 *.pot
+!src/sleeve_shelf/translations/messages.pot
 
 # Django stuff:
 *.log
