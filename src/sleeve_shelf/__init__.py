@@ -33,7 +33,8 @@ from sleeve_shelf.web import (
     versions,
 )
 from sleeve_shelf.web import proposal as proposal_screen
-from sleeve_shelf.web.context import has_collection
+from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.waiting import menu_counts
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
@@ -68,6 +69,11 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
         # able to replace the collection by posting a form to this app.
         if request.method == "POST" and request.headers.get("Sec-Fetch-Site") == "cross-site":
             abort(403)
+
+    @app.context_processor
+    def menu():
+        # The numbers behind menu items: where something is waiting for the user.
+        return {"menu_counts": menu_counts(get_store()) if has_collection() else {}}
 
     @app.get("/")
     def index():

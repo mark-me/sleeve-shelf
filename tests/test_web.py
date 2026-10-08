@@ -331,3 +331,21 @@ def test_covers_show_in_browse_search_and_layout_once_albums_have_them(client):
     assert 'data-covers="https://i.discogs.com/nenette.jpeg|"' in layout
     artist = client.get("/artists/1").text
     assert "nenette.jpeg" in artist and "ss-cover-empty" in artist
+
+
+def test_menu_is_grouped_and_counts_what_is_waiting(client):
+    _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
+
+    page = client.get("/browse").text
+
+    groups = [page.index(f'<div class="ss-nav-group">{name}</div>') for name in ("Collection", "Arrange", "Sorting rules", "Setup")]
+    assert groups == sorted(groups)
+    assert page.index("Sorting proposal") < groups[2] < page.index("Artist families") < groups[3]
+    assert "Cabinets & shelves" in page and "Discogs sync" in page and "Import workbook" in page
+    # One LP has no place: the menu says so behind Unplaced albums.
+    unplaced = page[page.index("<span>Unplaced albums</span>"):]
+    unplaced = unplaced[: unplaced.index("</a>")]
+    assert 'class="ss-nav-count" title="Waiting for you">1</span>' in unplaced
+    # Nothing waits under Discogs sync, so it shows no number.
+    discogs = page[page.index("<span>Discogs sync</span>"):]
+    assert "ss-nav-count" not in discogs[: discogs.index("</a>")]

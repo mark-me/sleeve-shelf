@@ -102,6 +102,29 @@ h2 { font-size: 1.15rem; margin: 0; }
 }
 
 .ss-nav a:hover { color: #fff; }
+.ss-nav a { justify-content: space-between; gap: 8px; }
+
+/* The menu in groups, in the order the app is used. */
+.ss-nav-group {
+  margin-top: 14px;
+  padding: 0 20px 2px;
+  color: #8B93A6;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ss-nav-count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(232, 163, 61, 0.2);
+  color: var(--ss-accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-align: center;
+}
 
 .ss-nav a.active {
   background: rgba(232, 163, 61, 0.14);
@@ -141,7 +164,10 @@ h2 { font-size: 1.15rem; margin: 0; }
   }
 
   .ss-brand { font-size: 1.15rem; padding: 0 4px; }
-  .ss-nav { flex: 1; padding-top: 28px; }
+  /* Fourteen items and four headings have to fit a laptop screen; scroll when they don't. */
+  .ss-nav { flex: 1; gap: 2px; padding-top: 20px; min-height: 0; overflow-y: auto; }
+  .ss-nav a { height: 34px; flex-shrink: 0; font-size: 0.9rem; }
+  .ss-nav-group { margin-top: 12px; }
   .ss-nav .ss-theme-toggle { margin-top: auto; }
   .ss-main { flex: 1; padding: 40px 48px; }
   .ss-page { padding: 0; }

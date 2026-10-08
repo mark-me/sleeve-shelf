@@ -4,7 +4,7 @@
 {% block content %}
 <div class="ss-page" style="max-width: 900px;">
   <h1>{{ _('Sorting proposal') }}</h1>
-  <p class="ss-muted mt-1">{{ _('The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Storage. Nothing changes on your shelves until you accept.') }}</p>
+  <p class="ss-muted mt-1">{{ _('The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you accept.') }}</p>
 
   {% if not has_proposal %}
   <div class="ss-stats mt-3">
@@ -21,7 +21,7 @@
     <button class="ss-button ss-button-primary {{ 'disabled' if not usable_count }}" type="submit" {{ 'disabled' if not usable_count }}>{{ _('Generate a proposal') }}</button>
   </form>
   {% if not usable_count %}
-  <p class="ss-muted small mt-2">{{ _('No shelf can be filled: give at least one shelf a width under Storage.') }}</p>
+  <p class="ss-muted small mt-2">{{ _('No shelf can be filled: give at least one shelf a width under Cabinets & shelves.') }}</p>
   {% endif %}
 
   {% else %}

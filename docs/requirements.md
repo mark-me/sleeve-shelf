@@ -391,22 +391,29 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 
 ### Main navigation (after the wizard)
 
-All items below are built with Phase 1 (1a and 1b), except where a later phase is marked.
+The menu is grouped in the order the app is used — what is done daily on top, what is rarely touched at the bottom. All items are built, except where a later phase is marked.
 
 - **Dashboard** — overview and open confirmations (see below)
-- **Layout** — core screen (see below)
-- **Browse/Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1). This supersedes the earlier decision to have no separate "Collection" nav item — that assumption no longer holds now that browsing/search is its own dedicated feature, not just a detail drill-down from Layout
-- **Sorting proposal** — generate a proposal, compare it with the current layout, accept or discard it (see below)
-- **Storage structure** — manage cabinets/shelves
-- **Discogs** — import the collection export, fetch styles and original years, confirm proposed matches (see below)
-- **Artists** — the list of artists, and per artist its start year and cluster (see below)
-- **Artist families** — the alias groups: accept or turn down suggested families, and manage them by hand (see below)
-- **Clusters** — the clusters in their order: reorder, rename, merge, and re-point styles (see below)
-- **Location rules** — bind a cluster, a family, an artist, or an album to a cabinet (see below)
-- **Showcase** — manage top-loaders/samples (phase 2)
-- **Versions** — saved layouts, with the option to put one back (see below)
-- **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); see below
-- **Unplaced albums** — surfaces albums that don't fit anywhere in the current storage structure (see Initial load), so they can be resolved rather than silently dropped
+- **Collection**
+  - **Browse / Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1)
+  - **Unplaced albums** — albums without a spot on a shelf (see Initial load), so they can be resolved rather than silently dropped
+- **Arrange**
+  - **Layout** — core screen (see below)
+  - **Sorting proposal** — generate a proposal, compare it with the current layout, accept or discard it (see below)
+  - **Versions** — saved layouts, with the option to put one back (see below)
+- **Sorting rules** — what decides how a proposal sorts, in the order they are best gone through
+  - **Artists** — the list of artists, and per artist its start year and cluster (see below)
+  - **Artist families** — the alias groups: accept or turn down suggested families, and manage them by hand (see below)
+  - **Clusters** — the clusters in their order: reorder, rename, merge, and re-point styles (see below)
+  - **Location rules** — bind a cluster, a family, an artist, or an album to a cabinet (see below)
+- **Setup**
+  - **Cabinets & shelves** — the Storage structure screen: manage cabinets and shelves
+  - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below)
+  - **Import workbook** — load a layout workbook (see Initial load)
+  - **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); see below
+- **Showcase** — manage top-loaders/samples (phase 2, not in the menu yet)
+
+**Counters in the menu**: an item shows a number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
 
 Album/artist detail is still reachable both from Layout (clicking an artist/era band) and from Browse/Search.
 
