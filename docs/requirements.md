@@ -66,6 +66,7 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 - The Discogs personal access token is a credential: it lives only in `config.yaml` (git-ignored, never committed) and is never shown in full in the UI once set (see Configuration)
 - **Light and dark theme**: follows the device's system preference by default, with a manual toggle to override it. The preference is remembered per device (browser-local), not synced across devices or stored in `config.yaml`
 - **Responsive / mobile-friendly**: the whole app is usable on a phone, but this matters most for the Browse/Search screen (see UI) — browsing is something you'd realistically do standing in front of the actual shelves, phone in hand
+- **Installable (PWA)**: the app has a web app manifest and icons, so it can be put on the home screen of a phone and then opens as an app of its own, without the browser's address bar, on Browse/Search. Browsers only offer this over HTTPS (or on `localhost`); HTTPS is arranged outside the app, for instance by Tailscale or a reverse proxy. There is no service worker and no offline use: every page comes from the server
 - **Language**: English is the primary and only shipped language for the MVP. Multi-language support is not needed now but is a real option for a later phase, so the MVP is built i18n-ready from the start (see Architecture) rather than retrofitted later. Discogs data itself (styles, genres) stays in English regardless of UI locale — that's external source data, not app copy, and isn't part of this requirement
 
 ## Sorting logic

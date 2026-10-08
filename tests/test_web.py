@@ -349,3 +349,19 @@ def test_menu_is_grouped_and_counts_what_is_waiting(client):
     # Nothing waits under Discogs sync, so it shows no number.
     discogs = page[page.index("<span>Discogs sync</span>"):]
     assert "ss-nav-count" not in discogs[: discogs.index("</a>")]
+
+
+def test_app_can_be_installed_from_its_manifest(client):
+    manifest = client.get("/manifest.webmanifest")
+
+    assert manifest.mimetype == "application/manifest+json"
+    data = manifest.get_json()
+    assert (data["display"], data["start_url"], data["scope"]) == ("standalone", "/browse", "/")
+    assert {icon["sizes"] for icon in data["icons"]} == {"192x192", "512x512"}
+    assert any(icon["purpose"] == "maskable" for icon in data["icons"])
+    # Every icon the manifest and the page name is really there.
+    for icon in data["icons"]:
+        assert client.get(icon["src"]).status_code == 200
+    page = client.get("/setup/").text
+    assert 'rel="manifest" href="/manifest.webmanifest"' in page
+    assert client.get("/static/icons/apple-touch-icon.png").status_code == 200

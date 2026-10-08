@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 01:08+0200\n"
+"POT-Creation-Date: 2026-10-09 01:23+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -72,6 +72,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/families.py
 msgid "Choose an artist from the list."
+msgstr ""
+
+#: src/sleeve_shelf/web/pwa.py
+msgid "Your vinyl collection, in the order of your shelves."
 msgstr ""
 
 #: src/sleeve_shelf/web/rules.py

@@ -46,6 +46,7 @@ Strict separation of concerns; keep it that way.
 | `src/sleeve_shelf/persistence/` | `JsonStore` (one JSON file per entity, read and written through DuckDB) and the read queries for Browse. |
 | `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
 | `src/sleeve_shelf/web/` | Flask blueprints, templates, static files. One blueprint per screen. |
+| `src/sleeve_shelf/web/pwa.py`, `web/static/icons/` | The web app manifest and the icons for installing the app on a phone. No service worker, on purpose. |
 | `docker/` | Dockerfile and Compose examples; `.github/workflows/docker.yml` builds and publishes the image. |
 
 Things that are easy to get wrong:
