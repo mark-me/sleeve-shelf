@@ -60,6 +60,16 @@
     Sortable.create(list, {
       group: "albums",
       animation: 120,
+      // The page scrolls along as soon as a drag comes near the top or bottom of
+      // the window. The browser's own zone for that is only a few pixels high,
+      // so Sortable's is used instead, with a wide zone and a brisk pace.
+      scroll: true,
+      forceAutoScrollFallback: true,
+      scrollSensitivity: 160,
+      scrollSpeed: 28,
+      bubbleScroll: true,
+      // An empty shelf takes a block that is dropped near it, not only right on it.
+      emptyInsertThreshold: 32,
       filter: "[data-split]",
       preventOnFilter: false,
       onEnd: function (event) {

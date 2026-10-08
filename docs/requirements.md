@@ -414,7 +414,7 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 
 - All cabinets underneath one another, in the order set under Storage, each showing its shelves. A shelf has a bar for the occupied width, with the number of albums and the filled and total width; a shelf filled beyond its width is marked
 - The contents of a shelf are **blocks**: neighbouring albums of one artist form one block, showing the artist and the number of albums (a single album shows its title). A block shows the cover of its first album; split into single albums, each shows its own
-- **Drag and drop** (SortableJS) moves a block between or within shelves; every move is saved at once and the bars update. Clicking the number on a block splits it into single albums, so one album can be moved on its own
+- **Drag and drop** (SortableJS) moves a block between or within shelves; every move is saved at once and the bars update. Clicking the number on a block splits it into single albums, so one album can be moved on its own. While dragging, the page scrolls along as soon as the pointer comes within some 160 px of the top or bottom of the window, so a block can be carried from the tray to a shelf far up the page
 - **Not on a shelf**: a tray at the bottom holds the LPs without a place. Dragging from it places an album; dropping an album on it takes the album off its shelf
 - **Which layout**: the screen adjusts the shelves as they are, or — when there is a proposal — the proposal, with a switch between the two. Adjusting the proposal changes nothing on the shelves until it is accepted; moved albums are marked as placed by hand
 - A move that would lose or duplicate an album (the page being out of date, for instance) is refused and the screen asks to reload
