@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Search results') }}{% endblock %}
 
+{% from "_cover.html" import cover %}
 {% block content %}
 <div class="ss-page d-none d-lg-block mb-4">
   <h1>{{ _('Browse / Search') }}</h1>
@@ -17,6 +18,7 @@
 
 <div class="ss-page">
   {% if albums %}
+  {% set covers = albums | selectattr('cover_url') | list | length > 0 %}
   <div class="ss-card">
     {% for album in albums %}
     {% if album.shelf_id is not none %}
@@ -24,6 +26,7 @@
     {% else %}
     <a class="ss-row" href="{{ url_for('browse.unplaced') }}#album-{{ album.album_id }}">
     {% endif %}
+      {{ cover(album.cover_url, covers) }}
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ album.artist }}</span>
         <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>

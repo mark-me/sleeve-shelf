@@ -11,7 +11,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 - **Phase 1a (load a layout, browse, search)** is built.
 - **Phase 1b (Discogs, sorting proposal, management screens)** is built; nothing of it is left open.
 - What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and three parked points from 1a (the upload and preview screens never looked at, top-loaders `a` and `b` as a rotating sample, the `Overflow` and `Nieuwe koffer` locations).
-- Phase 2 and 3 are not started.
+- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, showcase management, cluster-shift confirmation) is not, and neither is Phase 3.
 
 ## Commands
 
@@ -27,7 +27,7 @@ After changing UI copy, extract the translation template again and bring the cat
 
 ```sh
 uv run python -m babel.messages.frontend extract -F babel.cfg --project "Sleeve & Shelf" --copyright-holder "Mark Zwart" --no-wrap --sort-by-file --add-location=file -o src/sleeve_shelf/translations/messages.pot .
-uv run python -m babel.messages.frontend update -i src/sleeve_shelf/translations/messages.pot -d src/sleeve_shelf/translations --no-wrap
+uv run python -m babel.messages.frontend update -i src/sleeve_shelf/translations/messages.pot -d src/sleeve_shelf/translations --no-wrap --no-fuzzy-matching --ignore-obsolete
 ```
 
 Always use the `python -m` form. On Mark's managed work laptop the generated `.exe` console scripts (`uv run pytest`, `uv run sleeve-shelf`) are refused; the module form works everywhere.
@@ -41,7 +41,7 @@ Strict separation of concerns; keep it that way.
 | Path | What it holds |
 | --- | --- |
 | `src/sleeve_shelf/domain/` | Plain dataclasses, standard library only. No storage or web knowledge. |
-| `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API, the format-string parser. |
+| `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API (collection, release and master), the format-string parser. |
 | `src/sleeve_shelf/sorting/` | The sorting engine: pure functions on domain objects (era bands, families, order, placement). |
 | `src/sleeve_shelf/persistence/` | `JsonStore` (one JSON file per entity, read and written through DuckDB) and the read queries for Browse. |
 | `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
@@ -55,7 +55,7 @@ Things that are easy to get wrong:
 - **`JsonStore.save` rewrites the whole file.** Load the list, change it, save the list.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
 - **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
-- **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN.
+- **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN. Album covers are the one exception: the browser fetches them from Discogs, and every page has to work without them.
 
 ## Data
 

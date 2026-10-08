@@ -18,7 +18,7 @@
     <div class="ss-stat"><div class="ss-stat-number">{{ '%.0f' | format(offered) }} cm</div><div class="ss-stat-label">{{ _('your shelves offer') }}</div></div>
     <div class="ss-stat"><div class="ss-stat-number {{ 'ss-over' if needed > offered }}">{{ '%.0f' | format(offered - needed) }} cm</div><div class="ss-stat-label">{{ _('room left') }}</div></div>
   </div>
-  <p class="ss-muted small mt-2">{{ _('Counted over the albums and shelves a sorting proposal uses. Shelf widths are set per shelf under Storage; the values below only change how wide the albums are taken to be.') }}</p>
+  <p class="ss-muted small mt-2">{{ _('Counted over the albums and shelves a sorting proposal uses. Shelf widths are set per shelf under Cabinets & shelves; the values below only change how wide the albums are taken to be.') }}</p>
   {% endif %}
 
   <form class="ss-card mt-4" method="post">

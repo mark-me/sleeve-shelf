@@ -6,6 +6,8 @@ import pytest
 from openpyxl import Workbook
 
 from sleeve_shelf import create_app
+from sleeve_shelf.domain import Album
+from sleeve_shelf.persistence import JsonStore
 
 HEADER = ["Locatie", "Vak", "Cluster", "Era-band (artiest)", "Jaar artiest", "Artiest", "Titel",
           "Formaat", "Sorteerjaar (origineel)", "Jaarbron"]
@@ -367,6 +369,13 @@ def test_dashboard_sums_up_and_lists_what_is_waiting(client):
     assert "1 box set or bundle with a rough width" in page
     assert "1 LP without a place" in page
     assert "The current layout is saved." in page
+    assert "no longer in your Discogs collection" not in page
+
+    store = JsonStore(client.application.config["DATA_DIR"])
+    albums = store.load(Album)
+    albums[0].left_discogs = True
+    store.save(Album, albums)
+    assert "1 album no longer in your Discogs collection" in client.get("/dashboard/").text
     assert client.get("/").headers["Location"] == "/dashboard/"
 
 

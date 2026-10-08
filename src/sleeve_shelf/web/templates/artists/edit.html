@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ artist.name }}{% endblock %}
 
+{% from "_cover.html" import cover %}
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   <p class="mb-1"><a href="{{ url_for('artists.index') }}">&larr; {{ _('Artists') }}</a></p>
@@ -55,6 +56,7 @@
   <div class="ss-card mt-3">
     {% for row in albums %}
     <div class="ss-row">
+      {{ cover(row.album.cover_url, albums | map(attribute='album') | selectattr('cover_url') | list | length > 0) }}
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ row.album.title }}</span>
         <span class="ss-row-title">{% if row.album.original_release_year %}{{ row.album.original_release_year }}{% else %}{{ _('year unknown') }}{% endif %}{% if row.album.format_tokens %} &middot; {{ row.album.format_tokens.qualifiers | join(', ') }}{% endif %}</span>

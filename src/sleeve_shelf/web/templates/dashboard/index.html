@@ -35,6 +35,7 @@
           {% elif item.kind == 'artists' %}{{ ngettext('%(num)d artist without a confirmed cluster or a start year', '%(num)d artists without a confirmed cluster or a start year', item.count) }}
           {% elif item.kind == 'widths' %}{{ ngettext('%(num)d box set or bundle with a rough width', '%(num)d box sets and bundles with a rough width', item.count) }}
           {% elif item.kind == 'unlinked' %}{{ ngettext('%(num)d album without a Discogs release', '%(num)d albums without a Discogs release', item.count) }}
+          {% elif item.kind == 'gone' %}{{ ngettext('%(num)d album no longer in your Discogs collection', '%(num)d albums no longer in your Discogs collection', item.count) }}
           {% elif item.kind == 'overfull' %}{{ ngettext('%(num)d shelf filled beyond its width', '%(num)d shelves filled beyond their width', item.count) }}
           {% else %}{{ ngettext('%(num)d LP without a place', '%(num)d LPs without a place', item.count) }}{% endif %}
         </span>
@@ -44,6 +45,7 @@
           {% elif item.kind == 'artists' %}{{ _('They are sorted on a proposed cluster or a year taken from their albums.') }}
           {% elif item.kind == 'widths' %}{{ _('Measure them and enter the real width; until then they count as loose discs.') }}
           {% elif item.kind == 'unlinked' %}{{ _('Without a release there are no styles or original year from Discogs.') }}
+          {% elif item.kind == 'gone' %}{{ _('Sold, or removed on Discogs? They still stand in the layout until you remove them.') }}
           {% elif item.kind == 'overfull' %}{{ _('The shelf width is an estimate, or the shelf really is too full.') }}
           {% else %}{{ _('Place them by hand in Layout, or generate a proposal.') }}{% endif %}
         </span>

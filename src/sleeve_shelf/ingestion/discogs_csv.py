@@ -12,13 +12,15 @@ REQUIRED_COLUMNS = ("Artist", "Title", "Format", "release_id")
 
 @dataclass(frozen=True, slots=True)
 class CollectionItem:
-    """One row of the export: a release owned, vinyl or not."""
+    """One release owned, vinyl or not: a row of the export or a release from the API."""
 
     release_id: int
     artist: str
     title: str
     is_vinyl: bool
     format_tokens: FormatTokens
+    # Only the API gives a cover; the export has none.
+    cover_url: str | None = None
 
 
 def read_collection(

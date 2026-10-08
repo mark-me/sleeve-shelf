@@ -6,6 +6,7 @@
 <a class="ss-button ss-button-primary {{ 'disabled' if not next }}" {% if next %}href="{{ url_for('browse.browse', shelf=next.shelf_id, layout=layout) }}"{% else %}aria-disabled="true"{% endif %}>{{ _('Next shelf') }} &rarr;</a>
 {% endmacro %}
 
+{% from "_cover.html" import cover %}
 {% block content %}
 <div class="ss-page d-none d-lg-block mb-4">
   <h1>{{ _('Browse / Search') }}</h1>
@@ -48,12 +49,14 @@
   {% elif not albums %}
   <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('This shelf is empty.') }}</div></div>
   {% else %}
+  {% set covers = albums | selectattr('cover_url') | list | length > 0 %}
   <div class="ss-card">
     {% for album in albums %}
     {% if loop.changed(album.cluster, album.era_band) %}
     <div class="ss-group">{{ [album.cluster, album.era_band] | select | join(' · ') }}</div>
     {% endif %}
     <div class="ss-row" id="album-{{ album.album_id }}">
+      {{ cover(album.cover_url, covers) }}
       <div class="ss-row-text">
         <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=album.artist_id) }}">{{ album.artist }}</a>
         <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>

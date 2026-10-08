@@ -60,6 +60,16 @@
     Sortable.create(list, {
       group: "albums",
       animation: 120,
+      // The page scrolls along as soon as a drag comes near the top or bottom of
+      // the window. The browser's own zone for that is only a few pixels high,
+      // so Sortable's is used instead, with a wide zone and a brisk pace.
+      scroll: true,
+      forceAutoScrollFallback: true,
+      scrollSensitivity: 160,
+      scrollSpeed: 28,
+      bubbleScroll: true,
+      // An empty shelf takes a block that is dropped near it, not only right on it.
+      emptyInsertThreshold: 32,
       filter: "[data-split]",
       preventOnFilter: false,
       onEnd: function (event) {
@@ -76,6 +86,7 @@
     const block = button.closest(".ss-block");
     const ids = block.dataset.albums.split(",");
     const titles = button.dataset.titles.split("|");
+    const covers = (button.dataset.covers || "").split("|");
     const link = block.querySelector(".ss-block-name");
     ids.forEach(function (id, index) {
       const single = document.createElement("li");
@@ -85,6 +96,15 @@
       const title = document.createElement("span");
       title.className = "ss-block-title";
       title.textContent = titles[index] || "";
+      if (covers[index]) {
+        const cover = document.createElement("img");
+        cover.className = "ss-cover";
+        cover.src = covers[index];
+        cover.alt = "";
+        cover.width = cover.height = 28;
+        cover.referrerPolicy = "no-referrer";
+        single.append(cover);
+      }
       single.append(name, title);
       block.before(single);
     });

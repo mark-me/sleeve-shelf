@@ -1,14 +1,17 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Layout') }}{% endblock %}
 
+{% from "_cover.html" import cover %}
 {% macro block_list(blocks) %}
 {% for block in blocks %}
 <li class="ss-block" data-albums="{{ block.albums | map(attribute='album_id') | join(',') }}"
     title="{{ [block.cluster, block.era_band] | select | join(' · ') }}&#10;{% for album in block.albums %}{{ album.title }}{% if album.year %} ({{ album.year }}){% endif %}&#10;{% endfor %}">
+  {{ cover(block.albums[0].cover_url, block.albums[0].cover_url, 28) }}
   <a class="ss-block-name" href="{{ url_for('artists.edit', artist_id=block.artist_id) }}" draggable="false">{{ block.artist }}</a>
   {% if block.albums | length > 1 %}
   <button class="ss-block-count" type="button" data-split
           data-titles="{{ block.albums | map(attribute='title') | join('|') }}"
+          data-covers="{{ block.albums | map(attribute='cover_url') | map('default', '', true) | join('|') }}"
           aria-label="{{ _('Split %(artist)s into single albums', artist=block.artist) }}">{{ block.albums | length }}</button>
   {% else %}
   <span class="ss-block-title">{{ block.albums[0].title }}</span>

@@ -28,20 +28,30 @@
     </div>
     <nav id="main-nav" class="ss-nav collapse d-lg-flex">
       {% block nav %}
-      <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.blueprint == 'dashboard' }}">{{ _('Dashboard') }}</a>
-      <a href="{{ url_for('browse.browse') }}" class="{{ 'active' if request.endpoint == 'browse.browse' }}">{{ _('Browse / Search') }}</a>
-      <a href="{{ url_for('browse.unplaced') }}" class="{{ 'active' if request.endpoint == 'browse.unplaced' }}">{{ _('Unplaced albums') }}</a>
-      <a href="{{ url_for('layout.index') }}" class="{{ 'active' if request.blueprint == 'layout' }}">{{ _('Layout') }}</a>
-      <a href="{{ url_for('proposal.index') }}" class="{{ 'active' if request.blueprint == 'proposal' }}">{{ _('Sorting proposal') }}</a>
-      <a href="{{ url_for('storage.index') }}" class="{{ 'active' if request.blueprint == 'storage' }}">{{ _('Storage') }}</a>
-      <a href="{{ url_for('artists.index') }}" class="{{ 'active' if request.blueprint == 'artists' }}">{{ _('Artists') }}</a>
-      <a href="{{ url_for('clusters.index') }}" class="{{ 'active' if request.blueprint == 'clusters' }}">{{ _('Clusters') }}</a>
-      <a href="{{ url_for('families.index') }}" class="{{ 'active' if request.blueprint == 'families' }}">{{ _('Artist families') }}</a>
-      <a href="{{ url_for('rules.index') }}" class="{{ 'active' if request.blueprint == 'rules' }}">{{ _('Location rules') }}</a>
-      <a href="{{ url_for('versions.index') }}" class="{{ 'active' if request.blueprint == 'versions' }}">{{ _('Versions') }}</a>
-      <a href="{{ url_for('discogs.index') }}" class="{{ 'active' if request.blueprint == 'discogs' }}">{{ _('Discogs') }}</a>
-      <a href="{{ url_for('setup.upload_form') }}" class="{{ 'active' if request.blueprint == 'setup' }}">{{ _('Load workbook') }}</a>
-      <a href="{{ url_for('settings.index') }}" class="{{ 'active' if request.blueprint == 'settings' }}">{{ _('Settings') }}</a>
+      {% macro item(endpoint, label, active, count=0) %}
+      <a href="{{ url_for(endpoint) }}" class="{{ 'active' if active }}">
+        <span>{{ label }}</span>
+        {% if count %}<span class="ss-nav-count" title="{{ _('Waiting for you') }}">{{ count }}</span>{% endif %}
+      </a>
+      {% endmacro %}
+      {{ item('dashboard.index', _('Dashboard'), request.blueprint == 'dashboard') }}
+      <div class="ss-nav-group">{{ _('Collection') }}</div>
+      {{ item('browse.browse', _('Browse / Search'), request.endpoint == 'browse.browse') }}
+      {{ item('browse.unplaced', _('Unplaced albums'), request.endpoint == 'browse.unplaced', menu_counts.unplaced) }}
+      <div class="ss-nav-group">{{ _('Arrange') }}</div>
+      {{ item('layout.index', _('Layout'), request.blueprint == 'layout') }}
+      {{ item('proposal.index', _('Sorting proposal'), request.blueprint == 'proposal') }}
+      {{ item('versions.index', _('Versions'), request.blueprint == 'versions') }}
+      <div class="ss-nav-group">{{ _('Sorting rules') }}</div>
+      {{ item('artists.index', _('Artists'), request.blueprint == 'artists', menu_counts.artists) }}
+      {{ item('families.index', _('Artist families'), request.blueprint == 'families', menu_counts.families) }}
+      {{ item('clusters.index', _('Clusters'), request.blueprint == 'clusters') }}
+      {{ item('rules.index', _('Location rules'), request.blueprint == 'rules') }}
+      <div class="ss-nav-group">{{ _('Setup') }}</div>
+      {{ item('storage.index', _('Cabinets & shelves'), request.blueprint in ('storage', 'albums'), menu_counts.storage) }}
+      {{ item('discogs.index', _('Discogs sync'), request.blueprint == 'discogs', menu_counts.discogs) }}
+      {{ item('setup.upload_form', _('Import workbook'), request.blueprint == 'setup') }}
+      {{ item('settings.index', _('Settings'), request.blueprint == 'settings') }}
       {% endblock %}
       <button class="ss-theme-toggle" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
       <div class="ss-version">{{ _('Version %(version)s', version=config.VERSION) }}</div>

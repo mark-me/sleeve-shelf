@@ -1,6 +1,6 @@
 # Requirements — Sleeve & Shelf
 
-*As of: October 8, 2026*
+*As of: October 9, 2026*
 
 **Sleeve & Shelf** is a self-hosted, open-source Python Flask web application (Bootstrap + JavaScript) that organizes a vinyl collection (~1,190 vinyl titles out of ~1,455 tracked releases on Discogs) across a record cabinet, based on musical kinship, artist era, and physical shelf space.
 
@@ -33,12 +33,16 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 - Generate a sorting proposal following the sorting logic (see below)
 - Proposal is fully adjustable by hand (move between shelves, reorder)
 - Onboarding wizard for first-time setup
-- No album covers — the standard Discogs CSV export does not include cover URLs, and cover art is out of scope for the Phase 1 API enrichment (kept for Phase 2, see below)
+- No album covers in Phase 1 — the standard Discogs CSV export does not include cover URLs, and cover art is out of scope for the Phase 1 API enrichment (built in Phase 2, see below)
 
 ### Phase 2 — Ongoing management
 
 - **Live/ongoing** Discogs API integration: the one-time enrichment already happens in Phase 1 — Phase 2 extends this to keep the collection in sync (new purchases, changed collection data) rather than only at first import
+  - **Built: sync on demand.** The collection is fetched straight from the Discogs API (the collection of the token's owner, 100 releases per request) and taken over exactly like a CSV export: same vinyl detection, same linking, same preview before anything changes (see Discogs screen). New vinyl becomes new, unplaced albums; albums whose release is no longer in the Discogs collection are marked and reported, and kept until the user removes them, which always takes a confirmation
+  - **A sync brings the format of linked albums up to date** (decided 2026-10-09): disc count, 180 gram, gatefold and the other tokens are taken from the release, and the estimated width follows. A width measured by hand is not touched. An uploaded export does not do this — it knows the format less well than the API (see Discogs screen)
+  - **A sync runs on demand only** (decided 2026-10-09): by the button on the Discogs screen, for now; not at start-up or on a schedule
 - Add album covers to the Layout screen (Album gets a cover_url field)
+  - **Built** (2026-10-09), and wider than Layout: covers also show in Browse/Search, in the Unplaced albums list, and on an artist's page. A sync stores the address of each release's small cover image on the album (`cover_url`); an uploaded export has no covers and leaves them alone. The images are not downloaded: the browser fetches them from Discogs when a page is shown, so covers need an internet connection while everything else keeps working without (see Open questions)
 - Add new purchases, with a suggested spot within the existing layout
 - Suggestions for new location rules based on the existing layout — always requiring confirmation, never applied automatically
 - Showcase management for the top-loaders (rotating samples from the collection)
@@ -175,8 +179,9 @@ erDiagram
         bool width_confirmed
         list style_ids FK
         int era_band_id FK "nullable"
-        string cover_url "empty until phase 2"
+        string cover_url "small cover image at Discogs, set by a sync"
         bool original_year_confirmed
+        bool left_discogs "release no longer in the Discogs collection"
     }
     Style {
         int id PK
@@ -262,7 +267,7 @@ erDiagram
 - **Artist**: id, name, Discogs artist ID (optional), alias_group_id (nullable), `start_year` (nullable — the year the artist began, which decides its era band; see Sorting logic §2)
 - **AliasGroup**: id, label — an artist family: the Artists pointing at it stand together as one unit (see Sorting logic §1)
 - **FamilyDismissal**: anchor artist id — a suggested family the user turned down, so it is not suggested again
-- **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), cover_url (empty until phase 2), `original_year_confirmed` (bool — true when the year is known to be the original rather than a pressing's, so enrichment leaves it alone; see Sorting logic §2)
+- **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), `cover_url` (the address of the release's small cover image at Discogs, set by a sync; empty until the first sync), `original_year_confirmed` (bool — true when the year is known to be the original rather than a pressing's, so enrichment leaves it alone; see Sorting logic §2), `left_discogs` (bool — true when the last sync or import no longer found the album's release in the Discogs collection; set again at every sync or import)
 - **Style**: id, name (from Discogs), `cluster_id` — the Cluster this Style points to; set the first time the Style is seen, user-remappable afterward (see Sorting logic §1)
 - **Cluster**: id, name — a user-curated group of artists, decoupled from Discogs' own style taxonomy (see Sorting logic §1); seeded by the initial load, can be renamed or merged via the Clusters screen (see UI). `position` is its place in the curated sequence of clusters
 
@@ -386,30 +391,37 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 
 ### Main navigation (after the wizard)
 
-All items below are built with Phase 1 (1a and 1b), except where a later phase is marked.
+The menu is grouped in the order the app is used — what is done daily on top, what is rarely touched at the bottom. All items are built, except where a later phase is marked.
 
 - **Dashboard** — overview and open confirmations (see below)
-- **Layout** — core screen (see below)
-- **Browse/Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1). This supersedes the earlier decision to have no separate "Collection" nav item — that assumption no longer holds now that browsing/search is its own dedicated feature, not just a detail drill-down from Layout
-- **Sorting proposal** — generate a proposal, compare it with the current layout, accept or discard it (see below)
-- **Storage structure** — manage cabinets/shelves
-- **Discogs** — import the collection export, fetch styles and original years, confirm proposed matches (see below)
-- **Artists** — the list of artists, and per artist its start year and cluster (see below)
-- **Artist families** — the alias groups: accept or turn down suggested families, and manage them by hand (see below)
-- **Clusters** — the clusters in their order: reorder, rename, merge, and re-point styles (see below)
-- **Location rules** — bind a cluster, a family, an artist, or an album to a cabinet (see below)
-- **Showcase** — manage top-loaders/samples (phase 2)
-- **Versions** — saved layouts, with the option to put one back (see below)
-- **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); see below
-- **Unplaced albums** — surfaces albums that don't fit anywhere in the current storage structure (see Initial load), so they can be resolved rather than silently dropped
+- **Collection**
+  - **Browse / Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1)
+  - **Unplaced albums** — albums without a spot on a shelf (see Initial load), so they can be resolved rather than silently dropped
+- **Arrange**
+  - **Layout** — core screen (see below)
+  - **Sorting proposal** — generate a proposal, compare it with the current layout, accept or discard it (see below)
+  - **Versions** — saved layouts, with the option to put one back (see below)
+- **Sorting rules** — what decides how a proposal sorts, in the order they are best gone through
+  - **Artists** — the list of artists, and per artist its start year and cluster (see below)
+  - **Artist families** — the alias groups: accept or turn down suggested families, and manage them by hand (see below)
+  - **Clusters** — the clusters in their order: reorder, rename, merge, and re-point styles (see below)
+  - **Location rules** — bind a cluster, a family, an artist, or an album to a cabinet (see below)
+- **Setup**
+  - **Cabinets & shelves** — the Storage structure screen: manage cabinets and shelves
+  - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below)
+  - **Import workbook** — load a layout workbook (see Initial load)
+  - **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); see below
+- **Showcase** — manage top-loaders/samples (phase 2, not in the menu yet)
+
+**Counters in the menu**: an item shows a number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
 
 Album/artist detail is still reachable both from Layout (clicking an artist/era band) and from Browse/Search.
 
 ### Layout screen (core)
 
 - All cabinets underneath one another, in the order set under Storage, each showing its shelves. A shelf has a bar for the occupied width, with the number of albums and the filled and total width; a shelf filled beyond its width is marked
-- The contents of a shelf are **blocks**: neighbouring albums of one artist form one block, showing the artist and the number of albums (a single album shows its title). Plain text in Phase 1; covers follow in Phase 2
-- **Drag and drop** (SortableJS) moves a block between or within shelves; every move is saved at once and the bars update. Clicking the number on a block splits it into single albums, so one album can be moved on its own
+- The contents of a shelf are **blocks**: neighbouring albums of one artist form one block, showing the artist and the number of albums (a single album shows its title). A block shows the cover of its first album; split into single albums, each shows its own
+- **Drag and drop** (SortableJS) moves a block between or within shelves; every move is saved at once and the bars update. Clicking the number on a block splits it into single albums, so one album can be moved on its own. While dragging, the page scrolls along as soon as the pointer comes within some 160 px of the top or bottom of the window, so a block can be carried from the tray to a shelf far up the page
 - **Not on a shelf**: a tray at the bottom holds the LPs without a place. Dragging from it places an album; dropping an album on it takes the album off its shelf
 - **Which layout**: the screen adjusts the shelves as they are, or — when there is a proposal — the proposal, with a switch between the two. Adjusting the proposal changes nothing on the shelves until it is accepted; moved albums are marked as placed by hand
 - A move that would lose or duplicate an album (the page being out of date, for instance) is refused and the screen asks to reload
@@ -419,7 +431,7 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 ### Dashboard
 
 - The home screen once a collection is loaded: counters for the albums in the layout, how many stand on a shelf, artists, clusters, cabinets, and shelves; and how many singles and EPs are kept outside the layout
-- **Waiting for you** (the open confirmations): Discogs matches to confirm, suggested artist families not yet looked at, artists sorted on a proposed cluster or a year taken from their albums, box sets and bundles with only a rough width, albums without a Discogs release, shelves filled beyond their width, and LPs without a place — each linking to the screen where it is resolved. Only what is not zero is shown
+- **Waiting for you** (the open confirmations): Discogs matches to confirm, suggested artist families not yet looked at, artists sorted on a proposed cluster or a year taken from their albums, box sets and bundles with only a rough width, albums without a Discogs release, albums no longer in the Discogs collection, shelves filled beyond their width, and LPs without a place — each linking to the screen where it is resolved. Only what is not zero is shown
 - Whether a proposal is waiting, and the last saved version with whether the layout has changed since
 
 ### Browse/Search screen
@@ -427,7 +439,7 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 - Crate-digging mode: renders the collection in physical order (cabinet → shelf → position within shelf), based on the current `Placement` data — scrolling through it mirrors flipping through the real shelves
 - One shelf at a time, with previous/next shelf and a shelf picker to jump straight to any shelf. Within a shelf the albums are grouped under a heading per cluster and era band (the artist's dominant cluster), each row showing artist, title, and original year
 - Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked, or to the Unplaced albums list when it has no spot. The artist name on a shelf row opens that artist (see Artists screen)
-- Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
+- Each row shows the album's cover as a small square, on a shelf and in search results. An album without a cover keeps the space so the rows line up; while no album in the list has a cover (before the first sync) no space is kept at all
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
 
 ### Discogs screen
@@ -435,7 +447,11 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 One screen for the three Discogs steps of the sorting setup (see [Onboarding wizard](#onboarding-wizard)); each can be repeated at any time.
 
 - **Counters** at the top: albums, albums linked to a release, albums enriched, and matches waiting for confirmation
-- **Import your collection**: upload the Discogs CSV export, then a preview of what the import would do — vinyl releases found, linked to existing albums, proposed matches, new unplaced albums, non-vinyl skipped — and only then confirm. Importing the same export again changes nothing
+- **Import your collection**, in two ways that do the same: **Sync with Discogs** fetches the collection through the API with the token set below (about a second per hundred releases; not while styles and years are being fetched, since both draw on the same rate limit), or upload the Discogs CSV export. Either way a preview follows of what it would do — vinyl releases found, linked to existing albums, proposed matches, new unplaced albums, non-vinyl skipped — and only then confirm. Syncing or importing the same collection again changes nothing
+- **No longer in your Discogs collection**: the preview lists the albums whose release the collection no longer holds (sold or removed on Discogs). Once confirmed they are marked (`left_discogs`) and listed in a section of their own on this screen, each linking to its artist, and counted on the Dashboard. The albums stay as they are, on their shelf; a release that is back at the next sync loses the mark
+- **Removing an album that left Discogs** (decided 2026-10-09): each album in that list has a Remove action, which first asks for confirmation on a page of its own, showing the album and where it stands. Only after confirming is the album removed — from the app, from its shelf (also in a waiting proposal), together with its own location rule and a proposed match. The layout as it was is saved as a version first; the artist stays, even without albums. Cancelling changes nothing, and there is no "keep and stop asking": an album that is not removed is listed again after every sync, for now. Only an album marked as gone can be removed this way
+- **Linked albums**: the preview of a sync says how many linked albums get their format brought up to date; an uploaded export leaves linked albums as they are
+- **Formats from the API**: the API spells a format out where the export abbreviates it, so a synced release gets the same tokens as an exported one (`Reissue` → `RE`, …). The export keeps only the first three letters of a format's free text ("Blue Translucent, Gatefold" → `Blu`); a sync searches that text for 180 gram and gatefold instead, so it recognises them where the export misses them
 - **Fetch styles and original years**: the personal access token is set here (shown masked, last 4 characters, with a replace action — the same rule as on the Settings screen). The enrichment runs in the background of the app, not inside a page request: the page shows a progress bar that keeps itself up to date, and a Stop button. Stopping, an error, or a restart of the app loses nothing — starting again continues with what is not cached yet. Only one enrichment runs at a time
 - **Matches to confirm**: each proposed match (see [Initial load](#initial-load)) shows the album and the Discogs release side by side, with their similarity. "Same album" links them; "Different" leaves the album without a release and adds the release as a new, unplaced album
 
@@ -516,6 +532,9 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 ## Open questions
 
+- **Covers are fetched from Discogs by the browser**, not kept in the data directory. That was chosen without asking, as the smallest step: no downloads, no extra storage. The alternative — downloading the images once into the data directory, so covers also show offline and do not depend on Discogs keeping the addresses alive — is open
+- **Albums that left Discogs but are kept**: an album that is not removed is listed again after every sync. Whether the user should be able to say "I still own this, stop asking" is left for later
+- **Removed albums and older versions**: a removed album is left out when an older version is put back. A new album could in time get the id of a removed one and would then take its place in such a version; not handled
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
 

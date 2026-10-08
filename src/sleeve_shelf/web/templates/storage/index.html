@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Storage') }}{% endblock %}
+{% block title %}{{ _('Cabinets & shelves') }}{% endblock %}
 
 {% block content %}
 <div class="ss-page">
   <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
     <div>
-      <h1>{{ _('Storage') }}</h1>
+      <h1>{{ _('Cabinets & shelves') }}</h1>
       <p class="ss-muted mb-0 mt-1">{{ _('Cabinets and shelves — width in cm determines how many records fit') }}</p>
     </div>
     <a class="ss-button ss-button-primary" href="{{ url_for('storage.new_cabinet') }}">+ {{ _('Add cabinet') }}</a>

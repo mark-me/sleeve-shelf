@@ -2,22 +2,11 @@
 
 from flask import Blueprint, redirect, render_template, url_for
 
-from sleeve_shelf.alias_groups import family_suggestions
-from sleeve_shelf.domain import (
-    Album,
-    Artist,
-    ArtistClusterAssignment,
-    Cabinet,
-    Cluster,
-    MatchProposal,
-    Placement,
-    Shelf,
-    UnitType,
-)
-from sleeve_shelf.persistence import BrowseQueries
+from sleeve_shelf.domain import Album, Cabinet, Cluster, Placement, Shelf, UnitType
 from sleeve_shelf.proposal import has_proposal, takes_part
 from sleeve_shelf.versions import list_versions
 from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.waiting import waiting_counts
 
 blueprint = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -32,57 +21,23 @@ def require_collection():
 def index():
     store = get_store()
     albums = store.load(Album)
-    artists = store.load(Artist)
     shelves = store.load(Shelf)
     placed = {p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM}
     sorted_albums = [album for album in albums if takes_part(album, placed)]
     sorted_artists = {album.artist_id for album in sorted_albums}
-    confirmed = {a.artist_id for a in store.load(ArtistClusterAssignment) if a.confirmed}
-    start_years = {artist.id for artist in artists if artist.start_year}
-    fill = BrowseQueries(store).shelf_fill()
     versions = list_versions(store)
-
-    waiting = [
-        {
-            "count": len(store.load(MatchProposal)),
-            "kind": "matches",
-            "url": url_for("discogs.index") + "#matches",
-        },
-        {
-            "count": len(family_suggestions(store)),
-            "kind": "families",
-            "url": url_for("families.index"),
-        },
-        {
-            "count": sum(
-                1 for a in sorted_artists if a not in confirmed or a not in start_years
-            ),
-            "kind": "artists",
-            "url": url_for("artists.index", show="attention"),
-        },
-        {
-            "count": sum(1 for album in sorted_albums if not album.width_confirmed),
-            "kind": "widths",
-            "url": url_for("albums.widths"),
-        },
-        {
-            "count": sum(1 for album in sorted_albums if album.release_id is None),
-            "kind": "unlinked",
-            "url": url_for("discogs.index"),
-        },
-        {
-            "count": sum(
-                1 for s in shelves if s.width_cm and fill.get(s.id, (0, 0.0))[1] > s.width_cm
-            ),
-            "kind": "overfull",
-            "url": url_for("storage.index"),
-        },
-        {
-            "count": sum(1 for album in sorted_albums if album.id not in placed),
-            "kind": "unplaced",
-            "url": url_for("browse.unplaced"),
-        },
-    ]
+    counts = waiting_counts(store)
+    urls = {
+        "matches": url_for("discogs.index") + "#matches",
+        "families": url_for("families.index"),
+        "artists": url_for("artists.index", show="attention"),
+        "widths": url_for("albums.widths"),
+        "unlinked": url_for("discogs.index"),
+        "gone": url_for("discogs.index") + "#gone",
+        "overfull": url_for("storage.index"),
+        "unplaced": url_for("browse.unplaced"),
+    }
+    waiting = [{"count": counts[kind], "kind": kind, "url": url} for kind, url in urls.items()]
     return render_template(
         "dashboard/index.html",
         album_count=len(sorted_albums),

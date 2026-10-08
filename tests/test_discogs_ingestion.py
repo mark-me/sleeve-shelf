@@ -5,7 +5,7 @@ import urllib.error
 
 import pytest
 
-from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
+from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError, collection_items, format_text
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.formats import parse_format
 
@@ -123,3 +123,95 @@ def test_rate_limit_is_waited_out_and_a_bad_token_stops():
 
     with pytest.raises(DiscogsError, match="token"):
         _Api(401).client().release(1)
+
+
+def _release(release_id, artists, title, formats):
+    return {
+        "id": release_id,
+        "basic_information": {"title": title, "artists": artists, "formats": formats},
+    }
+
+
+def test_collection_is_fetched_page_by_page_for_the_owner_of_the_token():
+    api = _Api(
+        {"username": "mark"},
+        {"pagination": {"pages": 2}, "releases": [{"id": 1}]},
+        {"pagination": {"pages": 2}, "releases": [{"id": 2}]},
+    )
+
+    releases = api.client().collection()
+
+    assert [release["id"] for release in releases] == [1, 2]
+    assert [request.full_url for request in api.requests] == [
+        "https://api.discogs.com/oauth/identity",
+        "https://api.discogs.com/users/mark/collection/folders/0/releases?per_page=100&page=1",
+        "https://api.discogs.com/users/mark/collection/folders/0/releases?per_page=100&page=2",
+    ]
+
+
+def test_collection_releases_become_the_same_items_as_export_rows():
+    items = collection_items(
+        [
+            _release(
+                1,
+                [{"name": "Tom Waits", "join": "And"}, {"name": "Crystal Gayle", "join": ""}],
+                "One From The Heart ",
+                [{"name": "Vinyl", "qty": "1", "descriptions": ["LP", "Album", "Reissue", "Stereo"]}],
+            ),
+            _release(
+                2,
+                [{"name": "Stan Getz", "join": ","}, {"name": "João Gilberto", "join": ""}],
+                "Getz / Gilberto",
+                [
+                    {
+                        "name": "Vinyl",
+                        "qty": "2",
+                        "descriptions": ["LP", "Album", "Limited Edition"],
+                        "text": "Blue Translucent, Gatefold, 180 gram",
+                    }
+                ],
+            ),
+            _release(3, [{"name": "The National"}], "Boxer", [{"name": "CD", "qty": "1", "descriptions": ["Album"]}]),
+            _release(
+                4,
+                [{"name": "Wilco"}],
+                "Box",
+                [
+                    {"name": "Vinyl", "qty": "3", "descriptions": ["LP", "Compilation"]},
+                    {"name": "Box Set", "qty": "1", "descriptions": []},
+                ],
+            ),
+        ]
+    )
+
+    assert [(i.release_id, i.artist, i.title, i.is_vinyl) for i in items] == [
+        (1, "Tom Waits And Crystal Gayle", "One From The Heart", True),
+        (2, "Stan Getz, João Gilberto", "Getz / Gilberto", True),
+        (3, "The National", "Boxer", False),
+        (4, "Wilco", "Box", True),
+    ]
+    assert items[0].format_tokens.qualifiers == ("LP", "Album", "RE")
+    # The export would keep only "Blu" of the free text and miss both.
+    gatefold = items[1].format_tokens
+    assert (gatefold.disc_count, gatefold.is_180_gram, gatefold.is_gatefold) == (2, True, True)
+    assert gatefold.qualifiers == ("2xLP", "Album", "Ltd", "180", "Gat")
+    assert (items[3].format_tokens.disc_count, items[3].format_tokens.is_compound) == (3, True)
+
+
+def test_a_ten_inch_lp_is_named_by_its_size_as_in_the_export():
+    assert format_text([{"name": "Vinyl", "qty": "1", "descriptions": ["LP", '10"', "Compilation"]}]) == '10", Comp'
+
+
+def test_bonus_disc_setting_also_applies_to_the_collection():
+    release = _release(
+        1,
+        [{"name": "Low"}],
+        "Hey What",
+        [
+            {"name": "CD", "qty": "1", "descriptions": ["Album"]},
+            {"name": "Vinyl", "qty": "1", "descriptions": ["LP"]},
+        ],
+    )
+
+    assert collection_items([release])[0].is_vinyl
+    assert not collection_items([release], count_bonus_discs_as_vinyl=False)[0].is_vinyl
