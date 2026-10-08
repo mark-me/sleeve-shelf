@@ -28,9 +28,20 @@
     </div>
     <nav id="main-nav" class="ss-nav collapse d-lg-flex">
       {% block nav %}
+      <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.blueprint == 'dashboard' }}">{{ _('Dashboard') }}</a>
       <a href="{{ url_for('browse.browse') }}" class="{{ 'active' if request.endpoint == 'browse.browse' }}">{{ _('Browse / Search') }}</a>
       <a href="{{ url_for('browse.unplaced') }}" class="{{ 'active' if request.endpoint == 'browse.unplaced' }}">{{ _('Unplaced albums') }}</a>
-      <a href="{{ url_for('setup.upload_form') }}" class="{{ 'active' if request.blueprint == 'setup' }}">{{ _('Import') }}</a>
+      <a href="{{ url_for('layout.index') }}" class="{{ 'active' if request.blueprint == 'layout' }}">{{ _('Layout') }}</a>
+      <a href="{{ url_for('proposal.index') }}" class="{{ 'active' if request.blueprint == 'proposal' }}">{{ _('Sorting proposal') }}</a>
+      <a href="{{ url_for('storage.index') }}" class="{{ 'active' if request.blueprint == 'storage' }}">{{ _('Storage') }}</a>
+      <a href="{{ url_for('artists.index') }}" class="{{ 'active' if request.blueprint == 'artists' }}">{{ _('Artists') }}</a>
+      <a href="{{ url_for('clusters.index') }}" class="{{ 'active' if request.blueprint == 'clusters' }}">{{ _('Clusters') }}</a>
+      <a href="{{ url_for('families.index') }}" class="{{ 'active' if request.blueprint == 'families' }}">{{ _('Artist families') }}</a>
+      <a href="{{ url_for('rules.index') }}" class="{{ 'active' if request.blueprint == 'rules' }}">{{ _('Location rules') }}</a>
+      <a href="{{ url_for('versions.index') }}" class="{{ 'active' if request.blueprint == 'versions' }}">{{ _('Versions') }}</a>
+      <a href="{{ url_for('discogs.index') }}" class="{{ 'active' if request.blueprint == 'discogs' }}">{{ _('Discogs') }}</a>
+      <a href="{{ url_for('setup.upload_form') }}" class="{{ 'active' if request.blueprint == 'setup' }}">{{ _('Load workbook') }}</a>
+      <a href="{{ url_for('settings.index') }}" class="{{ 'active' if request.blueprint == 'settings' }}">{{ _('Settings') }}</a>
       {% endblock %}
       <button class="ss-theme-toggle" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
       <div class="ss-version">{{ _('Version %(version)s', version=config.VERSION) }}</div>

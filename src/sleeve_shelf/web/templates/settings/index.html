@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Settings') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 640px;">
+  <h1>{{ _('Settings') }}</h1>
+
+  {% for error in errors %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endfor %}
+  {% if saved %}
+  <div class="ss-alert mt-3">{{ _('Saved. The album widths have been recalculated.') }}</div>
+  {% endif %}
+
+  {% if needed is not none %}
+  <div class="ss-stats mt-3">
+    <div class="ss-stat"><div class="ss-stat-number">{{ '%.0f' | format(needed) }} cm</div><div class="ss-stat-label">{{ _('your albums need') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ '%.0f' | format(offered) }} cm</div><div class="ss-stat-label">{{ _('your shelves offer') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number {{ 'ss-over' if needed > offered }}">{{ '%.0f' | format(offered - needed) }} cm</div><div class="ss-stat-label">{{ _('room left') }}</div></div>
+  </div>
+  <p class="ss-muted small mt-2">{{ _('Counted over the albums and shelves a sorting proposal uses. Shelf widths are set per shelf under Storage; the values below only change how wide the albums are taken to be.') }}</p>
+  {% endif %}
+
+  <form class="ss-card mt-4" method="post">
+    <div class="ss-card-head"><h2>{{ _('Album width') }}</h2></div>
+    <div class="ss-card-body d-flex flex-column gap-3">
+      <div>
+        <label for="base_width_cm" class="form-label fw-semibold">{{ _('Base width per disc (cm)') }}</label>
+        <input id="base_width_cm" class="form-control" style="max-width: 160px;" name="base_width_cm" inputmode="decimal" value="{{ values.base_width_cm }}" required>
+        <div class="form-text">{{ _('A single LP in a standard sleeve. A double album counts twice.') }}</div>
+      </div>
+      <div>
+        <label for="surcharge_180_gram_cm" class="form-label fw-semibold">{{ _('Extra per 180-gram disc (cm)') }}</label>
+        <input id="surcharge_180_gram_cm" class="form-control" style="max-width: 160px;" name="surcharge_180_gram_cm" inputmode="decimal" value="{{ values.surcharge_180_gram_cm }}" required>
+      </div>
+      <div>
+        <label for="surcharge_gatefold_cm" class="form-label fw-semibold">{{ _('Extra for a gatefold sleeve (cm)') }}</label>
+        <input id="surcharge_gatefold_cm" class="form-control" style="max-width: 160px;" name="surcharge_gatefold_cm" inputmode="decimal" value="{{ values.surcharge_gatefold_cm }}" required>
+        <div class="form-text">{{ _('Once per album, not per disc.') }}</div>
+      </div>
+    </div>
+
+    <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Discogs') }}</h2></div>
+    <div class="ss-card-body d-flex flex-column gap-3">
+      <div class="form-check">
+        <input id="count_bonus_discs_as_vinyl" class="form-check-input" type="checkbox" name="count_bonus_discs_as_vinyl" {{ 'checked' if count_bonus }}>
+        <label for="count_bonus_discs_as_vinyl" class="form-check-label">{{ _('Count a bundle such as “CD + LP” as vinyl') }}</label>
+        <div class="form-text">{{ _('Applies the next time a Discogs export is imported.') }}</div>
+      </div>
+      <div>
+        <label for="discogs_token" class="form-label fw-semibold">{{ _('Personal access token') }}</label>
+        <div class="ss-muted small mb-2">{% if masked_token %}{{ _('A token is set: %(token)s. Paste a new one to replace it.', token=masked_token) }}{% else %}{{ _('No token is set yet.') }}{% endif %}</div>
+        <input id="discogs_token" class="form-control" style="max-width: 420px;" type="password" name="discogs_token" autocomplete="off">
+      </div>
+      <div>
+        <button class="ss-button ss-button-primary" type="submit">{{ _('Save') }}</button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

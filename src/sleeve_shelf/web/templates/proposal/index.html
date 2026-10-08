@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Sorting proposal') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 900px;">
+  <h1>{{ _('Sorting proposal') }}</h1>
+  <p class="ss-muted mt-1">{{ _('The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Storage. Nothing changes on your shelves until you accept.') }}</p>
+
+  {% if not has_proposal %}
+  <div class="ss-stats mt-3">
+    <div class="ss-stat"><div class="ss-stat-number">{{ taking_part }}</div><div class="ss-stat-label">{{ _('albums to place') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ usable_count }}</div><div class="ss-stat-label">{{ _('shelves to fill') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ skipped | length }}</div><div class="ss-stat-label">{{ _('shelves skipped') }}</div></div>
+  </div>
+
+  {% if suggestion_count %}
+  <div class="ss-alert mt-3">{{ ngettext('%(num)d suggested artist family has not been looked at yet.', '%(num)d suggested artist families have not been looked at yet.', suggestion_count) }} {{ _('Families decide which artists stand together.') }} <a href="{{ url_for('families.index') }}">{{ _('Review them first') }}</a></div>
+  {% endif %}
+
+  <form class="mt-3" method="post" action="{{ url_for('proposal.generate') }}">
+    <button class="ss-button ss-button-primary {{ 'disabled' if not usable_count }}" type="submit" {{ 'disabled' if not usable_count }}>{{ _('Generate a proposal') }}</button>
+  </form>
+  {% if not usable_count %}
+  <p class="ss-muted small mt-2">{{ _('No shelf can be filled: give at least one shelf a width under Storage.') }}</p>
+  {% endif %}
+
+  {% else %}
+  <div class="ss-stats mt-3">
+    <div class="ss-stat"><div class="ss-stat-number">{{ placed_count }}</div><div class="ss-stat-label">{{ _('albums placed') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ moved_count }}</div><div class="ss-stat-label">{{ _('go to another shelf') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ staying_count }}</div><div class="ss-stat-label">{{ _('stay on their shelf') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ left_out | length }}</div><div class="ss-stat-label">{{ _('do not fit') }}</div></div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <a class="ss-button" href="{{ url_for('browse.browse', layout='proposal') }}">{{ _('Browse the proposal') }}</a>
+    <a class="ss-button" href="{{ url_for('layout.index', layout='proposal') }}">{{ _('Adjust by hand') }}</a>
+    <form method="post" action="{{ url_for('proposal.accept') }}">
+      <button class="ss-button ss-button-primary" type="submit">{{ _('Accept: make this my layout') }}</button>
+    </form>
+    <form method="post" action="{{ url_for('proposal.generate') }}">
+      <button class="ss-button" type="submit">{{ _('Generate again') }}</button>
+    </form>
+    <form method="post" action="{{ url_for('proposal.discard') }}">
+      <button class="ss-button" type="submit">{{ _('Discard') }}</button>
+    </form>
+  </div>
+  <p class="ss-muted small mt-2">{{ _('Accepting saves the result as a new version; albums that do not fit become unplaced. “Generate again” takes changes to families, clusters, storage and widths into account.') }}</p>
+
+  {% for cabinet in cabinets %}
+  <section class="ss-card mt-4">
+    <div class="ss-card-head"><h2>{{ cabinet.name }}</h2></div>
+    <div class="table-responsive">
+      <table class="ss-table">
+        <thead>
+          <tr>
+            <th>{{ _('Shelf') }}</th>
+            <th class="text-end">{{ _('Width') }}</th>
+            <th class="text-end">{{ _('Now') }}</th>
+            <th class="text-end">{{ _('Proposed') }}</th>
+            <th class="text-end">{{ _('Albums now') }}</th>
+            <th class="text-end">{{ _('Albums proposed') }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in cabinet.shelves %}
+          <tr>
+            <td class="fw-semibold">{{ row.shelf.name }}</td>
+            <td class="text-end">{% if row.shelf.width_cm is not none %}{{ '%.1f' | format(row.shelf.width_cm) }} cm{% else %}&mdash;{% endif %}</td>
+            <td class="text-end">{{ '%.1f' | format(row.now[1]) }} cm</td>
+            <td class="text-end">{% if row.skipped %}&mdash;{% else %}{{ '%.1f' | format(row.new[1]) }} cm{% endif %}</td>
+            <td class="text-end">{{ row.now[0] }}</td>
+            <td class="text-end">{% if row.skipped %}&mdash;{% else %}{{ row.new[0] }}{% endif %}</td>
+            <td class="text-end">
+              {% if row.skipped %}
+              <span class="ss-muted">{% if row.shelf.is_showcase %}{{ _('showcase, not filled') }}{% else %}{{ _('no width, not filled') }}{% endif %}</span>
+              {% else %}
+              <a href="{{ url_for('browse.browse', layout='proposal', shelf=row.shelf.id) }}">{{ _('View') }}</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endfor %}
+
+  <h2 class="mt-5">{{ _('Do not fit') }} ({{ left_out | length }})</h2>
+  {% if left_out %}
+  <p class="ss-muted mt-1">{{ _('No shelf had room left for these albums. Accepting leaves them unplaced.') }}</p>
+  <div class="ss-card">
+    {% for album in left_out %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ album.artist }}</span>
+        <span class="ss-row-title">{{ album.title }}</span>
+      </div>
+      {% if album.was_placed %}<span class="ss-chip">{{ _('on a shelf now') }}</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('Every album has a place in this proposal.') }}</div></div>
+  {% endif %}
+  {% endif %}
+
+  {% if skipped and not has_proposal %}
+  <h2 class="mt-5">{{ _('Shelves a proposal skips') }}</h2>
+  <div class="ss-card mt-3">
+    {% for entry in skipped %}
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ entry.cabinet }} &rsaquo; {{ entry.shelf.name }}</span>
+      <span class="ss-row-place">{% if entry.shelf.is_showcase %}{{ _('showcase') }}{% else %}{{ _('no width set') }}{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

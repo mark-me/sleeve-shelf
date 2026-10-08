@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Location rules') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 860px;">
+  <h1>{{ _('Location rules') }}</h1>
+  <p class="ss-muted mt-1">{{ _('A rule binds a cluster, a family, an artist, or a single album to a cabinet. A sorting proposal then places it there and nowhere else — and keeps everything without a rule out of that cabinet.') }}</p>
+
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <form class="ss-card mt-4" method="post" action="{{ url_for('rules.create') }}">
+    <div class="ss-card-head"><h2>{{ _('Add a rule') }}</h2></div>
+    <div class="ss-card-body d-flex flex-column gap-3">
+      <div class="d-flex flex-wrap gap-2">
+        <div>
+          <label for="target_type" class="form-label fw-semibold">{{ _('For') }}</label>
+          <select id="target_type" class="form-select" name="target_type">
+            <option value="cluster">{{ _('A cluster') }}</option>
+            <option value="alias_group">{{ _('A family') }}</option>
+            <option value="artist">{{ _('An artist') }}</option>
+            <option value="album">{{ _('One album') }}</option>
+          </select>
+        </div>
+        <div class="flex-grow-1" style="min-width: 240px;">
+          <label for="target" class="form-label fw-semibold">{{ _('Name') }}</label>
+          <input id="target" class="form-control" name="target" list="options-cluster" autocomplete="off" required>
+        </div>
+        <div>
+          <label for="cabinet_id" class="form-label fw-semibold">{{ _('Always in') }}</label>
+          <select id="cabinet_id" class="form-select" name="cabinet_id" required>
+            {% for cabinet in cabinets %}<option value="{{ cabinet.id }}">{{ cabinet.name }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="note" class="form-label fw-semibold">{{ _('Note') }}</label>
+        <input id="note" class="form-control" name="note" placeholder="{{ _('Optional — why this is here') }}">
+      </div>
+      <div><button class="ss-button ss-button-primary" type="submit">{{ _('Add rule') }}</button></div>
+    </div>
+    {% for kind, names in options.items() %}
+    <datalist id="options-{{ kind }}">{% for name in names %}<option value="{{ name }}"></option>{% endfor %}</datalist>
+    {% endfor %}
+  </form>
+
+  <h2 class="mt-5">{{ _('Rules') }} ({{ rules | length }})</h2>
+  {% if rules %}
+  <div class="ss-card mt-3">
+    {% for entry in rules %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ entry.target or _('(no longer exists)') }} &rarr; {{ entry.cabinet or _('(cabinet removed)') }}</span>
+        <span class="ss-row-title">
+          {% if entry.rule.target_type == 'cluster' %}{{ _('Cluster') }}{% elif entry.rule.target_type == 'alias_group' %}{{ _('Family') }}{% elif entry.rule.target_type == 'artist' %}{{ _('Artist') }}{% else %}{{ _('Album') }}{% endif %}{% if entry.rule.note %} &middot; {{ entry.rule.note }}{% endif %}
+        </span>
+      </div>
+      <form method="post" action="{{ url_for('rules.delete', rule_id=entry.rule.id) }}">
+        <button class="ss-link-button" type="submit">{{ _('Remove') }}</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('No rules yet: a proposal fills the cabinets in the order set under Storage.') }}</div></div>
+  {% endif %}
+  <p class="ss-muted small mt-3">{{ _('The most specific rule wins: an album’s own rule, then its artist’s, its family’s, its cluster’s. Rules take effect the next time a proposal is generated.') }}</p>
+</div>
+
+<script>
+  // Offer the names that go with the chosen kind of target.
+  (function () {
+    const kind = document.getElementById("target_type");
+    const target = document.getElementById("target");
+    kind.addEventListener("change", function () {
+      target.setAttribute("list", "options-" + kind.value);
+      target.value = "";
+    });
+  })();
+</script>
+{% endblock %}

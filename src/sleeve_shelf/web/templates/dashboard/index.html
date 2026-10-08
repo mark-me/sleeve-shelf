@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Dashboard') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 900px;">
+  <h1>{{ _('Dashboard') }}</h1>
+
+  <div class="ss-stats mt-3">
+    <div class="ss-stat"><div class="ss-stat-number">{{ album_count }}</div><div class="ss-stat-label">{{ _('albums in the layout') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ placed_count }}</div><div class="ss-stat-label">{{ _('on a shelf') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ artist_count }}</div><div class="ss-stat-label">{{ _('artists') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ cluster_count }}</div><div class="ss-stat-label">{{ _('clusters') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ cabinet_count }}</div><div class="ss-stat-label">{{ _('cabinets') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ shelf_count }}</div><div class="ss-stat-label">{{ _('shelves') }}</div></div>
+  </div>
+  {% if single_count %}
+  <p class="ss-muted small mt-2">{{ ngettext('%(num)d single or EP is kept outside the layout.', '%(num)d singles and EPs are kept outside the layout.', single_count) }}</p>
+  {% endif %}
+
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <a class="ss-button ss-button-primary" href="{{ url_for('browse.browse') }}">{{ _('Browse the shelves') }}</a>
+    <a class="ss-button" href="{{ url_for('layout.index') }}">{{ _('Layout') }}</a>
+    <a class="ss-button" href="{{ url_for('proposal.index') }}">{% if has_proposal %}{{ _('A proposal is waiting') }}{% else %}{{ _('Sorting proposal') }}{% endif %}</a>
+  </div>
+
+  <h2 class="mt-5">{{ _('Waiting for you') }}</h2>
+  {% if waiting %}
+  <div class="ss-card mt-3">
+    {% for item in waiting %}
+    {% if item.url %}<a class="ss-row" href="{{ item.url }}">{% else %}<div class="ss-row">{% endif %}
+      <div class="ss-row-text">
+        <span class="ss-row-artist">
+          {% if item.kind == 'matches' %}{{ ngettext('%(num)d Discogs match to confirm', '%(num)d Discogs matches to confirm', item.count) }}
+          {% elif item.kind == 'families' %}{{ ngettext('%(num)d suggested artist family to look at', '%(num)d suggested artist families to look at', item.count) }}
+          {% elif item.kind == 'artists' %}{{ ngettext('%(num)d artist without a confirmed cluster or a start year', '%(num)d artists without a confirmed cluster or a start year', item.count) }}
+          {% elif item.kind == 'widths' %}{{ ngettext('%(num)d box set or bundle with a rough width', '%(num)d box sets and bundles with a rough width', item.count) }}
+          {% elif item.kind == 'unlinked' %}{{ ngettext('%(num)d album without a Discogs release', '%(num)d albums without a Discogs release', item.count) }}
+          {% elif item.kind == 'overfull' %}{{ ngettext('%(num)d shelf filled beyond its width', '%(num)d shelves filled beyond their width', item.count) }}
+          {% else %}{{ ngettext('%(num)d LP without a place', '%(num)d LPs without a place', item.count) }}{% endif %}
+        </span>
+        <span class="ss-row-title">
+          {% if item.kind == 'matches' %}{{ _('Is the Discogs release the same album?') }}
+          {% elif item.kind == 'families' %}{{ _('Families decide which artists stand together.') }}
+          {% elif item.kind == 'artists' %}{{ _('They are sorted on a proposed cluster or a year taken from their albums.') }}
+          {% elif item.kind == 'widths' %}{{ _('Measure them and enter the real width; until then they count as loose discs.') }}
+          {% elif item.kind == 'unlinked' %}{{ _('Without a release there are no styles or original year from Discogs.') }}
+          {% elif item.kind == 'overfull' %}{{ _('The shelf width is an estimate, or the shelf really is too full.') }}
+          {% else %}{{ _('Place them by hand in Layout, or generate a proposal.') }}{% endif %}
+        </span>
+      </div>
+    {% if item.url %}</a>{% else %}</div>{% endif %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('Nothing is waiting for a decision.') }}</div></div>
+  {% endif %}
+
+  <h2 class="mt-5">{{ _('Last saved version') }}</h2>
+  <div class="ss-card mt-3">
+    <a class="ss-row" href="{{ url_for('versions.index') }}">
+      <div class="ss-row-text">
+        {% if last_version %}
+        <span class="ss-row-artist">{{ last_version.saved_at.strftime('%Y-%m-%d %H:%M') }}{% if last_version.label %} &middot; {{ last_version.label }}{% endif %}</span>
+        <span class="ss-row-title">{% if unsaved %}{{ _('The layout has changed since; those changes are in no version yet.') }}{% else %}{{ _('The current layout is saved.') }}{% endif %}</span>
+        {% else %}
+        <span class="ss-row-artist">{{ _('No version saved yet') }}</span>
+        {% endif %}
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}
