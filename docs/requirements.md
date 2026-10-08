@@ -1,6 +1,6 @@
 # Requirements — Sleeve & Shelf
 
-*As of: October 7, 2026*
+*As of: October 8, 2026*
 
 **Sleeve & Shelf** is a self-hosted, open-source Python Flask web application (Bootstrap + JavaScript) that organizes a vinyl collection (~1,190 vinyl titles out of ~1,455 tracked releases on Discogs) across a record cabinet, based on musical kinship, artist era, and physical shelf space.
 
@@ -386,7 +386,7 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 
 ### Main navigation (after the wizard)
 
-Phase 1a ships only **Browse/Search** and **Unplaced albums**; the other items arrive with Phase 1b unless marked otherwise.
+All items below are built with Phase 1 (1a and 1b), except where a later phase is marked.
 
 - **Dashboard** — overview and open confirmations (see below)
 - **Layout** — core screen (see below)
@@ -426,7 +426,7 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 
 - Crate-digging mode: renders the collection in physical order (cabinet → shelf → position within shelf), based on the current `Placement` data — scrolling through it mirrors flipping through the real shelves
 - One shelf at a time, with previous/next shelf and a shelf picker to jump straight to any shelf. Within a shelf the albums are grouped under a heading per cluster and era band (the artist's dominant cluster), each row showing artist, title, and original year
-- Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked — the Detail screen it will eventually open arrives in Phase 1b
+- Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked, or to the Unplaced albums list when it has no spot. The artist name on a shelf row opens that artist (see Artists screen)
 - Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
 
@@ -447,7 +447,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Browse the proposal**: the proposal can be walked shelf by shelf exactly like the real shelves in Browse/Search, under a notice that it is the proposal; search stays on the current layout
 - **Do not fit**: the albums no shelf had room for, marking those that stand on a shelf now
 - **Accept**, **Generate again** (after changing families, clusters, storage, or widths), and **Discard**
-- Adjusting the proposal by hand — moving albums between and within shelves — is the Layout screen, which is not built yet
+- Adjusting the proposal by hand — moving albums between and within shelves — is done on the Layout screen, switched to the proposal (see Layout screen)
 
 ### Artists screen
 
