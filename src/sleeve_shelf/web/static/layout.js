@@ -76,6 +76,7 @@
     const block = button.closest(".ss-block");
     const ids = block.dataset.albums.split(",");
     const titles = button.dataset.titles.split("|");
+    const covers = (button.dataset.covers || "").split("|");
     const link = block.querySelector(".ss-block-name");
     ids.forEach(function (id, index) {
       const single = document.createElement("li");
@@ -85,6 +86,15 @@
       const title = document.createElement("span");
       title.className = "ss-block-title";
       title.textContent = titles[index] || "";
+      if (covers[index]) {
+        const cover = document.createElement("img");
+        cover.className = "ss-cover";
+        cover.src = covers[index];
+        cover.alt = "";
+        cover.width = cover.height = 28;
+        cover.referrerPolicy = "no-referrer";
+        single.append(cover);
+      }
       single.append(name, title);
       block.before(single);
     });

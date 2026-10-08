@@ -41,6 +41,7 @@ class AlbumRow:
     shelf: str | None
     is_lp: bool = True
     artist_id: int | None = None
+    cover_url: str | None = None
 
 
 class BrowseQueries:
@@ -106,7 +107,7 @@ class BrowseQueries:
             f"""
             {self._located_albums()}
             SELECT album_id, artist, title, year, cluster, era_band, shelf_id, cabinet, shelf,
-                   is_lp, artist_id
+                   is_lp, artist_id, cover_url
             FROM located
             {where}
             ORDER BY cabinet_order NULLS LAST, cabinet_id, shelf_order, shelf_id,
@@ -124,7 +125,7 @@ class BrowseQueries:
             WITH placement AS (SELECT * FROM {relation(self._placements)}),
             located AS (
                 SELECT album.id AS album_id, artist.name AS artist, artist.id AS artist_id,
-                       album.title,
+                       album.title, album.cover_url,
                        album.original_release_year AS year, cluster.name AS cluster,
                        era_band.label AS era_band, shelf.id AS shelf_id,
                        cabinet.id AS cabinet_id, cabinet.name AS cabinet, shelf.name AS shelf,

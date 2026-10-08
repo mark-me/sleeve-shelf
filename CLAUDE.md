@@ -11,7 +11,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 - **Phase 1a (load a layout, browse, search)** is built.
 - **Phase 1b (Discogs, sorting proposal, management screens)** is built; nothing of it is left open.
 - What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and three parked points from 1a (the upload and preview screens never looked at, top-loaders `a` and `b` as a rotating sample, the `Overflow` and `Nieuwe koffer` locations).
-- **Phase 2** has started: syncing the collection through the Discogs API on demand is built. The rest of Phase 2 (covers, a suggested spot for new purchases, rule suggestions, showcase management, cluster-shift confirmation) is not, and neither is Phase 3.
+- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, showcase management, cluster-shift confirmation) is not, and neither is Phase 3.
 
 ## Commands
 
@@ -55,7 +55,7 @@ Things that are easy to get wrong:
 - **`JsonStore.save` rewrites the whole file.** Load the list, change it, save the list.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
 - **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
-- **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN.
+- **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN. Album covers are the one exception: the browser fetches them from Discogs, and every page has to work without them.
 
 ## Data
 

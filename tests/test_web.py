@@ -6,6 +6,8 @@ import pytest
 from openpyxl import Workbook
 
 from sleeve_shelf import create_app, main
+from sleeve_shelf.domain import Album
+from sleeve_shelf.persistence import JsonStore
 
 
 def _workbook(layout_rows, unplaced=()) -> io.BytesIO:
@@ -307,3 +309,25 @@ def test_cabinets_and_shelves_can_be_put_in_order(client):
     # Moving past the end changes nothing.
     client.post("/storage/cabinets/2/move", data={"direction": "up"})
     assert stops() == [a, b, x]
+
+
+def test_covers_show_in_browse_search_and_layout_once_albums_have_them(client):
+    _load(client)
+    assert "ss-cover" not in client.get("/browse").text
+
+    store = JsonStore(client.application.config["DATA_DIR"])
+    albums = store.load(Album)
+    albums[0].cover_url = "https://i.discogs.com/nenette.jpeg"
+    store.save(Album, albums)
+
+    shelf = client.get("/browse").text
+    assert '<img class="ss-cover" src="https://i.discogs.com/nenette.jpeg"' in shelf
+    # The album without a cover keeps the space, so the rows line up.
+    assert shelf.count("ss-cover-empty") == 1
+    assert "nenette.jpeg" in client.get("/browse?q=tindersticks").text
+    assert "ss-cover" not in client.get("/browse?q=miles").text
+    layout = client.get("/layout/").text
+    assert layout.count('<img class="ss-cover"') == 1
+    assert 'data-covers="https://i.discogs.com/nenette.jpeg|"' in layout
+    artist = client.get("/artists/1").text
+    assert "nenette.jpeg" in artist and "ss-cover-empty" in artist

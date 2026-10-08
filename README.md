@@ -10,7 +10,7 @@ It's built for collectors who track their collection on [Discogs](https://www.di
 
 ## Status
 
-Phase 1 (the MVP) is built. You can load a worked-out cabinet layout from an Excel workbook and browse or search it in physical shelf order (Phase 1a). You can also link the albums to Discogs, manage cabinets, shelves, clusters, artist families and location rules, generate a sorting proposal, adjust it by hand, and keep versions of the layout (Phase 1b). Phase 2 has started with syncing the collection straight from Discogs; the rest of Phase 2 and Phase 3 are not built. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
+Phase 1 (the MVP) is built. You can load a worked-out cabinet layout from an Excel workbook and browse or search it in physical shelf order (Phase 1a). You can also link the albums to Discogs, manage cabinets, shelves, clusters, artist families and location rules, generate a sorting proposal, adjust it by hand, and keep versions of the layout (Phase 1b). Phase 2 has started with syncing the collection straight from Discogs and album covers; the rest of Phase 2 and Phase 3 are not built. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
 
 ## Running it
 

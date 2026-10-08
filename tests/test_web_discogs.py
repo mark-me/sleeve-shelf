@@ -53,6 +53,7 @@ def _vinyl(release_id, artist, title):
         "id": release_id,
         "basic_information": {
             "title": title,
+            "thumb": f"https://i.discogs.com/{release_id}.jpeg",
             "artists": [{"name": artist, "join": ""}],
             "formats": [{"name": "Vinyl", "qty": "1", "descriptions": ["LP", "Album"]}],
         },
@@ -202,6 +203,12 @@ def test_sync_previews_the_collection_and_only_changes_things_on_confirm(app, cl
     albums = _store(app).load(Album)
     assert albums[0].release_id == 1874289
     assert (albums[-1].title, albums[-1].release_id) == ("Prayers On Fire", 1965832)
+    # A sync brings the covers, for albums that were there and for new ones.
+    assert albums[0].cover_url == "https://i.discogs.com/1874289.jpeg"
+    assert albums[-1].cover_url == "https://i.discogs.com/1965832.jpeg"
+    # An export has no covers and leaves them alone.
+    _import(client)
+    assert _store(app).load(Album)[0].cover_url == "https://i.discogs.com/1874289.jpeg"
     # Nothing is left waiting: confirming again does nothing.
     client.post("/discogs/import/confirm")
     assert len(_store(app).load(Album)) == 3

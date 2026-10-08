@@ -297,6 +297,9 @@ def import_discogs_collection(
         if album.left_discogs:
             gone.append((artist_names[album.artist_id], album.title))
 
+    # A cover only comes with a sync; an export leaves the covers as they are.
+    covers = {item.release_id: item.cover_url for item in vinyl if item.cover_url}
+
     refreshed = 0
     if refresh_formats:
         formats = {item.release_id: item.format_tokens for item in vinyl}
@@ -368,6 +371,10 @@ def import_discogs_collection(
                 format_tokens=item.format_tokens,
             )
         )
+
+    for album in albums:
+        if album.release_id in covers:
+            album.cover_url = covers[album.release_id]
 
     if not dry_run:
         estimate_widths(albums, constants)

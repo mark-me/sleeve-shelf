@@ -184,7 +184,12 @@ h2 { font-size: 1.15rem; margin: 0; }
 .ss-row:target { box-shadow: inset 4px 0 0 var(--ss-accent); background: var(--ss-chip); }
 a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 
-.ss-row-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ss-row-text { display: flex; flex-direction: column; flex: 1; gap: 2px; min-width: 0; }
+
+/* Album covers, hotlinked from Discogs. */
+.ss-cover { flex-shrink: 0; border-radius: 4px; object-fit: cover; background: var(--ss-chip); }
+.ss-cover-empty { display: inline-block; }
+.ss-block .ss-cover { margin: -2px 0 -2px -4px; pointer-events: none; }
 .ss-row-artist { font-size: 0.95rem; font-weight: 600; }
 .ss-row-title { font-size: 0.82rem; color: var(--ss-muted); }
 .ss-row-place { font-size: 0.78rem; color: var(--ss-muted); text-align: right; }

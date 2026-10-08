@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Unplaced albums') }}{% endblock %}
 
+{% from "_cover.html" import cover %}
 {% block content %}
 <div class="ss-page">
   <h1>{{ _('Unplaced albums') }}</h1>
@@ -12,6 +13,7 @@
   <div class="ss-card">
     {% for album in lps %}
     <div class="ss-row" id="album-{{ album.album_id }}">
+      {{ cover(album.cover_url, lps | selectattr('cover_url') | list | length > 0) }}
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ album.artist }}</span>
         <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
@@ -30,6 +32,7 @@
   <div class="ss-card">
     {% for album in others %}
     <div class="ss-row" id="album-{{ album.album_id }}">
+      {{ cover(album.cover_url, others | selectattr('cover_url') | list | length > 0) }}
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ album.artist }}</span>
         <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>

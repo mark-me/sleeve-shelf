@@ -1,0 +1,11 @@
+{# An album cover as a small square; an album without one keeps the space, so rows line up.
+   Nothing is shown while no album in the list has a cover (before the first sync). #}
+{% macro cover(url, show=true, size=44) %}
+{% if show %}
+{% if url %}
+<img class="ss-cover" src="{{ url }}" alt="" width="{{ size }}" height="{{ size }}" loading="lazy" referrerpolicy="no-referrer">
+{% else %}
+<span class="ss-cover ss-cover-empty" style="width: {{ size }}px; height: {{ size }}px;" aria-hidden="true"></span>
+{% endif %}
+{% endif %}
+{% endmacro %}
