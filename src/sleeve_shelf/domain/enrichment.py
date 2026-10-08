@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from sleeve_shelf.domain.catalog import FormatTokens
+
 
 @dataclass(frozen=True, slots=True)
 class ReleaseEnrichment:
@@ -36,3 +38,4 @@ class MatchProposal:
     artist: str
     title: str
     score: float
+    format_tokens: FormatTokens | None = None

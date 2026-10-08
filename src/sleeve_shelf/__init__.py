@@ -17,7 +17,7 @@ from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.initial_load import load_initial_layout
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.web import browse, setup, storage
+from sleeve_shelf.web import browse, discogs, setup, storage
 from sleeve_shelf.web.context import has_collection
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
@@ -35,6 +35,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(setup.blueprint)
     app.register_blueprint(browse.blueprint)
     app.register_blueprint(storage.blueprint)
+    app.register_blueprint(discogs.blueprint)
 
     @app.before_request
     def reject_cross_site_posts():

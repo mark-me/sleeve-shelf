@@ -59,7 +59,10 @@ def test_import_links_loaded_albums_and_adds_the_rest(tmp_path):
     # A near match is proposed, not applied.
     assert albums[3].release_id is None
     assert store.load(MatchProposal) == [
-        MatchProposal(3, 1126311, "Woody Herman", "The First Herd At Carnegie Hall", 0.83)
+        MatchProposal(
+            3, 1126311, "Woody Herman", "The First Herd At Carnegie Hall", 0.83,
+            parse_format("LP, Album").tokens,
+        )
     ]
     assert albums[4].release_id is None
     # New vinyl becomes an album under a new artist; the CD is left out.

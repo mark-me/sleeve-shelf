@@ -50,6 +50,11 @@ def _format_tokens(value: dict) -> FormatTokens:
     return FormatTokens(**{**value, "qualifiers": tuple(value["qualifiers"])})
 
 
+_FORMAT_TOKENS_TYPE = (
+    "STRUCT(disc_count INTEGER, is_180_gram BOOLEAN, is_gatefold BOOLEAN,"
+    " is_compound BOOLEAN, qualifiers VARCHAR[])"
+)
+
 _TABLES: dict[type, _Table] = {
     Cabinet: _Table(
         "cabinets.json",
@@ -102,10 +107,7 @@ _TABLES: dict[type, _Table] = {
             "artist_id": "INTEGER",
             "title": "VARCHAR",
             "release_id": "INTEGER",
-            "format_tokens": (
-                "STRUCT(disc_count INTEGER, is_180_gram BOOLEAN, is_gatefold BOOLEAN,"
-                " is_compound BOOLEAN, qualifiers VARCHAR[])"
-            ),
+            "format_tokens": _FORMAT_TOKENS_TYPE,
             "computed_width_cm": "DOUBLE",
             "master_id": "INTEGER",
             "original_release_year": "INTEGER",
@@ -144,7 +146,9 @@ _TABLES: dict[type, _Table] = {
             "artist": "VARCHAR",
             "title": "VARCHAR",
             "score": "DOUBLE",
+            "format_tokens": _FORMAT_TOKENS_TYPE,
         },
+        {"format_tokens": _format_tokens},
     ),
     Placement: _Table(
         "placement_current.json",

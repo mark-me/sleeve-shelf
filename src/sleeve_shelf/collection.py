@@ -78,13 +78,17 @@ class ImportResult:
 
 
 def import_discogs_collection(
-    store: JsonStore, items: list[CollectionItem], constants: WidthConstants
+    store: JsonStore,
+    items: list[CollectionItem],
+    constants: WidthConstants,
+    dry_run: bool = False,
 ) -> ImportResult:
     """Link the stored albums to the releases of a Discogs export, and add what is new.
 
     Albums and releases with the same artist and title are linked outright. For
     what is left, a similar-looking release is only proposed, to be confirmed by
     hand. Vinyl releases that no album accounts for become new, unplaced albums.
+    A dry run only reports what would happen.
     """
     albums = store.load(Album)
     artists = store.load(Artist)
@@ -129,7 +133,14 @@ def import_discogs_collection(
         if item is not None and score >= PROPOSAL_THRESHOLD:
             remaining.remove(item)
             proposals.append(
-                MatchProposal(album.id, item.release_id, item.artist, item.title, round(score, 3))
+                MatchProposal(
+                    album.id,
+                    item.release_id,
+                    item.artist,
+                    item.title,
+                    round(score, 3),
+                    item.format_tokens,
+                )
             )
 
     artist_ids = {artist.name: artist.id for artist in artists}
@@ -149,10 +160,11 @@ def import_discogs_collection(
             )
         )
 
-    estimate_widths(albums, constants)
-    store.save(Artist, artists)
-    store.save(Album, albums)
-    store.save(MatchProposal, proposals)
+    if not dry_run:
+        estimate_widths(albums, constants)
+        store.save(Artist, artists)
+        store.save(Album, albums)
+        store.save(MatchProposal, proposals)
     return ImportResult(
         vinyl_count=len(vinyl),
         skipped_non_vinyl=len(items) - len(vinyl),
@@ -161,6 +173,48 @@ def import_discogs_collection(
         added=len(remaining),
         unmatched_albums=len(unmatched) - len(proposals),
     )
+
+
+def confirm_match(store: JsonStore, album_id: int, constants: WidthConstants) -> None:
+    """Accept a proposed match: the album takes the proposed release."""
+    proposals = store.load(MatchProposal)
+    proposal = next((p for p in proposals if p.album_id == album_id), None)
+    if proposal is None:
+        return
+    albums = store.load(Album)
+    album = next(album for album in albums if album.id == album_id)
+    album.release_id = proposal.release_id
+    if album.format_tokens is None:
+        album.format_tokens = proposal.format_tokens
+    estimate_widths([album], constants)
+    store.save(Album, albums)
+    store.save(MatchProposal, [p for p in proposals if p is not proposal])
+
+
+def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> None:
+    """Turn a proposed match down: the release becomes a new, unplaced album of its own."""
+    proposals = store.load(MatchProposal)
+    proposal = next((p for p in proposals if p.album_id == album_id), None)
+    if proposal is None:
+        return
+    albums = store.load(Album)
+    artists = store.load(Artist)
+    artist = next((artist for artist in artists if artist.name == proposal.artist), None)
+    if artist is None:
+        artist = Artist(max((a.id for a in artists), default=0) + 1, proposal.artist)
+        artists.append(artist)
+    album = Album(
+        id=max((a.id for a in albums), default=0) + 1,
+        artist_id=artist.id,
+        title=proposal.title,
+        release_id=proposal.release_id,
+        format_tokens=proposal.format_tokens,
+    )
+    estimate_widths([album], constants)
+    albums.append(album)
+    store.save(Artist, artists)
+    store.save(Album, albums)
+    store.save(MatchProposal, [p for p in proposals if p is not proposal])
 
 
 def _key(artist: str, title: str) -> tuple[str, str]:

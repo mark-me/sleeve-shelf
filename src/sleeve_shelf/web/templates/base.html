@@ -31,7 +31,8 @@
       <a href="{{ url_for('browse.browse') }}" class="{{ 'active' if request.endpoint == 'browse.browse' }}">{{ _('Browse / Search') }}</a>
       <a href="{{ url_for('browse.unplaced') }}" class="{{ 'active' if request.endpoint == 'browse.unplaced' }}">{{ _('Unplaced albums') }}</a>
       <a href="{{ url_for('storage.index') }}" class="{{ 'active' if request.blueprint == 'storage' }}">{{ _('Storage') }}</a>
-      <a href="{{ url_for('setup.upload_form') }}" class="{{ 'active' if request.blueprint == 'setup' }}">{{ _('Import') }}</a>
+      <a href="{{ url_for('discogs.index') }}" class="{{ 'active' if request.blueprint == 'discogs' }}">{{ _('Discogs') }}</a>
+      <a href="{{ url_for('setup.upload_form') }}" class="{{ 'active' if request.blueprint == 'setup' }}">{{ _('Load workbook') }}</a>
       {% endblock %}
       <button class="ss-theme-toggle" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
       <div class="ss-version">{{ _('Version %(version)s', version=config.VERSION) }}</div>

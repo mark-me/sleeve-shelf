@@ -343,7 +343,7 @@ Two strictly linear flows, matching the two steps of Phase 1. Once a flow is com
 
 ### Sorting setup (Phase 1b)
 
-Started from the regular app once the user wants a generated layout. A user without a spreadsheet goes straight from the welcome step into this flow.
+Started from the regular app once the user wants a generated layout. Steps 1–4 are not a locked sequence in the app: step 1 is the Storage screen and steps 2–4 are the three parts of the Discogs screen (see UI), each of which can be revisited. A user without a spreadsheet goes straight from the welcome step into this flow.
 
 1. **Storage structure** — cabinets + shelves (type, layer, width, reachability, showcase flag). After an initial load these already exist and only need reviewing and completing; otherwise they are created here
 2. **Import collection** — explanation of the Discogs CSV export, upload, automatic filtering to vinyl (by parsing the `Format` field), preview of counts
@@ -383,6 +383,7 @@ Phase 1a ships only **Browse/Search** and **Unplaced albums**; the other items a
 - **Layout** — core screen (see below)
 - **Browse/Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1). This supersedes the earlier decision to have no separate "Collection" nav item — that assumption no longer holds now that browsing/search is its own dedicated feature, not just a detail drill-down from Layout
 - **Storage structure** — manage cabinets/shelves
+- **Discogs** — import the collection export, fetch styles and original years, confirm proposed matches (see below)
 - **Alias groups** — management screen
 - **Clusters** — rename a cluster, or merge several Styles into one cluster (see Sorting logic §1 and Data model); not part of the wizard — the clusters seeded by the initial load work unmodified, curation happens here at the user's own pace
 - **Location rules** — management screen
@@ -408,6 +409,15 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 - Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked — the Detail screen it will eventually open arrives in Phase 1b
 - Plain text in Phase 1, same as Layout — covers follow the same phase-2 timeline
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
+
+### Discogs screen
+
+One screen for the three Discogs steps of the sorting setup (see [Onboarding wizard](#onboarding-wizard)); each can be repeated at any time.
+
+- **Counters** at the top: albums, albums linked to a release, albums enriched, and matches waiting for confirmation
+- **Import your collection**: upload the Discogs CSV export, then a preview of what the import would do — vinyl releases found, linked to existing albums, proposed matches, new unplaced albums, non-vinyl skipped — and only then confirm. Importing the same export again changes nothing
+- **Fetch styles and original years**: the personal access token is set here (shown masked, last 4 characters, with a replace action — the same rule as on the Settings screen). The enrichment runs in the background of the app, not inside a page request: the page shows a progress bar that keeps itself up to date, and a Stop button. Stopping, an error, or a restart of the app loses nothing — starting again continues with what is not cached yet. Only one enrichment runs at a time
+- **Matches to confirm**: each proposed match (see [Initial load](#initial-load)) shows the album and the Discogs release side by side, with their similarity. "Same album" links them; "Different" leaves the album without a release and adds the release as a new, unplaced album
 
 ### Storage structure screen
 
@@ -450,7 +460,6 @@ Album/artist detail is still reachable both from Layout (clicking an artist/era 
 - **Re-uploading the workbook in Phase 1b**: a new upload still replaces everything, including Discogs links, styles, and — once they exist — alias groups and location rules. It needs a gentler variant before those are in use
 - **Clusters screen**: its description (see UI) still assumes clusters are merged Styles. Now that a cluster is a curated group of artists, the screen has to be about moving artists between clusters and re-pointing Styles; to be redesigned
 - **Order of cabinets and shelves**: Browse/Search and the engine walk the cabinets and shelves in the order they were created. A new shelf therefore always comes last within its cabinet; reordering needs an explicit position
-- **Confirming a proposed match**: proposals are stored, but there is no screen yet to accept or reject one
 
 ### Parked from Phase 1a
 

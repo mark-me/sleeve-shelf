@@ -345,3 +345,5 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
   border-color: var(--ss-border);
   color: var(--ss-text);
 }
+
+.progress { --bs-progress-bg: var(--ss-chip); --bs-progress-bar-bg: var(--ss-accent); height: 10px; }
