@@ -3,7 +3,7 @@
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf.domain import Cabinet, Shelf, ShelfLayer, ShelfType
+from sleeve_shelf.domain import Cabinet, Shelf, ShelfLayer, ShelfType, in_order, move, settle_order
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.web.context import get_store, has_collection
 
@@ -21,11 +21,11 @@ def index():
             "shelves": [
                 {"shelf": shelf, "albums": fill.get(shelf.id, (0, 0.0))[0],
                  "filled_cm": fill.get(shelf.id, (0, 0.0))[1]}
-                for shelf in shelves
+                for shelf in in_order(shelves)
                 if shelf.cabinet_id == cabinet.id
             ],
         }
-        for cabinet in store.load(Cabinet)
+        for cabinet in in_order(store.load(Cabinet))
     ]
     return render_template("storage/index.html", cabinets=cabinets, error=request.args.get("error"))
 
@@ -54,6 +54,7 @@ def _cabinet_form(cabinet_id: int | None):
             if cabinet is None:
                 cabinet = Cabinet(max((c.id for c in cabinets), default=0) + 1, values["name"])
                 cabinets.append(cabinet)
+                settle_order(cabinets, [])
             cabinet.name = values["name"]
             cabinet.location = values["location"] or None
             store.save(Cabinet, cabinets)
@@ -74,6 +75,30 @@ def delete_cabinet(cabinet_id: int):
     cabinets.remove(cabinet)
     store.save(Cabinet, cabinets)
     return redirect(url_for("storage.index"))
+
+
+@blueprint.post("/cabinets/<int:cabinet_id>/move")
+def move_cabinet(cabinet_id: int):
+    store = get_store()
+    cabinets = store.load(Cabinet)
+    _find(cabinets, cabinet_id)
+    move(cabinets, cabinet_id, _step())
+    store.save(Cabinet, cabinets)
+    return redirect(url_for("storage.index") + f"#cabinet-{cabinet_id}")
+
+
+@blueprint.post("/shelves/<int:shelf_id>/move")
+def move_shelf(shelf_id: int):
+    store = get_store()
+    shelves = store.load(Shelf)
+    shelf = _find(shelves, shelf_id)
+    move([s for s in shelves if s.cabinet_id == shelf.cabinet_id], shelf_id, _step())
+    store.save(Shelf, shelves)
+    return redirect(url_for("storage.index") + f"#cabinet-{shelf.cabinet_id}")
+
+
+def _step() -> int:
+    return -1 if request.form.get("direction") == "up" else 1
 
 
 @blueprint.route("/cabinets/<int:cabinet_id>/shelves/new", methods=["GET", "POST"])
@@ -126,6 +151,7 @@ def _shelf_form(cabinet: Cabinet, shelf_id: int | None):
             if shelf is None:
                 shelf = Shelf(max((s.id for s in shelves), default=0) + 1, cabinet.id, values["name"])
                 shelves.append(shelf)
+                settle_order([cabinet], shelves)
             shelf.name = values["name"]
             shelf.width_cm = width
             shelf.type = ShelfType(values["type"]) if values["type"] else None

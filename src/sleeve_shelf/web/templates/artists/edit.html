@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ artist.name }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 760px;">
+  <p class="mb-1"><a href="{{ url_for('artists.index') }}">&larr; {{ _('Artists') }}</a></p>
+  <h1>{{ artist.name }}</h1>
+  <p class="ss-muted mt-1">
+    {{ _('Era band: %(band)s', band=band) }}
+    {% if family %} &middot; {{ _('Family:') }} <a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% endif %}
+  </p>
+
+  {% for error in errors %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endfor %}
+  {% if saved %}
+  <div class="ss-alert mt-3">{{ _('Saved. Generate the proposal again to see the effect.') }}</div>
+  {% endif %}
+
+  <form class="ss-card mt-4" method="post">
+    <div class="ss-card-body d-flex flex-column gap-4">
+      <div>
+        <label for="start_year" class="form-label fw-semibold">{{ _('Start year') }}</label>
+        <input id="start_year" class="form-control" style="max-width: 160px;" name="start_year" inputmode="numeric" value="{{ request.form.get('start_year', artist.start_year or '') }}">
+        <div class="form-text">
+          {{ _('The year the artist began; it decides the era band.') }}
+          {% if derived_year %}{{ _('Left empty, the earliest original year among the albums is used: %(year)d.', year=derived_year) }}{% endif %}
+          <a href="{{ wikipedia_url }}" target="_blank" rel="noopener">{{ _('Look up on Wikipedia') }}</a>
+        </div>
+      </div>
+      <div>
+        <label for="cluster_id" class="form-label fw-semibold">{{ _('Cluster') }}</label>
+        <select id="cluster_id" class="form-select" name="cluster_id">
+          <option value="">{{ _('None — let the app propose one') }}</option>
+          {% for cluster in clusters %}
+          <option value="{{ cluster.id }}" {{ 'selected' if assignment and assignment.cluster_id == cluster.id }}>{{ cluster.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="form-text">
+          {% if assignment and not assignment.confirmed %}{{ _('This cluster was proposed by the app; saving confirms it.') }}{% endif %}
+          {% if proposed_cluster %}{{ _('Going by the Discogs styles of the albums: %(cluster)s.', cluster=proposed_cluster.name) }}{% endif %}
+        </div>
+        <label for="new_cluster" class="form-label mt-3">{{ _('…or a new cluster') }}</label>
+        <input id="new_cluster" class="form-control" name="new_cluster" placeholder="{{ _('Name of a new cluster') }}" value="{{ request.form.get('new_cluster', '') }}">
+        <div class="form-text">{{ _('For an artist that deserves a cluster of its own, for example. A new cluster is added at the end of the cluster order.') }}</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="ss-button ss-button-primary" type="submit">{{ _('Save') }}</button>
+        <a class="ss-button" href="{{ url_for('artists.index') }}">{{ _('Cancel') }}</a>
+      </div>
+    </div>
+  </form>
+
+  <h2 class="mt-5">{{ _('Albums') }} ({{ albums | length }})</h2>
+  <div class="ss-card mt-3">
+    {% for row in albums %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ row.album.title }}</span>
+        <span class="ss-row-title">{% if row.album.original_release_year %}{{ row.album.original_release_year }}{% else %}{{ _('year unknown') }}{% endif %}{% if row.album.format_tokens %} &middot; {{ row.album.format_tokens.qualifiers | join(', ') }}{% endif %}</span>
+      </div>
+      {% if not row.album.width_confirmed %}<a class="ss-chip" href="{{ url_for('albums.widths') }}#album-{{ row.album.id }}">{{ _('rough width') }}</a>{% endif %}
+      {% if row.place and row.place.shelf_id is not none %}
+      <a class="ss-row-place" href="{{ url_for('browse.browse', shelf=row.place.shelf_id) }}#album-{{ row.album.id }}">{{ row.place.cabinet }} &middot; {{ row.place.shelf }}</a>
+      {% else %}
+      <span class="ss-row-place">{{ _('Unplaced') }}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

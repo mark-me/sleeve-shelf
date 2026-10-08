@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Clusters') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page">
+  <h1>{{ _('Clusters') }}</h1>
+  <p class="ss-muted mt-1">{{ _('The groups of artists your collection is sorted into, in the order they follow each other across the shelves. The arrows change that order.') }}</p>
+
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <form id="merge" method="post" action="{{ url_for('clusters.merge') }}"></form>
+  {% for row in rows %}<form id="move-{{ row.cluster.id }}" method="post" action="{{ url_for('clusters.move', cluster_id=row.cluster.id) }}"></form>{% endfor %}
+
+  <div class="ss-card mt-4">
+    <div class="table-responsive">
+      <table class="ss-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>{{ _('Cluster') }}</th>
+            <th class="text-end">{{ _('Artists') }}</th>
+            <th class="text-end">{{ _('Albums') }}</th>
+            <th>{{ _('Discogs styles pointing here') }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr id="cluster-{{ row.cluster.id }}">
+            <td><input class="form-check-input" type="checkbox" name="cluster" value="{{ row.cluster.id }}" form="merge" aria-label="{{ _('Select %(name)s to merge', name=row.cluster.name) }}"></td>
+            <td class="fw-semibold"><a href="{{ url_for('clusters.edit', cluster_id=row.cluster.id) }}">{{ row.cluster.name }}</a></td>
+            <td class="text-end"><a href="{{ url_for('artists.index', cluster=row.cluster.id) }}">{{ row.artists }}</a></td>
+            <td class="text-end">{{ row.albums }}</td>
+            <td style="white-space: normal; min-width: 220px;">
+              {% for style in row.styles[:6] %}<span class="ss-chip me-1 mb-1 d-inline-block" style="max-width: none;">{{ style.name }}</span>{% endfor %}
+              {% if row.styles | length > 6 %}<span class="ss-muted small">+{{ row.styles | length - 6 }}</span>{% endif %}
+            </td>
+            <td class="text-end text-nowrap">
+              <button class="ss-link-button ss-move" type="submit" form="move-{{ row.cluster.id }}" name="direction" value="up" aria-label="{{ _('Move %(name)s earlier', name=row.cluster.name) }}" {{ 'disabled' if loop.first }}>&uarr;</button>
+              <button class="ss-link-button ss-move" type="submit" form="move-{{ row.cluster.id }}" name="direction" value="down" aria-label="{{ _('Move %(name)s later', name=row.cluster.name) }}" {{ 'disabled' if loop.last }}>&darr;</button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="ss-card-body d-flex flex-wrap align-items-end gap-2" style="border-top: 1px solid var(--ss-border);">
+      <div>
+        <label for="merge-name" class="form-label fw-semibold">{{ _('Merge the ticked clusters') }}</label>
+        <input id="merge-name" class="form-control" style="min-width: 300px;" name="name" form="merge" placeholder="{{ _('Name for the merged cluster (optional)') }}">
+      </div>
+      <button class="ss-button" type="submit" form="merge">{{ _('Merge') }}</button>
+    </div>
+  </div>
+  <p class="ss-muted small mt-3">{{ _('Merging moves the artists, styles and location rules of the ticked clusters into the one with the most albums, which keeps its place in the order — and its name, unless you give another. Changes here count the next time a proposal is generated.') }}</p>
+</div>
+{% endblock %}

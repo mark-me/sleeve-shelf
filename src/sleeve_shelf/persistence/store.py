@@ -14,17 +14,22 @@ import duckdb
 
 from sleeve_shelf.domain import (
     Album,
+    AliasGroup,
     Artist,
     ArtistClusterAssignment,
     Cabinet,
     Cluster,
     EraBand,
     EraBandSource,
+    FamilyDismissal,
     FormatTokens,
+    LocationRule,
+    LocationRuleTarget,
     MasterEnrichment,
     MatchProposal,
     Placement,
     PlacementSource,
+    ProposedPlacement,
     ReleaseEnrichment,
     Shelf,
     ShelfLayer,
@@ -55,10 +60,18 @@ _FORMAT_TOKENS_TYPE = (
     " is_compound BOOLEAN, qualifiers VARCHAR[])"
 )
 
+_PLACEMENT_COLUMNS = {
+    "unit_type": "VARCHAR",
+    "unit_id": "INTEGER",
+    "shelf_id": "INTEGER",
+    "position": "INTEGER",
+    "source": "VARCHAR",
+}
+
 _TABLES: dict[type, _Table] = {
     Cabinet: _Table(
         "cabinets.json",
-        {"id": "INTEGER", "name": "VARCHAR", "location": "VARCHAR"},
+        {"id": "INTEGER", "name": "VARCHAR", "location": "VARCHAR", "position": "INTEGER"},
     ),
     Shelf: _Table(
         "shelves.json",
@@ -71,10 +84,26 @@ _TABLES: dict[type, _Table] = {
             "layer": "VARCHAR",
             "reachability_score": "INTEGER",
             "is_showcase": "BOOLEAN",
+            "position": "INTEGER",
         },
         {"type": ShelfType, "layer": ShelfLayer},
     ),
-    Cluster: _Table("clusters.json", {"id": "INTEGER", "name": "VARCHAR"}),
+    Cluster: _Table(
+        "clusters.json", {"id": "INTEGER", "name": "VARCHAR", "position": "INTEGER"}
+    ),
+    AliasGroup: _Table("alias_groups.json", {"id": "INTEGER", "label": "VARCHAR"}),
+    LocationRule: _Table(
+        "location_rules.json",
+        {
+            "id": "INTEGER",
+            "target_type": "VARCHAR",
+            "target_id": "INTEGER",
+            "cabinet_id": "INTEGER",
+            "note": "VARCHAR",
+        },
+        {"target_type": LocationRuleTarget},
+    ),
+    FamilyDismissal: _Table("family_dismissals.json", {"anchor_artist_id": "INTEGER"}),
     Artist: _Table(
         "artists.json",
         {
@@ -152,13 +181,12 @@ _TABLES: dict[type, _Table] = {
     ),
     Placement: _Table(
         "placement_current.json",
-        {
-            "unit_type": "VARCHAR",
-            "unit_id": "INTEGER",
-            "shelf_id": "INTEGER",
-            "position": "INTEGER",
-            "source": "VARCHAR",
-        },
+        _PLACEMENT_COLUMNS,
+        {"unit_type": UnitType, "source": PlacementSource},
+    ),
+    ProposedPlacement: _Table(
+        "placement_proposal.json",
+        _PLACEMENT_COLUMNS,
         {"unit_type": UnitType, "source": PlacementSource},
     ),
 }
@@ -222,14 +250,21 @@ class JsonStore:
         """Whether the entity's file has been written."""
         return (self.data_dir / _TABLES[entity].filename).exists()
 
+    def remove(self, entity: type) -> None:
+        """Delete the entity's file, if it was written."""
+        (self.data_dir / _TABLES[entity].filename).unlink(missing_ok=True)
+
     def relation(self, entity: type) -> str:
         """The SQL table expression that reads the entity's file, for use in queries."""
         table = _TABLES[entity]
+        return self._read(table, self.data_dir / table.filename)
+
+    @staticmethod
+    def _read(table: _Table, path: Path) -> str:
         columns = ", ".join(
             f"{_sql_string(name)}: {_sql_string(kind)}" for name, kind in table.columns.items()
         )
-        path = _sql_string((self.data_dir / table.filename).as_posix())
-        return f"read_json({path}, format = 'array', columns = {{{columns}}})"
+        return f"read_json({_sql_string(path.as_posix())}, format = 'array', columns = {{{columns}}})"
 
     def query(self, sql: str, parameters: list | None = None) -> list[tuple]:
         """Run a read query; refer to entities through relation()."""
@@ -242,6 +277,25 @@ class JsonStore:
         target = snapshots / f"{name}.json"
         shutil.copyfile(self.data_dir / _TABLES[Placement].filename, target)
         return target
+
+    def snapshots(self) -> list[str]:
+        """The names of the saved layout versions, oldest first."""
+        return sorted(path.stem for path in (self.data_dir / SNAPSHOT_DIR).glob("*.json"))
+
+    def load_snapshot(self, name: str) -> list[Placement]:
+        """The placements of a saved layout version."""
+        table = _TABLES[Placement]
+        path = self.data_dir / SNAPSHOT_DIR / f"{name}.json"
+        rows = self._connection.execute(
+            f"SELECT * FROM {self._read(table, path)}"
+        ).fetchall()
+        return [self._decode(Placement, table, row) for row in rows]
+
+    def snapshot_is_current(self, name: str) -> bool:
+        """Whether a saved version is exactly the current layout."""
+        current = self.data_dir / _TABLES[Placement].filename
+        saved = self.data_dir / SNAPSHOT_DIR / f"{name}.json"
+        return current.exists() and saved.exists() and current.read_bytes() == saved.read_bytes()
 
     def clear_snapshots(self) -> None:
         """Remove all saved layout versions."""

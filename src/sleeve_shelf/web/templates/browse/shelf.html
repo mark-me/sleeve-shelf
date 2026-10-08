@@ -2,8 +2,8 @@
 {% block title %}{{ _('Browse / Search') }}{% endblock %}
 
 {% macro shelf_nav() %}
-<a class="ss-button {{ 'disabled' if not previous }}" {% if previous %}href="{{ url_for('browse.browse', shelf=previous.shelf_id) }}"{% else %}aria-disabled="true"{% endif %}>&larr; {{ _('Previous shelf') }}</a>
-<a class="ss-button ss-button-primary {{ 'disabled' if not next }}" {% if next %}href="{{ url_for('browse.browse', shelf=next.shelf_id) }}"{% else %}aria-disabled="true"{% endif %}>{{ _('Next shelf') }} &rarr;</a>
+<a class="ss-button {{ 'disabled' if not previous }}" {% if previous %}href="{{ url_for('browse.browse', shelf=previous.shelf_id, layout=layout) }}"{% else %}aria-disabled="true"{% endif %}>&larr; {{ _('Previous shelf') }}</a>
+<a class="ss-button ss-button-primary {{ 'disabled' if not next }}" {% if next %}href="{{ url_for('browse.browse', shelf=next.shelf_id, layout=layout) }}"{% else %}aria-disabled="true"{% endif %}>{{ _('Next shelf') }} &rarr;</a>
 {% endmacro %}
 
 {% block content %}
@@ -13,7 +13,11 @@
 </div>
 
 <div class="ss-sticky-top">
+  {% if layout %}
+  <div class="ss-alert">{{ _('You are browsing the proposal, not your shelves as they are.') }} <a href="{{ url_for('proposal.index') }}">{{ _('Back to the proposal') }}</a></div>
+  {% else %}
   {% include "browse/_search.html" %}
+  {% endif %}
   {% if shelf %}
   <div class="ss-shelf-bar">
     <span>
@@ -26,6 +30,7 @@
     <div class="ss-shelf-nav d-none d-lg-flex">{{ shelf_nav() }}</div>
   </div>
   <form method="get" action="{{ url_for('browse.browse') }}">
+    {% if layout %}<input type="hidden" name="layout" value="{{ layout }}">{% endif %}
     <label for="shelf" class="visually-hidden">{{ _('Jump to shelf') }}</label>
     <select id="shelf" name="shelf" class="ss-shelf-select" onchange="this.form.submit()">
       {% for option in shelves %}
@@ -50,7 +55,7 @@
     {% endif %}
     <div class="ss-row" id="album-{{ album.album_id }}">
       <div class="ss-row-text">
-        <span class="ss-row-artist">{{ album.artist }}</span>
+        <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=album.artist_id) }}">{{ album.artist }}</a>
         <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
       </div>
     </div>

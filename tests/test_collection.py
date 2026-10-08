@@ -157,7 +157,7 @@ def test_style_without_a_curated_cluster_gets_its_own(tmp_path):
 
     apply_enrichment(store)
 
-    assert store.load(Cluster) == [Cluster(1, "Dub")]
+    assert store.load(Cluster) == [Cluster(1, "Dub", position=0)]
     assert store.load(Style) == [Style(1, "Dub", 1)]
 
 

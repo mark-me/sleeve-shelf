@@ -10,14 +10,29 @@ from flask_babel import Babel
 from sleeve_shelf.collection import (
     enrich_collection,
     import_discogs_collection,
-    replace_collection,
+    load_layout,
 )
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.initial_load import load_initial_layout
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.web import browse, discogs, setup, storage
+from sleeve_shelf.web import (
+    albums,
+    artists,
+    browse,
+    clusters,
+    dashboard,
+    discogs,
+    families,
+    layout,
+    rules,
+    settings,
+    setup,
+    storage,
+    versions,
+)
+from sleeve_shelf.web import proposal as proposal_screen
 from sleeve_shelf.web.context import has_collection
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
@@ -36,6 +51,16 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(browse.blueprint)
     app.register_blueprint(storage.blueprint)
     app.register_blueprint(discogs.blueprint)
+    app.register_blueprint(families.blueprint)
+    app.register_blueprint(proposal_screen.blueprint)
+    app.register_blueprint(artists.blueprint)
+    app.register_blueprint(settings.blueprint)
+    app.register_blueprint(rules.blueprint)
+    app.register_blueprint(layout.blueprint)
+    app.register_blueprint(clusters.blueprint)
+    app.register_blueprint(versions.blueprint)
+    app.register_blueprint(dashboard.blueprint)
+    app.register_blueprint(albums.blueprint)
 
     @app.before_request
     def reject_cross_site_posts():
@@ -46,7 +71,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
 
     @app.get("/")
     def index():
-        return redirect(url_for("browse.browse" if has_collection() else "setup.welcome"))
+        return redirect(url_for("dashboard.index" if has_collection() else "setup.welcome"))
 
     return app
 
@@ -60,7 +85,7 @@ def main(arguments: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="sleeve-shelf")
     commands = parser.add_subparsers(dest="command")
     load = commands.add_parser(
-        "load", help="load a layout workbook, replacing the stored collection"
+        "load", help="load a layout workbook; once a collection exists only the layout changes"
     )
     load.add_argument("workbook", type=Path)
     import_discogs = commands.add_parser(
@@ -77,7 +102,7 @@ def main(arguments: list[str] | None = None) -> None:
     if options.command == "load":
         # Same effect as the upload in the wizard, for when a browser can't upload.
         result = load_initial_layout(options.workbook, settings.base_width_cm)
-        replace_collection(store, result, settings.width_constants)
+        load_layout(store, result, settings.width_constants)
         print(
             f"Loaded {len(result.albums)} albums on {len(result.shelves)} shelves"
             f" into {data_dir}"

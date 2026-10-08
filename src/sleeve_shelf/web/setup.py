@@ -8,7 +8,7 @@ from flask import Blueprint, current_app, redirect, render_template, request, ur
 from flask_babel import gettext as _
 from openpyxl.utils.exceptions import InvalidFileException
 
-from sleeve_shelf.collection import replace_collection
+from sleeve_shelf.collection import load_layout
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.ingestion.initial_load import InitialLoad, load_initial_layout
 from sleeve_shelf.web.context import get_store, has_collection
@@ -91,7 +91,7 @@ def confirm():
     finally:
         pending.unlink(missing_ok=True)
     settings = load_settings(current_app.config["DATA_DIR"])
-    replace_collection(get_store(), load, settings.width_constants)
+    load_layout(get_store(), load, settings.width_constants)
     return redirect(url_for("browse.browse"))
 
 

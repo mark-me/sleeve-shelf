@@ -347,3 +347,65 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 }
 
 .progress { --bs-progress-bg: var(--ss-chip); --bs-progress-bar-bg: var(--ss-accent); height: 10px; }
+
+.ss-move { margin-left: 4px; padding: 2px 8px; font-size: 1rem; }
+.ss-button:disabled, .ss-link-button:disabled { opacity: 0.3; pointer-events: none; }
+
+a.ss-row-artist { color: inherit; text-decoration: none; }
+a.ss-row-artist:hover { color: var(--ss-accent); }
+.ss-page a:not(.ss-button):not(.ss-row):not(.ss-row-artist) { color: var(--ss-accent); }
+
+/* Layout: shelves with draggable blocks of albums. */
+.ss-shelf { padding: 14px 20px; border-top: 1px solid var(--ss-border); }
+.ss-card-head + .ss-shelf { border-top: none; }
+.ss-shelf-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.ss-meter { flex: 1; max-width: 260px; height: 8px; border-radius: 999px; background: var(--ss-chip); overflow: hidden; }
+.ss-meter-fill { height: 100%; width: 0; background: var(--ss-accent); }
+.ss-shelf-over .ss-meter-fill { background: #D9534F; }
+.ss-shelf-over .ss-shelf-fill { color: #D9534F; font-weight: 600; }
+
+.ss-blocks { display: flex; flex-wrap: wrap; gap: 6px; min-height: 40px; margin: 0; padding: 0; list-style: none; }
+.ss-tray { min-height: 64px; }
+
+.ss-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--ss-border);
+  border-radius: 8px;
+  background: var(--ss-bg);
+  font-size: 0.8rem;
+  cursor: grab;
+  touch-action: manipulation;
+}
+
+.ss-block-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+.ss-block-title { color: var(--ss-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+
+.ss-block-count {
+  min-width: 24px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 999px;
+  background: var(--ss-chip);
+  color: var(--ss-chip-text);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.sortable-ghost { opacity: 0.35; }
+.sortable-chosen { border-color: var(--ss-accent); }
+
+/* Tabs, one per room on the Layout screen. */
+.ss-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--ss-border); }
+.ss-tab {
+  padding: 10px 16px;
+  border-bottom: 3px solid transparent;
+  color: var(--ss-muted) !important;
+  font-weight: 600;
+  text-decoration: none;
+}
+.ss-tab.active { border-bottom-color: var(--ss-accent); color: var(--ss-text) !important; }
+a.ss-chip { text-decoration: none; }

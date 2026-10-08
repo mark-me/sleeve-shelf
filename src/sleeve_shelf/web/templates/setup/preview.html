@@ -16,7 +16,7 @@
   </div>
 
   {% if has_collection %}
-  <div class="ss-alert mt-3">{{ _('Loading this workbook replaces the collection that is loaded now.') }}</div>
+  <div class="ss-alert mt-3">{{ _('Loading this workbook only changes where your albums stand. Albums, Discogs links, styles and families are kept; albums the workbook does not list become unplaced, and new ones are added.') }}</div>
   {% endif %}
 
   <form class="d-flex gap-2 mt-3" method="post" action="{{ url_for('setup.confirm') }}">

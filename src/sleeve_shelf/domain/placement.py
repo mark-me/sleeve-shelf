@@ -32,6 +32,11 @@ class Placement:
 
 
 @dataclass(slots=True)
+class ProposedPlacement(Placement):
+    """A placement in a sorting proposal, kept next to the current layout until accepted."""
+
+
+@dataclass(slots=True)
 class ShowcaseFeature:
     """An artist or album featured on a showcase shelf.
 

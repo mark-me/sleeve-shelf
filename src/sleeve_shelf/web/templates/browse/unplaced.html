@@ -6,9 +6,11 @@
   <h1>{{ _('Unplaced albums') }}</h1>
   <p class="ss-muted mt-1">{{ _('Albums that have no spot on a shelf yet.') }}</p>
 
-  {% if albums %}
+  {% set lps = albums | selectattr('is_lp') | list %}
+  {% set others = albums | rejectattr('is_lp') | list %}
+  {% if lps %}
   <div class="ss-card">
-    {% for album in albums %}
+    {% for album in lps %}
     <div class="ss-row" id="album-{{ album.album_id }}">
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ album.artist }}</span>
@@ -19,7 +21,22 @@
     {% endfor %}
   </div>
   {% else %}
-  <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('Every album has a place on a shelf.') }}</div></div>
+  <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('Every LP has a place on a shelf.') }}</div></div>
+  {% endif %}
+
+  {% if others %}
+  <h2 class="mt-5">{{ _('Singles and EPs') }} ({{ others | length }})</h2>
+  <p class="ss-muted mt-1">{{ _('7", 10" and 12" releases are kept outside the layout; they are listed here for reference.') }}</p>
+  <div class="ss-card">
+    {% for album in others %}
+    <div class="ss-row" id="album-{{ album.album_id }}">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ album.artist }}</span>
+        <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
   {% endif %}
 </div>
 {% endblock %}

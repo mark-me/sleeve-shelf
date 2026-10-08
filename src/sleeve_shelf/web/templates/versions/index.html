@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Versions') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 820px;">
+  <h1>{{ _('Versions') }}</h1>
+  <p class="ss-muted mt-1">{{ _('Saved layouts. Putting one back changes where your albums stand — nothing else — and the layout you have now is saved first, so you can always return.') }}</p>
+
+  {% if message %}
+  <div class="ss-alert mt-3">{{ message }}</div>
+  {% endif %}
+
+  <form class="ss-card mt-4" method="post" action="{{ url_for('versions.save') }}">
+    <div class="ss-card-body">
+      <label for="label" class="form-label fw-semibold">{{ _('Save the layout as it is now') }}</label>
+      <div class="ss-muted small mb-2">{% if unsaved %}{{ _('The current layout has changes that are not in any version yet.') }}{% else %}{{ _('The current layout is already saved as the version marked “current”.') }}{% endif %}</div>
+      <div class="d-flex flex-wrap gap-2">
+        <input id="label" class="form-control" style="max-width: 360px;" name="label" placeholder="{{ _('Optional name, e.g. “after the move”') }}">
+        <button class="ss-button ss-button-primary" type="submit">{{ _('Save version') }}</button>
+      </div>
+    </div>
+  </form>
+
+  <h2 class="mt-5">{{ _('Saved versions') }} ({{ versions | length }})</h2>
+  {% if versions %}
+  <div class="ss-card mt-3">
+    {% for version in versions %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ version.saved_at.strftime('%Y-%m-%d %H:%M') }}{% if version.label %} &middot; {{ version.label }}{% endif %}</span>
+        <span class="ss-row-title">{{ ngettext('%(num)d album placed', '%(num)d albums placed', version.album_count) }}</span>
+      </div>
+      {% if version.is_current %}
+      <span class="ss-chip">{{ _('current') }}</span>
+      {% else %}
+      <form method="post" action="{{ url_for('versions.restore', name=version.name) }}">
+        <button class="ss-button ss-button-small" type="submit">{{ _('Put back') }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('No versions have been saved yet.') }}</div></div>
+  {% endif %}
+  <p class="ss-muted small mt-3">{{ _('A version is saved when a workbook is loaded and when a proposal is accepted, and — at most once an hour — before you change the layout by hand.') }}</p>
+</div>
+{% endblock %}

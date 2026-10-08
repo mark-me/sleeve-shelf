@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Layout') }}{% endblock %}
+
+{% macro block_list(blocks) %}
+{% for block in blocks %}
+<li class="ss-block" data-albums="{{ block.albums | map(attribute='album_id') | join(',') }}"
+    title="{{ [block.cluster, block.era_band] | select | join(' · ') }}&#10;{% for album in block.albums %}{{ album.title }}{% if album.year %} ({{ album.year }}){% endif %}&#10;{% endfor %}">
+  <span class="ss-block-name">{{ block.artist }}</span>
+  {% if block.albums | length > 1 %}
+  <button class="ss-block-count" type="button" data-split
+          data-titles="{{ block.albums | map(attribute='title') | join('|') }}"
+          aria-label="{{ _('Split %(artist)s into single albums', artist=block.artist) }}">{{ block.albums | length }}</button>
+  {% else %}
+  <span class="ss-block-title">{{ block.albums[0].title }}</span>
+  {% endif %}
+</li>
+{% endfor %}
+{% endmacro %}
+
+{% block content %}
+<div class="ss-page" id="layout" data-move-url="{{ url_for('layout.move', layout=layout) }}">
+  <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
+    <div>
+      <h1>{{ _('Layout') }}</h1>
+      <p class="ss-muted mb-0 mt-1">{{ _('Drag artists between and within shelves. A number is how many albums a block holds; click it to split the block into single albums.') }}</p>
+    </div>
+    {% if has_proposal %}
+    <div class="d-flex gap-2">
+      <a class="ss-button {{ 'ss-button-primary' if not layout }}" href="{{ url_for('layout.index', room=room or none) }}">{{ _('My shelves') }}</a>
+      <a class="ss-button {{ 'ss-button-primary' if layout }}" href="{{ url_for('layout.index', layout='proposal', room=room or none) }}">{{ _('The proposal') }}</a>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if layout %}
+  <div class="ss-alert mt-3">{{ _('You are adjusting the proposal. Your shelves change only when you accept it.') }} <a href="{{ url_for('proposal.index') }}">{{ _('Back to the proposal') }}</a></div>
+  {% else %}
+  <div class="ss-alert mt-3">{{ _('You are adjusting your shelves as they are: every move is saved at once. A version from before you started is kept, so you can go back.') }} <a href="{{ url_for('versions.index') }}">{{ _('Versions') }}</a></div>
+  {% endif %}
+  {% if rooms %}
+  <nav class="ss-tabs mt-4" aria-label="{{ _('Rooms') }}">
+    {% for name in rooms %}
+    <a class="ss-tab {{ 'active' if name == room }}" href="{{ url_for('layout.index', layout=layout, room=name) }}" {% if name == room %}aria-current="page"{% endif %}>{{ name or _('No room set') }}</a>
+    {% endfor %}
+  </nav>
+  {% endif %}
+  <div class="ss-alert mt-3 d-none" id="layout-error" role="alert">{{ _('That move could not be saved. Reload the page and try again.') }}</div>
+
+  {% for entry in cabinets %}
+  <section class="ss-card mt-4">
+    <div class="ss-card-head">
+      <div>
+        <h2>{{ entry.cabinet.name }}</h2>
+        {% if entry.cabinet.location %}<div class="ss-muted small">{{ entry.cabinet.location }}</div>{% endif %}
+      </div>
+    </div>
+    {% for row in entry.shelves %}
+    {% set shelf = row.shelf %}
+    <div class="ss-shelf" data-shelf="{{ shelf.id }}" data-width="{{ shelf.width_cm if shelf.width_cm is not none else '' }}">
+      <div class="ss-shelf-head">
+        <span class="fw-semibold">{{ shelf.name }}</span>
+        <div class="ss-meter" aria-hidden="true"><div class="ss-meter-fill"></div></div>
+        <span class="ss-shelf-fill ss-muted small"
+              data-albums="{{ row.albums }}" data-filled="{{ '%.1f' | format(row.filled_cm) }}"></span>
+      </div>
+      <ul class="ss-blocks" data-list="{{ shelf.id }}">{{ block_list(row.blocks) }}</ul>
+    </div>
+    {% else %}
+    <div class="ss-card-body ss-muted">{{ _('This cabinet has no shelves yet.') }}</div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <section class="ss-card mt-4">
+    <div class="ss-card-head">
+      <div>
+        <h2>{{ _('Not on a shelf') }}</h2>
+        <div class="ss-muted small">{{ _('LPs without a place. Drag one to a shelf to place it, or drop an album here to take it off its shelf.') }}</div>
+      </div>
+    </div>
+    <div class="ss-shelf">
+      <ul class="ss-blocks ss-tray" data-list="0">{{ block_list(tray) }}</ul>
+    </div>
+  </section>
+</div>
+
+<script>
+  window.layoutText = {
+    fill: {{ _('%(albums)s albums · %(filled)s of %(width)s cm', albums='__albums__', filled='__filled__', width='__width__') | tojson }},
+    fillNoWidth: {{ _('%(albums)s albums · %(filled)s cm', albums='__albums__', filled='__filled__') | tojson }}
+  };
+</script>
+<script src="{{ url_for('static', filename='vendor/Sortable.min.js') }}"></script>
+<script src="{{ url_for('static', filename='layout.js') }}"></script>
+{% endblock %}

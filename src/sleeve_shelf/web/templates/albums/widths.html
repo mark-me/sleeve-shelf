@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Album widths') }}{% endblock %}
+
+{% macro width_rows(rows, button) %}
+{% for row in rows %}
+<form class="ss-row" id="album-{{ row.album.id }}" method="post" action="{{ url_for('albums.set_width', album_id=row.album.id) }}">
+  <div class="ss-row-text">
+    <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=row.album.artist_id) }}">{{ row.artist }}</a>
+    <span class="ss-row-title">{{ row.album.title }}{% if row.album.format_tokens %} &middot; {{ row.album.format_tokens.qualifiers | join(', ') }}{% endif %}</span>
+    <span class="ss-row-title">{{ _('Estimate: %(width).1f cm', width=row.album.computed_width_cm or 0) }}</span>
+  </div>
+  <div class="d-flex align-items-center gap-2 flex-shrink-0">
+    <label for="width-{{ row.album.id }}" class="visually-hidden">{{ _('Width of %(title)s in cm', title=row.album.title) }}</label>
+    <input id="width-{{ row.album.id }}" class="form-control" style="width: 90px;" name="width_cm" inputmode="decimal"
+           value="{{ '%g' | format(row.album.manual_width_cm) if row.album.manual_width_cm is not none else '' }}" placeholder="cm">
+    <button class="ss-button ss-button-small" type="submit">{{ button }}</button>
+  </div>
+</form>
+{% endfor %}
+{% endmacro %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 860px;">
+  <h1>{{ _('Album widths') }}</h1>
+  <p class="ss-muted mt-1">{{ _('Box sets and bundles differ too much to estimate from their format: they count as loose discs until you measure them. Enter the width of the spine in centimetres.') }}</p>
+
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <h2 class="mt-4">{{ _('To measure') }} ({{ to_measure | length }})</h2>
+  {% if to_measure %}
+  <div class="ss-card mt-3">{{ width_rows(to_measure, _('Save')) }}</div>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('Every box set and bundle has a measured width.') }}</div></div>
+  {% endif %}
+
+  {% if measured %}
+  <h2 class="mt-5">{{ _('Measured') }} ({{ measured | length }})</h2>
+  <p class="ss-muted mt-1">{{ _('Clear a width and save to go back to the estimate.') }}</p>
+  <div class="ss-card mt-3">{{ width_rows(measured, _('Change')) }}</div>
+  {% endif %}
+</div>
+{% endblock %}
