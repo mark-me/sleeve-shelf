@@ -69,7 +69,10 @@ def test_files_are_plain_json_arrays(tmp_path):
 
     content = json.loads((tmp_path / "clusters.json").read_text(encoding="utf-8"))
 
-    assert content == [{"id": 1, "name": "Jazz"}, {"id": 2, "name": "Rock"}]
+    assert content == [
+        {"id": 1, "name": "Jazz", "position": None},
+        {"id": 2, "name": "Rock", "position": None},
+    ]
 
 
 def test_save_replaces_previous_content(tmp_path):

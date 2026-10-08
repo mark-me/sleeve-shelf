@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Artist families') }}{% endblock %}
+
+{% macro member_line(member) %}
+<span class="ss-row-artist">{{ member.name }}</span>
+<span class="ss-row-title">{{ ngettext('%(num)d album', '%(num)d albums', member.albums) }}{% if member.cluster %} &middot; {{ member.cluster }}{% endif %}</span>
+{% endmacro %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 860px;">
+  <h1>{{ _('Artist families') }}</h1>
+  <p class="ss-muted mt-1">{{ _('A family keeps an artist’s other billings and side projects next to each other on the shelf, in one cluster.') }}</p>
+
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <datalist id="free-artists">
+    {% for name in free_artists %}<option value="{{ name }}"></option>{% endfor %}
+  </datalist>
+
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-4" id="suggestions">
+    <h2>{{ _('Suggested from the names') }} ({{ suggestions | length }})</h2>
+    {% if suggestions %}
+    <form method="post" action="{{ url_for('families.accept_all') }}">
+      <button class="ss-button ss-button-small" type="submit">{{ _('Accept all') }}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% if not suggestions %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('No suggestions: no ungrouped artist’s name appears inside another’s.') }}</div></div>
+  {% endif %}
+  {% for suggestion in suggestions %}
+  <div class="ss-card mt-3">
+    <form method="post" action="{{ url_for('families.accept', anchor_id=suggestion.anchor.id) }}">
+      <div class="ss-group">{{ suggestion.anchor.name }}</div>
+      <div class="ss-row"><div class="ss-row-text">{{ member_line(suggestion.anchor) }}</div></div>
+      {% for member in suggestion.members %}
+      <label class="ss-row" for="member-{{ member.id }}">
+        <div class="ss-row-text">{{ member_line(member) }}</div>
+        <input id="member-{{ member.id }}" class="form-check-input flex-shrink-0" type="checkbox" name="member" value="{{ member.id }}" checked>
+      </label>
+      {% endfor %}
+      <div class="ss-card-body d-flex gap-2">
+        <button class="ss-button ss-button-small ss-button-primary" type="submit">{{ _('Make this a family') }}</button>
+        <button class="ss-button ss-button-small" type="submit" formaction="{{ url_for('families.dismiss', anchor_id=suggestion.anchor.id) }}">{{ _('Not a family') }}</button>
+      </div>
+    </form>
+  </div>
+  {% endfor %}
+
+  <h2 class="mt-5" id="families">{{ _('Families') }} ({{ families | length }})</h2>
+  <form class="d-flex flex-wrap gap-2 mt-3" method="post" action="{{ url_for('families.create') }}">
+    <label for="new-family" class="visually-hidden">{{ _('Name of the new family') }}</label>
+    <input id="new-family" class="form-control" style="max-width: 360px;" name="label" placeholder="{{ _('Name of a new family…') }}" required>
+    <button class="ss-button" type="submit">+ {{ _('Add family') }}</button>
+  </form>
+
+  {% for family in families %}
+  <div class="ss-card mt-3" id="family-{{ family.group.id }}">
+    <div class="ss-card-head">
+      <form class="d-flex flex-wrap gap-2" method="post" action="{{ url_for('families.rename', group_id=family.group.id) }}">
+        <label for="label-{{ family.group.id }}" class="visually-hidden">{{ _('Family name') }}</label>
+        <input id="label-{{ family.group.id }}" class="form-control fw-semibold" style="max-width: 320px;" name="label" value="{{ family.group.label }}" required>
+        <button class="ss-button ss-button-small" type="submit">{{ _('Rename') }}</button>
+      </form>
+      <form method="post" action="{{ url_for('families.delete', group_id=family.group.id) }}">
+        <button class="ss-button ss-button-small" type="submit">{{ _('Remove family') }}</button>
+      </form>
+    </div>
+    {% for member in family.members %}
+    <div class="ss-row">
+      <div class="ss-row-text">{{ member_line(member) }}</div>
+      <form method="post" action="{{ url_for('families.remove_member', artist_id=member.id) }}">
+        <button class="ss-link-button" type="submit">{{ _('Take out') }}</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="ss-card-body ss-muted">{{ _('No artists in this family yet.') }}</div>
+    {% endfor %}
+    <form class="ss-card-body d-flex flex-wrap gap-2" method="post" action="{{ url_for('families.add_member', group_id=family.group.id) }}">
+      <label for="add-{{ family.group.id }}" class="visually-hidden">{{ _('Artist to add') }}</label>
+      <input id="add-{{ family.group.id }}" class="form-control" style="max-width: 360px;" name="artist" list="free-artists" placeholder="{{ _('Add an artist…') }}" autocomplete="off" required>
+      <button class="ss-button ss-button-small" type="submit">{{ _('Add') }}</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -11,7 +11,7 @@
   <div class="ss-alert mt-3" role="alert">{{ error }}</div>
   {% endif %}
   {% if has_collection %}
-  <div class="ss-alert mt-3">{{ _('A collection is already loaded. Loading a new workbook replaces all of it.') }}</div>
+  <div class="ss-alert mt-3">{{ _('A collection is already loaded. A new workbook only changes the layout: where your albums stand.') }}</div>
   {% endif %}
 
   <form class="ss-card mt-4" method="post" action="{{ url_for('setup.upload') }}" enctype="multipart/form-data">

@@ -1,14 +1,24 @@
 """Collection entities: artists, albums, and the style/cluster taxonomy."""
 
+import re
 from dataclasses import dataclass, field
+
+_LP = re.compile(r"^(?:\d+x)?LP$")
 
 
 @dataclass(slots=True)
 class AliasGroup:
-    """Links multiple artists treated as related-but-separate projects."""
+    """An artist family: billings and side projects that stand together on the shelf."""
 
     id: int
     label: str
+
+
+@dataclass(frozen=True, slots=True)
+class FamilyDismissal:
+    """A suggested family around this artist that the user turned down."""
+
+    anchor_artist_id: int
 
 
 @dataclass(slots=True)
@@ -19,6 +29,7 @@ class Artist:
     name: str
     discogs_artist_id: int | None = None
     alias_group_id: int | None = None
+    start_year: int | None = None
 
 
 @dataclass(slots=True)
@@ -27,6 +38,8 @@ class Cluster:
 
     id: int
     name: str
+    # Place in the curated sequence of clusters across the shelves.
+    position: int | None = None
 
 
 @dataclass(slots=True)
@@ -56,6 +69,11 @@ class FormatTokens:
     is_gatefold: bool = False
     is_compound: bool = False
     qualifiers: tuple[str, ...] = ()
+
+    @property
+    def is_lp(self) -> bool:
+        """Whether this is an LP rather than a single or EP (7", 10", 12")."""
+        return any(_LP.match(token) for token in self.qualifiers)
 
     def estimated_width_cm(self, constants: WidthConstants) -> float:
         """Estimate the shelf width; compound formats only get the rough fallback."""
@@ -90,6 +108,8 @@ class Album:
     style_ids: list[int] = field(default_factory=list)
     era_band_id: int | None = None
     cover_url: str | None = None
+    # False while the year may still be that of the pressing rather than the original.
+    original_year_confirmed: bool = False
 
     @property
     def width_cm(self) -> float | None:

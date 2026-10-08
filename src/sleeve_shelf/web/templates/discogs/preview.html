@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Preview') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 760px;">
+  <h1>{{ _('Preview') }}</h1>
+  <p class="ss-muted mt-2">{{ _('This is what importing the export would do. Nothing has changed yet.') }}</p>
+
+  <div class="ss-stats mt-3">
+    <div class="ss-stat"><div class="ss-stat-number">{{ outcome.vinyl_count }}</div><div class="ss-stat-label">{{ _('vinyl releases in the export') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ outcome.matched }}</div><div class="ss-stat-label">{{ _('linked to your albums') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ outcome.proposed }}</div><div class="ss-stat-label">{{ _('matches to confirm') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ outcome.added }}</div><div class="ss-stat-label">{{ _('new, unplaced albums') }}</div></div>
+  </div>
+
+  <ul class="ss-muted small mt-3">
+    <li>{{ ngettext('%(num)d release that is not vinyl is skipped.', '%(num)d releases that are not vinyl are skipped.', outcome.skipped_non_vinyl) }}</li>
+    <li>{{ ngettext('%(num)d of your albums stays without a release.', '%(num)d of your albums stay without a release.', outcome.unmatched_albums) }}</li>
+    <li>{{ _('Albums that are already linked are left as they are.') }}</li>
+  </ul>
+
+  <form class="d-flex gap-2 mt-3" method="post" action="{{ url_for('discogs.confirm_import') }}">
+    <button class="ss-button ss-button-primary" type="submit">{{ _('Import') }}</button>
+    <a class="ss-button" href="{{ url_for('discogs.index') }}">{{ _('Cancel') }}</a>
+  </form>
+</div>
+{% endblock %}

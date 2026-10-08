@@ -2,7 +2,7 @@
 
 import re
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -21,6 +21,7 @@ from sleeve_shelf.domain import (
     Shelf,
     UnitType,
 )
+from sleeve_shelf.ingestion.formats import parse_format
 
 LAYOUT_SHEET = "Kastindeling"
 SHELVES_SHEET = "Vakoverzicht"
@@ -45,13 +46,17 @@ class InitialLoad:
     placements: list[Placement] = field(default_factory=list)
 
 
-def load_initial_layout(path: str | Path) -> InitialLoad:
-    """Read the spreadsheet at path into a fresh set of domain objects."""
+def load_initial_layout(path: str | Path, cm_per_lp_unit: float | None = None) -> InitialLoad:
+    """Read the spreadsheet at path into a fresh set of domain objects.
+
+    The workbook counts shelf capacity in LP-units; cm_per_lp_unit turns that
+    into an estimated shelf width, to be corrected by measuring later.
+    """
     workbook = load_workbook(path, read_only=True, data_only=True)
     try:
         if LAYOUT_SHEET not in workbook.sheetnames:
             raise ValueError(f"Sheet '{LAYOUT_SHEET}' is missing from the spreadsheet")
-        builder = _Builder()
+        builder = _Builder(cm_per_lp_unit)
         if SHELVES_SHEET in workbook.sheetnames:
             for row in _rows(workbook[SHELVES_SHEET], SHELVES_COLUMNS):
                 builder.add_shelf(row)
@@ -90,20 +95,21 @@ def _number(value) -> int | None:
 def _format_tokens(format_text: str, disc_count: int | None) -> FormatTokens | None:
     if not format_text:
         return None
-    tokens = tuple(token.strip() for token in re.split(r"[,+]", format_text) if token.strip())
-    return FormatTokens(
-        disc_count=disc_count or 1,
-        is_180_gram="180" in tokens,
-        is_gatefold="Gat" in tokens,
-        is_compound="+" in format_text or "Box" in tokens,
-        qualifiers=tokens,
-    )
+    tokens = parse_format(format_text).tokens
+    # The workbook's own disc count wins over the one read from the format.
+    return replace(tokens, disc_count=disc_count) if disc_count else tokens
+
+
+def _is_confirmed_year(source: str) -> bool:
+    """Whether the workbook's year source says the year is the original, not the pressing's."""
+    return bool(source) and not source.startswith(("Discogs-jaar", "Onbekend"))
 
 
 class _Builder:
     """Accumulates domain objects, handing out sequential ids per entity."""
 
-    def __init__(self) -> None:
+    def __init__(self, cm_per_lp_unit: float | None = None) -> None:
+        self.cm_per_lp_unit = cm_per_lp_unit
         self.result = InitialLoad()
         self.cabinets: dict[str, Cabinet] = {}
         self.shelves: dict[tuple[str, str], Shelf] = {}
@@ -128,10 +134,16 @@ class _Builder:
         reachability = re.match(r"\d+", _text(row.get("Toegankelijkheid")))
         if reachability:
             shelf.reachability_score = int(reachability.group())
+        capacity = row.get("Capaciteit")
+        if shelf.width_cm is None and self.cm_per_lp_unit and isinstance(capacity, (int, float)):
+            shelf.width_cm = round(capacity * self.cm_per_lp_unit, 1)
         return shelf
 
     def add_album(self, row: dict, *, placed: bool) -> None:
         artist = self._artist(_text(row["Artiest"]))
+        start_year = _number(row.get("Jaar artiest"))
+        if start_year and (artist.start_year is None or start_year < artist.start_year):
+            artist.start_year = start_year
         cluster = self._cluster(_text(row["Cluster"]))
         self.cluster_counts.setdefault(artist.id, Counter())[cluster.id] += 1
         album = Album(
@@ -142,6 +154,9 @@ class _Builder:
                 _text(row.get("Formaat")), _number(row.get("Aantal schijven"))
             ),
             original_release_year=_number(row.get("Sorteerjaar (origineel)")),
+        )
+        album.original_year_confirmed = album.original_release_year is not None and (
+            _is_confirmed_year(_text(row.get("Jaarbron")))
         )
         era_label = _text(row.get("Era-band (artiest)"))
         if era_label:
