@@ -10,7 +10,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 
 - **Phase 1a (load a layout, browse, search)** is built.
 - **Phase 1b (Discogs, sorting proposal, management screens)** is built; nothing of it is left open.
-- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and four parked points from 1a (screens never looked at, no translation catalogue, top-loaders as a rotating sample, the `Overflow` and `Nieuwe koffer` locations).
+- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and three parked points from 1a (the upload and preview screens never looked at, top-loaders `a` and `b` as a rotating sample, the `Overflow` and `Nieuwe koffer` locations).
 - Phase 2 and 3 are not started.
 
 ## Commands
@@ -21,6 +21,13 @@ uv run python -m pytest                            # run the tests
 uv run python -m sleeve_shelf load <workbook.xlsx> # load a layout workbook
 uv run python -m sleeve_shelf import-discogs <collection.csv>
 uv run python -m sleeve_shelf enrich               # fetch styles and original years from Discogs
+```
+
+After changing UI copy, extract the translation template again and bring the catalogues up to date (a test fails otherwise):
+
+```sh
+uv run python -m babel.messages.frontend extract -F babel.cfg --project "Sleeve & Shelf" --copyright-holder "Mark Zwart" --no-wrap --sort-by-file --add-location=file -o src/sleeve_shelf/translations/messages.pot .
+uv run python -m babel.messages.frontend update -i src/sleeve_shelf/translations/messages.pot -d src/sleeve_shelf/translations --no-wrap
 ```
 
 Always use the `python -m` form. On Mark's managed work laptop the generated `.exe` console scripts (`uv run pytest`, `uv run sleeve-shelf`) are refused; the module form works everywhere.
@@ -47,7 +54,7 @@ Things that are easy to get wrong:
 - **A service module and a blueprint can share a name** (`sleeve_shelf/versions.py` and `sleeve_shelf/web/versions.py`). In web modules import names explicitly — `from sleeve_shelf.versions import save_version` — not `from sleeve_shelf import versions`, which can resolve to the blueprint.
 - **`JsonStore.save` rewrites the whole file.** Load the list, change it, save the list.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
-- **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. No translation catalogue exists yet; English is the only language.
+- **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
 - **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN.
 
 ## Data
