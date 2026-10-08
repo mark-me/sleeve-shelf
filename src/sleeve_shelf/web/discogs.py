@@ -1,4 +1,6 @@
-"""Discogs: importing the collection export, enriching it, and confirming proposed matches."""
+"""Discogs: syncing or importing the collection, enriching it, and confirming matches."""
+
+import json
 
 from pathlib import Path
 
@@ -20,7 +22,7 @@ from sleeve_shelf.collection import (
 )
 from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import Album, Artist, MatchProposal, ReleaseEnrichment
-from sleeve_shelf.ingestion.discogs_api import DiscogsClient
+from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError, collection_items
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem, read_collection
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.jobs import EnrichmentJob
@@ -28,6 +30,7 @@ from sleeve_shelf.web.jobs import EnrichmentJob
 blueprint = Blueprint("discogs", __name__, url_prefix="/discogs")
 
 PENDING_EXPORT = "pending_export.csv"
+PENDING_SYNC = "pending_sync.json"
 
 
 def _data_dir() -> Path:
@@ -45,6 +48,23 @@ def _read(path: Path) -> list[CollectionItem]:
         return read_collection(path, settings.count_bonus_discs_as_vinyl)
     except (UnicodeDecodeError, OSError) as error:
         raise ValueError(_("This file could not be read as a Discogs CSV export.")) from error
+
+
+def _pending_items() -> tuple[list[CollectionItem], bool] | None:
+    """The collection waiting for confirmation, and whether it comes from a sync."""
+    settings = load_settings(_data_dir())
+    synced = _data_dir() / PENDING_SYNC
+    if synced.exists():
+        releases = json.loads(synced.read_text(encoding="utf-8"))
+        return collection_items(releases, settings.count_bonus_discs_as_vinyl), True
+    if (_data_dir() / PENDING_EXPORT).exists():
+        return _read(_data_dir() / PENDING_EXPORT), False
+    return None
+
+
+def _clear_pending() -> None:
+    for name in (PENDING_EXPORT, PENDING_SYNC):
+        (_data_dir() / name).unlink(missing_ok=True)
 
 
 @blueprint.get("/")
@@ -66,6 +86,11 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
         if proposal.album_id in by_id
     ]
     token = settings.discogs_token
+    gone = [
+        {"album": album, "artist": artists.get(album.artist_id, "")}
+        for album in albums
+        if album.left_discogs
+    ]
     return (
         render_template(
             "discogs/index.html",
@@ -74,6 +99,7 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             fetched_count=len(linked & fetched),
             to_fetch_count=len(linked - fetched),
             proposals=proposals,
+            gone=gone,
             masked_token=f"••••{token[-4:]}" if token else None,
             job=_job().status(),
             error=error,
@@ -90,6 +116,7 @@ def upload():
         return index(error=_("Choose your Discogs export to upload."), status=400)
     pending = _data_dir() / PENDING_EXPORT
     pending.parent.mkdir(parents=True, exist_ok=True)
+    _clear_pending()
     file.save(pending)
     try:
         items = _read(pending)
@@ -100,22 +127,51 @@ def upload():
         return index(error=str(error), status=400)
     settings = load_settings(_data_dir())
     outcome = import_discogs_collection(get_store(), items, settings.width_constants, dry_run=True)
-    return render_template("discogs/preview.html", outcome=outcome)
+    return render_template("discogs/preview.html", outcome=outcome, synced=False)
+
+
+@blueprint.post("/sync")
+def sync():
+    """Fetch the collection from Discogs and preview what taking it over would do."""
+    settings = load_settings(_data_dir())
+    if not settings.discogs_token:
+        return index(error=_("Set your Discogs token first."), status=400)
+    if _job().running:
+        # Both would draw on the same rate limit.
+        return index(error=_("Wait for the fetching to finish, or stop it, before syncing."), status=409)
+    factory = current_app.config.get("DISCOGS_CLIENT_FACTORY", DiscogsClient)
+    try:
+        releases = factory(settings.discogs_token).collection()
+    except DiscogsError as error:
+        return index(error=str(error), status=502)
+    if not releases:
+        return index(error=_("Your Discogs collection is empty."), status=400)
+    _data_dir().mkdir(parents=True, exist_ok=True)
+    _clear_pending()
+    (_data_dir() / PENDING_SYNC).write_text(json.dumps(releases), encoding="utf-8")
+    items = collection_items(releases, settings.count_bonus_discs_as_vinyl)
+    outcome = import_discogs_collection(
+        get_store(), items, settings.width_constants, dry_run=True, refresh_formats=True
+    )
+    return render_template("discogs/preview.html", outcome=outcome, synced=True)
 
 
 @blueprint.post("/import/confirm")
 def confirm_import():
-    pending = _data_dir() / PENDING_EXPORT
-    if not pending.exists():
-        return redirect(url_for("discogs.index"))
     try:
-        items = _read(pending)
+        pending = _pending_items()
     except ValueError as error:
         return index(error=str(error), status=400)
     finally:
-        pending.unlink(missing_ok=True)
+        _clear_pending()
+    if pending is None:
+        return redirect(url_for("discogs.index"))
+    items, synced = pending
     settings = load_settings(_data_dir())
-    import_discogs_collection(get_store(), items, settings.width_constants)
+    # Only a sync knows the format well enough to correct albums that are already linked.
+    import_discogs_collection(
+        get_store(), items, settings.width_constants, refresh_formats=synced
+    )
     return redirect(url_for("discogs.index"))
 
 

@@ -16,14 +16,21 @@
   <section class="ss-card mt-4" id="import">
     <div class="ss-card-head"><h2>1 · {{ _('Import your collection') }}</h2></div>
     <div class="ss-card-body">
-      <p>{{ _('On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you get a preview before anything changes.') }}</p>
       {% if error %}
       <div class="ss-alert mb-3" role="alert">{{ error }}</div>
       {% endif %}
+      <h3 class="h6">{{ _('Sync with Discogs') }}</h3>
+      <p>{{ _('Fetches your collection straight from Discogs, so new purchases come in without an export. It takes about a second per hundred releases; you get a preview before anything changes.') }}</p>
+      <form class="mb-4" method="post" action="{{ url_for('discogs.sync') }}">
+        <button class="ss-button ss-button-primary {{ 'disabled' if not masked_token or job.running }}" type="submit" {{ 'disabled' if not masked_token or job.running }}>{{ _('Sync and preview') }}</button>
+        {% if not masked_token %}<span class="ss-muted small ms-2">{{ _('Set your token below first.') }}</span>{% endif %}
+      </form>
+      <h3 class="h6">{{ _('Or upload an export') }}</h3>
+      <p>{{ _('On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you get a preview before anything changes.') }}</p>
       <form method="post" action="{{ url_for('discogs.upload') }}" enctype="multipart/form-data">
         <label for="export" class="form-label fw-semibold">{{ _('Discogs export (.csv)') }}</label>
         <input id="export" class="form-control" type="file" name="export" accept=".csv" required>
-        <button class="ss-button ss-button-primary mt-3" type="submit">{{ _('Upload and preview') }}</button>
+        <button class="ss-button mt-3" type="submit">{{ _('Upload and preview') }}</button>
       </form>
     </div>
   </section>
@@ -107,6 +114,21 @@
     <div class="ss-card-body ss-muted">{{ _('No matches are waiting for confirmation.') }}</div>
     {% endif %}
   </section>
+
+  {% if gone %}
+  <section class="ss-card mt-4" id="gone">
+    <div class="ss-card-head"><h2>{{ _('No longer in your Discogs collection') }}</h2></div>
+    {% for entry in gone %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=entry.album.artist_id) }}">{{ entry.artist }}</a>
+        <span class="ss-row-title">{{ entry.album.title }}</span>
+      </div>
+    </div>
+    {% endfor %}
+    <div class="ss-card-body ss-muted small">{{ _('The last sync or import did not find these releases. The albums are kept; the artist shows where each stands. The list is renewed with every sync.') }}</div>
+  </section>
+  {% endif %}
 </div>
 
 <script>

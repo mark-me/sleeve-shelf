@@ -255,6 +255,10 @@ class ImportResult:
     proposed: int
     added: int
     unmatched_albums: int
+    # Artist and title of the albums whose release is no longer in the Discogs collection.
+    gone: tuple[tuple[str, str], ...] = ()
+    # Linked albums whose format was brought up to date.
+    refreshed: int = 0
 
 
 def import_discogs_collection(
@@ -262,13 +266,17 @@ def import_discogs_collection(
     items: list[CollectionItem],
     constants: WidthConstants,
     dry_run: bool = False,
+    refresh_formats: bool = False,
 ) -> ImportResult:
     """Link the stored albums to the releases of a Discogs export, and add what is new.
 
     Albums and releases with the same artist and title are linked outright. For
     what is left, a similar-looking release is only proposed, to be confirmed by
     hand. Vinyl releases that no album accounts for become new, unplaced albums.
-    A dry run only reports what would happen.
+    Albums whose release the collection no longer holds are marked and reported,
+    never removed. With refresh_formats the albums that are already linked take
+    the format of their release — for a sync, which knows the format better than
+    an export does. A dry run only reports what would happen.
     """
     albums = store.load(Album)
     artists = store.load(Artist)
@@ -276,6 +284,23 @@ def import_discogs_collection(
     vinyl = [item for item in items if item.is_vinyl]
 
     known_releases = {album.release_id for album in albums if album.release_id is not None}
+    in_collection = {item.release_id for item in items}
+    gone = []
+    for album in albums:
+        album.left_discogs = (
+            album.release_id is not None and album.release_id not in in_collection
+        )
+        if album.left_discogs:
+            gone.append((artist_names[album.artist_id], album.title))
+
+    refreshed = 0
+    if refresh_formats:
+        formats = {item.release_id: item.format_tokens for item in vinyl}
+        for album in albums:
+            current = formats.get(album.release_id)
+            if current is not None and album.format_tokens != current:
+                album.format_tokens = current
+                refreshed += 1
     available = [item for item in vinyl if item.release_id not in known_releases]
     by_key: dict[tuple[str, str], list[CollectionItem]] = defaultdict(list)
     for item in available:
@@ -352,6 +377,8 @@ def import_discogs_collection(
         proposed=len(proposals),
         added=len(remaining),
         unmatched_albums=len(unmatched) - len(proposals),
+        gone=tuple(gone),
+        refreshed=refreshed,
     )
 
 

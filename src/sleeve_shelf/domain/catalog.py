@@ -62,7 +62,7 @@ class WidthConstants:
 
 @dataclass(frozen=True, slots=True)
 class FormatTokens:
-    """What was parsed from the free-text Format field of the Discogs CSV."""
+    """What was parsed from the format of a release: the CSV's Format field or the API's formats."""
 
     disc_count: int = 1
     is_180_gram: bool = False
@@ -110,6 +110,8 @@ class Album:
     cover_url: str | None = None
     # False while the year may still be that of the pressing rather than the original.
     original_year_confirmed: bool = False
+    # True when the last sync or import no longer found the release in the Discogs collection.
+    left_discogs: bool = False
 
     @property
     def width_cm(self) -> float | None:

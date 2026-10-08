@@ -10,7 +10,7 @@ It's built for collectors who track their collection on [Discogs](https://www.di
 
 ## Status
 
-Phase 1 (the MVP) is built. You can load a worked-out cabinet layout from an Excel workbook and browse or search it in physical shelf order (Phase 1a). You can also link the albums to Discogs, manage cabinets, shelves, clusters, artist families and location rules, generate a sorting proposal, adjust it by hand, and keep versions of the layout (Phase 1b). Phase 2 and 3 are not started. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
+Phase 1 (the MVP) is built. You can load a worked-out cabinet layout from an Excel workbook and browse or search it in physical shelf order (Phase 1a). You can also link the albums to Discogs, manage cabinets, shelves, clusters, artist families and location rules, generate a sorting proposal, adjust it by hand, and keep versions of the layout (Phase 1b). Phase 2 has started with syncing the collection straight from Discogs; the rest of Phase 2 and Phase 3 are not built. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
 
 ## Running it
 
@@ -36,7 +36,7 @@ uv run python -m sleeve_shelf load path/to/layout.xlsx
 
 ### Linking the collection to Discogs
 
-Use the **Discogs** screen in the app: upload your collection export, set your personal access token, and start fetching. The same can be done from the command line — put the token in `config.yaml` inside the data directory (`discogs_token: ...`; the file is git-ignored), then:
+Use the **Discogs** screen in the app: set your personal access token, sync your collection (or upload your collection export), and start fetching. The same can be done from the command line — put the token in `config.yaml` inside the data directory (`discogs_token: ...`; the file is git-ignored), then:
 
 ```sh
 uv run python -m sleeve_shelf import-discogs path/to/discogs-collection.csv

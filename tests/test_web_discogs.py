@@ -14,6 +14,7 @@ from sleeve_shelf.domain import (
     MatchProposal,
     ReleaseEnrichment,
 )
+from sleeve_shelf.ingestion.discogs_api import DiscogsError
 from sleeve_shelf.persistence import JsonStore
 
 EXPORT = (
@@ -34,6 +35,26 @@ class _Client:
 
     def master(self, master_id):
         return MasterEnrichment(master_id, 1973, datetime(2026, 10, 8))
+
+    def collection(self):
+        return COLLECTION
+
+
+def _vinyl(release_id, artist, title):
+    return {
+        "id": release_id,
+        "basic_information": {
+            "title": title,
+            "artists": [{"name": artist, "join": ""}],
+            "formats": [{"name": "Vinyl", "qty": "1", "descriptions": ["LP", "Album"]}],
+        },
+    }
+
+
+COLLECTION = [
+    _vinyl(1874289, "Tom Waits", "Closing Time"),
+    _vinyl(1965832, "The Birthday Party", "Prayers On Fire"),
+]
 
 
 @pytest.fixture
@@ -156,3 +177,82 @@ def test_a_failing_lookup_is_reported(app, client):
     app.extensions["enrichment_job"].wait(10)
 
     assert "RuntimeError: boom" in client.get("/discogs/").text
+
+
+def test_sync_previews_the_collection_and_only_changes_things_on_confirm(app, client):
+    assert client.post("/discogs/sync").status_code == 400
+    client.post("/discogs/token", data={"token": "secret"})
+
+    preview = client.post("/discogs/sync")
+
+    assert "taking over your Discogs collection" in preview.text
+    assert "2</div>" in preview.text and "vinyl releases in your collection" in preview.text
+    assert all(album.release_id is None for album in _store(app).load(Album))
+
+    assert client.post("/discogs/import/confirm").status_code == 302
+
+    albums = _store(app).load(Album)
+    assert albums[0].release_id == 1874289
+    assert (albums[-1].title, albums[-1].release_id) == ("Prayers On Fire", 1965832)
+    # Nothing is left waiting: confirming again does nothing.
+    client.post("/discogs/import/confirm")
+    assert len(_store(app).load(Album)) == 3
+
+
+def test_sync_reports_albums_that_left_the_collection_and_keeps_them(app, client, monkeypatch):
+    client.post("/discogs/token", data={"token": "secret"})
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+    monkeypatch.setitem(globals(), "COLLECTION", COLLECTION[:1])
+
+    preview = client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+
+    assert "1 album is no longer in your Discogs collection" in preview.text
+    assert "Prayers On Fire" in preview.text
+    assert len(_store(app).load(Album)) == 3
+    page = client.get("/discogs/").text
+    assert 'id="gone"' in page and "Prayers On Fire" in page
+
+    # Back in the collection, the mark goes again.
+    monkeypatch.setitem(globals(), "COLLECTION", COLLECTION + [_vinyl(1965832, "The Birthday Party", "Prayers On Fire")])
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+    assert 'id="gone"' not in client.get("/discogs/").text
+
+
+def test_sync_brings_the_format_of_linked_albums_up_to_date_and_an_export_does_not(app, client):
+    client.post("/discogs/token", data={"token": "secret"})
+    _import(client)
+    album = _store(app).load(Album)[0]
+    assert (album.format_tokens.qualifiers, album.computed_width_cm) == (("LP", "Album"), 0.5)
+    heavy = _vinyl(1874289, "Tom Waits", "Closing Time")
+    heavy["basic_information"]["formats"][0].update(qty="2", text="Blue, Gatefold, 180g")
+    app.config["DISCOGS_CLIENT_FACTORY"] = type("Heavy", (_Client,), {"collection": lambda self: [heavy]})
+
+    preview = client.post("/discogs/sync")
+    assert "1 linked album gets its format" in preview.text
+    assert _store(app).load(Album)[0].computed_width_cm == 0.5
+    client.post("/discogs/import/confirm")
+
+    album = _store(app).load(Album)[0]
+    assert album.format_tokens.qualifiers == ("2xLP", "Album", "180", "Gat")
+    assert album.computed_width_cm == 1.5
+
+    # The export knows less; importing it again does not undo the sync.
+    _import(client)
+    assert _store(app).load(Album)[0].computed_width_cm == 1.5
+
+
+def test_sync_reports_when_discogs_cannot_be_reached(app, client):
+    class Unreachable(_Client):
+        def collection(self):
+            raise DiscogsError("Discogs could not be reached: timed out")
+
+    app.config["DISCOGS_CLIENT_FACTORY"] = Unreachable
+    client.post("/discogs/token", data={"token": "secret"})
+
+    response = client.post("/discogs/sync")
+
+    assert response.status_code == 502
+    assert "Discogs could not be reached" in response.text

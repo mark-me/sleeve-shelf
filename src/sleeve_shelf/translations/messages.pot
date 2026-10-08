@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-08 23:54+0200\n"
+"POT-Creation-Date: 2026-10-09 00:07+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -50,11 +50,19 @@ msgid "No releases were found in this file."
 msgstr ""
 
 #: src/sleeve_shelf/web/discogs.py
-msgid "Paste your Discogs personal access token."
+msgid "Set your Discogs token first."
 msgstr ""
 
 #: src/sleeve_shelf/web/discogs.py
-msgid "Set your Discogs token first."
+msgid "Wait for the fetching to finish, or stop it, before syncing."
+msgstr ""
+
+#: src/sleeve_shelf/web/discogs.py
+msgid "Your Discogs collection is empty."
+msgstr ""
+
+#: src/sleeve_shelf/web/discogs.py
+msgid "Paste your Discogs personal access token."
 msgstr ""
 
 #: src/sleeve_shelf/web/families.py
@@ -684,6 +692,13 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
+msgid "%(num)d album no longer in your Discogs collection"
+msgid_plural "%(num)d albums no longer in your Discogs collection"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
 msgid "%(num)d shelf filled beyond its width"
 msgid_plural "%(num)d shelves filled beyond their width"
 msgstr[0] ""
@@ -715,6 +730,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Without a release there are no styles or original year from Discogs."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Sold, or removed on Discogs? They still stand in the layout."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -769,6 +788,26 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Import your collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Sync with Discogs"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Fetches your collection straight from Discogs, so new purchases come in without an export. It takes about a second per hundred releases; you get a preview before anything changes."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Sync and preview"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Set your token below first."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Or upload an export"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -892,6 +931,14 @@ msgid "No matches are waiting for confirmation."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "No longer in your Discogs collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "The last sync or import did not find these releases. The albums are kept; the artist shows where each stands. The list is renewed with every sync."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
 msgid "%(done)s of about %(total)s lookups"
 msgstr ""
@@ -902,7 +949,15 @@ msgid "Preview"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html
+msgid "This is what taking over your Discogs collection would do. Nothing has changed yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/preview.html
 msgid "This is what importing the export would do. Nothing has changed yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/preview.html
+msgid "vinyl releases in your collection"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html
@@ -932,7 +987,29 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html
+#, python-format
+msgid "%(num)d linked album gets its format, and with it its estimated width, brought up to date."
+msgid_plural "%(num)d linked albums get their format, and with it their estimated width, brought up to date."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/preview.html
 msgid "Albums that are already linked are left as they are."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/preview.html
+#, python-format
+msgid "%(num)d album is no longer in your Discogs collection"
+msgid_plural "%(num)d albums are no longer in your Discogs collection"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/preview.html
+msgid "They are kept as they are, on their shelf, and listed on the Discogs screen and the Dashboard: nothing is removed."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/preview.html
+msgid "Take over"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html

@@ -71,6 +71,11 @@ def index():
             "url": url_for("discogs.index"),
         },
         {
+            "count": sum(1 for album in albums if album.left_discogs),
+            "kind": "gone",
+            "url": url_for("discogs.index") + "#gone",
+        },
+        {
             "count": sum(
                 1 for s in shelves if s.width_cm and fill.get(s.id, (0, 0.0))[1] > s.width_cm
             ),

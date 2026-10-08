@@ -146,6 +146,7 @@ _TABLES: dict[type, _Table] = {
             "era_band_id": "INTEGER",
             "cover_url": "VARCHAR",
             "original_year_confirmed": "BOOLEAN",
+            "left_discogs": "BOOLEAN",
         },
         {"format_tokens": _format_tokens},
     ),

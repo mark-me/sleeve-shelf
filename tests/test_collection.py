@@ -76,6 +76,11 @@ def test_import_links_loaded_albums_and_adds_the_rest(tmp_path):
     assert (again.matched, again.added) == (0, 0)
     assert len(store.load(Album)) == 5
 
+    # A release that left the Discogs collection is reported; its album stays.
+    sold = import_discogs_collection(store, items[1:], CONSTANTS)
+    assert sold.gone == (("Tom Waits", "Closing Time"),)
+    assert len(store.load(Album)) == 5
+
 
 class _Client:
     def __init__(self, fail_on=None):

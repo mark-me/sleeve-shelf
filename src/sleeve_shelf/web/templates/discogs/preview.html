@@ -4,10 +4,10 @@
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   <h1>{{ _('Preview') }}</h1>
-  <p class="ss-muted mt-2">{{ _('This is what importing the export would do. Nothing has changed yet.') }}</p>
+  <p class="ss-muted mt-2">{% if synced %}{{ _('This is what taking over your Discogs collection would do. Nothing has changed yet.') }}{% else %}{{ _('This is what importing the export would do. Nothing has changed yet.') }}{% endif %}</p>
 
   <div class="ss-stats mt-3">
-    <div class="ss-stat"><div class="ss-stat-number">{{ outcome.vinyl_count }}</div><div class="ss-stat-label">{{ _('vinyl releases in the export') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ outcome.vinyl_count }}</div><div class="ss-stat-label">{% if synced %}{{ _('vinyl releases in your collection') }}{% else %}{{ _('vinyl releases in the export') }}{% endif %}</div></div>
     <div class="ss-stat"><div class="ss-stat-number">{{ outcome.matched }}</div><div class="ss-stat-label">{{ _('linked to your albums') }}</div></div>
     <div class="ss-stat"><div class="ss-stat-number">{{ outcome.proposed }}</div><div class="ss-stat-label">{{ _('matches to confirm') }}</div></div>
     <div class="ss-stat"><div class="ss-stat-number">{{ outcome.added }}</div><div class="ss-stat-label">{{ _('new, unplaced albums') }}</div></div>
@@ -16,11 +16,25 @@
   <ul class="ss-muted small mt-3">
     <li>{{ ngettext('%(num)d release that is not vinyl is skipped.', '%(num)d releases that are not vinyl are skipped.', outcome.skipped_non_vinyl) }}</li>
     <li>{{ ngettext('%(num)d of your albums stays without a release.', '%(num)d of your albums stay without a release.', outcome.unmatched_albums) }}</li>
+    {% if synced %}
+    <li>{{ ngettext('%(num)d linked album gets its format, and with it its estimated width, brought up to date.', '%(num)d linked albums get their format, and with it their estimated width, brought up to date.', outcome.refreshed) }}</li>
+    {% else %}
     <li>{{ _('Albums that are already linked are left as they are.') }}</li>
+    {% endif %}
   </ul>
 
+  {% if outcome.gone %}
+  <div class="ss-card mt-3" id="gone">
+    <div class="ss-card-head"><h2>{{ ngettext('%(num)d album is no longer in your Discogs collection', '%(num)d albums are no longer in your Discogs collection', outcome.gone | length) }}</h2></div>
+    {% for artist, title in outcome.gone %}
+    <div class="ss-row"><div class="ss-row-text"><span class="ss-row-artist">{{ artist }}</span><span class="ss-row-title">{{ title }}</span></div></div>
+    {% endfor %}
+    <div class="ss-card-body ss-muted small">{{ _('They are kept as they are, on their shelf, and listed on the Discogs screen and the Dashboard: nothing is removed.') }}</div>
+  </div>
+  {% endif %}
+
   <form class="d-flex gap-2 mt-3" method="post" action="{{ url_for('discogs.confirm_import') }}">
-    <button class="ss-button ss-button-primary" type="submit">{{ _('Import') }}</button>
+    <button class="ss-button ss-button-primary" type="submit">{% if synced %}{{ _('Take over') }}{% else %}{{ _('Import') }}{% endif %}</button>
     <a class="ss-button" href="{{ url_for('discogs.index') }}">{{ _('Cancel') }}</a>
   </form>
 </div>
