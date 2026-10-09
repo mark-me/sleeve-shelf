@@ -187,8 +187,14 @@ def test_enrichment_fetches_each_artists_picture_once(tmp_path):
     client = Pictured()
     seen = []
 
-    enrich_collection(store, client, lambda done, total: seen.append((done, total)))
+    parts = []
+    enrich_collection(
+        store, client, lambda done, total: seen.append((done, total)),
+        lambda name, done, total: parts.append((name, done, total)),
+    )
 
+    # Each part says how far it is; the pictures are named first so their count is known at once.
+    assert parts == [("pictures", 0, 1), ("albums", 0, 1), ("albums", 1, 1), ("pictures", 1, 1)]
     # The picture comes last, after what the sorting needs.
     assert client.calls == [("release", 12), ("artist", 30)]
     assert seen[-1] == (2, 2)

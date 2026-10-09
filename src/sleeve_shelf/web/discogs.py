@@ -1,7 +1,7 @@
 """Discogs: syncing or importing the collection, enriching it, and confirming matches."""
 
 import json
-
+from math import ceil
 from pathlib import Path
 
 from flask import (
@@ -32,7 +32,12 @@ from sleeve_shelf.domain import (
     ReleaseEnrichment,
     Shelf,
 )
-from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError, collection_items
+from sleeve_shelf.ingestion.discogs_api import (
+    SECONDS_BETWEEN_REQUESTS,
+    DiscogsClient,
+    DiscogsError,
+    collection_items,
+)
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem, read_collection
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.jobs import EnrichmentJob
@@ -97,6 +102,9 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
         if proposal.album_id in by_id
     ]
     token = settings.discogs_token
+    named = {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
+    pictured = {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
+    job = _job().status()
     gone = [
         {"album": album, "artist": artists.get(album.artist_id, "")}
         for album in albums
@@ -113,14 +121,20 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             waiting="sync" if (_data_dir() / PENDING_SYNC).exists()
             else "export" if (_data_dir() / PENDING_EXPORT).exists()
             else None,
-            pictures_to_fetch_count=len(
-                {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
-                - {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
+            pictures_to_fetch_count=len(named - pictured),
+            # How far each part is, as [done, total]; a running job knows it more precisely.
+            albums_progress=job["albums"] or [len(linked & fetched), len(linked)],
+            pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
+            unnamed_count=sum(artist.discogs_artist_id is None for artist in artist_list),
+            minutes=ceil(
+                (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS / 60
             ),
+            minutes_left=ceil((job["total"] - job["done"]) * SECONDS_BETWEEN_REQUESTS / 60),
+            seconds_per_lookup=SECONDS_BETWEEN_REQUESTS,
             proposals=proposals,
             gone=gone,
             masked_token=f"••••{token[-4:]}" if token else None,
-            job=_job().status(),
+            job=job,
             error=error,
             token_error=token_error,
         ),

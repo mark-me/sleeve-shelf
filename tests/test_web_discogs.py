@@ -168,10 +168,11 @@ def test_enrichment_runs_in_the_background_and_fills_the_albums(app, client):
 
     status = client.get("/discogs/enrich/status").get_json()
     assert (status["running"], status["outcome"], status["done"]) == (False, "finished", 3)
+    assert status["albums"] == [2, 2]
     album = _store(app).load(Album)[0]
     assert (album.master_id, album.original_release_year) == (77, 1973)
     page = client.get("/discogs/").text
-    assert "Enrichment finished." in page and "Every linked album has been fetched." in page
+    assert "Everything has been fetched." in page and "2 of 2 linked albums" in page
 
 
 def test_a_failing_lookup_is_reported(app, client):
@@ -345,7 +346,11 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
 
     # The sync names the artist on Discogs; the picture itself still has to be fetched.
     assert [a.discogs_artist_id for a in _store(app).load(Artist)] == [82294, None]
-    assert "The picture of 1 artist still has to be fetched." in client.get("/discogs/").text
+    waiting = client.get("/discogs/").text
+    assert "The picture of 1 artist still has to be fetched." in waiting
+    # Not done while a picture is open, and the artist no sync could name is accounted for.
+    assert "Everything has been fetched." not in waiting and "0 of 1 artists" in waiting
+    assert "1 artist is not named on Discogs" in waiting
     assert "tw150.jpeg" not in client.get("/artists/1").text
     assert "ss-cover" not in client.get("/artists/").text
 
@@ -356,7 +361,9 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     assert 'src="https://i.discogs.com/tw150.jpeg"' in page and "Show the picture larger" in page
     # The large picture is only fetched when the pop-up opens.
     assert 'data-src="https://i.discogs.com/tw.jpeg"' in page
-    assert "still has to be fetched" not in client.get("/discogs/").text
+    done = client.get("/discogs/").text
+    assert "still has to be fetched" not in done
+    assert "Everything has been fetched." in done and "1 of 1 artists" in done
     # An artist without a picture has the page as it was.
     assert "ss-cover-zoom" not in client.get("/artists/2").text
     # In the list the pictured artist shows its picture, and the other keeps the space.

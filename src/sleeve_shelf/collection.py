@@ -502,11 +502,14 @@ def enrich_collection(
     store: JsonStore,
     client: DiscogsClient,
     progress: Callable[[int, int], None] = lambda done, total: None,
+    part: Callable[[str, int, int], None] = lambda name, done, total: None,
 ) -> int:
     """Fetch what the Discogs cache still lacks for the stored albums and artists, then apply it.
 
     Returns the number of lookups made. The cache is saved along the way, so an
-    interrupted run picks up where it stopped.
+    interrupted run picks up where it stopped. Progress counts the lookups of
+    this run; part names what is being fetched ("albums", then "pictures") and
+    how many of all of them are in, earlier runs included.
     """
     albums = store.load(Album)
     releases = {release.release_id: release for release in store.load(ReleaseEnrichment)}
@@ -521,8 +524,14 @@ def enrich_collection(
     )
     # Each new release may bring one master lookup with it.
     done, saved, total = 0, 0, 2 * len(release_ids) + len(artist_ids)
+    linked_count = len(release_ids) + len(
+        {a.release_id for a in albums if a.release_id is not None} & releases.keys()
+    )
+    named_count = len(artist_ids) + len(pictures)
+    part("pictures", named_count - len(artist_ids), named_count)
+    part("albums", linked_count - len(release_ids), linked_count)
     try:
-        for release_id in release_ids:
+        for count, release_id in enumerate(release_ids, start=1):
             release = client.release(release_id)
             releases[release_id] = release
             done += 1
@@ -531,6 +540,7 @@ def enrich_collection(
             else:
                 masters[release.master_id] = client.master(release.master_id)
                 done += 1
+            part("albums", linked_count - len(release_ids) + count, linked_count)
             progress(done, total)
             if done - saved >= SAVE_CACHE_EVERY:
                 _save_cache(store, releases, masters, pictures)
@@ -543,9 +553,10 @@ def enrich_collection(
                 total += 1
                 progress(done, total)
         # Last, as nothing in the sorting waits for them: the pictures of the artists.
-        for artist_id in artist_ids:
+        for count, artist_id in enumerate(artist_ids, start=1):
             pictures[artist_id] = client.artist(artist_id)
             done += 1
+            part("pictures", named_count - len(artist_ids) + count, named_count)
             progress(done, total)
             if done - saved >= SAVE_CACHE_EVERY:
                 _save_cache(store, releases, masters, pictures)
