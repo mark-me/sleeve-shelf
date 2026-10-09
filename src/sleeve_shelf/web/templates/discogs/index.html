@@ -13,6 +13,15 @@
     <div class="ss-stat"><div class="ss-stat-number">{{ proposals | length }}</div><div class="ss-stat-label">{{ _('matches to confirm') }}</div></div>
   </div>
 
+  {% if waiting %}
+  <div class="ss-alert mt-3">
+    {% if waiting == 'sync' %}{{ _('A sync was previewed but not taken over yet: nothing has changed so far.') }}{% else %}{{ _('An export was previewed but not imported yet: nothing has changed so far.') }}{% endif %}
+    <form class="d-inline" method="post" action="{{ url_for('discogs.confirm_import') }}">
+      <button class="ss-link-button" type="submit">{% if waiting == 'sync' %}{{ _('Take over') }}{% else %}{{ _('Import') }}{% endif %}</button>
+    </form>
+  </div>
+  {% endif %}
+
   <section class="ss-card mt-4" id="import">
     <div class="ss-card-head"><h2>1 · {{ _('Import your collection') }}</h2></div>
     <div class="ss-card-body">

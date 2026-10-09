@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 11:44+0200\n"
+"POT-Creation-Date: 2026-10-09 12:07+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1097,6 +1097,25 @@ msgid "matches to confirm"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "A sync was previewed but not taken over yet: nothing has changed so far."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "An export was previewed but not imported yet: nothing has changed so far."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/discogs/preview.html
+msgid "Take over"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/discogs/preview.html
+#: src/sleeve_shelf/web/templates/setup/upload.html
+msgid "Import"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Import your collection"
 msgstr ""
 
@@ -1274,6 +1293,10 @@ msgid "This is what taking over your Discogs collection would do. Nothing has ch
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html
+msgid "Taking it over also brings the album covers, and notes which artist on Discogs each artist is — which the artist pictures need."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/preview.html
 msgid "This is what importing the export would do. Nothing has changed yet."
 msgstr ""
 
@@ -1327,15 +1350,6 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html
 msgid "They are kept as they are, on their shelf, and listed on the Discogs screen and the Dashboard. There you can remove one, after confirming."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "Take over"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-#: src/sleeve_shelf/web/templates/setup/upload.html
-msgid "Import"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/remove.html

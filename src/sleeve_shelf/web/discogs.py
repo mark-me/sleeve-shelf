@@ -109,6 +109,10 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             linked_count=sum(album.release_id is not None for album in albums),
             fetched_count=len(linked & fetched),
             to_fetch_count=len(linked - fetched),
+            # A preview that was left without taking it over or importing it.
+            waiting="sync" if (_data_dir() / PENDING_SYNC).exists()
+            else "export" if (_data_dir() / PENDING_EXPORT).exists()
+            else None,
             pictures_to_fetch_count=len(
                 {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
                 - {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
