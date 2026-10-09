@@ -110,7 +110,7 @@ This section and §2 follow the logic of the layout the collection is actually s
 - A cluster may span adjacent shelves within the same cabinet if it doesn't fit on one shelf
 - **What does not fit is not forced in.** Albums a proposal has no room for are left unplaced: they appear in the Unplaced albums list, and the proposal states how many there are
 - **The shelves are filled as one continuous row.** The albums, in the order of §1 and §2, are stood on the shelves in the order set under Storage: each shelf is filled until the next album no longer fits, and the row continues on the next shelf that has room — so a cluster, and an artist, can run on across shelves. A shelf once passed is not gone back to
-- **Shelves a proposal skips**: a shelf without a width, and a showcase shelf. **A showcase is left as it is**: the albums on display there are the user's own selection, so a proposal keeps them where they are and leaves them out of the row that fills the other shelves — they take no room there. An album whose format is unknown is taken to be one disc of base width
+- **Shelves a proposal skips**: a shelf without a width, a showcase shelf, and every shelf of a cabinet kept outside the sorting. **A showcase is left as it is**: the albums on display there are the user's own selection, so a proposal keeps them where they are and leaves them out of the row that fills the other shelves — they take no room there. **A cabinet kept outside the sorting** (a switch on the cabinet) is treated the same way: what stands there stays, takes no part in the row, and nothing is added. It is meant for a place that is not part of the sorted collection — albums set aside to give away, a case yet to be bought, storage elsewhere. An album whose format is unknown is taken to be one disc of base width
 - **Location rules** bind a cluster, a family, an artist, or a single album to a cabinet (see Data model). A proposal places what a rule binds in that cabinet and nowhere else — bound albums that don't fit there are left out rather than put elsewhere — and a cabinet that rules send albums to holds only those albums: everything without a rule runs over the other cabinets. The most specific rule wins: an album's own, then its artist's, its family's, its cluster's
 - Reachability only plays a role through the explicit, manually configured location rules — not as a general rule for popular/frequently-picked artists
 
@@ -210,6 +210,7 @@ erDiagram
         string name
         string location "room, nullable"
         int position "order of the cabinets"
+        bool outside_sorting "left as it is by a proposal"
     }
     Shelf {
         int id PK
@@ -284,7 +285,7 @@ erDiagram
 
 **Storage structure**
 
-- **Cabinet**: id, name, location (room; nullable — not known after an initial load), `position` (its place in the order the cabinets are walked)
+- **Cabinet**: id, name, location (room; nullable — not known after an initial load), `position` (its place in the order the cabinets are walked), `outside_sorting` (bool; a sorting proposal leaves the cabinet as it is — see Sorting logic §3)
 - **Shelf**: id, cabinet_id, name (the label of the shelf within its cabinet, e.g. "a"), width (cm), type (top-/front-loader), layer, reachability score, is_showcase (bool). Width, type, layer, and reachability are nullable: a shelf seeded by the initial load has only a name (and a reachability score when the workbook gives one) until it is completed in the storage structure (Phase 1b). `position` is its place among the shelves of its cabinet
 - **LocationRule**: id, target (`artist_id`, `alias_group_id`, `cluster_id`, **or `album_id`**), mandatory cabinet_id, note — always created manually. The `album_id` level is a specific-title exception: it detaches one release from its artist's normal placement (breaking the "artist stays together" rule in Sorting logic §1) without affecting the rest of that artist's catalog — needed for cases like a single boxset or compilation that lives in external storage while the rest of the artist stays in the main cabinet
 
@@ -387,7 +388,7 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 - **Topladers are loaded as they are**: in the workbook an album sits in exactly one place — the rows under `Topladers` do not also appear on another shelf — so they are loaded as Placements on those shelves. Of the `Topladers` shelves `a` and `b` are showcases and `c` is an ordinary shelf; the workbook does not say so, so a shelf becomes a showcase when the user marks it as one under Cabinets & shelves. The albums standing on it are then its sample (see Showcase screen)
 - **The Cluster column seeds the `Cluster` entity directly** (see Data model) — each distinct value becomes a Cluster, and each artist gets a confirmed `ArtistClusterAssignment` to the Cluster of its rows (the most frequent one if they differ). Once the albums are matched to Discogs and enriched in Phase 1b, their Styles are mapped to these Clusters (see Sorting logic §1). This is a natural fit: the spreadsheet's curated cluster names are exactly what the Clusters screen (see UI) lets the user build by hand later — initial load just bootstraps it from work already done
 - **The Era band column is stored as the initial per-artist era-band label** — each distinct (Artist, Era band) value becomes an `EraBand` with source "initial load" (see Data model), and the row's album is linked to it. The workbook's decade labels ("voor 1960", "1990s", …) are the same bands the sorting engine works with (see Sorting logic §2)
-- **Unplaced albums**: the rows of the `Nog niet geplaatst` sheet are loaded as Albums without a Placement — visible in a dedicated list, not silently dropped, so they can be resolved later (mark as external, free up shelf space, etc.). Locations such as `Overflow` or a not-yet-bought `Nieuwe koffer` are named in `Kastindeling` and are therefore loaded as ordinary Cabinets, exactly as the workbook has them
+- **Unplaced albums**: the rows of the `Nog niet geplaatst` sheet are loaded as Albums without a Placement — visible in a dedicated list, not silently dropped, so they can be resolved later (mark as external, free up shelf space, etc.). Locations such as `Overflow` or a not-yet-bought `Nieuwe koffer` are named in `Kastindeling` and are therefore loaded as ordinary Cabinets, exactly as the workbook has them. The load does not recognise them by name: the user marks such a cabinet as kept outside the sorting on the Storage structure screen
 
 ## UI / screen layout
 
@@ -460,7 +461,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 ### Sorting proposal screen
 
-- **Before generating**: how many albums take part, how many shelves will be filled, and which shelves are skipped and why. If suggested artist families have not been looked at yet, the screen says so and links to them — families decide which artists stand together
+- **Before generating**: how many albums are to be placed (those standing in a showcase or in a cabinet kept outside the sorting are not counted), how many shelves will be filled, and which shelves are skipped and why. If suggested artist families have not been looked at yet, the screen says so and links to them — families decide which artists stand together
 - **Generate a proposal** sorts the collection and fills the shelves (see Sorting logic); it takes well under a second
 - **The proposal**: counters for albums placed, albums that go to another shelf, albums that stay on their shelf, and albums that do not fit. Per cabinet a table of its shelves with width, filled width now and proposed, and number of albums now and proposed, each shelf linking to its proposed contents
 - **Browse the proposal**: the proposal can be walked shelf by shelf exactly like the real shelves in Browse/Search, under a notice that it is the proposal; search stays on the current layout
@@ -479,7 +480,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 ### Settings screen
 
 - **Album width**: base width per disc, extra per 180-gram disc, and extra for a gatefold sleeve (see Sorting logic §3). Saving recalculates the estimated width of every album; shelf widths are not touched — those are set per shelf under Storage
-- **Room**: the screen shows how many cm the albums of a proposal need, how many the shelves it fills offer, and the difference — the quickest way to see whether the estimates add up
+- **Room**: the screen shows how many cm the albums of a proposal need, how many the shelves it fills offer, and the difference — the quickest way to see whether the estimates add up. Albums that a proposal leaves where they are (in a showcase, or in a cabinet kept outside the sorting) are not counted, and neither are their shelves
 - **Showcase**: how full a showcase may be, as a percentage of its width (see Showcase screen)
 - **Discogs**: whether a bundle such as "CD + LP" counts as vinyl (applies at the next import), and the personal access token, shown masked
 
@@ -523,9 +524,10 @@ A showcase is a top-loader that shows a sample of the well-represented artists, 
 
 ### Storage structure screen
 
-- Lists every cabinet (name and room) with its shelves: name, type, row, width, filled width, number of albums, reachability, and showcase flag
+- Lists every cabinet (name, room, and whether it is kept outside the sorting) with its shelves: name, type, row, width, filled width, number of albums, reachability, and showcase flag
 - Cabinets and shelves can be added and edited. A shelf is edited on its own page: name, width in cm, type (top-/front-loader), row (top/bottom), reachability (a whole number, 1 being the easiest to reach), and showcase — which only a top-loader can be. Type, row, width, and reachability may be left empty when not known yet
 - **Filled width** is the summed width of the albums standing on the shelf; when it exceeds the shelf width it is marked. After an initial load the shelf widths are estimates (see Sorting logic §3), so this mark mostly says the estimate needs measuring
+- **Outside the sorting**: a cabinet is edited on its own page — name, room, and a switch that keeps it outside the sorting (see Sorting logic §3). Its shelves stay ordinary shelves everywhere else: they are browsed, searched, and filled by hand like any other, and Browse/Search says on such a shelf that it is outside the sorting
 - A shelf can only be removed once it holds no albums, a cabinet once it has no shelves — nothing is ever unplaced as a side effect of tidying the structure
 - **Order**: cabinets, and the shelves within a cabinet, stand in an order the user sets with up/down arrows. It is the order in which they are walked — by previous/next shelf in Browse/Search and by a sorting proposal, which fills the shelves in this order. Until moved, they keep the order they were added in; new cabinets and shelves are added at the end
 
@@ -580,4 +582,3 @@ The detail of an artist and of an album are two pages.
 Not blocking; set aside to be addressed later.
 
 - **Screens not seen**: the upload and preview pages have only been exercised by tests. The light theme and the collapsed menu on a phone were looked at and approved (2026-10-08)
-- **`Overflow` and `Nieuwe koffer` locations**: the workbook lists these under `Kastindeling`, so they are loaded as ordinary Cabinets and show up as locations in Browse/Search. Neither is a real, existing storage spot (overflow is a proposal to give away, the cases are yet to be bought) — whether they should appear in the Unplaced albums list instead is undecided

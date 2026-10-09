@@ -82,7 +82,13 @@ _TABLES: dict[type, _Table] = {
     _IdMark: _Table("id_marks.json", {"name": "VARCHAR", "last_id": "INTEGER"}),
     Cabinet: _Table(
         "cabinets.json",
-        {"id": "INTEGER", "name": "VARCHAR", "location": "VARCHAR", "position": "INTEGER"},
+        {
+            "id": "INTEGER",
+            "name": "VARCHAR",
+            "location": "VARCHAR",
+            "position": "INTEGER",
+            "outside_sorting": "BOOLEAN",
+        },
     ),
     Shelf: _Table(
         "shelves.json",

@@ -24,6 +24,8 @@ class ShelfSummary:
     shelf: str
     reachability_score: int | None
     album_count: int
+    # The cabinet is kept outside the sorting: not part of the sorted collection.
+    outside_sorting: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,11 +60,12 @@ class BrowseQueries:
             f"""
             {self._located_albums()}
             SELECT shelf.id, cabinet.name, shelf.name, shelf.reachability_score,
-                   count(located.album_id)
+                   count(located.album_id), coalesce(cabinet.outside_sorting, false)
             FROM {self._store.relation(Shelf)} AS shelf
             JOIN {self._store.relation(Cabinet)} AS cabinet ON cabinet.id = shelf.cabinet_id
             LEFT JOIN located ON located.shelf_id = shelf.id
-            GROUP BY cabinet.id, cabinet.name, cabinet.position, shelf.id, shelf.name,
+            GROUP BY cabinet.id, cabinet.name, cabinet.position, cabinet.outside_sorting,
+                     shelf.id, shelf.name,
                      shelf.position, shelf.reachability_score
             ORDER BY coalesce(cabinet.position, cabinet.id), cabinet.id,
                      coalesce(shelf.position, shelf.id), shelf.id

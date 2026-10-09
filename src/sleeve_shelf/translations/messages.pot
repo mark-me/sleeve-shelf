@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 09:37+0200\n"
+"POT-Creation-Date: 2026-10-09 11:19+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -695,6 +695,11 @@ msgid "%(num)d album"
 msgid_plural "%(num)d albums"
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/browse/shelf.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "outside the sorting"
+msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #, python-format
@@ -1562,6 +1567,10 @@ msgid "showcase, kept as it is"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "outside the sorting, kept as it is"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "View"
 msgstr ""
 
@@ -1892,6 +1901,14 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 msgid "Optional — for example “Living room”."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+msgid "Keep this cabinet outside the sorting"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+msgid "A sorting proposal then leaves it as it is: what stands here stays, and nothing is added. For a place that is not part of the sorted collection — albums set aside to give away, a case you have yet to buy, storage elsewhere."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html

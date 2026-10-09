@@ -48,18 +48,35 @@ def takes_part(album: Album, placed_ids: set[int]) -> bool:
     return album.format_tokens is None or album.format_tokens.is_lp
 
 
+def kept_shelf_ids(store: JsonStore) -> set[int]:
+    """The shelves a proposal leaves exactly as they are.
+
+    A showcase keeps the sample the user put there, and a cabinet kept outside
+    the sorting keeps what the user assigned to it. What stands on these
+    shelves stays, and takes no part in the row that fills the other shelves.
+    """
+    outside = {cabinet.id for cabinet in store.load(Cabinet) if cabinet.outside_sorting}
+    return {
+        shelf.id
+        for shelf in store.load(Shelf)
+        if shelf.is_showcase or shelf.cabinet_id in outside
+    }
+
+
 def usable_shelves(store: JsonStore) -> tuple[list[Shelf], list[Shelf]]:
     """The shelves a proposal fills, in walking order, and the ones it has to skip.
 
-    A showcase shelf keeps the sample the user put there, and a shelf without a width can't be filled.
+    Skipped are the shelves that are kept as they are (see kept_shelf_ids), and
+    a shelf without a width, which can't be filled.
     """
+    kept = kept_shelf_ids(store)
     shelves = store.load(Shelf)
     walked = [
         shelf
         for cabinet in in_order(store.load(Cabinet))
         for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
     ]
-    usable = [shelf for shelf in walked if shelf.width_cm and not shelf.is_showcase]
+    usable = [shelf for shelf in walked if shelf.width_cm and shelf.id not in kept]
     return usable, [shelf for shelf in walked if shelf not in usable]
 
 
@@ -83,10 +100,10 @@ def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
     result = _sort(store)
     usable, _skipped = usable_shelves(store)
     cabinet_of = _mandatory_cabinets(store, result)
-    # What is on display in a showcase is the user's own selection: it stays there,
-    # and is left out of the row that fills the other shelves.
-    showcase_ids = {shelf.id for shelf in store.load(Shelf) if shelf.is_showcase}
-    on_display = [p for p in store.load(Placement) if p.shelf_id in showcase_ids]
+    # What stands in a showcase, or in a cabinet kept outside the sorting, is the user's
+    # own choice: it stays there, and is left out of the row that fills the other shelves.
+    kept_ids = kept_shelf_ids(store)
+    on_display = [p for p in store.load(Placement) if p.shelf_id in kept_ids]
     displayed = {p.unit_id for p in on_display if p.unit_type is UnitType.ALBUM}
     # An album whose format is unknown is taken to be a single LP.
     albums = [

@@ -620,3 +620,43 @@ def test_a_removed_shelf_does_not_come_back_as_another_in_an_older_version(clien
     # The album that stood on the removed shelf is left out, not put on the new shelf.
     assert "Moanin" not in client.get("/browse?shelf=4").text
     assert "Moanin" in client.get("/unplaced").text
+
+
+def _set_cabinet_aside(client):
+    """A second cabinet, kept outside the sorting, with one wide shelf that holds Fun House."""
+    client.post("/storage/cabinets/new", data={"name": "Overflow", "location": "",
+                                               "outside_sorting": "on"})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "width_cm": "5", "type": "",
+                                                         "layer": ""})
+    client.post("/layout/move", json={"shelves": {"2": [5], "4": [4]}})
+
+
+def test_a_cabinet_outside_the_sorting_is_left_as_it_is(client):
+    _set_cabinet_aside(client)
+    assert "outside the sorting" in client.get("/storage/").text
+    assert "checked" in client.get("/storage/cabinets/2").text
+    assert "outside the sorting" in client.get("/browse?shelf=4").text
+    assert "outside the sorting" not in client.get("/browse?shelf=1").text
+    # Fun House stays where it is, so four albums are left to place.
+    assert "outside the sorting, kept as it is" in client.get("/proposal/").text
+
+    client.post("/proposal/generate")
+
+    page = client.get("/proposal/").text
+    assert "outside the sorting, kept as it is" in page
+    # The box set (3 cm) would fit the 5 cm shelf, but nothing is added there.
+    assert "Do not fit (1)" in page
+    client.post("/proposal/accept")
+    aside = client.get("/browse?shelf=4").text
+    assert "Fun House" in aside and "1 album" in aside and "Moanin" not in aside
+    assert "Fun House" not in client.get("/unplaced").text
+
+
+def test_the_switch_can_be_turned_off_again(client):
+    _set_cabinet_aside(client)
+
+    client.post("/storage/cabinets/2", data={"name": "Overflow", "location": ""})
+    client.post("/proposal/generate")
+
+    page = client.get("/proposal/").text
+    assert "outside the sorting" not in page and "Do not fit (0)" in page

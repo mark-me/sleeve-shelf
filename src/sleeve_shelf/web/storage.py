@@ -44,10 +44,15 @@ def _cabinet_form(cabinet_id: int | None):
     store = get_store()
     cabinets = store.load(Cabinet)
     cabinet = _find(cabinets, cabinet_id) if cabinet_id is not None else None
-    values = {"name": cabinet.name, "location": cabinet.location or ""} if cabinet else {}
+    values = (
+        {"name": cabinet.name, "location": cabinet.location or "", "outside_sorting": cabinet.outside_sorting}
+        if cabinet
+        else {}
+    )
     errors: list[str] = []
     if request.method == "POST":
         values = {key: request.form.get(key, "").strip() for key in ("name", "location")}
+        values["outside_sorting"] = "outside_sorting" in request.form
         if not values["name"]:
             errors.append(_("Give the cabinet a name."))
         if not errors:
@@ -57,6 +62,7 @@ def _cabinet_form(cabinet_id: int | None):
                 settle_order(cabinets, [])
             cabinet.name = values["name"]
             cabinet.location = values["location"] or None
+            cabinet.outside_sorting = values["outside_sorting"]
             store.save(Cabinet, cabinets)
             return redirect(url_for("storage.index"))
     status = 400 if errors else 200

@@ -10,7 +10,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 
 - **Phase 1a (load a layout, browse, search)** is built.
 - **Phase 1b (Discogs, sorting proposal, management screens)** is built, including starting without a workbook. What the code still lacks of Phase 1 is listed under "Not built from Phase 1" in Open questions.
-- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and two parked points from 1a (the upload and preview screens never looked at, the `Overflow` and `Nieuwe koffer` locations).
+- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and one parked point from 1a (the upload and preview screens never looked at).
 - **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync) and the showcase (a top-loader holding a sample of an artist's albums, exchanged one for one with the shelf). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, cluster-shift confirmation) is not, and neither is Phase 3.
 
 ## Commands
