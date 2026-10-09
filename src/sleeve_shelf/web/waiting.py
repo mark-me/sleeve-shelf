@@ -13,7 +13,6 @@ from sleeve_shelf.domain import (
     MatchProposal,
     Placement,
     Shelf,
-    UnitType,
 )
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
 from sleeve_shelf.proposal import takes_part
@@ -25,7 +24,7 @@ _LAYOUT_ENTITIES = (Album, Artist, ArtistClusterAssignment, Cabinet, Cluster, Er
 def waiting_counts(store: JsonStore) -> dict[str, int]:
     """Per kind of open point, how many there are; kinds without any are included as 0."""
     albums = store.load(Album)
-    placed = {p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM}
+    placed = {p.album_id for p in store.load(Placement)}
     sorted_albums = [album for album in albums if takes_part(album, placed)]
     sorted_artists = {album.artist_id for album in sorted_albums}
     confirmed = {a.artist_id for a in store.load(ArtistClusterAssignment) if a.confirmed}

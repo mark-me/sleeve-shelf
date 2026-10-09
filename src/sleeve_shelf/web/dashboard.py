@@ -10,7 +10,6 @@ from sleeve_shelf.domain import (
     Placement,
     ReleaseEnrichment,
     Shelf,
-    UnitType,
 )
 from sleeve_shelf.proposal import has_proposal, takes_part
 from sleeve_shelf.versions import list_versions
@@ -35,7 +34,7 @@ def index():
     store = get_store()
     albums = store.load(Album)
     shelves = store.load(Shelf)
-    placed = {p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM}
+    placed = {p.album_id for p in store.load(Placement)}
     sorted_albums = [album for album in albums if takes_part(album, placed)]
     sorted_artists = {album.artist_id for album in sorted_albums}
     versions = list_versions(store)

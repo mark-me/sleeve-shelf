@@ -36,7 +36,6 @@ from sleeve_shelf.domain import (
     ShelfLayer,
     ShelfType,
     Style,
-    UnitType,
 )
 
 
@@ -51,6 +50,9 @@ class _Table:
     filename: str
     columns: dict[str, str]
     decoders: dict[str, Callable[[Any], Any]] = field(default_factory=dict)
+    # Columns that had another name in files written earlier: new name -> old name.
+    # Such a file is still read; it gets the new names when it is next saved.
+    renamed: dict[str, str] = field(default_factory=dict)
 
 
 def _format_tokens(value: dict) -> FormatTokens:
@@ -63,12 +65,13 @@ _FORMAT_TOKENS_TYPE = (
 )
 
 _PLACEMENT_COLUMNS = {
-    "unit_type": "VARCHAR",
-    "unit_id": "INTEGER",
+    "album_id": "INTEGER",
     "shelf_id": "INTEGER",
     "position": "INTEGER",
     "source": "VARCHAR",
 }
+# Until placements were per album only, the album was named by a unit id.
+_PLACEMENT_RENAMED = {"album_id": "unit_id"}
 
 @dataclass(slots=True)
 class _IdMark:
@@ -126,7 +129,6 @@ _TABLES: dict[type, _Table] = {
         {
             "id": "INTEGER",
             "name": "VARCHAR",
-            "discogs_artist_id": "INTEGER",
             "alias_group_id": "INTEGER",
             "start_year": "INTEGER",
         },
@@ -201,12 +203,14 @@ _TABLES: dict[type, _Table] = {
     Placement: _Table(
         "placement_current.json",
         _PLACEMENT_COLUMNS,
-        {"unit_type": UnitType, "source": PlacementSource},
+        {"source": PlacementSource},
+        _PLACEMENT_RENAMED,
     ),
     ProposedPlacement: _Table(
         "placement_proposal.json",
         _PLACEMENT_COLUMNS,
-        {"unit_type": UnitType, "source": PlacementSource},
+        {"source": PlacementSource},
+        _PLACEMENT_RENAMED,
     ),
 }
 
@@ -337,10 +341,18 @@ class JsonStore:
 
     @staticmethod
     def _read(table: _Table, path: Path) -> str:
-        columns = ", ".join(
-            f"{_sql_string(name)}: {_sql_string(kind)}" for name, kind in table.columns.items()
+        kinds = dict(table.columns)
+        kinds.update({old: table.columns[new] for new, old in table.renamed.items()})
+        columns = ", ".join(f"{_sql_string(name)}: {_sql_string(kind)}" for name, kind in kinds.items())
+        file = f"read_json({_sql_string(path.as_posix())}, format = 'array', columns = {{{columns}}})"
+        if not table.renamed:
+            return file
+        selected = ", ".join(
+            f'coalesce("{name}", "{table.renamed[name]}") AS "{name}"' if name in table.renamed
+            else f'"{name}"'
+            for name in table.columns
         )
-        return f"read_json({_sql_string(path.as_posix())}, format = 'array', columns = {{{columns}}})"
+        return f"(SELECT {selected} FROM {file})"
 
     def query(self, sql: str, parameters: list | None = None) -> list[tuple]:
         """Run a read query; refer to entities through relation()."""
@@ -371,7 +383,12 @@ class JsonStore:
         """Whether a saved version is exactly the current layout."""
         current = self.data_dir / _TABLES[Placement].filename
         saved = self.data_dir / SNAPSHOT_DIR / f"{name}.json"
-        return current.exists() and saved.exists() and current.read_bytes() == saved.read_bytes()
+        if not (current.exists() and saved.exists()):
+            return False
+        # Compared by content, not by bytes: an older version may still carry the old column names.
+        return current.read_bytes() == saved.read_bytes() or (
+            self.load(Placement) == self.load_snapshot(name)
+        )
 
     def clear_snapshots(self) -> None:
         """Remove all saved layout versions."""

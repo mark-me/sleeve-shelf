@@ -20,7 +20,6 @@ from sleeve_shelf.domain import (
     ProposedPlacement,
     Shelf,
     Style,
-    UnitType,
     WidthConstants,
     in_order,
 )
@@ -83,7 +82,7 @@ def usable_shelves(store: JsonStore) -> tuple[list[Shelf], list[Shelf]]:
 def _sort(store: JsonStore) -> _Sorted:
     ensure_cluster_order(store)
     placed_ids = {
-        p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM
+        p.album_id for p in store.load(Placement)
     }
     albums = [album for album in store.load(Album) if takes_part(album, placed_ids)]
     # Only confirmed assignments are curated; a proposed cluster is worked out afresh.
@@ -104,7 +103,7 @@ def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
     # own choice: it stays there, and is left out of the row that fills the other shelves.
     kept_ids = kept_shelf_ids(store)
     on_display = [p for p in store.load(Placement) if p.shelf_id in kept_ids]
-    displayed = {p.unit_id for p in on_display if p.unit_type is UnitType.ALBUM}
+    displayed = {p.album_id for p in on_display}
     # An album whose format is unknown is taken to be a single LP.
     albums = [
         (
@@ -122,12 +121,12 @@ def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
         ProposedPlacement,
         [
             ProposedPlacement(
-                UnitType.ALBUM, spot.album_id, spot.shelf_id, spot.position, PlacementSource.ALGORITHM
+                spot.album_id, spot.shelf_id, spot.position, PlacementSource.ALGORITHM
             )
             for spot in spots
         ]
         + [
-            ProposedPlacement(p.unit_type, p.unit_id, p.shelf_id, p.position, p.source)
+            ProposedPlacement(p.album_id, p.shelf_id, p.position, p.source)
             for p in on_display
         ],
     )
@@ -197,7 +196,7 @@ def accept_proposal(store: JsonStore) -> None:
     store.save(Album, albums)
     store.save(
         Placement,
-        [Placement(p.unit_type, p.unit_id, p.shelf_id, p.position, p.source) for p in proposed],
+        [Placement(p.album_id, p.shelf_id, p.position, p.source) for p in proposed],
     )
     store.remove(ProposedPlacement)
     save_version(store, "proposal accepted")

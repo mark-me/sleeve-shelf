@@ -3,7 +3,7 @@
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf.domain import Album, Artist, Placement, Style, UnitType
+from sleeve_shelf.domain import Album, Artist, Placement, Style
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
 from sleeve_shelf.proposal import takes_part
@@ -32,7 +32,7 @@ def detail(album_id: int):
         None,
     )
     style_names = {style.id: style.name for style in store.load(Style)}
-    placed = {p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM}
+    placed = {p.album_id for p in store.load(Placement)}
     return render_template(
         "albums/detail.html",
         album=album,
@@ -63,7 +63,7 @@ def move(album_id: int):
 def widths():
     store = get_store()
     artists = {artist.id: artist.name for artist in store.load(Artist)}
-    placed = {p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM}
+    placed = {p.album_id for p in store.load(Placement)}
     rows = sorted(
         (
             {"album": album, "artist": artists.get(album.artist_id, "")}

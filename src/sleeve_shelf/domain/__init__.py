@@ -12,7 +12,6 @@ from sleeve_shelf.domain.catalog import (
 )
 from sleeve_shelf.domain.clustering import (
     ArtistClusterAssignment,
-    ClusterOrder,
     EraBand,
     EraBandSource,
 )
@@ -25,7 +24,6 @@ from sleeve_shelf.domain.placement import (
     Placement,
     PlacementSource,
     ProposedPlacement,
-    UnitType,
 )
 from sleeve_shelf.domain.storage import (
     Cabinet,
@@ -46,7 +44,6 @@ __all__ = [
     "ArtistClusterAssignment",
     "Cabinet",
     "Cluster",
-    "ClusterOrder",
     "EraBand",
     "EraBandSource",
     "FamilyDismissal",
@@ -63,7 +60,6 @@ __all__ = [
     "ShelfLayer",
     "ShelfType",
     "Style",
-    "UnitType",
     "WidthConstants",
     "in_order",
     "move",

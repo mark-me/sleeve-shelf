@@ -27,7 +27,6 @@ class Artist:
 
     id: int
     name: str
-    discogs_artist_id: int | None = None
     alias_group_id: int | None = None
     start_year: int | None = None
 

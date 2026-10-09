@@ -129,8 +129,7 @@ class BrowseQueries:
         return [AlbumRow(*row) for row in rows]
 
     def _located_albums(self) -> str:
-        """CTE resolving each album's location: its own placement, else its era band's,
-        else its artist's."""
+        """CTE giving each album its location, if it has one."""
         relation = self._store.relation
         return f"""
             WITH placement AS (SELECT * FROM {relation(self._placements)}),
@@ -142,7 +141,7 @@ class BrowseQueries:
                        cabinet.id AS cabinet_id, cabinet.name AS cabinet, shelf.name AS shelf,
                        coalesce(cabinet.position, cabinet.id) AS cabinet_order,
                        coalesce(shelf.position, shelf.id) AS shelf_order,
-                       coalesce(own.position, band.position, whole.position) AS position,
+                       placement.position AS position,
                        coalesce(album.manual_width_cm, album.computed_width_cm) AS width_cm,
                        -- An album whose format is unknown counts as an LP.
                        coalesce(len(list_filter(album.format_tokens.qualifiers,
@@ -153,14 +152,8 @@ class BrowseQueries:
                 LEFT JOIN {relation(ArtistClusterAssignment)} AS assignment
                     ON assignment.artist_id = artist.id
                 LEFT JOIN {relation(Cluster)} AS cluster ON cluster.id = assignment.cluster_id
-                LEFT JOIN placement AS own
-                    ON own.unit_type = 'album' AND own.unit_id = album.id
-                LEFT JOIN placement AS band
-                    ON band.unit_type = 'era_band' AND band.unit_id = album.era_band_id
-                LEFT JOIN placement AS whole
-                    ON whole.unit_type = 'artist' AND whole.unit_id = album.artist_id
-                LEFT JOIN {relation(Shelf)} AS shelf
-                    ON shelf.id = coalesce(own.shelf_id, band.shelf_id, whole.shelf_id)
+                LEFT JOIN placement ON placement.album_id = album.id
+                LEFT JOIN {relation(Shelf)} AS shelf ON shelf.id = placement.shelf_id
                 LEFT JOIN {relation(Cabinet)} AS cabinet ON cabinet.id = shelf.cabinet_id
             )
         """

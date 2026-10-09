@@ -94,6 +94,6 @@ def restore_version(store: JsonStore, name: str) -> int:
     save_if_unsaved(store, "before restoring")
     album_ids = {album.id for album in store.load(Album)}
     shelf_ids = {shelf.id for shelf in store.load(Shelf)}
-    kept = [p for p in placements if p.unit_id in album_ids and p.shelf_id in shelf_ids]
+    kept = [p for p in placements if p.album_id in album_ids and p.shelf_id in shelf_ids]
     store.save(Placement, kept)
     return len(placements) - len(kept)

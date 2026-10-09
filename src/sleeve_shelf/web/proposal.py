@@ -11,7 +11,6 @@ from sleeve_shelf.domain import (
     Cabinet,
     Placement,
     ProposedPlacement,
-    UnitType,
     in_order,
 )
 from sleeve_shelf.persistence import BrowseQueries
@@ -34,7 +33,7 @@ def index():
     outside = {cabinet.id for cabinet in store.load(Cabinet) if cabinet.outside_sorting}
     cabinet_names = {cabinet.id: cabinet.name for cabinet in store.load(Cabinet)}
     current = {
-        p.unit_id: p.shelf_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM
+        p.album_id: p.shelf_id for p in store.load(Placement)
     }
     albums = [a for a in store.load(Album) if proposal.takes_part(a, set(current))]
     context = {
@@ -51,7 +50,7 @@ def index():
     if not context["has_proposal"]:
         return render_template("proposal/index.html", **context)
 
-    proposed = {p.unit_id: p.shelf_id for p in store.load(ProposedPlacement)}
+    proposed = {p.album_id: p.shelf_id for p in store.load(ProposedPlacement)}
     artist_names = {artist.id: artist.name for artist in store.load(Artist)}
     now_fill = BrowseQueries(store).shelf_fill()
     new_fill = BrowseQueries(store, ProposedPlacement).shelf_fill()

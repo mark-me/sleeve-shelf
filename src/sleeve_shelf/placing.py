@@ -7,7 +7,6 @@ from sleeve_shelf.domain import (
     LocationRuleTarget,
     Placement,
     PlacementSource,
-    UnitType,
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.versions import keep_restore_point
@@ -23,12 +22,12 @@ def move_albums(store: JsonStore, album_ids: list[int], shelf_id: int | None) ->
     placements = [
         p
         for p in store.load(Placement)
-        if not (p.unit_type is UnitType.ALBUM and p.unit_id in moving)
+        if p.album_id not in moving
     ]
     if shelf_id is not None:
         following = max((p.position for p in placements if p.shelf_id == shelf_id), default=-1) + 1
         placements += [
-            Placement(UnitType.ALBUM, album_id, shelf_id, following + offset, PlacementSource.MANUAL)
+            Placement(album_id, shelf_id, following + offset, PlacementSource.MANUAL)
             for offset, album_id in enumerate(album_ids)
         ]
     store.save(Placement, placements)

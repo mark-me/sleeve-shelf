@@ -25,7 +25,6 @@ from sleeve_shelf.domain import (
     ReleaseEnrichment,
     Shelf,
     Style,
-    UnitType,
     WidthConstants,
     settle_order,
 )
@@ -177,13 +176,13 @@ def update_layout(
         albums.append(album)
         return album
 
-    placement_of = {placement.unit_id: placement for placement in load.placements}
+    placement_of = {placement.album_id: placement for placement in load.placements}
     placements = []
     for loaded in load.albums:
         album = stored(loaded)
         placement = placement_of.get(loaded.id)
         if placement is not None:
-            placements.append(replace(placement, unit_id=album.id, shelf_id=shelf_of[placement.shelf_id]))
+            placements.append(replace(placement, album_id=album.id, shelf_id=shelf_of[placement.shelf_id]))
 
     if constants:
         estimate_widths([album for album in albums if album.computed_width_cm is None], constants)
@@ -460,7 +459,7 @@ def remove_departed_album(store: JsonStore, album_id: int) -> bool:
         return False
 
     def is_other(placement: Placement) -> bool:
-        return placement.unit_type is not UnitType.ALBUM or placement.unit_id != album_id
+        return placement.album_id != album_id
 
     placements = store.load(Placement)
     if not all(is_other(placement) for placement in placements):

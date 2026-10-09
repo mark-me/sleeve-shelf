@@ -123,7 +123,7 @@ This section and §2 follow the logic of the layout the collection is actually s
 
 ## Data model
 
-Overview of the persisted entities and their relations; the lists below are authoritative for the details. Solid lines are plain foreign keys. Dashed lines are either polymorphic references (a LocationRule target, a Placement unit — each row points at exactly one of the connected entities) or lookups by Discogs ID into the enrichment cache. ClusterOrder is not an entity of its own: it is the `position` of each Cluster. There is no separate entity for what a showcase shows: an album on display simply has its Placement on a showcase shelf.
+Overview of the persisted entities and their relations; the lists below are authoritative for the details. Solid lines are plain foreign keys. Dashed lines are either polymorphic references (a LocationRule target — each row points at exactly one of the connected entities) or lookups by Discogs ID into the enrichment cache. There is no separate entity for what a showcase shows: an album on display simply has its Placement on a showcase shelf.
 
 ```mermaid
 erDiagram
@@ -144,9 +144,7 @@ erDiagram
     Cluster |o..o{ LocationRule : "target"
     Album |o..o{ LocationRule : "target"
 
-    Artist |o..o| Placement : "unit"
-    EraBand |o..o| Placement : "unit"
-    Album |o..o| Placement : "unit"
+    Album ||--o| Placement : "stands at"
 
     ReleaseEnrichment |o..o{ Album : "release_id"
     MasterEnrichment |o..o{ Album : "master_id"
@@ -157,7 +155,6 @@ erDiagram
     Artist {
         int id PK
         string name
-        int discogs_artist_id "optional, not filled yet"
         int alias_group_id FK "nullable"
         int start_year "nullable"
     }
@@ -231,8 +228,7 @@ erDiagram
         string note
     }
     Placement {
-        string unit_type "album; artist and era band are not written yet"
-        int unit_id FK
+        int album_id FK
         int shelf_id FK
         int position "order within the shelf"
         string source "algorithm, manual or initial load"
@@ -264,7 +260,7 @@ erDiagram
 
 **Core entities**
 
-- **Artist**: id, name, Discogs artist ID (optional; a field only — neither the export nor the sync fills it yet), alias_group_id (nullable), `start_year` (nullable — the year the artist began, which decides its era band; see Sorting logic §2)
+- **Artist**: id, name, alias_group_id (nullable), `start_year` (nullable — the year the artist began, which decides its era band; see Sorting logic §2)
 - **AliasGroup**: id, label — an artist family: the Artists pointing at it stand together as one unit (see Sorting logic §1)
 - **FamilyDismissal**: anchor artist id — a suggested family the user turned down, so it is not suggested again
 - **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), `cover_url` (the address of the release's small cover image at Discogs, set by a sync; empty until the first sync), `cover_image_url` (the address of the same cover as a large image, set by the same sync; only used to enlarge the cover on the album's page), `original_year_confirmed` (bool — true when the year is known to be the original rather than a pressing's, so enrichment leaves it alone; see Sorting logic §2), `left_discogs` (bool — true when the last sync or import no longer found the album's release in the Discogs collection; set again at every sync or import)
@@ -281,7 +277,6 @@ erDiagram
 
 - **ArtistClusterAssignment**: artist_id, cluster_id (the artist's cluster — curated, or proposed from its albums' Styles), confirmed (bool) — distinguishes a proposed cluster from a confirmed one. An artist without an assignment has no cluster yet and gets one proposed. An artist that forms a cluster of its own (see Sorting logic §1) simply has an ordinary Cluster named after it; there is no separate "standalone" marker
 - **EraBand**: id, artist_id, label, position (order of the band within the artist's timeline), source (algorithm vs. initial load) — one band of an artist's discography (see Sorting logic §2); albums point at their band via `era_band_id`. The label is the decade band (e.g. "1990s" — see Sorting logic §2); an initial load stores the workbook's own labels as-is. Era bands are persisted, so the bands seeded by an initial load are kept until a proposal is accepted; accepting renews them, one band per artist, since a band is the decade of the artist's start year
-- **ClusterOrder**: the curated sequence of the clusters (see Sorting logic §1) — not an entity of its own: it is the `position` of each Cluster
 
 **Storage structure**
 
@@ -291,7 +286,7 @@ erDiagram
 
 **Placement**
 
-- **Placement**: unit, shelf_id, order position within the shelf, source (algorithm proposal, manually overridden, or initial load) — this is the one, canonical location, consuming shelf width (see Sorting logic §3). **Every placement the app writes is per album**: the initial load, a proposal, and a move in Layout all place single albums, which is what lets an artist run on across shelves and one title be moved on its own. The model also allows a placement for a whole artist or era band, and Browse/Search can read those — the most specific unit winning: an album's own placement, otherwise its era band's, otherwise its artist's — but nothing writes them
+- **Placement**: album_id, shelf_id, order position within the shelf, source (algorithm proposal, manually overridden, or initial load) — this is the one, canonical location, consuming shelf width (see Sorting logic §3). **A placement is always of one album**: the initial load, a proposal, and a move in Layout all place single albums, which is what lets an artist run on across shelves and one title be moved on its own. Until October 2026 the model also allowed a placement for a whole artist or era band; nothing ever wrote one, and that was removed. Files from before then name the album as `unit_id` and are still read
 - **Showcase**: not an entity. A shelf marked `is_showcase` holds a sample, and an album on display has its one Placement there — it stands in the top-loader, not on the artist's shelf, so nothing is counted twice and no room is kept free for it elsewhere. The earlier design, a `ShowcaseFeature` pointing at a Placement elsewhere, was dropped (2026-10-09): albums are exchanged one for one between the showcase and the shelf, so both always hold as many albums as before
 
 ## Architecture, storage, and deployment
@@ -571,11 +566,6 @@ The detail of an artist and of an album are two pages.
 - **Proportion is shown, not guarded**: the screen shows each artist's share and marks an artist that is entirely on display, but nothing stops a sample from growing out of proportion. Whether the app should suggest a sample size per artist is open
 - **Which artists are "well represented"** is left to the user; the app sets no threshold
 - **Widths of the top-loaders**: each showcase top-loader is 35 cm wide according to Mark; that has to be entered per shelf under Cabinets & shelves, together with marking shelves `a` and `b` of `Topladers` as showcase
-
-### Not built from Phase 1
-
-- **Placements per artist or era band**: the model and Browse/Search allow them, but every placement is written per album (see Data model). Whether they are still wanted, now that the row runs on album by album, is undecided
-- **`Artist.discogs_artist_id`** is never filled; nothing uses it yet
 
 ### Parked from Phase 1a
 

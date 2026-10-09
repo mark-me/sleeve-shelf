@@ -8,7 +8,7 @@ way round.
 
 from dataclasses import dataclass, field
 
-from sleeve_shelf.domain import AliasGroup, Artist, Placement, Shelf, UnitType
+from sleeve_shelf.domain import AliasGroup, Artist, Placement, Shelf
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries, JsonStore
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.versions import keep_restore_point
@@ -79,7 +79,7 @@ def swap(store: JsonStore, shown_album_id: int, shelved_album_id: int) -> bool:
     """
     showcase_ids = showcase_shelf_ids(store)
     placements = store.load(Placement)
-    by_album = {p.unit_id: p for p in placements if p.unit_type is UnitType.ALBUM}
+    by_album = {p.album_id: p for p in placements}
     shown, shelved = by_album.get(shown_album_id), by_album.get(shelved_album_id)
     if shown is None or shelved is None:
         return False

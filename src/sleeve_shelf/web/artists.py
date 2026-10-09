@@ -15,7 +15,6 @@ from sleeve_shelf.domain import (
     Cluster,
     Placement,
     Style,
-    UnitType,
 )
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
@@ -36,7 +35,7 @@ def require_collection():
 
 
 def _albums_taking_part(store) -> dict[int, list[Album]]:
-    placed = {p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM}
+    placed = {p.album_id for p in store.load(Placement)}
     by_artist: dict[int, list[Album]] = defaultdict(list)
     for album in store.load(Album):
         if takes_part(album, placed):
