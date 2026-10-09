@@ -51,7 +51,7 @@ def takes_part(album: Album, placed_ids: set[int]) -> bool:
 def usable_shelves(store: JsonStore) -> tuple[list[Shelf], list[Shelf]]:
     """The shelves a proposal fills, in walking order, and the ones it has to skip.
 
-    A showcase shelf only shows samples, and a shelf without a width can't be filled.
+    A showcase shelf keeps the sample the user put there, and a shelf without a width can't be filled.
     """
     shelves = store.load(Shelf)
     walked = [
@@ -83,6 +83,11 @@ def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
     result = _sort(store)
     usable, _skipped = usable_shelves(store)
     cabinet_of = _mandatory_cabinets(store, result)
+    # What is on display in a showcase is the user's own selection: it stays there,
+    # and is left out of the row that fills the other shelves.
+    showcase_ids = {shelf.id for shelf in store.load(Shelf) if shelf.is_showcase}
+    on_display = [p for p in store.load(Placement) if p.shelf_id in showcase_ids]
+    displayed = {p.unit_id for p in on_display if p.unit_type is UnitType.ALBUM}
     # An album whose format is unknown is taken to be a single LP.
     albums = [
         (
@@ -91,6 +96,7 @@ def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
             cabinet_of.get(o.album_id),
         )
         for o in result.ordered
+        if o.album_id not in displayed
     ]
     spots, _left_out = place(
         albums, [(shelf.id, shelf.cabinet_id, shelf.width_cm) for shelf in usable]
@@ -102,6 +108,10 @@ def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
                 UnitType.ALBUM, spot.album_id, spot.shelf_id, spot.position, PlacementSource.ALGORITHM
             )
             for spot in spots
+        ]
+        + [
+            ProposedPlacement(p.unit_type, p.unit_id, p.shelf_id, p.position, p.source)
+            for p in on_display
         ],
     )
 

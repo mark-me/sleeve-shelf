@@ -36,7 +36,12 @@ def index():
             errors.append(_("The base width has to be a number above zero."))
         if any(numbers[name] is None or numbers[name] < 0 for name in WIDTH_FIELDS[1:]):
             errors.append(_("A surcharge has to be a number, zero or more."))
+        fill_text = request.form.get("showcase_fill_percent", "").strip()
+        if fill_text and not (fill_text.isdigit() and 1 <= int(fill_text) <= 100):
+            errors.append(_("The showcase fill has to be a whole percentage from 1 to 100."))
         if not errors:
+            if fill_text:
+                settings.showcase_fill_percent = int(fill_text)
             for name in WIDTH_FIELDS:
                 setattr(settings, name, numbers[name])
             settings.count_bonus_discs_as_vinyl = "count_bonus_discs_as_vinyl" in request.form
@@ -68,6 +73,7 @@ def index():
             count_bonus=settings.count_bonus_discs_as_vinyl
             if request.method == "GET"
             else "count_bonus_discs_as_vinyl" in request.form,
+            showcase_fill=request.form.get("showcase_fill_percent", settings.showcase_fill_percent),
             masked_token=f"••••{token[-4:]}" if token else None,
             errors=errors,
             saved=request.args.get("saved") and not errors,

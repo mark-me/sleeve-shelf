@@ -25,7 +25,6 @@ from sleeve_shelf.domain.placement import (
     Placement,
     PlacementSource,
     ProposedPlacement,
-    ShowcaseFeature,
     UnitType,
 )
 from sleeve_shelf.domain.storage import (
@@ -63,7 +62,6 @@ __all__ = [
     "Shelf",
     "ShelfLayer",
     "ShelfType",
-    "ShowcaseFeature",
     "Style",
     "UnitType",
     "WidthConstants",

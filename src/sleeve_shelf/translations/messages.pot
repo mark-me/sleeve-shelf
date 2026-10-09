@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 09:13+0200\n"
+"POT-Creation-Date: 2026-10-09 09:37+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -97,12 +97,20 @@ msgstr ""
 msgid "A surcharge has to be a number, zero or more."
 msgstr ""
 
+#: src/sleeve_shelf/web/settings.py
+msgid "The showcase fill has to be a whole percentage from 1 to 100."
+msgstr ""
+
 #: src/sleeve_shelf/web/setup.py
 msgid "This file could not be read as an Excel workbook (.xlsx)."
 msgstr ""
 
 #: src/sleeve_shelf/web/setup.py
 msgid "Choose a workbook to upload."
+msgstr ""
+
+#: src/sleeve_shelf/web/showcase.py
+msgid "Those two albums can’t be exchanged."
 msgstr ""
 
 #: src/sleeve_shelf/web/storage.py
@@ -554,6 +562,13 @@ msgid "Sorting proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+#: src/sleeve_shelf/web/templates/showcase/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Showcase"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 #: src/sleeve_shelf/web/templates/versions/index.html
 msgid "Versions"
@@ -586,6 +601,7 @@ msgid "Setup"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
+#: src/sleeve_shelf/web/templates/showcase/index.html
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Cabinets & shelves"
 msgstr ""
@@ -804,6 +820,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
+#: src/sleeve_shelf/web/templates/showcase/index.html
 msgid "artists"
 msgstr ""
 
@@ -1537,11 +1554,11 @@ msgid "Albums proposed"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "showcase, not filled"
+msgid "no width, not filled"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "no width, not filled"
+msgid "showcase, kept as it is"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -1566,10 +1583,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Shelves a proposal skips"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "showcase"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -1690,6 +1703,14 @@ msgid "Once per album, not per disc."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
+msgid "How full a showcase may be, as a percentage of its width"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "A top-loader is flipped through to see the fronts, so it needs room left over. The Showcase screen warns when a top-loader holds more than this."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Discogs"
 msgstr ""
 
@@ -1790,6 +1811,68 @@ msgstr ""
 msgid "Start without a workbook"
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "A sample of the artists you have most of, facing front in the top-loaders. Each artist shows a few albums and keeps the rest on its own shelf; exchange one for another to change what is on display."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "Exchanged. A version from before is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "No shelf is a showcase yet. Mark a top-loader as showcase under Cabinets & shelves; the albums that stand on it then become its sample."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "albums on display"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "of their albums"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+#, python-format
+msgid "of %(room).1f cm to keep flipping (%(percent)d%% of %(width).1f cm)"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "taken; the shelf has no width yet"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "This top-loader holds more than leaves room to flip through it. Take albums out in Layout, or measure the shelf and the albums."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "Nothing is on display here. Drag albums onto this shelf in Layout."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+#, python-format
+msgid "%(shown)d of %(total)d albums on display · %(share)d%%"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "everything is on display"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "Take off display"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "Put on display instead"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "Exchange"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "Exchanging puts each album in the other’s spot, so the top-loader and the shelf hold as many albums as before. To show more or fewer albums of an artist, or another artist, drag albums to or from a top-loader in Layout. A sorting proposal leaves a showcase as it is."
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 msgid "Cabinet"
 msgstr ""
@@ -1859,10 +1942,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/storage/index.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Reachability"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Showcase"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html

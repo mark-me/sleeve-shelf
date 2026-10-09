@@ -19,6 +19,8 @@ class Settings:
     surcharge_180_gram_cm: float = 0.15
     surcharge_gatefold_cm: float = 0.2
     count_bonus_discs_as_vinyl: bool = True
+    # The part of a showcase shelf's width albums may take, leaving room to flip through them.
+    showcase_fill_percent: int = 60
 
     @property
     def width_constants(self) -> WidthConstants:

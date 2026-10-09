@@ -91,6 +91,10 @@ class BrowseQueries:
         """All albums of one artist, placed or not."""
         return self._albums("WHERE artist_id = ?", [artist_id])
 
+    def everything(self) -> list[AlbumRow]:
+        """Every album, placed or not, in shelf order."""
+        return self._albums("", [])
+
     def unplaced(self) -> list[AlbumRow]:
         """Albums without a spot on any shelf."""
         return self._albums("WHERE shelf_id IS NULL", [])

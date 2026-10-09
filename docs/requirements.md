@@ -46,6 +46,7 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 - Add new purchases, with a suggested spot within the existing layout
 - Suggestions for new location rules based on the existing layout — always requiring confirmation, never applied automatically
 - Showcase management for the top-loaders (rotating samples from the collection)
+  - **Built** (2026-10-09), as Mark described it: a showcase shows a sample of the artists that are well represented in the collection — a few albums of each, in proportion to how many the artist has, never all of them — while the rest stand on the artist's own shelf. Albums are exchanged between the two, one for one, and the selection is the user's own (see Showcase screen)
 - Notification + confirmation when a new purchase would shift an existing artist's cluster
 
 ### Phase 3 — Refinement
@@ -109,7 +110,7 @@ This section and §2 follow the logic of the layout the collection is actually s
 - A cluster may span adjacent shelves within the same cabinet if it doesn't fit on one shelf
 - **What does not fit is not forced in.** Albums a proposal has no room for are left unplaced: they appear in the Unplaced albums list, and the proposal states how many there are
 - **The shelves are filled as one continuous row.** The albums, in the order of §1 and §2, are stood on the shelves in the order set under Storage: each shelf is filled until the next album no longer fits, and the row continues on the next shelf that has room — so a cluster, and an artist, can run on across shelves. A shelf once passed is not gone back to
-- **Shelves a proposal skips**: a showcase shelf (it shows samples, see Data model) and a shelf without a width. An album whose format is unknown is taken to be one disc of base width
+- **Shelves a proposal skips**: a shelf without a width, and a showcase shelf. **A showcase is left as it is**: the albums on display there are the user's own selection, so a proposal keeps them where they are and leaves them out of the row that fills the other shelves — they take no room there. An album whose format is unknown is taken to be one disc of base width
 - **Location rules** bind a cluster, a family, an artist, or a single album to a cabinet (see Data model). A proposal places what a rule binds in that cabinet and nowhere else — bound albums that don't fit there are left out rather than put elsewhere — and a cabinet that rules send albums to holds only those albums: everything without a rule runs over the other cabinets. The most specific rule wins: an album's own, then its artist's, its family's, its cluster's
 - Reachability only plays a role through the explicit, manually configured location rules — not as a general rule for popular/frequently-picked artists
 
@@ -122,7 +123,7 @@ This section and §2 follow the logic of the layout the collection is actually s
 
 ## Data model
 
-Overview of the persisted entities and their relations; the lists below are authoritative for the details. Solid lines are plain foreign keys. Dashed lines are either polymorphic references (a LocationRule target, a Placement or ShowcaseFeature unit — each row points at exactly one of the connected entities) or lookups by Discogs ID into the enrichment cache. ClusterOrder is not an entity of its own: it is the `position` of each Cluster. ShowcaseFeature is in the model but not stored or used yet (Phase 2).
+Overview of the persisted entities and their relations; the lists below are authoritative for the details. Solid lines are plain foreign keys. Dashed lines are either polymorphic references (a LocationRule target, a Placement unit — each row points at exactly one of the connected entities) or lookups by Discogs ID into the enrichment cache. ClusterOrder is not an entity of its own: it is the `position` of each Cluster. There is no separate entity for what a showcase shows: an album on display simply has its Placement on a showcase shelf.
 
 ```mermaid
 erDiagram
@@ -137,7 +138,6 @@ erDiagram
     Cabinet ||--o{ Shelf : "has"
     Cabinet ||--o{ LocationRule : "mandatory cabinet of"
     Shelf ||--o{ Placement : "holds"
-    Shelf ||--o{ ShowcaseFeature : "showcases"
 
     Artist |o..o{ LocationRule : "target"
     AliasGroup |o..o{ LocationRule : "target"
@@ -147,9 +147,6 @@ erDiagram
     Artist |o..o| Placement : "unit"
     EraBand |o..o| Placement : "unit"
     Album |o..o| Placement : "unit"
-
-    Artist |o..o{ ShowcaseFeature : "unit"
-    Album |o..o{ ShowcaseFeature : "unit"
 
     ReleaseEnrichment |o..o{ Album : "release_id"
     MasterEnrichment |o..o{ Album : "master_id"
@@ -222,7 +219,7 @@ erDiagram
         string type "top-loader or front-loader, nullable"
         string layer "top or bottom, nullable"
         int reachability_score "nullable"
-        bool is_showcase "top-loaders only"
+        bool is_showcase "top-loaders only; holds a sample, kept by a proposal"
         int position "order within the cabinet"
     }
     LocationRule {
@@ -238,11 +235,6 @@ erDiagram
         int shelf_id FK
         int position "order within the shelf"
         string source "algorithm, manual or initial load"
-    }
-    ShowcaseFeature {
-        int shelf_id FK "showcase shelf"
-        string unit_type "artist or album"
-        int unit_id FK
     }
     ReleaseEnrichment {
         int release_id PK
@@ -299,7 +291,7 @@ erDiagram
 **Placement**
 
 - **Placement**: unit, shelf_id, order position within the shelf, source (algorithm proposal, manually overridden, or initial load) — this is the one, canonical location, consuming shelf width (see Sorting logic §3). **Every placement the app writes is per album**: the initial load, a proposal, and a move in Layout all place single albums, which is what lets an artist run on across shelves and one title be moved on its own. The model also allows a placement for a whole artist or era band, and Browse/Search can read those — the most specific unit winning: an album's own placement, otherwise its era band's, otherwise its artist's — but nothing writes them
-- **ShowcaseFeature**: shelf_id (must reference a shelf with `is_showcase = true`), album_id or artist_id currently featured there. This is a **pointer to an existing Placement, not a placement of its own** — a showcase slot shows a sample "borrowed" from wherever that artist/album's real Placement already is, so it consumes no shelf width and isn't counted in any cabinet's capacity twice. **Not built yet**: the entity exists in the model only, and is not stored; it comes with showcase management in Phase 2. What is built is the showcase flag on a shelf, which makes a proposal skip that shelf
+- **Showcase**: not an entity. A shelf marked `is_showcase` holds a sample, and an album on display has its one Placement there — it stands in the top-loader, not on the artist's shelf, so nothing is counted twice and no room is kept free for it elsewhere. The earlier design, a `ShowcaseFeature` pointing at a Placement elsewhere, was dropped (2026-10-09): albums are exchanged one for one between the showcase and the shelf, so both always hold as many albums as before
 
 ## Architecture, storage, and deployment
 
@@ -337,6 +329,7 @@ erDiagram
 - Holds:
   - The width-estimation constants (base width, 180-gram surcharge, gatefold surcharge — see Sorting logic §3); the base width also turns the workbook's LP-unit capacity into an estimated shelf width
   - The Discogs personal access token
+  - `showcase_fill_percent` (default `60`) — the part of a showcase shelf's width albums may take, leaving room to flip through them
   - `count_bonus_discs_as_vinyl` (bool, default `true`) — whether a "bonus disc" bundle such as `"CD + LP"` is treated as vinyl during import (see Phase 1); defaults to the current any-segment-matches behavior, but is a setting rather than a hardcoded rule, since it's genuinely a judgment call
 - Editable from the **Settings** screen in the web app (see UI). The token can also be set on the Discogs screen, where it is first needed
 - **Never committed to version control** — `config.yaml` is git-ignored, since it holds a credential. The Settings screen shows the API token masked (last 4 characters only), with a "replace" action rather than displaying it in full
@@ -389,7 +382,7 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 - **Cabinet/Shelf creation**: each distinct `Locatie` becomes a Cabinet, each (`Locatie`, `Vak`) pair a Shelf named after `Vak`, in the order of `Vakoverzicht` (then any pair that only occurs in `Kastindeling`). The reachability score is the leading number of `Toegankelijkheid`. The shelf width is estimated from `Capaciteit`, which counts LP-units rather than cm: units × the base width per disc from the settings (see Sorting logic §3). Room, shelf type, and layer are not in the workbook and stay empty until completed in the storage-structure step of Phase 1b
 - **Placement**: each `Kastindeling` row becomes an album-level Placement on its shelf (source "initial load"), with the row order within a shelf as the position — the loaded layout mirrors the workbook exactly, which is what Browse/Search then follows
 - **Matching to the Discogs export (Phase 1b)**: the spreadsheet has no `release_id`. Importing the Discogs export links each loaded album to the vinyl release with the same artist and title (ignoring case and spacing); two pressings of one title are told apart by their format. For an album left without a release, the most similar remaining release is only **proposed** (`MatchProposal`, see Data model) and has to be confirmed by hand — same non-blocking pattern as other confirmations (see Sorting logic §4): the album stays loaded and browsable. Vinyl releases in the export that no loaded album accounts for become new albums without a placement, visible under Unplaced albums. Non-vinyl releases are skipped. Importing the same export again changes nothing
-- **Topladers are ordinary locations**: in the workbook an album sits in exactly one place — the rows under `Topladers` do not also appear on another shelf — so they are loaded as normal Placements, not as a `ShowcaseFeature`. Of the `Topladers` shelves only `a` and `b` are meant as rotating samples; `c` is an ordinary shelf. Showcase features (a sample borrowed from a Placement elsewhere, see Data model) only come into play with showcase management in Phase 2
+- **Topladers are loaded as they are**: in the workbook an album sits in exactly one place — the rows under `Topladers` do not also appear on another shelf — so they are loaded as Placements on those shelves. Of the `Topladers` shelves `a` and `b` are showcases and `c` is an ordinary shelf; the workbook does not say so, so a shelf becomes a showcase when the user marks it as one under Cabinets & shelves. The albums standing on it are then its sample (see Showcase screen)
 - **The Cluster column seeds the `Cluster` entity directly** (see Data model) — each distinct value becomes a Cluster, and each artist gets a confirmed `ArtistClusterAssignment` to the Cluster of its rows (the most frequent one if they differ). Once the albums are matched to Discogs and enriched in Phase 1b, their Styles are mapped to these Clusters (see Sorting logic §1). This is a natural fit: the spreadsheet's curated cluster names are exactly what the Clusters screen (see UI) lets the user build by hand later — initial load just bootstraps it from work already done
 - **The Era band column is stored as the initial per-artist era-band label** — each distinct (Artist, Era band) value becomes an `EraBand` with source "initial load" (see Data model), and the row's album is linked to it. The workbook's decade labels ("voor 1960", "1990s", …) are the same bands the sorting engine works with (see Sorting logic §2)
 - **Unplaced albums**: the rows of the `Nog niet geplaatst` sheet are loaded as Albums without a Placement — visible in a dedicated list, not silently dropped, so they can be resolved later (mark as external, free up shelf space, etc.). Locations such as `Overflow` or a not-yet-bought `Nieuwe koffer` are named in `Kastindeling` and are therefore loaded as ordinary Cabinets, exactly as the workbook has them
@@ -407,6 +400,7 @@ The menu is grouped in the order the app is used — what is done daily on top, 
 - **Arrange**
   - **Layout** — core screen (see below)
   - **Sorting proposal** — generate a proposal, compare it with the current layout, accept or discard it (see below)
+  - **Showcase** — the samples on display in the top-loaders, and exchanging albums with the shelf (see below)
   - **Versions** — saved layouts, with the option to put one back (see below)
 - **Sorting rules** — what decides how a proposal sorts, in the order they are best gone through
   - **Artists** — the list of artists, and per artist its start year and cluster (see below)
@@ -418,7 +412,6 @@ The menu is grouped in the order the app is used — what is done daily on top, 
   - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below)
   - **Import workbook** — load a layout workbook (see Initial load)
   - **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); see below
-- **Showcase** — manage top-loaders/samples (phase 2, not in the menu yet)
 
 **Counters in the menu**: an item shows a number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
 
@@ -485,6 +478,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 - **Album width**: base width per disc, extra per 180-gram disc, and extra for a gatefold sleeve (see Sorting logic §3). Saving recalculates the estimated width of every album; shelf widths are not touched — those are set per shelf under Storage
 - **Room**: the screen shows how many cm the albums of a proposal need, how many the shelves it fills offer, and the difference — the quickest way to see whether the estimates add up
+- **Showcase**: how full a showcase may be, as a percentage of its width (see Showcase screen)
 - **Discogs**: whether a bundle such as "CD + LP" counts as vinyl (applies at the next import), and the personal access token, shown masked
 
 ### Album widths screen
@@ -505,6 +499,18 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Add a rule**: choose what it is for (a cluster, a family, an artist, or one album), pick the name from the list, choose the cabinet, and optionally note why. A target has one rule: a new rule for the same target replaces the old
 - **Rules**: each rule with its target, cabinet, and note, and a remove action. A rule whose target or cabinet no longer exists is shown as such
 - Rules are sorting inputs: they take effect the next time a proposal is generated (see Sorting logic §3)
+
+### Showcase screen
+
+A showcase is a top-loader that shows a sample of the well-represented artists, the sleeves facing front. It is a shelf marked as showcase under Cabinets & shelves; what stands on it is its sample.
+
+- **Per showcase shelf**: the number of albums on display, the number of artists, the sample as a share of everything those artists have in the collection, and how much of the shelf's width is taken
+- **Room to flip**: a top-loader is leafed through to see the fronts without taking a record out, so it may only be partly full. The part that may be taken is a setting (default 60% of the width); the screen shows the filled width against that limit and warns when a top-loader holds more
+- **Per artist**: the albums on display, and how many that is of all the artist's albums, as a number and a percentage — the sample is meant to be in proportion to the size of the artist's catalogue. An artist whose albums are all on display is marked, since a sample should leave the rest on the shelf. The app shows the proportions; it does not enforce them or pick the sample. A family counts as one artist here, as it does in sorting
+- **Exchange**: choose an album to take off display and one of the same artist on an ordinary shelf to put on display instead. Each takes the other's spot, so the top-loader and the shelf hold as many albums as before and no extra room is needed anywhere. Exchanging changes the shelves as they are, and a version from before is kept (see Versions screen). Albums of different artists, or two albums that are both on display or both shelved, cannot be exchanged
+- **Changing the size of a sample**, or showing another artist, is not an exchange: albums are dragged to or from the top-loader in Layout, or moved from the album's page
+- **A sorting proposal leaves a showcase as it is** (see Sorting logic §3)
+- In Browse/Search and Layout a showcase shelf behaves like any other shelf: an album on display is found there
 
 ### Versions screen
 
@@ -556,6 +562,13 @@ The detail of an artist and of an album are two pages.
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
 
+### Showcase
+
+- **How full a showcase may be**: the default of 60% of the width was chosen without asking; it is a setting, to be tuned to how the top-loaders actually leaf
+- **Proportion is shown, not guarded**: the screen shows each artist's share and marks an artist that is entirely on display, but nothing stops a sample from growing out of proportion. Whether the app should suggest a sample size per artist is open
+- **Which artists are "well represented"** is left to the user; the app sets no threshold
+- **Widths of the top-loaders**: each showcase top-loader is 35 cm wide according to Mark; that has to be entered per shelf under Cabinets & shelves, together with marking shelves `a` and `b` of `Topladers` as showcase
+
 ### Not built from Phase 1
 
 - **Placements per artist or era band**: the model and Browse/Search allow them, but every placement is written per album (see Data model). Whether they are still wanted, now that the row runs on album by album, is undecided
@@ -566,5 +579,4 @@ The detail of an artist and of an album are two pages.
 Not blocking; set aside to be addressed later.
 
 - **Screens not seen**: the upload and preview pages have only been exercised by tests. The light theme and the collapsed menu on a phone were looked at and approved (2026-10-08)
-- **Topladers as a rotating sample**: decided (2026-10-08) that only shelves `a` and `b` of `Topladers` are rotating samples; shelf `c` is an ordinary shelf. The workbook lists the albums on `a` and `b` only there, without the real spot they are borrowed from, so they are still loaded as ordinary placements (see [Initial load](#initial-load)). Turning them into showcase features — and giving those albums their real spot — is open, and belongs with showcase management in Phase 2
 - **`Overflow` and `Nieuwe koffer` locations**: the workbook lists these under `Kastindeling`, so they are loaded as ordinary Cabinets and show up as locations in Browse/Search. Neither is a real, existing storage spot (overflow is a proposal to give away, the cases are yet to be bought) — whether they should appear in the Unplaced albums list instead is undecided

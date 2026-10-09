@@ -96,9 +96,10 @@ def test_showcase_shelves_and_shelves_without_width_are_skipped(client):
     client.post("/proposal/generate")
 
     page = client.get("/proposal/").text
-    assert "showcase, not filled" in page and "no width, not filled" in page
-    # Only shelf b is left: three LPs fit, one LP and the box set do not.
-    assert "Do not fit (2)" in page
+    assert "showcase, kept as it is" in page and "no width, not filled" in page
+    # The showcase keeps its three albums; of the two others only shelf b is left to fill,
+    # where the LP fits and the box set does not.
+    assert "Do not fit (1)" in page
 
 
 def _add_new_artist(client):
@@ -528,3 +529,71 @@ def test_width_can_be_set_on_the_album_page(client):
     assert 'value="1.4"' in page and "A box set or bundle" not in page
     bad = client.post("/albums/5/width", data={"width_cm": "x", "next": "album"}, follow_redirects=True)
     assert "above zero" in bad.text and "<h1>Box</h1>" in bad.text
+
+
+def _make_showcase(client):
+    """Shelf a (Chet, Sings, Moanin') becomes a showcase; Sings goes to shelf c to stay shelved."""
+    client.post("/layout/move", json={"shelves": {"1": [1, 3], "3": [2]}})
+    client.post("/storage/shelves/1", data={"name": "a", "width_cm": "35", "type": "top_loader",
+                                             "layer": "", "is_showcase": "on"})
+
+
+def test_showcase_lists_each_artists_sample_next_to_the_rest(client):
+    assert "No shelf is a showcase yet" in client.get("/showcase/").text
+    _make_showcase(client)
+
+    page = client.get("/showcase/").text
+
+    # Chet Baker shows one of his two albums; Art Blakey's only album is all on display.
+    assert "1 of 2 albums on display · 50%" in page
+    assert "1 of 1 albums on display · 100%" in page
+    assert page.count("everything is on display") == 1
+    # Two LPs of 0.5 cm in a 35 cm top-loader that may be 60% full.
+    assert "of 21.0 cm to keep flipping (60% of 35.0 cm)" in page
+    assert "holds more than leaves room" not in page
+
+
+def test_exchanging_keeps_as_many_albums_on_both_shelves(client):
+    _make_showcase(client)
+
+    client.post("/showcase/swap", data={"shown": "1", "shelved": "2", "anchor": "x"})
+
+    # Sings now stands where Chet stood in the showcase, and Chet where Sings stood.
+    showcase = client.get("/browse?shelf=1").text
+    assert showcase.index("Sings") < showcase.index("Moanin") and "Chet &middot; 1959" not in showcase
+    assert "Chet &middot; 1959" in client.get("/browse?shelf=3").text
+    assert "/restore" in client.get("/versions/").text
+
+    # Not with another artist's album, nor between two albums that are both shelved.
+    for shown, shelved in (("2", "4"), ("1", "4")):
+        refused = client.post("/showcase/swap", data={"shown": shown, "shelved": shelved},
+                              follow_redirects=True)
+        assert "can’t be exchanged" in refused.text
+
+
+def test_a_proposal_leaves_the_showcase_as_it_is(client):
+    _make_showcase(client)
+
+    client.post("/proposal/generate")
+
+    page = client.get("/proposal/").text
+    assert "showcase, kept as it is" in page
+    client.post("/proposal/accept")
+    showcase = client.get("/browse?shelf=1").text
+    assert "Chet &middot; 1959" in showcase and "Moanin" in showcase
+    # The albums on display took no place in the row: Sings leads the first ordinary shelf.
+    assert "Sings" in client.get("/browse?shelf=2").text
+
+
+def test_showcase_fill_is_a_setting_and_a_full_top_loader_is_flagged(client):
+    _make_showcase(client)
+    bad = client.post("/settings/", data={"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15",
+                                          "surcharge_gatefold_cm": "0.2", "showcase_fill_percent": "150"})
+    assert bad.status_code == 400 and "whole percentage" in bad.text
+
+    client.post("/settings/", data={"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15",
+                                    "surcharge_gatefold_cm": "0.2", "showcase_fill_percent": "2"})
+
+    page = client.get("/showcase/").text
+    assert "(2% of 35.0 cm)" in page and "holds more than leaves room" in page
+    assert 'value="2"' in client.get("/settings/").text
