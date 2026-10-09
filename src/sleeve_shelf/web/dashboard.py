@@ -43,6 +43,7 @@ def index():
         "matches": url_for("discogs.index") + "#matches",
         "families": url_for("families.index"),
         "artists": url_for("artists.index", show="attention"),
+        "shifts": url_for("artists.index", show="attention"),
         "widths": url_for("albums.widths"),
         "unlinked": url_for("discogs.index"),
         "gone": url_for("discogs.index") + "#gone",
@@ -66,7 +67,7 @@ def index():
         # Families and artists come with the albums: without any, these steps are
         # neither to do nor done.
         {"kind": "families", "url": urls["families"], **_countable(counts["families"], albums)},
-        {"kind": "artists", "url": urls["artists"], **_countable(counts["artists"], albums)},
+        {"kind": "artists", "url": urls["artists"], **_countable(counts["artists_in_all"], albums)},
         {"kind": "clusters", "url": url_for("clusters.index"), "info": cluster_count},
         # Likewise a collection without a single shelf has its shelves still to enter.
         {

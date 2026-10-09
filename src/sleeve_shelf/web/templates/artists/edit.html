@@ -22,6 +22,20 @@
   {% for error in errors %}
   <div class="ss-alert mt-3" role="alert">{{ error }}</div>
   {% endfor %}
+  {% if shift %}
+  <div class="ss-alert mt-3" id="shift">
+    <p class="fw-semibold mb-1">{{ _('A new purchase points to another cluster') }}</p>
+    <p class="mb-2">{{ ngettext('With %(titles)s the Discogs styles of the albums now point to “%(proposed)s”; the artist stands in “%(current)s”.', 'With %(titles)s the Discogs styles of the albums now point to “%(proposed)s”; the artist stands in “%(current)s”.', shift.titles | length, titles=shift.titles | join(', '), proposed=shift.proposed, current=shift.current) }} {{ _('Nothing changes until you choose.') }}</p>
+    <div class="d-flex flex-wrap gap-2">
+      <form method="post" action="{{ url_for('artists.decide_shift', artist_id=artist.id, choice='keep') }}">
+        <button class="ss-button ss-button-primary" type="submit">{{ _('Keep in %(cluster)s', cluster=shift.current) }}</button>
+      </form>
+      <form method="post" action="{{ url_for('artists.decide_shift', artist_id=artist.id, choice='accept') }}">
+        <button class="ss-button" type="submit">{{ _('Move to %(cluster)s', cluster=shift.proposed) }}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
   {% if moved %}
   <div class="ss-alert mt-3">{{ _('Moved. A version from before the move is kept under Versions.') }}</div>
   {% endif %}

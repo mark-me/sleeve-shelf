@@ -170,6 +170,7 @@ _TABLES: dict[type, _Table] = {
             "original_year_confirmed": "BOOLEAN",
             "left_discogs": "BOOLEAN",
             "kept_after_discogs": "BOOLEAN",
+            "new_purchase": "BOOLEAN",
         },
         {"format_tokens": _format_tokens},
     ),

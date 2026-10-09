@@ -15,10 +15,11 @@ Phase 1 (the MVP) is built, and most of Phase 2.
 - **Load and browse**: load a worked-out cabinet layout from an Excel workbook — or start without one — and browse or search the collection in physical shelf order, with album covers.
 - **Discogs**: sync the collection straight from Discogs (or upload an export), and fetch styles, original release years and artist pictures. Albums that left your Discogs collection are reported; you keep or remove them yourself.
 - **Sorting**: manage cabinets, shelves, clusters, artist families and location rules, generate a sorting proposal, adjust it by dragging, and keep versions of the layout to go back to.
+- **New purchases**: when a purchase makes an artist's Discogs styles point to another cluster, the app says so and waits for you to move the artist or keep it where it is.
 - **Showcase**: top-loaders that hold a sample of an artist's albums, exchanged one for one with the shelf.
 - **On your phone**: the app can be installed to the home screen (over HTTPS) and opens on Browse / Search.
 
-Not built yet: a suggested spot for new purchases, suggestions for location rules, and a confirmation when a purchase would move an artist to another cluster (the rest of Phase 2), and all of Phase 3. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
+Not built yet: a suggested spot for new purchases and suggestions for location rules (the rest of Phase 2), and all of Phase 3. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
 
 ## Running it
 
@@ -80,7 +81,7 @@ Run the tests with `uv run python -m pytest`.
 ## Roadmap (summary)
 
 - **Phase 1 — MVP** (built): load an existing layout, browse and search it, link the collection to Discogs, configure cabinets and shelves, generate a sorting proposal (curated clusters, era bands by the decade an artist started, artist families), and adjust it by hand
-- **Phase 2 — Ongoing use** (mostly built): syncing with Discogs, album covers and the showcase are there; a suggested spot for new purchases, location-rule suggestions and cluster-shift confirmation are not
+- **Phase 2 — Ongoing use** (mostly built): syncing with Discogs, album covers and the showcase are there; a suggested spot for new purchases and location-rule suggestions are not
 - **Phase 3 — Refinement** (not started): deeper musical-kinship logic, song-level search, more languages, other media formats
 
 Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).

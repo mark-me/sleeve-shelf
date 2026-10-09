@@ -368,6 +368,8 @@ def import_discogs_collection(
             )
 
     artist_ids = {artist.name: artist.id for artist in artists}
+    # A new album of an artist whose cluster is settled is a purchase to weigh against it.
+    settled = {a.artist_id for a in store.load(ArtistClusterAssignment) if a.confirmed}
     for item in remaining:
         artist_id = artist_ids.get(item.artist)
         if artist_id is None:
@@ -381,6 +383,7 @@ def import_discogs_collection(
                 title=item.title,
                 release_id=item.release_id,
                 format_tokens=item.format_tokens,
+                new_purchase=artist_id in settled,
             )
         )
 
@@ -452,6 +455,10 @@ def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> 
         title=proposal.title,
         release_id=proposal.release_id,
         format_tokens=proposal.format_tokens,
+        new_purchase=any(
+            a.artist_id == artist.id and a.confirmed
+            for a in store.load(ArtistClusterAssignment)
+        ),
     )
     estimate_widths([album], constants)
     albums.append(album)

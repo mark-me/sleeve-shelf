@@ -1,7 +1,7 @@
 """Application services for curating an artist: start year and cluster."""
 
 from sleeve_shelf.collection import ensure_cluster_order
-from sleeve_shelf.domain import Artist, ArtistClusterAssignment, Cluster
+from sleeve_shelf.domain import Album, Artist, ArtistClusterAssignment, Cluster
 from sleeve_shelf.persistence import JsonStore
 
 
@@ -36,6 +36,7 @@ def set_cluster(
     if cluster_id is not None:
         assignments.append(ArtistClusterAssignment(artist_id, cluster_id, confirmed=True))
     store.save(ArtistClusterAssignment, assignments)
+    _clear_purchases(store, artist_id)
 
 
 def confirm_cluster(store: JsonStore, artist_id: int) -> None:
@@ -45,3 +46,14 @@ def confirm_cluster(store: JsonStore, artist_id: int) -> None:
         if assignment.artist_id == artist_id:
             assignment.confirmed = True
     store.save(ArtistClusterAssignment, assignments)
+    _clear_purchases(store, artist_id)
+
+
+def _clear_purchases(store: JsonStore, artist_id: int) -> None:
+    """A decision on the artist's cluster was taken, so its purchases need no weighing any more."""
+    albums = store.load(Album)
+    marked = [a for a in albums if a.artist_id == artist_id and a.new_purchase]
+    if marked:
+        for album in marked:
+            album.new_purchase = False
+        store.save(Album, albums)

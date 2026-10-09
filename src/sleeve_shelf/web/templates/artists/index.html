@@ -17,7 +17,7 @@
   {% if cluster_name %}
   <div class="ss-alert mt-3">{{ _('Only the artists in the cluster “%(cluster)s”.', cluster=cluster_name) }} <a href="{{ url_for('artists.index') }}">{{ _('Show all') }}</a></div>
   {% endif %}
-  <p class="ss-muted small mt-2">{{ ngettext('%(num)d artist', '%(num)d artists', rows | length) }} &middot; {{ _('“To check” lists sorted artists without a confirmed cluster or without a start year of their own.') }}</p>
+  <p class="ss-muted small mt-2">{{ ngettext('%(num)d artist', '%(num)d artists', rows | length) }} &middot; {{ _('“To check” lists sorted artists without a confirmed cluster or without a start year of their own, and artists a new purchase points to another cluster.') }}</p>
 
   {% if rows %}
   {# Pictures only once an artist in the list has one, as with covers. #}
@@ -46,6 +46,7 @@
             </td>
             <td>
               {% if row.cluster %}{{ row.cluster }}{% if not row.cluster_confirmed %} <span class="ss-chip">{{ _('proposed') }}</span>{% endif %}
+              {% if row.shift_to %}<a class="ss-chip" href="{{ url_for('artists.edit', artist_id=row.artist.id) }}#shift">{{ _('new purchase points to %(cluster)s', cluster=row.shift_to) }}</a>{% endif %}
               {% else %}<span class="ss-muted">{% if row.sorted %}{{ _('none yet') }}{% else %}&mdash;{% endif %}</span>{% endif %}
             </td>
             <td class="text-end">

@@ -33,6 +33,7 @@
           {% if item.kind == 'matches' %}{{ ngettext('%(num)d Discogs match to confirm', '%(num)d Discogs matches to confirm', item.count) }}
           {% elif item.kind == 'families' %}{{ ngettext('%(num)d suggested artist family to look at', '%(num)d suggested artist families to look at', item.count) }}
           {% elif item.kind == 'artists' %}{{ ngettext('%(num)d artist without a confirmed cluster or a start year', '%(num)d artists without a confirmed cluster or a start year', item.count) }}
+          {% elif item.kind == 'shifts' %}{{ ngettext('%(num)d artist a new purchase points to another cluster', '%(num)d artists a new purchase points to another cluster', item.count) }}
           {% elif item.kind == 'widths' %}{{ ngettext('%(num)d box set or bundle with a rough width', '%(num)d box sets and bundles with a rough width', item.count) }}
           {% elif item.kind == 'unlinked' %}{{ ngettext('%(num)d album without a Discogs release', '%(num)d albums without a Discogs release', item.count) }}
           {% elif item.kind == 'gone' %}{{ ngettext('%(num)d album no longer in your Discogs collection', '%(num)d albums no longer in your Discogs collection', item.count) }}
@@ -43,6 +44,7 @@
           {% if item.kind == 'matches' %}{{ _('Is the Discogs release the same album?') }}
           {% elif item.kind == 'families' %}{{ _('Families decide which artists stand together.') }}
           {% elif item.kind == 'artists' %}{{ _('They are sorted on a proposed cluster or a year taken from their albums.') }}
+          {% elif item.kind == 'shifts' %}{{ _('Move the artist to that cluster, or keep it where it is; nothing moves by itself.') }}
           {% elif item.kind == 'widths' %}{{ _('Measure them and enter the real width; until then they count as loose discs.') }}
           {% elif item.kind == 'unlinked' %}{{ _('Without a release there are no styles or original year from Discogs.') }}
           {% elif item.kind == 'gone' %}{{ _('Sold, or removed on Discogs? Say that you still have them, or remove them.') }}

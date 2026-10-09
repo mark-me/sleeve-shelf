@@ -117,6 +117,9 @@ class Album:
     left_discogs: bool = False
     # True when the user keeps the album although it left Discogs, and is not to be asked again.
     kept_after_discogs: bool = False
+    # True for an album a sync or import added to an artist whose cluster was already
+    # confirmed, until it has been weighed against that cluster (see shifts.py).
+    new_purchase: bool = False
 
     @property
     def width_cm(self) -> float | None:

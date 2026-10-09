@@ -11,7 +11,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 - **Phase 1a (load a layout, browse, search)** is built.
 - **Phase 1b (Discogs, sorting proposal, management screens)** is built, including starting without a workbook.
 - What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and one parked point from 1a (the upload and preview screens never looked at).
-- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync), artist pictures (hotlinked too; a sync names the artist, the enrichment fetches the picture) and the showcase (a top-loader holding a sample of an artist's albums, exchanged one for one with the shelf). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, cluster-shift confirmation) is not, and neither is Phase 3.
+- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync), artist pictures (hotlinked too; a sync names the artist, the enrichment fetches the picture) and the showcase (a top-loader holding a sample of an artist's albums, exchanged one for one with the shelf). A new purchase whose styles point an artist to another cluster is reported and waits for a decision (`shifts.py`). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions) is not built, and neither is Phase 3.
 
 ## Commands
 
@@ -44,7 +44,7 @@ Strict separation of concerns; keep it that way.
 | `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API (collection, release, master and artist), the format-string parser. |
 | `src/sleeve_shelf/sorting/` | The sorting engine: pure functions on domain objects (era bands, families, order, placement). |
 | `src/sleeve_shelf/persistence/` | `JsonStore` (one JSON file per entity, read and written through DuckDB) and the read queries for Browse. |
-| `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `placing` (moving an album or artist by hand, and the rules that bind it), `showcase`, `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
+| `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `placing` (moving an album or artist by hand, and the rules that bind it), `showcase`, `shifts` (a purchase that points an artist to another cluster), `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
 | `src/sleeve_shelf/web/` | Flask blueprints, templates, static files. One blueprint per screen. |
 | `src/sleeve_shelf/web/pwa.py`, `web/static/icons/` | The web app manifest and the icons for installing the app on a phone. No service worker, on purpose. |
 | `docker/` | Dockerfile and Compose examples; `.github/workflows/docker.yml` builds and publishes the image. |

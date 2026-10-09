@@ -20,6 +20,7 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
 from sleeve_shelf.proposal import takes_part
+from sleeve_shelf.shifts import cluster_shifts, keep_cluster
 from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
@@ -63,12 +64,15 @@ def index():
         picture.discogs_artist_id: picture.thumb_url for picture in store.load(ArtistEnrichment)
     }
 
+    shifts = {shift.artist_id: shift for shift in cluster_shifts(store)}
+
     rows = []
     for artist in store.load(Artist):
         assignment = assignments.get(artist.id)
         sorted_albums = by_artist.get(artist.id, [])
         # Only artists that are sorted need a cluster and a start year.
-        attention = bool(sorted_albums) and (
+        shift = shifts.get(artist.id)
+        attention = shift is not None or bool(sorted_albums) and (
             assignment is None or not assignment.confirmed or artist.start_year is None
         )
         if (search and search not in artist.name.casefold()) or (only_attention and not attention):
@@ -85,6 +89,7 @@ def index():
                 "derived_year": _earliest_year(sorted_albums),
                 "family": families.get(artist.alias_group_id),
                 "attention": attention,
+                "shift_to": cluster_names.get(shift.proposed_cluster_id) if shift else None,
                 "sorted": bool(sorted_albums),
             }
         )
@@ -129,6 +134,8 @@ def edit(artist_id: int):
     located = {row.album_id: row for row in BrowseQueries(store).artist_albums(artist_id)}
     family = next((g for g in store.load(AliasGroup) if g.id == artist.alias_group_id), None)
     derived_year = _earliest_year(sorted_albums)
+    shift = next((s for s in cluster_shifts(store) if s.artist_id == artist_id), None)
+    cluster_names = {cluster.id: cluster.name for cluster in clusters}
     return (
         render_template(
             "artists/edit.html",
@@ -142,6 +149,12 @@ def edit(artist_id: int):
                 None,
             ),
             errors=errors,
+            shift=shift
+            and {
+                "current": cluster_names.get(shift.cluster_id),
+                "proposed": cluster_names.get(shift.proposed_cluster_id),
+                "titles": [album.title for album in albums if album.id in shift.album_ids],
+            },
             saved=request.args.get("saved") and not errors,
             clusters=clusters,
             assignment=assignment,
@@ -186,3 +199,15 @@ def move(artist_id: int):
 def confirm(artist_id: int):
     artist_service.confirm_cluster(get_store(), artist_id)
     return redirect(request.form.get("next") or url_for("artists.index"))
+
+
+@blueprint.post("/<int:artist_id>/shift/<any(accept, keep):choice>")
+def decide_shift(artist_id: int, choice: str):
+    """A new purchase points the artist to another cluster: move it there, or keep it where it is."""
+    store = get_store()
+    shift = next((s for s in cluster_shifts(store) if s.artist_id == artist_id), None)
+    if shift is not None and choice == "accept":
+        artist_service.set_cluster(store, artist_id, shift.proposed_cluster_id)
+    elif shift is not None:
+        keep_cluster(store, artist_id)
+    return redirect(request.form.get("next") or url_for("artists.edit", artist_id=artist_id))

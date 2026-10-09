@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 19:59+0200\n"
+"POT-Creation-Date: 2026-10-09 20:05+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -364,6 +364,31 @@ msgid "Family:"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "A new purchase points to another cluster"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "With %(titles)s the Discogs styles of the albums now point to “%(proposed)s”; the artist stands in “%(current)s”."
+msgid_plural "With %(titles)s the Discogs styles of the albums now point to “%(proposed)s”; the artist stands in “%(current)s”."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Nothing changes until you choose."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Keep in %(cluster)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Move to %(cluster)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Saved. Generate the proposal again to see the effect."
 msgstr ""
 
@@ -488,7 +513,7 @@ msgid "Show all"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
-msgid "“To check” lists sorted artists without a confirmed cluster or without a start year of their own."
+msgid "“To check” lists sorted artists without a confirmed cluster or without a start year of their own, and artists a new purchase points to another cluster."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
@@ -511,6 +536,11 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
 msgid "proposed"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#, python-format
+msgid "new purchase points to %(cluster)s"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
@@ -894,6 +924,13 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
+msgid "%(num)d artist a new purchase points to another cluster"
+msgid_plural "%(num)d artists a new purchase points to another cluster"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
 msgid "%(num)d box set or bundle with a rough width"
 msgid_plural "%(num)d box sets and bundles with a rough width"
 msgstr[0] ""
@@ -938,6 +975,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "They are sorted on a proposed cluster or a year taken from their albums."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Move the artist to that cluster, or keep it where it is; nothing moves by itself."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
