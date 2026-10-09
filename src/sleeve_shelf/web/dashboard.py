@@ -26,6 +26,10 @@ def require_collection():
         return redirect(url_for("setup.welcome"))
 
 
+def _countable(open_count: int, albums: list[Album]) -> dict:
+    return {"open": open_count} if albums else {"later": True}
+
+
 @blueprint.get("/")
 def index():
     store = get_store()
@@ -60,8 +64,10 @@ def index():
             "url": url_for("discogs.index"),
             "open": counts["matches"] + to_fetch + (0 if albums else 1),
         },
-        {"kind": "families", "url": urls["families"], "open": counts["families"]},
-        {"kind": "artists", "url": urls["artists"], "open": counts["artists"]},
+        # Families and artists come with the albums: without any, these steps are
+        # neither to do nor done.
+        {"kind": "families", "url": urls["families"], **_countable(counts["families"], albums)},
+        {"kind": "artists", "url": urls["artists"], **_countable(counts["artists"], albums)},
         {"kind": "clusters", "url": url_for("clusters.index"), "info": cluster_count},
         # Likewise a collection without a single shelf has its shelves still to enter.
         {

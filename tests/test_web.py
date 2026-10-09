@@ -381,6 +381,9 @@ def test_a_collection_can_be_started_without_a_workbook(client):
     dashboard = client.get("/dashboard/").text
     # Taking over the collection and entering shelves are both still to do.
     assert dashboard.count("1 to do") == 2
+    # Families and artists are neither to do nor ticked off while there are no albums.
+    assert dashboard.count("once there are albums") == 2
+    assert "ss-step-done" not in dashboard
     assert "Add your cabinets and shelves" in client.get("/browse").text
 
 
@@ -400,6 +403,8 @@ def test_from_discogs_to_an_accepted_layout_without_a_workbook(client):
 
     for url in ("/dashboard/", "/browse", "/unplaced", "/layout/", "/storage/", "/artists/"):
         assert client.get(url).status_code == 200, url
+    # With albums the two steps count again.
+    assert "once there are albums" not in client.get("/dashboard/").text
     unplaced = client.get("/unplaced").text
     assert "Bleach" in unplaced and "Nevermind" in unplaced
 
