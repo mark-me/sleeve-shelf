@@ -16,7 +16,6 @@ from sleeve_shelf.domain import (
     Placement,
     PlacementSource,
     Shelf,
-    UnitType,
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
@@ -54,6 +53,7 @@ def _vinyl(release_id, artist, title):
         "basic_information": {
             "title": title,
             "thumb": f"https://i.discogs.com/{release_id}.jpeg",
+            "cover_image": f"https://i.discogs.com/{release_id}-large.jpeg",
             "artists": [{"name": artist, "join": ""}],
             "formats": [{"name": "Vinyl", "qty": "1", "descriptions": ["LP", "Album"]}],
         },
@@ -206,6 +206,7 @@ def test_sync_previews_the_collection_and_only_changes_things_on_confirm(app, cl
     # A sync brings the covers, for albums that were there and for new ones.
     assert albums[0].cover_url == "https://i.discogs.com/1874289.jpeg"
     assert albums[-1].cover_url == "https://i.discogs.com/1965832.jpeg"
+    assert albums[0].cover_image_url == "https://i.discogs.com/1874289-large.jpeg"
     # An export has no covers and leaves them alone.
     _import(client)
     assert _store(app).load(Album)[0].cover_url == "https://i.discogs.com/1874289.jpeg"
@@ -283,8 +284,8 @@ def test_an_album_that_left_discogs_is_only_removed_after_confirming(app, client
     store.save(
         Placement,
         [
-            Placement(UnitType.ALBUM, 1, 1, 0, PlacementSource.MANUAL),
-            Placement(UnitType.ALBUM, 3, 1, 1, PlacementSource.MANUAL),
+            Placement(1, 1, 0, PlacementSource.MANUAL),
+            Placement(3, 1, 1, PlacementSource.MANUAL),
         ],
     )
     store.save(LocationRule, [LocationRule(1, LocationRuleTarget.ALBUM, 3, 1)])
@@ -312,7 +313,7 @@ def test_an_album_that_left_discogs_is_only_removed_after_confirming(app, client
 
     store = _store(app)
     assert [album.id for album in store.load(Album)] == [1, 2]
-    assert [placement.unit_id for placement in store.load(Placement)] == [1]
+    assert [placement.album_id for placement in store.load(Placement)] == [1]
     assert store.load(LocationRule) == []
     # The layout from before the removal is kept as a version; the artist stays.
     assert [(v.label, v.album_count) for v in list_versions(store)] == [("before removing an album", 2)]

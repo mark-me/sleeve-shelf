@@ -87,6 +87,7 @@
         <span class="ss-chip">
           {% if step.open is defined %}
             {% if step.open %}{{ ngettext('%(num)d to do', '%(num)d to do', step.open) }}{% else %}{{ _('done') }}{% endif %}
+          {% elif step.later %}{{ _('once there are albums') }}
           {% elif step.kind == 'clusters' %}{{ ngettext('%(num)d cluster', '%(num)d clusters', step.info) }}
           {% elif step.kind == 'rules' %}{{ ngettext('%(num)d rule', '%(num)d rules', step.info) }}
           {% elif step.info %}{{ _('waiting for you') }}

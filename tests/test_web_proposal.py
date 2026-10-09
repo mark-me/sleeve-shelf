@@ -96,9 +96,10 @@ def test_showcase_shelves_and_shelves_without_width_are_skipped(client):
     client.post("/proposal/generate")
 
     page = client.get("/proposal/").text
-    assert "showcase, not filled" in page and "no width, not filled" in page
-    # Only shelf b is left: three LPs fit, one LP and the box set do not.
-    assert "Do not fit (2)" in page
+    assert "showcase, kept as it is" in page and "no width, not filled" in page
+    # The showcase keeps its three albums; of the two others only shelf b is left to fill,
+    # where the LP fits and the box set does not.
+    assert "Do not fit (1)" in page
 
 
 def _add_new_artist(client):
@@ -431,3 +432,231 @@ def test_layout_has_a_tab_per_room_once_there_is_more_than_one(client):
     assert 'data-list="0"' in attic
     # An unknown room falls back to the first.
     assert 'data-shelf="1"' in client.get("/layout/?room=Kelder").text
+
+
+def test_an_album_has_a_page_of_its_own(client):
+    page = client.get("/albums/1").text
+
+    assert "<h1>Chet</h1>" in page and "Chet Baker" in page
+    assert "Kast &middot; a" in page and "Jazz · voor 1960" in page
+    assert "1959 &middot; confirmed by hand" in page
+    assert "No location rule applies" in page
+    assert client.get("/albums/99").status_code == 404
+    # It is reached from the shelf in Browse and from the artist's page.
+    assert 'href="/albums/1"' in client.get("/browse?shelf=1").text
+    assert 'href="/albums/1"' in client.get("/artists/1").text
+
+
+def test_album_page_shows_the_cover_once_there_is_one(client):
+    from sleeve_shelf.domain import Album
+    from sleeve_shelf.persistence import JsonStore
+
+    assert "ss-cover" not in client.get("/albums/1").text
+
+    store = JsonStore(client.application.config["DATA_DIR"])
+    albums = store.load(Album)
+    albums[0].cover_url = "https://i.discogs.com/chet-150.jpg"
+    store.save(Album, albums)
+
+    page = client.get("/albums/1").text
+    assert 'src="https://i.discogs.com/chet-150.jpg"' in page and 'width="150"' in page
+    # Without a large image there is nothing to enlarge.
+    assert "ss-cover-zoom" not in page
+
+    albums[0].cover_image_url = "https://i.discogs.com/chet-600.jpg"
+    store.save(Album, albums)
+    page = client.get("/albums/1").text
+    assert 'data-bs-target="#cover-large"' in page
+    # The large image is named, but not loaded until the pop-up opens.
+    assert 'data-src="https://i.discogs.com/chet-600.jpg"' in page
+    assert 'src="https://i.discogs.com/chet-600.jpg"' not in page.replace("data-src", "data-x")
+    # The other album of the artist has none, and its page keeps no empty square.
+    assert "ss-cover" not in client.get("/albums/2").text
+
+
+def test_the_rules_that_apply_are_shown_with_the_one_that_decides(client):
+    client.post("/storage/cabinets/new", data={"name": "Extern"})
+    client.post("/rules/new", data={"target_type": "cluster", "target": "Jazz", "cabinet_id": "1"})
+    client.post("/rules/new", data={"target_type": "artist", "target": "Chet Baker", "cabinet_id": "2",
+                                    "note": "other room"})
+
+    artist = client.get("/artists/1").text
+    assert "Chet Baker &rarr; Extern" in artist and "Jazz &rarr; Kast" in artist
+    assert artist.index("Rule for the artist") < artist.index("Rule for the cluster")
+    assert artist.count(">decides<") == 1 and "overruled" in artist
+
+    client.post("/rules/new", data={"target_type": "album", "target": "Chet Baker — Sings", "cabinet_id": "1"})
+    album = client.get("/albums/2").text
+    assert album.index("Rule for this album") < album.index("Rule for the artist")
+    # Another artist in the cluster only has the cluster's rule.
+    blakey = client.get("/artists/2").text
+    assert "Rule for the cluster" in blakey and "Rule for the artist" not in blakey
+
+
+def test_an_album_can_be_moved_from_its_page(client):
+    client.post("/albums/1/move", data={"shelf_id": "2"})
+
+    assert "Chet &middot; 1959" not in client.get("/browse?shelf=1").text
+    shelf_b = client.get("/browse?shelf=2").text
+    # It goes to the end of the shelf, after what stood there.
+    assert shelf_b.index("Fun House") < shelf_b.index("Chet &middot; 1959")
+    assert "Kast &middot; b" in client.get("/albums/1").text
+    # A version from before the move can be put back.
+    assert "/restore" in client.get("/versions/").text
+
+    client.post("/albums/1/move", data={"shelf_id": ""})
+    assert "Not on a shelf" in client.get("/albums/1").text
+    assert "Chet" in client.get("/unplaced").text
+    assert client.post("/albums/1/move", data={"shelf_id": "99"}).status_code == 404
+
+
+def test_all_albums_of_an_artist_can_be_moved_at_once(client):
+    client.post("/artists/1/move", data={"shelf_id": "3"})
+
+    shelf_c = client.get("/browse?shelf=3").text
+    # Both albums, in year order: Sings (1954) before Chet (1959).
+    assert shelf_c.index("Sings") < shelf_c.index("Chet &middot; 1959")
+    assert "Moanin" in client.get("/browse?shelf=1").text
+    assert "Moved." in client.get("/artists/1?moved=1").text
+
+
+def test_width_can_be_set_on_the_album_page(client):
+    assert "A box set or bundle" in client.get("/albums/5").text
+
+    client.post("/albums/5/width", data={"width_cm": "1,4", "next": "album"})
+
+    page = client.get("/albums/5").text
+    assert 'value="1.4"' in page and "A box set or bundle" not in page
+    bad = client.post("/albums/5/width", data={"width_cm": "x", "next": "album"}, follow_redirects=True)
+    assert "above zero" in bad.text and "<h1>Box</h1>" in bad.text
+
+
+def _make_showcase(client):
+    """Shelf a (Chet, Sings, Moanin') becomes a showcase; Sings goes to shelf c to stay shelved."""
+    client.post("/layout/move", json={"shelves": {"1": [1, 3], "3": [2]}})
+    client.post("/storage/shelves/1", data={"name": "a", "width_cm": "35", "type": "top_loader",
+                                             "layer": "", "is_showcase": "on"})
+
+
+def test_showcase_lists_each_artists_sample_next_to_the_rest(client):
+    assert "No shelf is a showcase yet" in client.get("/showcase/").text
+    _make_showcase(client)
+
+    page = client.get("/showcase/").text
+
+    # Chet Baker shows one of his two albums; Art Blakey's only album is all on display.
+    assert "1 of 2 albums on display · 50%" in page
+    assert "1 of 1 albums on display · 100%" in page
+    assert page.count("everything is on display") == 1
+    # Two LPs of 0.5 cm in a 35 cm top-loader that may be 60% full.
+    assert "of 21.0 cm to keep flipping (60% of 35.0 cm)" in page
+    assert "holds more than leaves room" not in page
+
+
+def test_exchanging_keeps_as_many_albums_on_both_shelves(client):
+    _make_showcase(client)
+
+    client.post("/showcase/swap", data={"shown": "1", "shelved": "2", "anchor": "x"})
+
+    # Sings now stands where Chet stood in the showcase, and Chet where Sings stood.
+    showcase = client.get("/browse?shelf=1").text
+    assert showcase.index("Sings") < showcase.index("Moanin") and "Chet &middot; 1959" not in showcase
+    assert "Chet &middot; 1959" in client.get("/browse?shelf=3").text
+    assert "/restore" in client.get("/versions/").text
+
+    # Not with another artist's album, nor between two albums that are both shelved.
+    for shown, shelved in (("2", "4"), ("1", "4")):
+        refused = client.post("/showcase/swap", data={"shown": shown, "shelved": shelved},
+                              follow_redirects=True)
+        assert "can’t be exchanged" in refused.text
+
+
+def test_a_proposal_leaves_the_showcase_as_it_is(client):
+    _make_showcase(client)
+
+    client.post("/proposal/generate")
+
+    page = client.get("/proposal/").text
+    assert "showcase, kept as it is" in page
+    client.post("/proposal/accept")
+    showcase = client.get("/browse?shelf=1").text
+    assert "Chet &middot; 1959" in showcase and "Moanin" in showcase
+    # The albums on display took no place in the row: Sings leads the first ordinary shelf.
+    assert "Sings" in client.get("/browse?shelf=2").text
+
+
+def test_showcase_fill_is_a_setting_and_a_full_top_loader_is_flagged(client):
+    _make_showcase(client)
+    bad = client.post("/settings/", data={"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15",
+                                          "surcharge_gatefold_cm": "0.2", "showcase_fill_percent": "150"})
+    assert bad.status_code == 400 and "whole percentage" in bad.text
+
+    client.post("/settings/", data={"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15",
+                                    "surcharge_gatefold_cm": "0.2", "showcase_fill_percent": "2"})
+
+    page = client.get("/showcase/").text
+    assert "(2% of 35.0 cm)" in page and "holds more than leaves room" in page
+    assert 'value="2"' in client.get("/settings/").text
+
+
+def test_a_removed_shelf_does_not_come_back_as_another_in_an_older_version(client):
+    # Art Blakey moves to shelf c; that layout is saved; then c is emptied and removed.
+    client.post("/layout/move", json={"shelves": {"1": [1, 2], "3": [3]}})
+    client.post("/versions/save", data={"label": "three"})
+    client.post("/layout/move", json={"shelves": {"1": [1, 2, 3], "3": []}})
+    client.post("/storage/shelves/3/delete")
+
+    # A new shelf gets a number of its own, not the removed one's.
+    client.post("/storage/cabinets/1/shelves/new", data={"name": "new", "width_cm": "5", "type": "", "layer": ""})
+    assert "/storage/shelves/4" in client.get("/storage/").text
+    assert "/storage/shelves/3\"" not in client.get("/storage/").text
+
+    import re
+
+    page = client.get("/versions/").text
+    name = next(n for n in re.findall(r"/versions/([\w-]+)/restore", page) if n.endswith("--three"))
+    client.post(f"/versions/{name}/restore")
+
+    # The album that stood on the removed shelf is left out, not put on the new shelf.
+    assert "Moanin" not in client.get("/browse?shelf=4").text
+    assert "Moanin" in client.get("/unplaced").text
+
+
+def _set_cabinet_aside(client):
+    """A second cabinet, kept outside the sorting, with one wide shelf that holds Fun House."""
+    client.post("/storage/cabinets/new", data={"name": "Overflow", "location": "",
+                                               "outside_sorting": "on"})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "width_cm": "5", "type": "",
+                                                         "layer": ""})
+    client.post("/layout/move", json={"shelves": {"2": [5], "4": [4]}})
+
+
+def test_a_cabinet_outside_the_sorting_is_left_as_it_is(client):
+    _set_cabinet_aside(client)
+    assert "outside the sorting" in client.get("/storage/").text
+    assert "checked" in client.get("/storage/cabinets/2").text
+    assert "outside the sorting" in client.get("/browse?shelf=4").text
+    assert "outside the sorting" not in client.get("/browse?shelf=1").text
+    # Fun House stays where it is, so four albums are left to place.
+    assert "outside the sorting, kept as it is" in client.get("/proposal/").text
+
+    client.post("/proposal/generate")
+
+    page = client.get("/proposal/").text
+    assert "outside the sorting, kept as it is" in page
+    # The box set (3 cm) would fit the 5 cm shelf, but nothing is added there.
+    assert "Do not fit (1)" in page
+    client.post("/proposal/accept")
+    aside = client.get("/browse?shelf=4").text
+    assert "Fun House" in aside and "1 album" in aside and "Moanin" not in aside
+    assert "Fun House" not in client.get("/unplaced").text
+
+
+def test_the_switch_can_be_turned_off_again(client):
+    _set_cabinet_aside(client)
+
+    client.post("/storage/cabinets/2", data={"name": "Overflow", "location": ""})
+    client.post("/proposal/generate")
+
+    page = client.get("/proposal/").text
+    assert "outside the sorting" not in page and "Do not fit (0)" in page

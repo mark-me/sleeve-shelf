@@ -5,8 +5,8 @@ from flask_babel import gettext as _
 
 from sleeve_shelf.collection import estimate_widths
 from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.domain import Album, Placement, UnitType
-from sleeve_shelf.proposal import takes_part, usable_shelves
+from sleeve_shelf.domain import Album, Placement
+from sleeve_shelf.proposal import kept_shelf_ids, takes_part, usable_shelves
 from sleeve_shelf.web.context import get_store, has_collection
 
 blueprint = Blueprint("settings", __name__, url_prefix="/settings")
@@ -36,7 +36,12 @@ def index():
             errors.append(_("The base width has to be a number above zero."))
         if any(numbers[name] is None or numbers[name] < 0 for name in WIDTH_FIELDS[1:]):
             errors.append(_("A surcharge has to be a number, zero or more."))
+        fill_text = request.form.get("showcase_fill_percent", "").strip()
+        if fill_text and not (fill_text.isdigit() and 1 <= int(fill_text) <= 100):
+            errors.append(_("The showcase fill has to be a whole percentage from 1 to 100."))
         if not errors:
+            if fill_text:
+                settings.showcase_fill_percent = int(fill_text)
             for name in WIDTH_FIELDS:
                 setattr(settings, name, numbers[name])
             settings.count_bonus_discs_as_vinyl = "count_bonus_discs_as_vinyl" in request.form
@@ -53,11 +58,15 @@ def index():
 
     needed = offered = None
     if has_collection():
-        placed = {p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM}
+        placements = store.load(Placement)
+        placed = {p.album_id for p in placements}
+        # What stands in a showcase or outside the sorting needs no room on the other shelves.
+        kept = kept_shelf_ids(store)
+        staying = {p.album_id for p in placements if p.shelf_id in kept}
         needed = sum(
             album.width_cm or settings.base_width_cm
             for album in store.load(Album)
-            if takes_part(album, placed)
+            if takes_part(album, placed) and album.id not in staying
         )
         offered = sum(shelf.width_cm for shelf in usable_shelves(store)[0])
     token = settings.discogs_token
@@ -68,6 +77,7 @@ def index():
             count_bonus=settings.count_bonus_discs_as_vinyl
             if request.method == "GET"
             else "count_bonus_discs_as_vinyl" in request.form,
+            showcase_fill=request.form.get("showcase_fill_percent", settings.showcase_fill_percent),
             masked_token=f"••••{token[-4:]}" if token else None,
             errors=errors,
             saved=request.args.get("saved") and not errors,

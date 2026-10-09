@@ -9,9 +9,9 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 `docs/requirements.md` is the source of truth for scope, sorting logic, data model, and every screen. Read it before changing behavior. Its last section, **Open questions**, lists what is undecided and what was deliberately parked.
 
 - **Phase 1a (load a layout, browse, search)** is built.
-- **Phase 1b (Discogs, sorting proposal, management screens)** is built; nothing of it is left open.
-- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and three parked points from 1a (the upload and preview screens never looked at, top-loaders `a` and `b` as a rotating sample, the `Overflow` and `Nieuwe koffer` locations).
-- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, showcase management, cluster-shift confirmation) is not, and neither is Phase 3.
+- **Phase 1b (Discogs, sorting proposal, management screens)** is built, including starting without a workbook.
+- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and one parked point from 1a (the upload and preview screens never looked at).
+- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync) and the showcase (a top-loader holding a sample of an artist's albums, exchanged one for one with the shelf). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, cluster-shift confirmation) is not, and neither is Phase 3.
 
 ## Commands
 
@@ -54,6 +54,7 @@ Things that are easy to get wrong:
 - **Adding a field to an entity** means three places: the dataclass in `domain/`, its column list in `persistence/store.py` (`_TABLES`), and the data model in `docs/requirements.md` (the entity list and the Mermaid diagram).
 - **A service module and a blueprint can share a name** (`sleeve_shelf/versions.py` and `sleeve_shelf/web/versions.py`). In web modules import names explicitly — `from sleeve_shelf.versions import save_version` — not `from sleeve_shelf import versions`, which can resolve to the blueprint.
 - **`JsonStore.save` rewrites the whole file.** Load the list, change it, save the list.
+- **A new id comes from `store.next_id(Entity, items)`**, never from "highest + 1": ids of removed items stay taken, because saved versions and location rules still name them.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
 - **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
 - **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN. Album covers are the one exception: the browser fetches them from Discogs, and every page has to work without them.

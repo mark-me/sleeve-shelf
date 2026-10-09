@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Showcase') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 900px;">
+  <h1>{{ _('Showcase') }}</h1>
+  <p class="ss-muted mt-1">{{ _('A sample of the artists you have most of, facing front in the top-loaders. Each artist shows a few albums and keeps the rest on its own shelf; exchange one for another to change what is on display.') }}</p>
+
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+  {% if swapped %}
+  <div class="ss-alert mt-3">{{ _('Exchanged. A version from before is kept under Versions.') }}</div>
+  {% endif %}
+
+  {% if not showcases %}
+  <div class="ss-card mt-4">
+    <div class="ss-card-body">
+      <p class="ss-muted">{{ _('No shelf is a showcase yet. Mark a top-loader as showcase under Cabinets & shelves; the albums that stand on it then become its sample.') }}</p>
+      <a class="ss-button" href="{{ url_for('storage.index') }}">{{ _('Cabinets & shelves') }}</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {% for showcase in showcases %}
+  <section class="mt-5" id="shelf-{{ showcase.shelf.id }}">
+    <h2>{{ showcase.cabinet }} &rsaquo; {{ showcase.shelf.name }}</h2>
+    <div class="ss-stats mt-3">
+      <div class="ss-stat"><div class="ss-stat-number">{{ showcase.albums }}</div><div class="ss-stat-label">{{ _('albums on display') }}</div></div>
+      <div class="ss-stat"><div class="ss-stat-number">{{ showcase.samples | length }}</div><div class="ss-stat-label">{{ _('artists') }}</div></div>
+      <div class="ss-stat"><div class="ss-stat-number">{{ (showcase.share * 100) | round | int }}%</div><div class="ss-stat-label">{{ _('of their albums') }}</div></div>
+      <div class="ss-stat">
+        <div class="ss-stat-number {{ 'ss-over' if showcase.too_full }}">{{ '%.1f' | format(showcase.filled_cm) }} cm</div>
+        <div class="ss-stat-label">
+          {% if showcase.room_cm is not none %}{{ _('of %(room).1f cm to keep flipping (%(percent)d%% of %(width).1f cm)', room=showcase.room_cm, percent=fill_percent, width=showcase.shelf.width_cm) }}
+          {% else %}{{ _('taken; the shelf has no width yet') }}{% endif %}
+        </div>
+      </div>
+    </div>
+    {% if showcase.too_full %}
+    <div class="ss-alert mt-3">{{ _('This top-loader holds more than leaves room to flip through it. Take albums out in Layout, or measure the shelf and the albums.') }}</div>
+    {% endif %}
+
+    {% if not showcase.samples %}
+    <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('Nothing is on display here. Drag albums onto this shelf in Layout.') }}</div></div>
+    {% endif %}
+
+    {% for sample in showcase.samples %}
+    {% set anchor = 'sample-%d-%d' | format(showcase.shelf.id, loop.index) %}
+    <div class="ss-card mt-3" id="{{ anchor }}">
+      <div class="ss-card-head">
+        <div>
+          <span class="fw-semibold">{{ sample.name }}</span>
+          <div class="ss-muted small">{{ _('%(shown)d of %(total)d albums on display · %(share)d%%', shown=sample.shown | length, total=sample.total, share=(sample.share * 100) | round | int) }}</div>
+        </div>
+        {% if not sample.shelved and not sample.unplaced %}<span class="ss-chip">{{ _('everything is on display') }}</span>{% endif %}
+      </div>
+      {% for album in sample.shown %}
+      <div class="ss-row">
+        <div class="ss-row-text">
+          <a class="ss-row-artist" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}</a>
+          <span class="ss-row-title">{{ album.artist }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+        </div>
+      </div>
+      {% endfor %}
+      {% if sample.shelved %}
+      <form class="ss-card-body d-flex flex-wrap align-items-end gap-2" method="post" action="{{ url_for('showcase.exchange') }}" style="border-top: 1px solid var(--ss-border);">
+        <input type="hidden" name="anchor" value="{{ anchor }}">
+        <div>
+          <label for="{{ anchor }}-shown" class="form-label fw-semibold">{{ _('Take off display') }}</label>
+          <select id="{{ anchor }}-shown" class="form-select" name="shown" style="max-width: 320px;">
+            {% for album in sample.shown %}<option value="{{ album.album_id }}">{{ album.title }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="{{ anchor }}-shelved" class="form-label fw-semibold">{{ _('Put on display instead') }}</label>
+          <select id="{{ anchor }}-shelved" class="form-select" name="shelved" style="max-width: 360px;">
+            {% for album in sample.shelved %}<option value="{{ album.album_id }}">{{ album.title }} — {{ album.cabinet }} &rsaquo; {{ album.shelf }}</option>{% endfor %}
+          </select>
+        </div>
+        <button class="ss-button" type="submit">{{ _('Exchange') }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  {% if showcases %}
+  <p class="ss-muted small mt-4">{{ _('Exchanging puts each album in the other’s spot, so the top-loader and the shelf hold as many albums as before. To show more or fewer albums of an artist, or another artist, drag albums to or from a top-loader in Layout. A sorting proposal leaves a showcase as it is.') }}</p>
+  {% endif %}
+</div>
+{% endblock %}

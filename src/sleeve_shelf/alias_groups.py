@@ -14,7 +14,7 @@ def family_suggestions(store: JsonStore) -> list[FamilySuggestion]:
 def create_family(store: JsonStore, label: str, artist_ids: list[int] | None = None) -> AliasGroup:
     """Add a family, optionally with its first members."""
     groups = store.load(AliasGroup)
-    group = AliasGroup(max((g.id for g in groups), default=0) + 1, label)
+    group = AliasGroup(store.next_id(AliasGroup, groups), label)
     groups.append(group)
     store.save(AliasGroup, groups)
     if artist_ids:

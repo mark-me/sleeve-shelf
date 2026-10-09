@@ -10,7 +10,6 @@ from sleeve_shelf.domain import (
     Placement,
     ReleaseEnrichment,
     Shelf,
-    UnitType,
 )
 from sleeve_shelf.proposal import has_proposal, takes_part
 from sleeve_shelf.versions import list_versions
@@ -26,12 +25,16 @@ def require_collection():
         return redirect(url_for("setup.welcome"))
 
 
+def _countable(open_count: int, albums: list[Album]) -> dict:
+    return {"open": open_count} if albums else {"later": True}
+
+
 @blueprint.get("/")
 def index():
     store = get_store()
     albums = store.load(Album)
     shelves = store.load(Shelf)
-    placed = {p.unit_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM}
+    placed = {p.album_id for p in store.load(Placement)}
     sorted_albums = [album for album in albums if takes_part(album, placed)]
     sorted_artists = {album.artist_id for album in sorted_albums}
     versions = list_versions(store)
@@ -54,11 +57,23 @@ def index():
     # The way to a new layout, in the order of the menu. "open" counts what is left
     # to do in a step; a step with "info" has nothing to count and is never ticked off.
     steps = [
-        {"kind": "discogs", "url": url_for("discogs.index"), "open": counts["matches"] + to_fetch},
-        {"kind": "families", "url": urls["families"], "open": counts["families"]},
-        {"kind": "artists", "url": urls["artists"], "open": counts["artists"]},
+        # With no album at all, taking over the collection is the thing still to do.
+        {
+            "kind": "discogs",
+            "url": url_for("discogs.index"),
+            "open": counts["matches"] + to_fetch + (0 if albums else 1),
+        },
+        # Families and artists come with the albums: without any, these steps are
+        # neither to do nor done.
+        {"kind": "families", "url": urls["families"], **_countable(counts["families"], albums)},
+        {"kind": "artists", "url": urls["artists"], **_countable(counts["artists"], albums)},
         {"kind": "clusters", "url": url_for("clusters.index"), "info": cluster_count},
-        {"kind": "storage", "url": urls["overfull"], "open": unmeasured + counts["overfull"]},
+        # Likewise a collection without a single shelf has its shelves still to enter.
+        {
+            "kind": "storage",
+            "url": urls["overfull"],
+            "open": unmeasured + counts["overfull"] + (0 if shelves else 1),
+        },
         {"kind": "rules", "url": url_for("rules.index"), "info": len(store.load(LocationRule))},
         {"kind": "proposal", "url": url_for("proposal.index"), "info": int(has_proposal(store))},
     ]

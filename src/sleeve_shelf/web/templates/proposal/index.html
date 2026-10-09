@@ -69,12 +69,12 @@
             <td class="fw-semibold">{{ row.shelf.name }}</td>
             <td class="text-end">{% if row.shelf.width_cm is not none %}{{ '%.1f' | format(row.shelf.width_cm) }} cm{% else %}&mdash;{% endif %}</td>
             <td class="text-end">{{ '%.1f' | format(row.now[1]) }} cm</td>
-            <td class="text-end">{% if row.skipped %}&mdash;{% else %}{{ '%.1f' | format(row.new[1]) }} cm{% endif %}</td>
+            <td class="text-end">{% if row.skipped and not row.kept %}&mdash;{% else %}{{ '%.1f' | format(row.new[1]) }} cm{% endif %}</td>
             <td class="text-end">{{ row.now[0] }}</td>
-            <td class="text-end">{% if row.skipped %}&mdash;{% else %}{{ row.new[0] }}{% endif %}</td>
+            <td class="text-end">{% if row.skipped and not row.kept %}&mdash;{% else %}{{ row.new[0] }}{% endif %}</td>
             <td class="text-end">
               {% if row.skipped %}
-              <span class="ss-muted">{% if row.shelf.is_showcase %}{{ _('showcase, not filled') }}{% else %}{{ _('no width, not filled') }}{% endif %}</span>
+              <span class="ss-muted">{% if row.shelf.is_showcase %}{{ _('showcase, kept as it is') }}{% elif row.outside %}{{ _('outside the sorting, kept as it is') }}{% else %}{{ _('no width, not filled') }}{% endif %}</span>
               {% else %}
               <a href="{{ url_for('browse.browse', layout='proposal', shelf=row.shelf.id) }}">{{ _('View') }}</a>
               {% endif %}
@@ -112,7 +112,7 @@
     {% for entry in skipped %}
     <div class="ss-row">
       <span class="ss-row-artist">{{ entry.cabinet }} &rsaquo; {{ entry.shelf.name }}</span>
-      <span class="ss-row-place">{% if entry.shelf.is_showcase %}{{ _('showcase') }}{% else %}{{ _('no width set') }}{% endif %}</span>
+      <span class="ss-row-place">{% if entry.shelf.is_showcase %}{{ _('showcase, kept as it is') }}{% elif entry.outside %}{{ _('outside the sorting, kept as it is') }}{% else %}{{ _('no width set') }}{% endif %}</span>
     </div>
     {% endfor %}
   </div>

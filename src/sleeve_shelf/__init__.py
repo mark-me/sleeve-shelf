@@ -30,6 +30,7 @@ from sleeve_shelf.web import (
     rules,
     settings,
     setup,
+    showcase,
     storage,
     versions,
 )
@@ -59,6 +60,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(settings.blueprint)
     app.register_blueprint(rules.blueprint)
     app.register_blueprint(layout.blueprint)
+    app.register_blueprint(showcase.blueprint)
     app.register_blueprint(clusters.blueprint)
     app.register_blueprint(versions.blueprint)
     app.register_blueprint(dashboard.blueprint)

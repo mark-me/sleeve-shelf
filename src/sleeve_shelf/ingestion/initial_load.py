@@ -19,7 +19,6 @@ from sleeve_shelf.domain import (
     Placement,
     PlacementSource,
     Shelf,
-    UnitType,
 )
 from sleeve_shelf.ingestion.formats import parse_format
 
@@ -166,7 +165,6 @@ class _Builder:
             shelf = self.add_shelf(row)
             self.result.placements.append(
                 Placement(
-                    UnitType.ALBUM,
                     album.id,
                     shelf.id,
                     self.shelf_fill[shelf.id],

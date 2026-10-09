@@ -49,6 +49,7 @@
       <div class="ss-nav-group">{{ _('Arrange') }}</div>
       {{ item('layout.index', _('Layout'), request.blueprint == 'layout') }}
       {{ item('proposal.index', _('Sorting proposal'), request.blueprint == 'proposal') }}
+      {{ item('showcase.index', _('Showcase'), request.blueprint == 'showcase') }}
       {{ item('versions.index', _('Versions'), request.blueprint == 'versions') }}
       <div class="ss-nav-group">{{ _('Sorting rules') }}</div>
       {{ item('artists.index', _('Artists'), request.blueprint == 'artists', menu_counts.artists) }}
@@ -56,7 +57,7 @@
       {{ item('clusters.index', _('Clusters'), request.blueprint == 'clusters') }}
       {{ item('rules.index', _('Location rules'), request.blueprint == 'rules') }}
       <div class="ss-nav-group">{{ _('Setup') }}</div>
-      {{ item('storage.index', _('Cabinets & shelves'), request.blueprint in ('storage', 'albums'), menu_counts.storage) }}
+      {{ item('storage.index', _('Cabinets & shelves'), request.blueprint == 'storage' or request.endpoint == 'albums.widths', menu_counts.storage) }}
       {{ item('discogs.index', _('Discogs sync'), request.blueprint == 'discogs', menu_counts.discogs) }}
       {{ item('setup.upload_form', _('Import workbook'), request.blueprint == 'setup') }}
       {{ item('settings.index', _('Settings'), request.blueprint == 'settings') }}

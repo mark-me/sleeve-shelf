@@ -40,6 +40,13 @@
       </div>
     </div>
 
+    <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Showcase') }}</h2></div>
+    <div class="ss-card-body">
+      <label for="showcase_fill_percent" class="form-label fw-semibold">{{ _('How full a showcase may be, as a percentage of its width') }}</label>
+      <input id="showcase_fill_percent" class="form-control" style="max-width: 160px;" name="showcase_fill_percent" inputmode="numeric" value="{{ showcase_fill }}">
+      <div class="form-text">{{ _('A top-loader is flipped through to see the fronts, so it needs room left over. The Showcase screen warns when a top-loader holds more than this.') }}</div>
+    </div>
+
     <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Discogs') }}</h2></div>
     <div class="ss-card-body d-flex flex-column gap-3">
       <div class="form-check">

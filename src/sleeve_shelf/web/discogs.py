@@ -30,7 +30,6 @@ from sleeve_shelf.domain import (
     Placement,
     ReleaseEnrichment,
     Shelf,
-    UnitType,
 )
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError, collection_items
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem, read_collection
@@ -255,7 +254,7 @@ def _place(album_id: int) -> str | None:
         (
             p
             for p in store.load(Placement)
-            if p.unit_type is UnitType.ALBUM and p.unit_id == album_id
+            if p.album_id == album_id
         ),
         None,
     )

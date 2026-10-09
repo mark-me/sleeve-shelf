@@ -1,0 +1,38 @@
+{# Shared by the artist and album pages: the location rules that apply, and moving by hand.
+   Expects `rules`, `shelves`, `move_url`, `move_label` and `current_shelf_id` (or none). #}
+<h2 class="mt-5">{{ _('Location rules') }}</h2>
+{% if rules %}
+<div class="ss-card mt-3">
+  {% for rule in rules %}
+  <div class="ss-row">
+    <div class="ss-row-text">
+      <span class="ss-row-artist">{{ rule.target }} &rarr; {{ rule.cabinet or _('(cabinet removed)') }}</span>
+      <span class="ss-row-title">
+        {% if rule.kind == 'cluster' %}{{ _('Rule for the cluster') }}{% elif rule.kind == 'alias_group' %}{{ _('Rule for the family') }}{% elif rule.kind == 'artist' %}{{ _('Rule for the artist') }}{% else %}{{ _('Rule for this album') }}{% endif %}{% if rule.note %} &middot; {{ rule.note }}{% endif %}
+      </span>
+    </div>
+    {% if rule.decides %}<span class="ss-chip">{{ _('decides') }}</span>{% else %}<span class="ss-row-place">{{ _('overruled') }}</span>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+<p class="ss-muted small mt-2">{{ _('A sorting proposal places this in the cabinet of the deciding rule.') }} <a href="{{ url_for('rules.index') }}">{{ _('Location rules') }}</a></p>
+{% else %}
+<p class="ss-muted mt-2">{{ _('No location rule applies: a sorting proposal places this where the sorting puts it.') }} <a href="{{ url_for('rules.index') }}">{{ _('Location rules') }}</a></p>
+{% endif %}
+
+<h2 class="mt-5">{{ _('Move to another shelf') }}</h2>
+<form class="ss-card mt-3" method="post" action="{{ move_url }}">
+  <div class="ss-card-body">
+    <label for="shelf_id" class="form-label fw-semibold">{{ move_label }}</label>
+    <div class="d-flex flex-wrap gap-2">
+      <select id="shelf_id" class="form-select" style="max-width: 360px;" name="shelf_id">
+        <option value="">{{ _('Not on a shelf') }}</option>
+        {% for option in shelves %}
+        <option value="{{ option.id }}" {{ 'selected' if option.id == current_shelf_id }}>{{ option.cabinet }} &rsaquo; {{ option.shelf }}</option>
+        {% endfor %}
+      </select>
+      <button class="ss-button" type="submit">{{ _('Move') }}</button>
+    </div>
+    <div class="form-text">{{ _('Goes to the end of the chosen shelf, on your shelves as they are; put it in its exact spot in Layout. A version from before the move is kept.') }}</div>
+  </div>
+</form>

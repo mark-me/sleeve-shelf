@@ -1,4 +1,4 @@
-"""Sorting/clustering entities: dominant clusters, era bands, and the cluster ordering."""
+"""Sorting/clustering entities: an artist's cluster, and era bands."""
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -11,19 +11,11 @@ class EraBandSource(StrEnum):
 
 @dataclass(slots=True)
 class ArtistClusterAssignment:
-    """An artist's dominant cluster, either proposed or confirmed.
-
-    A cluster_id of None means the artist is its own standalone cluster.
-    """
+    """An artist's cluster, either proposed or confirmed."""
 
     artist_id: int
-    cluster_id: int | None
+    cluster_id: int
     confirmed: bool = False
-
-    @property
-    def is_standalone(self) -> bool:
-        """Whether the artist forms its own cluster, not tied to any style."""
-        return self.cluster_id is None
 
 
 @dataclass(slots=True)
@@ -39,10 +31,3 @@ class EraBand:
     label: str
     position: int
     source: EraBandSource = EraBandSource.ALGORITHM
-
-
-@dataclass(frozen=True, slots=True)
-class ClusterOrder:
-    """The computed co-occurrence ordering of clusters; recomputed, not persisted."""
-
-    cluster_ids: tuple[int, ...]

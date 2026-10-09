@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{{ album.title }}{% endblock %}
+
+{% from "_cover.html" import cover %}
+{% block content %}
+<div class="ss-page" style="max-width: 760px;">
+  {% if artist %}
+  <p class="mb-1"><a href="{{ url_for('artists.edit', artist_id=artist.id) }}">&larr; {{ artist.name }}</a></p>
+  {% endif %}
+  <div class="d-flex flex-wrap align-items-center gap-3">
+    {# The stored cover is Discogs' small image, 150 px square: shown here at its full size.
+       With a large image known, the cover is a button that opens it in a pop-up. #}
+    {% if album.cover_url and album.cover_image_url %}
+    <button class="ss-cover-zoom" type="button" data-bs-toggle="modal" data-bs-target="#cover-large" aria-label="{{ _('Show the cover larger') }}">
+      {{ cover(album.cover_url, true, 150) }}
+    </button>
+    {% else %}
+    {{ cover(album.cover_url, album.cover_url is not none, 150) }}
+    {% endif %}
+    <div>
+      <h1>{{ album.title }}</h1>
+      <p class="ss-muted mb-0 mt-1">{{ artist.name if artist }}{% if album.original_release_year %} &middot; {{ album.original_release_year }}{% endif %}</p>
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+  {% if moved %}
+  <div class="ss-alert mt-3">{{ _('Moved. A version from before the move is kept under Versions.') }}</div>
+  {% endif %}
+  {% if album.left_discogs %}
+  <div class="ss-alert mt-3">{{ _('This album is no longer in your Discogs collection.') }} <a href="{{ url_for('discogs.index') }}#gone">{{ _('Discogs sync') }}</a></div>
+  {% endif %}
+  {% if not takes_part %}
+  <div class="ss-alert mt-3">{{ _('A single or EP: it is kept outside the layout and gets no place in a sorting proposal.') }}</div>
+  {% endif %}
+
+  <div class="ss-card mt-4">
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ _('Where it stands') }}</span>
+      {% if row and row.shelf_id is not none %}
+      <a class="ss-row-place" href="{{ url_for('browse.browse', shelf=row.shelf_id) }}#album-{{ album.id }}">{{ row.cabinet }} &middot; {{ row.shelf }}</a>
+      {% else %}
+      <span class="ss-row-place">{{ _('Not on a shelf') }}</span>
+      {% endif %}
+    </div>
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ _('Sorted under') }}</span>
+      <span class="ss-row-place">{% if row and (row.cluster or row.era_band) %}{{ [row.cluster, row.era_band] | select | join(' · ') }}{% else %}&mdash;{% endif %}</span>
+    </div>
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ _('Original year') }}</span>
+      <span class="ss-row-place">
+        {% if album.original_release_year %}{{ album.original_release_year }} &middot; {% if album.original_year_confirmed %}{{ _('confirmed by hand') }}{% else %}{{ _('from Discogs or the pressing') }}{% endif %}
+        {% else %}{{ _('unknown') }}{% endif %}
+      </span>
+    </div>
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ _('Format') }}</span>
+      <span class="ss-row-place">{% if album.format_tokens %}{{ album.format_tokens.qualifiers | join(', ') }}{% else %}{{ _('unknown') }}{% endif %}</span>
+    </div>
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ _('Discogs styles') }}</span>
+      <span class="ss-row-place">{{ styles | join(', ') if styles else '—' }}</span>
+    </div>
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ _('Discogs release') }}</span>
+      {% if album.release_id %}
+      <a class="ss-row-place" href="https://www.discogs.com/release/{{ album.release_id }}" target="_blank" rel="noopener">{{ album.release_id }}</a>
+      {% else %}
+      <span class="ss-row-place">{{ _('not linked') }}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2 class="mt-5">{{ _('Width') }}</h2>
+  <form class="ss-card mt-3" method="post" action="{{ url_for('albums.set_width', album_id=album.id) }}">
+    <div class="ss-card-body">
+      <input type="hidden" name="next" value="album">
+      <label for="width_cm" class="form-label fw-semibold">{{ _('Measured width in cm') }}</label>
+      <div class="d-flex flex-wrap gap-2">
+        <input id="width_cm" class="form-control" style="width: 120px;" name="width_cm" inputmode="decimal"
+               value="{{ '%g' | format(album.manual_width_cm) if album.manual_width_cm is not none else '' }}">
+        <button class="ss-button" type="submit">{{ _('Save') }}</button>
+      </div>
+      <div class="form-text">
+        {% if album.computed_width_cm is not none %}{{ _('Estimated from the format: %(width).1f cm.', width=album.computed_width_cm) }}{% endif %}
+        {% if not album.width_confirmed %}{{ _('A box set or bundle: the estimate is rough until you measure it.') }}{% endif %}
+        {{ _('Leave empty to use the estimate.') }}
+      </div>
+    </div>
+  </form>
+
+  {% set move_url = url_for('albums.move', album_id=album.id) %}
+  {% set move_label = _('Stand this album on') %}
+  {% set current_shelf_id = row.shelf_id if row else none %}
+  {% include "_rules_and_move.html" %}
+</div>
+{% if album.cover_url and album.cover_image_url %}
+<div class="modal fade" id="cover-large" tabindex="-1" aria-label="{{ _('Cover of %(title)s', title=album.title) }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered ss-cover-dialog">
+    <div class="modal-content ss-cover-modal">
+      <button class="btn-close ss-cover-close" type="button" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      {# The large image has no src until the pop-up opens, so it is only fetched when asked for. #}
+      <img class="ss-cover-large" data-src="{{ album.cover_image_url }}" alt="{{ _('Cover of %(title)s', title=album.title) }}" referrerpolicy="no-referrer" data-bs-dismiss="modal">
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById("cover-large").addEventListener("show.bs.modal", function () {
+    const image = this.querySelector("img");
+    if (!image.src) image.src = image.dataset.src;
+  });
+</script>
+{% endif %}
+{% endblock %}
