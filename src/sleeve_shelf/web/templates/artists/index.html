@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Artists') }}{% endblock %}
 
+{% from "_cover.html" import cover %}
 {% block content %}
 <div class="ss-page">
   <h1>{{ _('Artists') }}</h1>
@@ -19,6 +20,8 @@
   <p class="ss-muted small mt-2">{{ ngettext('%(num)d artist', '%(num)d artists', rows | length) }} &middot; {{ _('“To check” lists sorted artists without a confirmed cluster or without a start year of their own.') }}</p>
 
   {% if rows %}
+  {# Pictures only once an artist in the list has one, as with covers. #}
+  {% set pictures = rows | selectattr('picture') | list | length > 0 %}
   <div class="ss-card">
     <div class="table-responsive">
       <table class="ss-table">
@@ -35,7 +38,12 @@
         <tbody>
           {% for row in rows %}
           <tr>
-            <td class="fw-semibold"><a href="{{ url_for('artists.edit', artist_id=row.artist.id) }}">{{ row.artist.name }}</a></td>
+            <td class="fw-semibold">
+              <div class="d-flex align-items-center gap-2">
+                {{ cover(row.picture, pictures) }}
+                <a href="{{ url_for('artists.edit', artist_id=row.artist.id) }}">{{ row.artist.name }}</a>
+              </div>
+            </td>
             <td>
               {% if row.cluster %}{{ row.cluster }}{% if not row.cluster_confirmed %} <span class="ss-chip">{{ _('proposed') }}</span>{% endif %}
               {% else %}<span class="ss-muted">{% if row.sorted %}{{ _('none yet') }}{% else %}&mdash;{% endif %}</span>{% endif %}

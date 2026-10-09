@@ -59,6 +59,9 @@ def index():
     cluster_names = {cluster.id: cluster.name for cluster in store.load(Cluster)}
     assignments = {a.artist_id: a for a in store.load(ArtistClusterAssignment)}
     families = {group.id: group.label for group in store.load(AliasGroup)}
+    pictures = {
+        picture.discogs_artist_id: picture.thumb_url for picture in store.load(ArtistEnrichment)
+    }
 
     rows = []
     for artist in store.load(Artist):
@@ -75,6 +78,7 @@ def index():
         rows.append(
             {
                 "artist": artist,
+                "picture": pictures.get(artist.discogs_artist_id),
                 "albums": album_counts[artist.id],
                 "cluster": cluster_names.get(assignment.cluster_id) if assignment else None,
                 "cluster_confirmed": bool(assignment and assignment.confirmed),
