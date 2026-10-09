@@ -198,8 +198,11 @@ def test_sync_previews_the_collection_and_only_changes_things_on_confirm(app, cl
     assert "taking over your Discogs collection" in preview.text
     assert "2</div>" in preview.text and "vinyl releases in your collection" in preview.text
     assert all(album.release_id is None for album in _store(app).load(Album))
+    # Left without taking it over, the Discogs screen says the sync is still waiting.
+    assert "previewed but not taken over yet" in client.get("/discogs/").text
 
     assert client.post("/discogs/import/confirm").status_code == 302
+    assert "previewed but not" not in client.get("/discogs/").text
 
     albums = _store(app).load(Album)
     assert albums[0].release_id == 1874289
