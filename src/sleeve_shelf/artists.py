@@ -28,7 +28,7 @@ def set_cluster(
             (c for c in clusters if c.name.casefold() == new_cluster_name.casefold()), None
         )
         if existing is None:
-            existing = Cluster(max((c.id for c in clusters), default=0) + 1, new_cluster_name)
+            existing = Cluster(store.next_id(Cluster, clusters), new_cluster_name)
             clusters.append(existing)
             store.save(Cluster, clusters)
             ensure_cluster_order(store)

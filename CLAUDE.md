@@ -9,9 +9,9 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 `docs/requirements.md` is the source of truth for scope, sorting logic, data model, and every screen. Read it before changing behavior. Its last section, **Open questions**, lists what is undecided and what was deliberately parked.
 
 - **Phase 1a (load a layout, browse, search)** is built.
-- **Phase 1b (Discogs, sorting proposal, management screens)** is built; nothing of it is left open.
-- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and three parked points from 1a (the upload and preview screens never looked at, top-loaders `a` and `b` as a rotating sample, the `Overflow` and `Nieuwe koffer` locations).
-- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, showcase management, cluster-shift confirmation) is not, and neither is Phase 3.
+- **Phase 1b (Discogs, sorting proposal, management screens)** is built, including starting without a workbook.
+- What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and one parked point from 1a (the upload and preview screens never looked at).
+- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync), artist pictures (hotlinked too; a sync names the artist, the enrichment fetches the picture) and the showcase (a top-loader holding a sample of an artist's albums, exchanged one for one with the shelf). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, cluster-shift confirmation) is not, and neither is Phase 3.
 
 ## Commands
 
@@ -41,7 +41,7 @@ Strict separation of concerns; keep it that way.
 | Path | What it holds |
 | --- | --- |
 | `src/sleeve_shelf/domain/` | Plain dataclasses, standard library only. No storage or web knowledge. |
-| `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API (collection, release and master), the format-string parser. |
+| `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API (collection, release, master and artist), the format-string parser. |
 | `src/sleeve_shelf/sorting/` | The sorting engine: pure functions on domain objects (era bands, families, order, placement). |
 | `src/sleeve_shelf/persistence/` | `JsonStore` (one JSON file per entity, read and written through DuckDB) and the read queries for Browse. |
 | `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
@@ -54,6 +54,7 @@ Things that are easy to get wrong:
 - **Adding a field to an entity** means three places: the dataclass in `domain/`, its column list in `persistence/store.py` (`_TABLES`), and the data model in `docs/requirements.md` (the entity list and the Mermaid diagram).
 - **A service module and a blueprint can share a name** (`sleeve_shelf/versions.py` and `sleeve_shelf/web/versions.py`). In web modules import names explicitly — `from sleeve_shelf.versions import save_version` — not `from sleeve_shelf import versions`, which can resolve to the blueprint.
 - **`JsonStore.save` rewrites the whole file.** Load the list, change it, save the list.
+- **A new id comes from `store.next_id(Entity, items)`**, never from "highest + 1": ids of removed items stay taken, because saved versions and location rules still name them.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
 - **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
 - **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN. Album covers are the one exception: the browser fetches them from Discogs, and every page has to work without them.
@@ -62,7 +63,7 @@ Things that are easy to get wrong:
 
 The `data/` directory is git-ignored. It holds the collection as JSON files, the Discogs cache, saved layout versions in `placements/`, and `config.yaml` — which contains the Discogs token. Never commit it, and never print the token in full; the UI shows only its last four characters.
 
-The Discogs cache (`discogs_releases.json`, `discogs_masters.json`) took hours to fetch at Discogs' rate limit. Don't delete it, and don't start an enrichment while another is running.
+The Discogs cache (`discogs_releases.json`, `discogs_masters.json`, `discogs_artists.json`) took hours to fetch at Discogs' rate limit. Don't delete it, and don't start an enrichment while another is running.
 
 When trying something out on real data, work on a copy of `data/` (point `SLEEVE_SHELF_DATA_DIR` at it), not on `data/` itself. `docs/import_example.xlsx` is Mark's own layout workbook and the reference for the workbook format.
 

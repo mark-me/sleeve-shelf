@@ -4,7 +4,7 @@
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   <h1>{{ _('Preview') }}</h1>
-  <p class="ss-muted mt-2">{% if synced %}{{ _('This is what taking over your Discogs collection would do. Nothing has changed yet.') }}{% else %}{{ _('This is what importing the export would do. Nothing has changed yet.') }}{% endif %}</p>
+  <p class="ss-muted mt-2">{% if synced %}{{ _('This is what taking over your Discogs collection would do. Nothing has changed yet.') }} {{ _('Taking it over also brings the album covers, and notes which artist on Discogs each artist is — which the artist pictures need.') }}{% else %}{{ _('This is what importing the export would do. Nothing has changed yet.') }}{% endif %}</p>
 
   <div class="ss-stats mt-3">
     <div class="ss-stat"><div class="ss-stat-number">{{ outcome.vinyl_count }}</div><div class="ss-stat-label">{% if synced %}{{ _('vinyl releases in your collection') }}{% else %}{{ _('vinyl releases in the export') }}{% endif %}</div></div>

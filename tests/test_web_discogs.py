@@ -10,13 +10,13 @@ from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
     Artist,
+    ArtistEnrichment,
     Cabinet,
     LocationRule,
     LocationRuleTarget,
     Placement,
     PlacementSource,
     Shelf,
-    UnitType,
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
@@ -54,6 +54,7 @@ def _vinyl(release_id, artist, title):
         "basic_information": {
             "title": title,
             "thumb": f"https://i.discogs.com/{release_id}.jpeg",
+            "cover_image": f"https://i.discogs.com/{release_id}-large.jpeg",
             "artists": [{"name": artist, "join": ""}],
             "formats": [{"name": "Vinyl", "qty": "1", "descriptions": ["LP", "Album"]}],
         },
@@ -167,10 +168,11 @@ def test_enrichment_runs_in_the_background_and_fills_the_albums(app, client):
 
     status = client.get("/discogs/enrich/status").get_json()
     assert (status["running"], status["outcome"], status["done"]) == (False, "finished", 3)
+    assert status["albums"] == [2, 2]
     album = _store(app).load(Album)[0]
     assert (album.master_id, album.original_release_year) == (77, 1973)
     page = client.get("/discogs/").text
-    assert "Enrichment finished." in page and "Every linked album has been fetched." in page
+    assert "Everything has been fetched." in page and "2 of 2 linked albums" in page
 
 
 def test_a_failing_lookup_is_reported(app, client):
@@ -197,8 +199,11 @@ def test_sync_previews_the_collection_and_only_changes_things_on_confirm(app, cl
     assert "taking over your Discogs collection" in preview.text
     assert "2</div>" in preview.text and "vinyl releases in your collection" in preview.text
     assert all(album.release_id is None for album in _store(app).load(Album))
+    # Left without taking it over, the Discogs screen says the sync is still waiting.
+    assert "previewed but not taken over yet" in client.get("/discogs/").text
 
     assert client.post("/discogs/import/confirm").status_code == 302
+    assert "previewed but not" not in client.get("/discogs/").text
 
     albums = _store(app).load(Album)
     assert albums[0].release_id == 1874289
@@ -206,6 +211,7 @@ def test_sync_previews_the_collection_and_only_changes_things_on_confirm(app, cl
     # A sync brings the covers, for albums that were there and for new ones.
     assert albums[0].cover_url == "https://i.discogs.com/1874289.jpeg"
     assert albums[-1].cover_url == "https://i.discogs.com/1965832.jpeg"
+    assert albums[0].cover_image_url == "https://i.discogs.com/1874289-large.jpeg"
     # An export has no covers and leaves them alone.
     _import(client)
     assert _store(app).load(Album)[0].cover_url == "https://i.discogs.com/1874289.jpeg"
@@ -283,8 +289,8 @@ def test_an_album_that_left_discogs_is_only_removed_after_confirming(app, client
     store.save(
         Placement,
         [
-            Placement(UnitType.ALBUM, 1, 1, 0, PlacementSource.MANUAL),
-            Placement(UnitType.ALBUM, 3, 1, 1, PlacementSource.MANUAL),
+            Placement(1, 1, 0, PlacementSource.MANUAL),
+            Placement(3, 1, 1, PlacementSource.MANUAL),
         ],
     )
     store.save(LocationRule, [LocationRule(1, LocationRuleTarget.ALBUM, 3, 1)])
@@ -312,9 +318,54 @@ def test_an_album_that_left_discogs_is_only_removed_after_confirming(app, client
 
     store = _store(app)
     assert [album.id for album in store.load(Album)] == [1, 2]
-    assert [placement.unit_id for placement in store.load(Placement)] == [1]
+    assert [placement.album_id for placement in store.load(Placement)] == [1]
     assert store.load(LocationRule) == []
     # The layout from before the removal is kept as a version; the artist stays.
     assert [(v.label, v.album_count) for v in list_versions(store)] == [("before removing an album", 2)]
     assert store.load(Artist)[-1].name == "The Birthday Party"
     assert 'id="gone"' not in client.get("/discogs/").text
+
+
+def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
+    class Pictured(_Client):
+        def collection(self):
+            release = _vinyl(1874289, "Tom Waits", "Closing Time")
+            release["basic_information"]["artists"][0]["id"] = 82294
+            return [release]
+
+        def artist(self, artist_id):
+            return ArtistEnrichment(
+                artist_id, "https://i.discogs.com/tw.jpeg", "https://i.discogs.com/tw150.jpeg",
+                datetime(2026, 10, 9),
+            )
+
+    app.config["DISCOGS_CLIENT_FACTORY"] = Pictured
+    client.post("/discogs/token", data={"token": "secret"})
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+
+    # The sync names the artist on Discogs; the picture itself still has to be fetched.
+    assert [a.discogs_artist_id for a in _store(app).load(Artist)] == [82294, None]
+    waiting = client.get("/discogs/").text
+    assert "The picture of 1 artist still has to be fetched." in waiting
+    # Not done while a picture is open, and the artist no sync could name is accounted for.
+    assert "Everything has been fetched." not in waiting and "0 of 1 artists" in waiting
+    assert "1 artist is not named on Discogs" in waiting
+    assert "tw150.jpeg" not in client.get("/artists/1").text
+    assert "ss-cover" not in client.get("/artists/").text
+
+    client.post("/discogs/enrich/start")
+    app.extensions["enrichment_job"].wait(10)
+
+    page = client.get("/artists/1").text
+    assert 'src="https://i.discogs.com/tw150.jpeg"' in page and "Show the picture larger" in page
+    # The large picture is only fetched when the pop-up opens.
+    assert 'data-src="https://i.discogs.com/tw.jpeg"' in page
+    done = client.get("/discogs/").text
+    assert "still has to be fetched" not in done
+    assert "Everything has been fetched." in done and "1 of 1 artists" in done
+    # An artist without a picture has the page as it was.
+    assert "ss-cover-zoom" not in client.get("/artists/2").text
+    # In the list the pictured artist shows its picture, and the other keeps the space.
+    listed = client.get("/artists/").text
+    assert 'src="https://i.discogs.com/tw150.jpeg"' in listed and "ss-cover-empty" in listed

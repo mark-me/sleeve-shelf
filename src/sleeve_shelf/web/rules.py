@@ -82,7 +82,7 @@ def create():
     ]
     rules.append(
         LocationRule(
-            max((rule.id for rule in rules), default=0) + 1,
+            store.next_id(LocationRule, rules),
             kind,
             target_id,
             cabinet_id,

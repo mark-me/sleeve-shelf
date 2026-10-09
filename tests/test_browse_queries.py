@@ -9,12 +9,11 @@ from sleeve_shelf.domain import (
     EraBand,
     Placement,
     Shelf,
-    UnitType,
 )
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
 
 
-def test_most_specific_placement_decides_where_an_album_is(tmp_path):
+def test_an_album_is_where_its_placement_says(tmp_path):
     store = JsonStore(tmp_path)
     store.save(Cabinet, [Cabinet(1, "Kast")])
     store.save(Shelf, [Shelf(1, 1, "a"), Shelf(2, 1, "b"), Shelf(3, 1, "c")])
@@ -34,17 +33,17 @@ def test_most_specific_placement_decides_where_an_album_is(tmp_path):
     store.save(
         Placement,
         [
-            Placement(UnitType.ARTIST, 1, 1, 0),
-            Placement(UnitType.ERA_BAND, 2, 2, 0),
-            Placement(UnitType.ALBUM, 4, 3, 0),
+            Placement(2, 1, 0),
+            Placement(1, 1, 1),
+            Placement(4, 3, 0),
         ],
     )
     queries = BrowseQueries(store)
 
-    # The early band has no placement of its own, so it follows the artist;
-    # within a unit the albums stand alphabetically.
+    # On a shelf the albums stand in the order of their positions; an album without a
+    # placement is on no shelf.
     assert [a.title for a in queries.shelf_albums(1)] == ["Closing Time", "Small Change"]
-    assert [a.title for a in queries.shelf_albums(2)] == ["Mule Variations"]
+    assert queries.shelf_albums(2) == []
     assert [a.title for a in queries.shelf_albums(3)] == ["Orphans"]
-    assert [s.album_count for s in queries.shelves()] == [2, 1, 1]
-    assert queries.unplaced() == []
+    assert [s.album_count for s in queries.shelves()] == [2, 0, 1]
+    assert [a.title for a in queries.unplaced()] == ["Mule Variations"]

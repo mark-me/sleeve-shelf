@@ -1,7 +1,7 @@
 """Discogs: syncing or importing the collection, enriching it, and confirming matches."""
 
 import json
-
+from math import ceil
 from pathlib import Path
 
 from flask import (
@@ -25,14 +25,19 @@ from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import (
     Album,
     Artist,
+    ArtistEnrichment,
     Cabinet,
     MatchProposal,
     Placement,
     ReleaseEnrichment,
     Shelf,
-    UnitType,
 )
-from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError, collection_items
+from sleeve_shelf.ingestion.discogs_api import (
+    SECONDS_BETWEEN_REQUESTS,
+    DiscogsClient,
+    DiscogsError,
+    collection_items,
+)
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem, read_collection
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.jobs import EnrichmentJob
@@ -82,7 +87,8 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     store = get_store()
     settings = load_settings(_data_dir())
     albums = store.load(Album)
-    artists = {artist.id: artist.name for artist in store.load(Artist)}
+    artist_list = store.load(Artist)
+    artists = {artist.id: artist.name for artist in artist_list}
     fetched = {release.release_id for release in store.load(ReleaseEnrichment)}
     linked = {album.release_id for album in albums if album.release_id is not None}
     by_id = {album.id: album for album in albums}
@@ -96,6 +102,9 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
         if proposal.album_id in by_id
     ]
     token = settings.discogs_token
+    named = {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
+    pictured = {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
+    job = _job().status()
     gone = [
         {"album": album, "artist": artists.get(album.artist_id, "")}
         for album in albums
@@ -108,10 +117,24 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             linked_count=sum(album.release_id is not None for album in albums),
             fetched_count=len(linked & fetched),
             to_fetch_count=len(linked - fetched),
+            # A preview that was left without taking it over or importing it.
+            waiting="sync" if (_data_dir() / PENDING_SYNC).exists()
+            else "export" if (_data_dir() / PENDING_EXPORT).exists()
+            else None,
+            pictures_to_fetch_count=len(named - pictured),
+            # How far each part is, as [done, total]; a running job knows it more precisely.
+            albums_progress=job["albums"] or [len(linked & fetched), len(linked)],
+            pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
+            unnamed_count=sum(artist.discogs_artist_id is None for artist in artist_list),
+            minutes=ceil(
+                (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS / 60
+            ),
+            minutes_left=ceil((job["total"] - job["done"]) * SECONDS_BETWEEN_REQUESTS / 60),
+            seconds_per_lookup=SECONDS_BETWEEN_REQUESTS,
             proposals=proposals,
             gone=gone,
             masked_token=f"••••{token[-4:]}" if token else None,
-            job=_job().status(),
+            job=job,
             error=error,
             token_error=token_error,
         ),
@@ -255,7 +278,7 @@ def _place(album_id: int) -> str | None:
         (
             p
             for p in store.load(Placement)
-            if p.unit_type is UnitType.ALBUM and p.unit_id == album_id
+            if p.album_id == album_id
         ),
         None,
     )

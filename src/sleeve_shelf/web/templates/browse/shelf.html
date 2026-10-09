@@ -24,6 +24,9 @@
     <span>
       {{ shelf.cabinet }} &rsaquo; <strong>{{ shelf.shelf }}</strong>
       &middot; {{ ngettext('%(num)d album', '%(num)d albums', shelf.album_count) }}
+      {% if shelf.outside_sorting %}
+      <span class="ss-reach">&middot; {{ _('outside the sorting') }}</span>
+      {% endif %}
       {% if shelf.reachability_score is not none %}
       <span class="ss-reach">&middot; {{ _('reachability %(score)d', score=shelf.reachability_score) }}</span>
       {% endif %}
@@ -45,7 +48,7 @@
 
 <div class="ss-page">
   {% if not shelf %}
-  <p class="ss-muted">{{ _('There are no shelves yet.') }}</p>
+  <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('There are no shelves yet.') }} <a href="{{ url_for('storage.index') }}">{{ _('Add your cabinets and shelves') }}</a></div></div>
   {% elif not albums %}
   <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('This shelf is empty.') }}</div></div>
   {% else %}
@@ -59,7 +62,7 @@
       {{ cover(album.cover_url, covers) }}
       <div class="ss-row-text">
         <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=album.artist_id) }}">{{ album.artist }}</a>
-        <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+        <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</a>
       </div>
     </div>
     {% endfor %}

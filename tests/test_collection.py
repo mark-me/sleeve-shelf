@@ -12,6 +12,7 @@ from sleeve_shelf.domain import (
     Album,
     Artist,
     ArtistClusterAssignment,
+    ArtistEnrichment,
     Cluster,
     MasterEnrichment,
     MatchProposal,
@@ -172,3 +173,31 @@ def test_settings_round_trip_and_default(tmp_path):
     save_settings(tmp_path, Settings(discogs_token="secret", base_width_cm=0.45))
 
     assert load_settings(tmp_path) == Settings(discogs_token="secret", base_width_cm=0.45)
+
+
+def test_enrichment_fetches_each_artists_picture_once(tmp_path):
+    class Pictured(_Client):
+        def artist(self, artist_id):
+            self.calls.append(("artist", artist_id))
+            return ArtistEnrichment(artist_id, f"https://i/{artist_id}.jpeg", None, NOW)
+
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Chet Baker", discogs_artist_id=30), Artist(2, "Unknown")])
+    store.save(Album, [Album(1, 1, "Chet", release_id=12)])
+    client = Pictured()
+    seen = []
+
+    parts = []
+    enrich_collection(
+        store, client, lambda done, total: seen.append((done, total)),
+        lambda name, done, total: parts.append((name, done, total)),
+    )
+
+    # Each part says how far it is; the pictures are named first so their count is known at once.
+    assert parts == [("pictures", 0, 1), ("albums", 0, 1), ("albums", 1, 1), ("pictures", 1, 1)]
+    # The picture comes last, after what the sorting needs.
+    assert client.calls == [("release", 12), ("artist", 30)]
+    assert seen[-1] == (2, 2)
+    assert store.load(ArtistEnrichment)[0].image_url == "https://i/30.jpeg"
+    enrich_collection(store, client)
+    assert len(client.calls) == 2

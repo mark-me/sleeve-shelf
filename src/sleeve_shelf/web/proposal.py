@@ -11,7 +11,6 @@ from sleeve_shelf.domain import (
     Cabinet,
     Placement,
     ProposedPlacement,
-    UnitType,
     in_order,
 )
 from sleeve_shelf.persistence import BrowseQueries
@@ -30,22 +29,28 @@ def require_collection():
 def index():
     store = get_store()
     usable, skipped = proposal.usable_shelves(store)
+    kept = proposal.kept_shelf_ids(store)
+    outside = {cabinet.id for cabinet in store.load(Cabinet) if cabinet.outside_sorting}
     cabinet_names = {cabinet.id: cabinet.name for cabinet in store.load(Cabinet)}
     current = {
-        p.unit_id: p.shelf_id for p in store.load(Placement) if p.unit_type is UnitType.ALBUM
+        p.album_id: p.shelf_id for p in store.load(Placement)
     }
     albums = [a for a in store.load(Album) if proposal.takes_part(a, set(current))]
     context = {
-        "taking_part": len(albums),
+        # What stands on a kept shelf stays there, and is not among the albums to place.
+        "taking_part": sum(1 for album in albums if current.get(album.id) not in kept),
         "usable_count": len(usable),
-        "skipped": [{"cabinet": cabinet_names[s.cabinet_id], "shelf": s} for s in skipped],
+        "skipped": [
+            {"cabinet": cabinet_names[s.cabinet_id], "shelf": s, "outside": s.cabinet_id in outside}
+            for s in skipped
+        ],
         "suggestion_count": len(family_suggestions(store)),
         "has_proposal": proposal.has_proposal(store),
     }
     if not context["has_proposal"]:
         return render_template("proposal/index.html", **context)
 
-    proposed = {p.unit_id: p.shelf_id for p in store.load(ProposedPlacement)}
+    proposed = {p.album_id: p.shelf_id for p in store.load(ProposedPlacement)}
     artist_names = {artist.id: artist.name for artist in store.load(Artist)}
     now_fill = BrowseQueries(store).shelf_fill()
     new_fill = BrowseQueries(store, ProposedPlacement).shelf_fill()
@@ -57,6 +62,8 @@ def index():
                 {
                     "shelf": shelf,
                     "skipped": shelf in skipped,
+                    "kept": shelf.id in kept,
+                    "outside": shelf.cabinet_id in outside,
                     "now": now_fill.get(shelf.id, (0, 0.0)),
                     "new": new_fill.get(shelf.id, (0, 0.0)),
                 }

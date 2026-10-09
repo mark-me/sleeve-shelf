@@ -30,6 +30,8 @@ class Cabinet:
     location: str | None = None
     # Place in the order the cabinets are walked; see in_order().
     position: int | None = None
+    # A sorting proposal leaves this cabinet as it is: nothing is taken from it or added to it.
+    outside_sorting: bool = False
 
 
 @dataclass(slots=True)

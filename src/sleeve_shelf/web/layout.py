@@ -11,7 +11,6 @@ from sleeve_shelf.domain import (
     PlacementSource,
     ProposedPlacement,
     Shelf,
-    UnitType,
     in_order,
 )
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries
@@ -111,7 +110,7 @@ def move():
     album_ids = {album.id for album in store.load(Album)}
     shelf_ids = {shelf.id for shelf in store.load(Shelf)}
     named = [album_id for ids in contents.values() for album_id in ids]
-    before = {p.unit_id for p in placements if p.shelf_id in contents}
+    before = {p.album_id for p in placements if p.shelf_id in contents}
     if (
         not set(named) <= album_ids
         or not set(contents) - {TRAY} <= shelf_ids
@@ -123,10 +122,10 @@ def move():
 
     kept = [
         p for p in placements
-        if p.shelf_id not in contents and p.unit_id not in named
+        if p.shelf_id not in contents and p.album_id not in named
     ]
     moved = [
-        entity(UnitType.ALBUM, album_id, shelf_id, position, PlacementSource.MANUAL)
+        entity(album_id, shelf_id, position, PlacementSource.MANUAL)
         for shelf_id, ids in contents.items()
         if shelf_id != TRAY
         for position, album_id in enumerate(ids)

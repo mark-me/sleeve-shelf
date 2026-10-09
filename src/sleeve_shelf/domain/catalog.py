@@ -27,9 +27,10 @@ class Artist:
 
     id: int
     name: str
-    discogs_artist_id: int | None = None
     alias_group_id: int | None = None
     start_year: int | None = None
+    # The artist on Discogs, as a sync found it on the artist's releases.
+    discogs_artist_id: int | None = None
 
 
 @dataclass(slots=True)
@@ -108,6 +109,8 @@ class Album:
     style_ids: list[int] = field(default_factory=list)
     era_band_id: int | None = None
     cover_url: str | None = None
+    # The same cover as a large image, only fetched when the cover is enlarged.
+    cover_image_url: str | None = None
     # False while the year may still be that of the pressing rather than the original.
     original_year_confirmed: bool = False
     # True when the last sync or import no longer found the release in the Discogs collection.

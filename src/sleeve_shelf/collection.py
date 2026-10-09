@@ -11,6 +11,7 @@ from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
+    ArtistEnrichment,
     Cabinet,
     Cluster,
     EraBand,
@@ -25,7 +26,6 @@ from sleeve_shelf.domain import (
     ReleaseEnrichment,
     Shelf,
     Style,
-    UnitType,
     WidthConstants,
     settle_order,
 )
@@ -110,11 +110,11 @@ def update_layout(
     for shelf in load.shelves:
         cabinet_name = loaded_cabinet[shelf.cabinet_id].name
         if cabinet_name not in cabinet_ids:
-            cabinet_ids[cabinet_name] = max((c.id for c in cabinets), default=0) + 1
+            cabinet_ids[cabinet_name] = store.next_id(Cabinet, cabinets)
             cabinets.append(Cabinet(cabinet_ids[cabinet_name], cabinet_name))
         key = (cabinet_ids[cabinet_name], shelf.name)
         if key not in shelf_ids:
-            shelf_ids[key] = max((s.id for s in shelves), default=0) + 1
+            shelf_ids[key] = store.next_id(Shelf, shelves)
             shelves.append(
                 Shelf(
                     shelf_ids[key],
@@ -147,12 +147,12 @@ def update_layout(
             matches.remove(album)
             return album
         if artist.name not in artist_ids:
-            artist_ids[artist.name] = max((a.id for a in artists), default=0) + 1
+            artist_ids[artist.name] = store.next_id(Artist, artists)
             artists.append(Artist(artist_ids[artist.name], artist.name, start_year=artist.start_year))
             cluster_name = loaded_cluster.get(loaded_assignment.get(artist.id))
             if cluster_name is not None:
                 if cluster_name not in cluster_ids:
-                    cluster_ids[cluster_name] = max((c.id for c in clusters), default=0) + 1
+                    cluster_ids[cluster_name] = store.next_id(Cluster, clusters)
                     clusters.append(Cluster(cluster_ids[cluster_name], cluster_name))
                 assignments.append(
                     ArtistClusterAssignment(artist_ids[artist.name], cluster_ids[cluster_name], True)
@@ -170,20 +170,20 @@ def update_layout(
             era_band_id = band_ids[artist_id, label]
         album = replace(
             loaded,
-            id=max((a.id for a in albums), default=0) + 1,
+            id=store.next_id(Album, albums),
             artist_id=artist_id,
             era_band_id=era_band_id,
         )
         albums.append(album)
         return album
 
-    placement_of = {placement.unit_id: placement for placement in load.placements}
+    placement_of = {placement.album_id: placement for placement in load.placements}
     placements = []
     for loaded in load.albums:
         album = stored(loaded)
         placement = placement_of.get(loaded.id)
         if placement is not None:
-            placements.append(replace(placement, unit_id=album.id, shelf_id=shelf_of[placement.shelf_id]))
+            placements.append(replace(placement, album_id=album.id, shelf_id=shelf_of[placement.shelf_id]))
 
     if constants:
         estimate_widths([album for album in albums if album.computed_width_cm is None], constants)
@@ -199,6 +199,12 @@ def update_layout(
     store.save(Placement, placements)
     ensure_cluster_order(store)
     save_version(store, "loaded")
+
+
+def start_empty(store: JsonStore) -> None:
+    """Begin a collection without a layout workbook: nothing in it yet, to be filled from Discogs."""
+    if not store.exists(Album):
+        store.save(Album, [])
 
 
 def ensure_cluster_order(store: JsonStore) -> None:
@@ -299,6 +305,9 @@ def import_discogs_collection(
 
     # A cover only comes with a sync; an export leaves the covers as they are.
     covers = {item.release_id: item.cover_url for item in vinyl if item.cover_url}
+    large_covers = {
+        item.release_id: item.cover_image_url for item in vinyl if item.cover_image_url
+    }
 
     refreshed = 0
     if refresh_formats:
@@ -359,12 +368,12 @@ def import_discogs_collection(
     for item in remaining:
         artist_id = artist_ids.get(item.artist)
         if artist_id is None:
-            artist_id = max((artist.id for artist in artists), default=0) + 1
+            artist_id = store.next_id(Artist, artists)
             artists.append(Artist(artist_id, item.artist))
             artist_ids[item.artist] = artist_id
         albums.append(
             Album(
-                id=max((album.id for album in albums), default=0) + 1,
+                id=store.next_id(Album, albums),
                 artist_id=artist_id,
                 title=item.title,
                 release_id=item.release_id,
@@ -375,6 +384,19 @@ def import_discogs_collection(
     for album in albums:
         if album.release_id in covers:
             album.cover_url = covers[album.release_id]
+        if album.release_id in large_covers:
+            album.cover_image_url = large_covers[album.release_id]
+
+    # Only a sync names the artist on Discogs. An artist is the one most of its releases
+    # are credited to; releases shared with other artists say nothing.
+    credited = {item.release_id: item.artist_discogs_id for item in vinyl if item.artist_discogs_id}
+    votes: dict[int, Counter] = defaultdict(Counter)
+    for album in albums:
+        if album.release_id in credited:
+            votes[album.artist_id][credited[album.release_id]] += 1
+    for artist in artists:
+        if artist.id in votes:
+            artist.discogs_artist_id = votes[artist.id].most_common(1)[0][0]
 
     if not dry_run:
         estimate_widths(albums, constants)
@@ -419,10 +441,10 @@ def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> 
     artists = store.load(Artist)
     artist = next((artist for artist in artists if artist.name == proposal.artist), None)
     if artist is None:
-        artist = Artist(max((a.id for a in artists), default=0) + 1, proposal.artist)
+        artist = Artist(store.next_id(Artist, artists), proposal.artist)
         artists.append(artist)
     album = Album(
-        id=max((a.id for a in albums), default=0) + 1,
+        id=store.next_id(Album, albums),
         artist_id=artist.id,
         title=proposal.title,
         release_id=proposal.release_id,
@@ -449,7 +471,7 @@ def remove_departed_album(store: JsonStore, album_id: int) -> bool:
         return False
 
     def is_other(placement: Placement) -> bool:
-        return placement.unit_type is not UnitType.ALBUM or placement.unit_id != album_id
+        return placement.album_id != album_id
 
     placements = store.load(Placement)
     if not all(is_other(placement) for placement in placements):
@@ -480,22 +502,36 @@ def enrich_collection(
     store: JsonStore,
     client: DiscogsClient,
     progress: Callable[[int, int], None] = lambda done, total: None,
+    part: Callable[[str, int, int], None] = lambda name, done, total: None,
 ) -> int:
-    """Fetch what the Discogs cache still lacks for the stored albums, then apply it.
+    """Fetch what the Discogs cache still lacks for the stored albums and artists, then apply it.
 
     Returns the number of lookups made. The cache is saved along the way, so an
-    interrupted run picks up where it stopped.
+    interrupted run picks up where it stopped. Progress counts the lookups of
+    this run; part names what is being fetched ("albums", then "pictures") and
+    how many of all of them are in, earlier runs included.
     """
     albums = store.load(Album)
     releases = {release.release_id: release for release in store.load(ReleaseEnrichment)}
     masters = {master.master_id: master for master in store.load(MasterEnrichment)}
+    pictures = {artist.discogs_artist_id: artist for artist in store.load(ArtistEnrichment)}
     release_ids = sorted(
         {a.release_id for a in albums if a.release_id is not None} - releases.keys()
     )
+    artist_ids = sorted(
+        {a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None}
+        - pictures.keys()
+    )
     # Each new release may bring one master lookup with it.
-    done, saved, total = 0, 0, 2 * len(release_ids)
+    done, saved, total = 0, 0, 2 * len(release_ids) + len(artist_ids)
+    linked_count = len(release_ids) + len(
+        {a.release_id for a in albums if a.release_id is not None} & releases.keys()
+    )
+    named_count = len(artist_ids) + len(pictures)
+    part("pictures", named_count - len(artist_ids), named_count)
+    part("albums", linked_count - len(release_ids), linked_count)
     try:
-        for release_id in release_ids:
+        for count, release_id in enumerate(release_ids, start=1):
             release = client.release(release_id)
             releases[release_id] = release
             done += 1
@@ -504,9 +540,10 @@ def enrich_collection(
             else:
                 masters[release.master_id] = client.master(release.master_id)
                 done += 1
+            part("albums", linked_count - len(release_ids) + count, linked_count)
             progress(done, total)
             if done - saved >= SAVE_CACHE_EVERY:
-                _save_cache(store, releases, masters)
+                _save_cache(store, releases, masters, pictures)
                 saved = done
         # Masters of releases cached by a run that stopped between the two lookups.
         for release in list(releases.values()):
@@ -515,15 +552,25 @@ def enrich_collection(
                 done += 1
                 total += 1
                 progress(done, total)
+        # Last, as nothing in the sorting waits for them: the pictures of the artists.
+        for count, artist_id in enumerate(artist_ids, start=1):
+            pictures[artist_id] = client.artist(artist_id)
+            done += 1
+            part("pictures", named_count - len(artist_ids) + count, named_count)
+            progress(done, total)
+            if done - saved >= SAVE_CACHE_EVERY:
+                _save_cache(store, releases, masters, pictures)
+                saved = done
     finally:
-        _save_cache(store, releases, masters)
+        _save_cache(store, releases, masters, pictures)
     apply_enrichment(store)
     return done
 
 
-def _save_cache(store: JsonStore, releases: dict, masters: dict) -> None:
+def _save_cache(store: JsonStore, releases: dict, masters: dict, pictures: dict) -> None:
     store.save(ReleaseEnrichment, releases.values())
     store.save(MasterEnrichment, masters.values())
+    store.save(ArtistEnrichment, pictures.values())
 
 
 def apply_enrichment(store: JsonStore) -> None:
@@ -569,10 +616,10 @@ def apply_enrichment(store: JsonStore) -> None:
         else:
             cluster_id = cluster_ids.get(name)
             if cluster_id is None:
-                cluster_id = max((cluster.id for cluster in clusters), default=0) + 1
+                cluster_id = store.next_id(Cluster, clusters)
                 clusters.append(Cluster(cluster_id, name))
                 cluster_ids[name] = cluster_id
-        styles[name] = Style(len(styles) + 1, name, cluster_id)
+        styles[name] = Style(store.next_id(Style, styles.values()), name, cluster_id)
 
     for album in albums:
         if album.id in album_styles:

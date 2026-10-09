@@ -1,19 +1,30 @@
 {% extends "base.html" %}
 {% block title %}{{ artist.name }}{% endblock %}
 
-{% from "_cover.html" import cover %}
+{% from "_cover.html" import cover, zoomable, zoom_dialog %}
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   <p class="mb-1"><a href="{{ url_for('artists.index') }}">&larr; {{ _('Artists') }}</a></p>
-  <h1>{{ artist.name }}</h1>
-  <p class="ss-muted mt-1">
-    {{ _('Era band: %(band)s', band=band) }}
-    {% if family %} &middot; {{ _('Family:') }} <a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% endif %}
-  </p>
+  <div class="d-flex flex-wrap align-items-center gap-3">
+    {# The artist's picture comes from Discogs; the page is the same without one. #}
+    {% if picture and picture.thumb_url %}
+    {{ zoomable(picture.thumb_url, picture.image_url, _('Show the picture larger')) }}
+    {% endif %}
+    <div>
+      <h1>{{ artist.name }}</h1>
+      <p class="ss-muted mt-1 mb-0">
+        {{ _('Era band: %(band)s', band=band) }}
+        {% if family %} &middot; {{ _('Family:') }} <a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% endif %}
+      </p>
+    </div>
+  </div>
 
   {% for error in errors %}
   <div class="ss-alert mt-3" role="alert">{{ error }}</div>
   {% endfor %}
+  {% if moved %}
+  <div class="ss-alert mt-3">{{ _('Moved. A version from before the move is kept under Versions.') }}</div>
+  {% endif %}
   {% if saved %}
   <div class="ss-alert mt-3">{{ _('Saved. Generate the proposal again to see the effect.') }}</div>
   {% endif %}
@@ -52,13 +63,18 @@
     </div>
   </form>
 
+  {% set move_url = url_for('artists.move', artist_id=artist.id) %}
+  {% set move_label = ngettext('Stand the %(num)d album of this artist on', 'Stand all %(num)d albums of this artist on', movable_count) %}
+  {% set current_shelf_id = none %}
+  {% include "_rules_and_move.html" %}
+
   <h2 class="mt-5">{{ _('Albums') }} ({{ albums | length }})</h2>
   <div class="ss-card mt-3">
     {% for row in albums %}
     <div class="ss-row">
       {{ cover(row.album.cover_url, albums | map(attribute='album') | selectattr('cover_url') | list | length > 0) }}
       <div class="ss-row-text">
-        <span class="ss-row-artist">{{ row.album.title }}</span>
+        <a class="ss-row-artist" href="{{ url_for('albums.detail', album_id=row.album.id) }}">{{ row.album.title }}</a>
         <span class="ss-row-title">{% if row.album.original_release_year %}{{ row.album.original_release_year }}{% else %}{{ _('year unknown') }}{% endif %}{% if row.album.format_tokens %} &middot; {{ row.album.format_tokens.qualifiers | join(', ') }}{% endif %}</span>
       </div>
       {% if not row.album.width_confirmed %}<a class="ss-chip" href="{{ url_for('albums.widths') }}#album-{{ row.album.id }}">{{ _('rough width') }}</a>{% endif %}
@@ -71,4 +87,5 @@
     {% endfor %}
   </div>
 </div>
+{% if picture %}{{ zoom_dialog(picture.thumb_url, picture.image_url, _('Picture of %(name)s', name=artist.name)) }}{% endif %}
 {% endblock %}

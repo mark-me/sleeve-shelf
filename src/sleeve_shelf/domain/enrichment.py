@@ -30,6 +30,17 @@ class MasterEnrichment:
 
 
 @dataclass(frozen=True, slots=True)
+class ArtistEnrichment:
+    """Cached result of a Discogs artist lookup: the artist's picture, if Discogs has one."""
+
+    discogs_artist_id: int
+    # The picture in full, and the small one of 150 px.
+    image_url: str | None
+    thumb_url: str | None
+    fetched_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class MatchProposal:
     """An uncertain link between a loaded album and a Discogs release, awaiting confirmation."""
 

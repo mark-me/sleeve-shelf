@@ -3,7 +3,7 @@
 import pytest
 from openpyxl import Workbook
 
-from sleeve_shelf.domain import PlacementSource, UnitType
+from sleeve_shelf.domain import PlacementSource
 from sleeve_shelf.ingestion.initial_load import load_initial_layout
 
 LAYOUT_HEADER = [
@@ -57,7 +57,6 @@ def test_rows_become_albums_placed_in_row_order(tmp_path):
     assert [s.name for s in result.shelves] == ["a", "b"]
     assert [a.name for a in result.artists] == ["Miles Davis", "Tom Waits"]
     assert [(p.shelf_id, p.position) for p in result.placements] == [(1, 0), (1, 1), (2, 0)]
-    assert all(p.unit_type is UnitType.ALBUM for p in result.placements)
     assert all(p.source is PlacementSource.INITIAL_LOAD for p in result.placements)
 
     kind_of_blue, bitches_brew, closing_time = result.albums
@@ -121,7 +120,7 @@ def test_unplaced_sheet_yields_albums_without_placement(tmp_path):
     result = load_initial_layout(path)
 
     assert [a.title for a in result.albums] == ["Kind Of Blue", "Sketches Of Spain"]
-    assert [p.unit_id for p in result.placements] == [1]
+    assert [p.album_id for p in result.placements] == [1]
 
 
 def test_missing_column_is_reported(tmp_path):

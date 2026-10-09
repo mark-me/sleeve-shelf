@@ -9,9 +9,19 @@
 
   <div class="ss-card mt-4">
     <div class="ss-card-body">
-      <h2>{{ _('One step to get started') }}</h2>
+      <h2>{{ _('You already worked out a layout') }}</h2>
       <p class="mt-2">{{ _('Upload the Excel workbook in which you worked out your cabinet layout. Sleeve & Shelf reads your cabinets, shelves and albums from it; nothing else needs to be set up.') }}</p>
       <a class="ss-button ss-button-primary" href="{{ url_for('setup.upload_form') }}">{{ _('Upload your layout') }}</a>
+    </div>
+  </div>
+
+  <div class="ss-card mt-4">
+    <div class="ss-card-body">
+      <h2>{{ _('You start from your Discogs collection') }}</h2>
+      <p class="mt-2">{{ _('Without a workbook you enter your cabinets and shelves yourself, take over your collection from Discogs, and let the app propose a layout. The Dashboard lists the steps.') }}</p>
+      <form method="post" action="{{ url_for('setup.start_without_workbook') }}">
+        <button class="ss-button" type="submit">{{ _('Start without a workbook') }}</button>
+      </form>
     </div>
   </div>
 </div>

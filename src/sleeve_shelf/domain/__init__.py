@@ -12,11 +12,11 @@ from sleeve_shelf.domain.catalog import (
 )
 from sleeve_shelf.domain.clustering import (
     ArtistClusterAssignment,
-    ClusterOrder,
     EraBand,
     EraBandSource,
 )
 from sleeve_shelf.domain.enrichment import (
+    ArtistEnrichment,
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
@@ -25,8 +25,6 @@ from sleeve_shelf.domain.placement import (
     Placement,
     PlacementSource,
     ProposedPlacement,
-    ShowcaseFeature,
-    UnitType,
 )
 from sleeve_shelf.domain.storage import (
     Cabinet,
@@ -45,9 +43,9 @@ __all__ = [
     "AliasGroup",
     "Artist",
     "ArtistClusterAssignment",
+    "ArtistEnrichment",
     "Cabinet",
     "Cluster",
-    "ClusterOrder",
     "EraBand",
     "EraBandSource",
     "FamilyDismissal",
@@ -63,9 +61,7 @@ __all__ = [
     "Shelf",
     "ShelfLayer",
     "ShelfType",
-    "ShowcaseFeature",
     "Style",
-    "UnitType",
     "WidthConstants",
     "in_order",
     "move",
