@@ -344,6 +344,7 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     assert [a.discogs_artist_id for a in _store(app).load(Artist)] == [82294, None]
     assert "The picture of 1 artist still has to be fetched." in client.get("/discogs/").text
     assert "tw150.jpeg" not in client.get("/artists/1").text
+    assert "ss-cover" not in client.get("/artists/").text
 
     client.post("/discogs/enrich/start")
     app.extensions["enrichment_job"].wait(10)
@@ -355,3 +356,6 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     assert "still has to be fetched" not in client.get("/discogs/").text
     # An artist without a picture has the page as it was.
     assert "ss-cover-zoom" not in client.get("/artists/2").text
+    # In the list the pictured artist shows its picture, and the other keeps the space.
+    listed = client.get("/artists/").text
+    assert 'src="https://i.discogs.com/tw150.jpeg"' in listed and "ss-cover-empty" in listed
