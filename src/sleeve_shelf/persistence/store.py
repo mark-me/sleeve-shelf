@@ -3,6 +3,7 @@
 import json
 import os
 import shutil
+import time
 from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field, is_dataclass
 from datetime import datetime
@@ -40,6 +41,7 @@ from sleeve_shelf.domain import (
 
 
 SNAPSHOT_DIR = "placements"
+SWAP_ATTEMPTS = 6
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,7 +70,16 @@ _PLACEMENT_COLUMNS = {
     "source": "VARCHAR",
 }
 
+@dataclass(slots=True)
+class _IdMark:
+    """The highest id ever handed out for one kind of entity, so that none is used twice."""
+
+    name: str
+    last_id: int
+
+
 _TABLES: dict[type, _Table] = {
+    _IdMark: _Table("id_marks.json", {"name": "VARCHAR", "last_id": "INTEGER"}),
     Cabinet: _Table(
         "cabinets.json",
         {"id": "INTEGER", "name": "VARCHAR", "location": "VARCHAR", "position": "INTEGER"},
@@ -211,21 +222,41 @@ def _sql_string(value: str) -> str:
     return "'" + value.replace("'", "''") + "'"
 
 
+def _swap_in(temporary: Path, target: Path) -> None:
+    """Put a freshly written file in the place of the old one.
+
+    On Windows the swap is refused while something else — a virus scanner,
+    typically — has the file open for a moment, so it is tried a few times.
+    """
+    for attempt in range(SWAP_ATTEMPTS):
+        try:
+            os.replace(temporary, target)
+            return
+        except PermissionError:
+            if attempt == SWAP_ATTEMPTS - 1:
+                raise
+            time.sleep(0.05 * (attempt + 1))
+
+
 class JsonStore:
     """Reads and writes each entity's JSON file in a data directory."""
 
     def __init__(self, data_dir: str | Path) -> None:
         self.data_dir = Path(data_dir)
         self._connection = duckdb.connect()
+        self._id_marks: dict[str, int] | None = None
 
     def save[T](self, entity: type[T], items: Iterable[T]) -> None:
         """Overwrite the entity's file with exactly these items."""
         table = _TABLES[entity]
+        rows = [{name: _encode(getattr(item, name)) for name in table.columns} for item in items]
+        if "id" in table.columns:
+            # Before anything is staged: recording the mark is a save of its own.
+            self._remember_ids(entity, table, max((row["id"] for row in rows), default=0))
         columns = ", ".join(f'"{name}" {kind}' for name, kind in table.columns.items())
         self._connection.execute(f"CREATE OR REPLACE TEMP TABLE staging ({columns})")
         # Hand all rows to DuckDB as one JSON parameter: binding each value
         # separately costs seconds for a full collection.
-        rows = [{name: _encode(getattr(item, name)) for name in table.columns} for item in items]
         self._connection.execute(
             "INSERT INTO staging SELECT row.* FROM (SELECT unnest(from_json(?, ?)) AS row)",
             [json.dumps(rows), json.dumps([table.columns])],
@@ -238,7 +269,36 @@ class JsonStore:
         self._connection.execute(
             f"COPY staging TO {_sql_string(temporary.as_posix())} (FORMAT JSON, ARRAY true)"
         )
-        os.replace(temporary, target)
+        _swap_in(temporary, target)
+
+    def next_id(self, entity: type, items: Iterable) -> int:
+        """An id for a new item, given the items there are now: one that was never used before.
+
+        An id is never handed out twice, not even after the item that had it is
+        removed — a saved version, a location rule or a link may still name it,
+        and would otherwise end up pointing at something else.
+        """
+        marked = self._marks().get(_TABLES[entity].filename, 0)
+        return max(marked, max((item.id for item in items), default=0)) + 1
+
+    def _marks(self) -> dict[str, int]:
+        if self._id_marks is None:
+            self._id_marks = {mark.name: mark.last_id for mark in self.load(_IdMark)}
+        return self._id_marks
+
+    def _remember_ids(self, entity: type, table: _Table, highest: int) -> None:
+        """Keep the highest id of an entity on record, before its file is overwritten."""
+        # Another store may have written since this one read the marks.
+        self._id_marks = None
+        marks = self._marks()
+        known = marks.get(table.filename)
+        if known is None and self.exists(entity):
+            # No mark yet: what the file holds until now counts too, as an item may be leaving it.
+            known = self.query(f'SELECT max("id") FROM {self.relation(entity)}')[0][0]
+        last = max(known or 0, highest)
+        if last != marks.get(table.filename):
+            marks[table.filename] = last
+            self.save(_IdMark, [_IdMark(name, last_id) for name, last_id in sorted(marks.items())])
 
     def load[T](self, entity: type[T]) -> list[T]:
         """Read all items of the entity; a file that doesn't exist yet yields none."""

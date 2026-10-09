@@ -597,3 +597,26 @@ def test_showcase_fill_is_a_setting_and_a_full_top_loader_is_flagged(client):
     page = client.get("/showcase/").text
     assert "(2% of 35.0 cm)" in page and "holds more than leaves room" in page
     assert 'value="2"' in client.get("/settings/").text
+
+
+def test_a_removed_shelf_does_not_come_back_as_another_in_an_older_version(client):
+    # Art Blakey moves to shelf c; that layout is saved; then c is emptied and removed.
+    client.post("/layout/move", json={"shelves": {"1": [1, 2], "3": [3]}})
+    client.post("/versions/save", data={"label": "three"})
+    client.post("/layout/move", json={"shelves": {"1": [1, 2, 3], "3": []}})
+    client.post("/storage/shelves/3/delete")
+
+    # A new shelf gets a number of its own, not the removed one's.
+    client.post("/storage/cabinets/1/shelves/new", data={"name": "new", "width_cm": "5", "type": "", "layer": ""})
+    assert "/storage/shelves/4" in client.get("/storage/").text
+    assert "/storage/shelves/3\"" not in client.get("/storage/").text
+
+    import re
+
+    page = client.get("/versions/").text
+    name = next(n for n in re.findall(r"/versions/([\w-]+)/restore", page) if n.endswith("--three"))
+    client.post(f"/versions/{name}/restore")
+
+    # The album that stood on the removed shelf is left out, not put on the new shelf.
+    assert "Moanin" not in client.get("/browse?shelf=4").text
+    assert "Moanin" in client.get("/unplaced").text

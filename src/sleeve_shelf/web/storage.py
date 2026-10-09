@@ -52,7 +52,7 @@ def _cabinet_form(cabinet_id: int | None):
             errors.append(_("Give the cabinet a name."))
         if not errors:
             if cabinet is None:
-                cabinet = Cabinet(max((c.id for c in cabinets), default=0) + 1, values["name"])
+                cabinet = Cabinet(store.next_id(Cabinet, cabinets), values["name"])
                 cabinets.append(cabinet)
                 settle_order(cabinets, [])
             cabinet.name = values["name"]
@@ -149,7 +149,7 @@ def _shelf_form(cabinet: Cabinet, shelf_id: int | None):
             errors.append(_("Only a top-loader shelf can be a showcase."))
         if not errors:
             if shelf is None:
-                shelf = Shelf(max((s.id for s in shelves), default=0) + 1, cabinet.id, values["name"])
+                shelf = Shelf(store.next_id(Shelf, shelves), cabinet.id, values["name"])
                 shelves.append(shelf)
                 settle_order([cabinet], shelves)
             shelf.name = values["name"]

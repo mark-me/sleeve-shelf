@@ -88,3 +88,30 @@ def test_save_replaces_previous_content(tmp_path):
 
 def test_missing_file_loads_as_empty(tmp_path):
     assert JsonStore(tmp_path / "nowhere").load(Album) == []
+
+
+def test_an_id_is_never_handed_out_twice(tmp_path):
+    store = JsonStore(tmp_path)
+    store.save(Cluster, [Cluster(1, "Jazz"), Cluster(2, "Rock"), Cluster(3, "Blues")])
+    assert store.next_id(Cluster, store.load(Cluster)) == 4
+
+    # The highest one goes; its id stays taken, also for a store opened later.
+    store.save(Cluster, [Cluster(1, "Jazz"), Cluster(2, "Rock")])
+
+    assert store.next_id(Cluster, store.load(Cluster)) == 4
+    assert JsonStore(tmp_path).next_id(Cluster, [Cluster(1, "Jazz")]) == 4
+    # Items made but not saved yet count as well.
+    assert store.next_id(Cluster, [Cluster(1, "Jazz"), Cluster(9, "New")]) == 10
+    assert store.load(Cluster) == [Cluster(1, "Jazz"), Cluster(2, "Rock")]
+
+
+def test_ids_in_files_from_before_the_marks_existed_stay_taken(tmp_path):
+    store = JsonStore(tmp_path)
+    store.save(Cluster, [Cluster(1, "Jazz"), Cluster(5, "Rock")])
+    (tmp_path / "id_marks.json").unlink()
+
+    # The first save since removes the highest: what the file held counts.
+    JsonStore(tmp_path).save(Cluster, [Cluster(1, "Jazz")])
+
+    assert JsonStore(tmp_path).next_id(Cluster, [Cluster(1, "Jazz")]) == 6
+    assert JsonStore(tmp_path).next_id(Album, []) == 1

@@ -309,6 +309,7 @@ erDiagram
 **Master data** (overwritable, no history needed):
 
 - `artists.json`, `alias_groups.json`, `family_dismissals.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_releases.json` and `discogs_masters.json` (the enrichment cache — see Data model), `match_proposals.json`
+- `id_marks.json` — the highest id ever handed out per kind of entity (see below)
 
 **Layout with history**:
 
@@ -321,6 +322,7 @@ erDiagram
 - The persistence layer uses DuckDB (`read_json()` with an explicit column schema per entity, and `COPY ... TO '...json'`) to read and write the JSON files via SQL. The read queries behind the screens run as SQL against the JSON files: the shelves in walking order, the albums of a shelf, search, and how full each shelf is. The sorting itself — proposing clusters, era bands, order, placement — is not SQL: it is the sorting engine, plain Python on domain objects. Python's `json` module only carries the rows to DuckDB when saving, as one parameter
 - DuckDB operates directly on the plain JSON files; there is no separate `.duckdb` database file
 - Each file is a JSON array with one object per line, written with an explicit column schema per entity — readable and diffable by hand. Saving an entity rewrites its whole file (written to a temporary file first, then swapped in)
+- **An id is never used twice.** A new album, artist, cluster, family, cabinet, shelf, style, or location rule gets an id above the highest ever handed out for its kind, also after the item that had that id was removed. Saved versions name albums and shelves by id, and location rules name their target and cabinet by id; a reused id would make an older version put a new album on a removed album's spot, or hand a removed cabinet's rule to a new cabinet. The highest ids are kept in `id_marks.json`; for data from before that file existed, the ids present at the first save count
 - **Explicitly out of scope**: Parquet and Delta Lake. At this scale (a single user, a personal collection, a handful of saved layouts) their benefit — avoiding full-copy storage across many versions — doesn't apply, while their cost (binary, non-diffable files; extra complexity) works directly against the project's goal of keeping the data human-readable and inspectable. The full-JSON-snapshot-per-save approach stays as is
 
 ### Configuration
@@ -516,7 +518,7 @@ A showcase is a top-loader that shows a sample of the well-represented artists, 
 
 - The saved versions, newest first, each with when it was saved, its name if it has one, and how many albums it places; the one that equals the current layout is marked
 - **Save version**: the layout as it is now, optionally under a name
-- **Put back**: makes a version the current layout. Only where albums stand changes; the layout as it was is saved first when it wasn't, so putting back can itself be undone. Albums or shelves of the version that no longer exist are left out, and the screen says how many
+- **Put back**: makes a version the current layout. Only where albums stand changes; the layout as it was is saved first when it wasn't, so putting back can itself be undone. Albums or shelves of the version that no longer exist are left out, and the screen says how many — a new album or shelf never takes their place, since ids are not reused (see Storage)
 - Versions are also saved automatically: when a workbook is loaded, when a proposal is accepted (and the layout before it, if it had unsaved changes), and — at most once an hour — before the layout is changed by hand, so an editing session in Layout always starts from a version to go back to
 
 ### Storage structure screen
@@ -558,7 +560,6 @@ The detail of an artist and of an album are two pages.
 
 - **Covers are fetched from Discogs by the browser**, not kept in the data directory. That was chosen without asking, as the smallest step: no downloads, no extra storage. The alternative — downloading the images once into the data directory, so covers also show offline and do not depend on Discogs keeping the addresses alive — is open
 - **Albums that left Discogs but are kept**: an album that is not removed is listed again after every sync. Whether the user should be able to say "I still own this, stop asking" is left for later
-- **Removed albums and older versions**: a removed album is left out when an older version is put back. A new album could in time get the id of a removed one and would then take its place in such a version; not handled
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
 

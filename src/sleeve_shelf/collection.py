@@ -110,11 +110,11 @@ def update_layout(
     for shelf in load.shelves:
         cabinet_name = loaded_cabinet[shelf.cabinet_id].name
         if cabinet_name not in cabinet_ids:
-            cabinet_ids[cabinet_name] = max((c.id for c in cabinets), default=0) + 1
+            cabinet_ids[cabinet_name] = store.next_id(Cabinet, cabinets)
             cabinets.append(Cabinet(cabinet_ids[cabinet_name], cabinet_name))
         key = (cabinet_ids[cabinet_name], shelf.name)
         if key not in shelf_ids:
-            shelf_ids[key] = max((s.id for s in shelves), default=0) + 1
+            shelf_ids[key] = store.next_id(Shelf, shelves)
             shelves.append(
                 Shelf(
                     shelf_ids[key],
@@ -147,12 +147,12 @@ def update_layout(
             matches.remove(album)
             return album
         if artist.name not in artist_ids:
-            artist_ids[artist.name] = max((a.id for a in artists), default=0) + 1
+            artist_ids[artist.name] = store.next_id(Artist, artists)
             artists.append(Artist(artist_ids[artist.name], artist.name, start_year=artist.start_year))
             cluster_name = loaded_cluster.get(loaded_assignment.get(artist.id))
             if cluster_name is not None:
                 if cluster_name not in cluster_ids:
-                    cluster_ids[cluster_name] = max((c.id for c in clusters), default=0) + 1
+                    cluster_ids[cluster_name] = store.next_id(Cluster, clusters)
                     clusters.append(Cluster(cluster_ids[cluster_name], cluster_name))
                 assignments.append(
                     ArtistClusterAssignment(artist_ids[artist.name], cluster_ids[cluster_name], True)
@@ -170,7 +170,7 @@ def update_layout(
             era_band_id = band_ids[artist_id, label]
         album = replace(
             loaded,
-            id=max((a.id for a in albums), default=0) + 1,
+            id=store.next_id(Album, albums),
             artist_id=artist_id,
             era_band_id=era_band_id,
         )
@@ -368,12 +368,12 @@ def import_discogs_collection(
     for item in remaining:
         artist_id = artist_ids.get(item.artist)
         if artist_id is None:
-            artist_id = max((artist.id for artist in artists), default=0) + 1
+            artist_id = store.next_id(Artist, artists)
             artists.append(Artist(artist_id, item.artist))
             artist_ids[item.artist] = artist_id
         albums.append(
             Album(
-                id=max((album.id for album in albums), default=0) + 1,
+                id=store.next_id(Album, albums),
                 artist_id=artist_id,
                 title=item.title,
                 release_id=item.release_id,
@@ -430,10 +430,10 @@ def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> 
     artists = store.load(Artist)
     artist = next((artist for artist in artists if artist.name == proposal.artist), None)
     if artist is None:
-        artist = Artist(max((a.id for a in artists), default=0) + 1, proposal.artist)
+        artist = Artist(store.next_id(Artist, artists), proposal.artist)
         artists.append(artist)
     album = Album(
-        id=max((a.id for a in albums), default=0) + 1,
+        id=store.next_id(Album, albums),
         artist_id=artist.id,
         title=proposal.title,
         release_id=proposal.release_id,
@@ -580,10 +580,10 @@ def apply_enrichment(store: JsonStore) -> None:
         else:
             cluster_id = cluster_ids.get(name)
             if cluster_id is None:
-                cluster_id = max((cluster.id for cluster in clusters), default=0) + 1
+                cluster_id = store.next_id(Cluster, clusters)
                 clusters.append(Cluster(cluster_id, name))
                 cluster_ids[name] = cluster_id
-        styles[name] = Style(len(styles) + 1, name, cluster_id)
+        styles[name] = Style(store.next_id(Style, styles.values()), name, cluster_id)
 
     for album in albums:
         if album.id in album_styles:
