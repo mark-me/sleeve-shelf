@@ -215,3 +215,43 @@ def test_bonus_disc_setting_also_applies_to_the_collection():
 
     assert collection_items([release])[0].is_vinyl
     assert not collection_items([release], count_bonus_discs_as_vinyl=False)[0].is_vinyl
+
+
+def test_artist_lookup_takes_the_primary_picture_and_copes_without_one():
+    api = _Api(
+        {
+            "images": [
+                {"type": "secondary", "uri": "https://i.discogs.com/b.jpeg", "uri150": "https://i.discogs.com/b150.jpeg"},
+                {"type": "primary", "uri": "https://i.discogs.com/a.jpeg", "uri150": "https://i.discogs.com/a150.jpeg"},
+            ]
+        },
+        {"name": "No Picture"},
+        404,
+    )
+    client = api.client()
+
+    pictured, plain, gone = client.artist(82294), client.artist(2), client.artist(3)
+
+    assert (pictured.image_url, pictured.thumb_url) == (
+        "https://i.discogs.com/a.jpeg", "https://i.discogs.com/a150.jpeg"
+    )
+    assert api.requests[0].full_url == "https://api.discogs.com/artists/82294"
+    assert (plain.image_url, plain.thumb_url, gone.image_url) == (None, None, None)
+
+
+def test_only_a_release_of_one_artist_names_that_artist():
+    formats = [{"name": "Vinyl", "qty": "1", "descriptions": ["LP"]}]
+    items = collection_items(
+        [
+            _release(1, [{"name": "Tom Waits", "join": "", "id": 82294}], "Closing Time", formats),
+            _release(
+                2,
+                [{"name": "Tom Waits", "join": "And", "id": 82294}, {"name": "Crystal Gayle", "join": "", "id": 5}],
+                "One From The Heart",
+                formats,
+            ),
+            _release(3, [{"name": "Various", "join": "", "id": 194}], "Sampler", formats),
+        ]
+    )
+
+    assert [item.artist_discogs_id for item in items] == [82294, None, None]

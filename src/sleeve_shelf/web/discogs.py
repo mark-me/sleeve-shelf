@@ -25,6 +25,7 @@ from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import (
     Album,
     Artist,
+    ArtistEnrichment,
     Cabinet,
     MatchProposal,
     Placement,
@@ -81,7 +82,8 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     store = get_store()
     settings = load_settings(_data_dir())
     albums = store.load(Album)
-    artists = {artist.id: artist.name for artist in store.load(Artist)}
+    artist_list = store.load(Artist)
+    artists = {artist.id: artist.name for artist in artist_list}
     fetched = {release.release_id for release in store.load(ReleaseEnrichment)}
     linked = {album.release_id for album in albums if album.release_id is not None}
     by_id = {album.id: album for album in albums}
@@ -107,6 +109,10 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             linked_count=sum(album.release_id is not None for album in albums),
             fetched_count=len(linked & fetched),
             to_fetch_count=len(linked - fetched),
+            pictures_to_fetch_count=len(
+                {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
+                - {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
+            ),
             proposals=proposals,
             gone=gone,
             masked_token=f"••••{token[-4:]}" if token else None,

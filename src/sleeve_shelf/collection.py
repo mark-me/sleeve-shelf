@@ -11,6 +11,7 @@ from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
+    ArtistEnrichment,
     Cabinet,
     Cluster,
     EraBand,
@@ -386,6 +387,17 @@ def import_discogs_collection(
         if album.release_id in large_covers:
             album.cover_image_url = large_covers[album.release_id]
 
+    # Only a sync names the artist on Discogs. An artist is the one most of its releases
+    # are credited to; releases shared with other artists say nothing.
+    credited = {item.release_id: item.artist_discogs_id for item in vinyl if item.artist_discogs_id}
+    votes: dict[int, Counter] = defaultdict(Counter)
+    for album in albums:
+        if album.release_id in credited:
+            votes[album.artist_id][credited[album.release_id]] += 1
+    for artist in artists:
+        if artist.id in votes:
+            artist.discogs_artist_id = votes[artist.id].most_common(1)[0][0]
+
     if not dry_run:
         estimate_widths(albums, constants)
         store.save(Artist, artists)
@@ -491,7 +503,7 @@ def enrich_collection(
     client: DiscogsClient,
     progress: Callable[[int, int], None] = lambda done, total: None,
 ) -> int:
-    """Fetch what the Discogs cache still lacks for the stored albums, then apply it.
+    """Fetch what the Discogs cache still lacks for the stored albums and artists, then apply it.
 
     Returns the number of lookups made. The cache is saved along the way, so an
     interrupted run picks up where it stopped.
@@ -499,11 +511,16 @@ def enrich_collection(
     albums = store.load(Album)
     releases = {release.release_id: release for release in store.load(ReleaseEnrichment)}
     masters = {master.master_id: master for master in store.load(MasterEnrichment)}
+    pictures = {artist.discogs_artist_id: artist for artist in store.load(ArtistEnrichment)}
     release_ids = sorted(
         {a.release_id for a in albums if a.release_id is not None} - releases.keys()
     )
+    artist_ids = sorted(
+        {a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None}
+        - pictures.keys()
+    )
     # Each new release may bring one master lookup with it.
-    done, saved, total = 0, 0, 2 * len(release_ids)
+    done, saved, total = 0, 0, 2 * len(release_ids) + len(artist_ids)
     try:
         for release_id in release_ids:
             release = client.release(release_id)
@@ -516,7 +533,7 @@ def enrich_collection(
                 done += 1
             progress(done, total)
             if done - saved >= SAVE_CACHE_EVERY:
-                _save_cache(store, releases, masters)
+                _save_cache(store, releases, masters, pictures)
                 saved = done
         # Masters of releases cached by a run that stopped between the two lookups.
         for release in list(releases.values()):
@@ -525,15 +542,24 @@ def enrich_collection(
                 done += 1
                 total += 1
                 progress(done, total)
+        # Last, as nothing in the sorting waits for them: the pictures of the artists.
+        for artist_id in artist_ids:
+            pictures[artist_id] = client.artist(artist_id)
+            done += 1
+            progress(done, total)
+            if done - saved >= SAVE_CACHE_EVERY:
+                _save_cache(store, releases, masters, pictures)
+                saved = done
     finally:
-        _save_cache(store, releases, masters)
+        _save_cache(store, releases, masters, pictures)
     apply_enrichment(store)
     return done
 
 
-def _save_cache(store: JsonStore, releases: dict, masters: dict) -> None:
+def _save_cache(store: JsonStore, releases: dict, masters: dict, pictures: dict) -> None:
     store.save(ReleaseEnrichment, releases.values())
     store.save(MasterEnrichment, masters.values())
+    store.save(ArtistEnrichment, pictures.values())
 
 
 def apply_enrichment(store: JsonStore) -> None:

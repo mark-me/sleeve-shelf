@@ -1,15 +1,23 @@
 {% extends "base.html" %}
 {% block title %}{{ artist.name }}{% endblock %}
 
-{% from "_cover.html" import cover %}
+{% from "_cover.html" import cover, zoomable, zoom_dialog %}
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   <p class="mb-1"><a href="{{ url_for('artists.index') }}">&larr; {{ _('Artists') }}</a></p>
-  <h1>{{ artist.name }}</h1>
-  <p class="ss-muted mt-1">
-    {{ _('Era band: %(band)s', band=band) }}
-    {% if family %} &middot; {{ _('Family:') }} <a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% endif %}
-  </p>
+  <div class="d-flex flex-wrap align-items-center gap-3">
+    {# The artist's picture comes from Discogs; the page is the same without one. #}
+    {% if picture and picture.thumb_url %}
+    {{ zoomable(picture.thumb_url, picture.image_url, _('Show the picture larger')) }}
+    {% endif %}
+    <div>
+      <h1>{{ artist.name }}</h1>
+      <p class="ss-muted mt-1 mb-0">
+        {{ _('Era band: %(band)s', band=band) }}
+        {% if family %} &middot; {{ _('Family:') }} <a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% endif %}
+      </p>
+    </div>
+  </div>
 
   {% for error in errors %}
   <div class="ss-alert mt-3" role="alert">{{ error }}</div>
@@ -79,4 +87,5 @@
     {% endfor %}
   </div>
 </div>
+{% if picture %}{{ zoom_dialog(picture.thumb_url, picture.image_url, _('Picture of %(name)s', name=artist.name)) }}{% endif %}
 {% endblock %}

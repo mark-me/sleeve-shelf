@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 11:19+0200\n"
+"POT-Creation-Date: 2026-10-09 11:44+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -142,6 +142,10 @@ msgstr ""
 #: src/sleeve_shelf/web/storage.py
 #, python-format
 msgid "Shelf “%(name)s” still holds albums; move them before removing it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_cover.html
+msgid "Close"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_rules_and_move.html
@@ -304,10 +308,6 @@ msgstr ""
 msgid "Cover of %(title)s"
 msgstr ""
 
-#: src/sleeve_shelf/web/templates/albums/detail.html
-msgid "Close"
-msgstr ""
-
 #: src/sleeve_shelf/web/templates/albums/widths.html
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Album widths"
@@ -345,6 +345,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
 msgid "Change"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Show the picture larger"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
@@ -444,6 +448,11 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/browse/results.html
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 msgid "Unplaced"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Picture of %(name)s"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
@@ -1129,7 +1138,7 @@ msgid "Fetch styles and original years"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs allows about one lookup per second, and each release takes up to two. You can stop and continue at any time: nothing is fetched twice."
+msgid "Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. You can stop and continue at any time: nothing is fetched twice."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1196,6 +1205,13 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "No album is linked to a release yet — import your collection first."
 msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "The picture of %(num)d artist still has to be fetched."
+msgid_plural "The pictures of %(num)d artists still have to be fetched."
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Start fetching"

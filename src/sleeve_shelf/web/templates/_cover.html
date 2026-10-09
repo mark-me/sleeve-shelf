@@ -9,3 +9,35 @@
 {% endif %}
 {% endif %}
 {% endmacro %}
+
+{# The small image at its full size. With a large image known it is a button that opens that
+   one in a pop-up; zoom_dialog has to stand at the end of the same page. #}
+{% macro zoomable(small, large, label, size=150) %}
+{% if small and large %}
+<button class="ss-cover-zoom" type="button" data-bs-toggle="modal" data-bs-target="#cover-large" aria-label="{{ label }}">
+  {{ cover(small, true, size) }}
+</button>
+{% else %}
+{{ cover(small, small is not none, size) }}
+{% endif %}
+{% endmacro %}
+
+{% macro zoom_dialog(small, large, label) %}
+{% if small and large %}
+<div class="modal fade" id="cover-large" tabindex="-1" aria-label="{{ label }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered ss-cover-dialog">
+    <div class="modal-content ss-cover-modal">
+      <button class="btn-close ss-cover-close" type="button" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      {# The large image has no src until the pop-up opens, so it is only fetched when asked for. #}
+      <img class="ss-cover-large" data-src="{{ large }}" alt="{{ label }}" referrerpolicy="no-referrer" data-bs-dismiss="modal">
+    </div>
+  </div>
+</div>
+<script>
+  document.getElementById("cover-large").addEventListener("show.bs.modal", function () {
+    const image = this.querySelector("img");
+    if (!image.src) image.src = image.dataset.src;
+  });
+</script>
+{% endif %}
+{% endmacro %}

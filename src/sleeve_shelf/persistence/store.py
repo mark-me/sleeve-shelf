@@ -18,6 +18,7 @@ from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
+    ArtistEnrichment,
     Cabinet,
     Cluster,
     EraBand,
@@ -131,6 +132,7 @@ _TABLES: dict[type, _Table] = {
             "name": "VARCHAR",
             "alias_group_id": "INTEGER",
             "start_year": "INTEGER",
+            "discogs_artist_id": "INTEGER",
         },
     ),
     ArtistClusterAssignment: _Table(
@@ -187,6 +189,15 @@ _TABLES: dict[type, _Table] = {
     MasterEnrichment: _Table(
         "discogs_masters.json",
         {"master_id": "INTEGER", "original_release_year": "INTEGER", "fetched_at": "TIMESTAMP"},
+    ),
+    ArtistEnrichment: _Table(
+        "discogs_artists.json",
+        {
+            "discogs_artist_id": "INTEGER",
+            "image_url": "VARCHAR",
+            "thumb_url": "VARCHAR",
+            "fetched_at": "TIMESTAMP",
+        },
     ),
     MatchProposal: _Table(
         "match_proposals.json",

@@ -16,6 +16,7 @@ from sleeve_shelf.domain.clustering import (
     EraBandSource,
 )
 from sleeve_shelf.domain.enrichment import (
+    ArtistEnrichment,
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
@@ -42,6 +43,7 @@ __all__ = [
     "AliasGroup",
     "Artist",
     "ArtistClusterAssignment",
+    "ArtistEnrichment",
     "Cabinet",
     "Cluster",
     "EraBand",
