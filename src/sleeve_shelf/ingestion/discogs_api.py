@@ -1,4 +1,4 @@
-"""Client for the Discogs API: the collection, and the release and master lookups."""
+"""Client for the Discogs API: the collection, and the release, master and artist lookups."""
 
 import json
 import time
@@ -7,7 +7,7 @@ import urllib.request
 from collections.abc import Callable
 from datetime import datetime
 
-from sleeve_shelf.domain import MasterEnrichment, ReleaseEnrichment
+from sleeve_shelf.domain import ArtistEnrichment, MasterEnrichment, ReleaseEnrichment
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
 from sleeve_shelf.ingestion.formats import parse_format
 
@@ -18,6 +18,8 @@ SECONDS_BETWEEN_REQUESTS = 1.05
 RATE_LIMIT_PAUSE_SECONDS = 60
 MAX_ATTEMPTS = 3
 COLLECTION_PAGE_SIZE = 100
+# The artist Discogs credits a compilation to; not an artist to look up.
+VARIOUS_ARTISTS_ID = 194
 
 # How the CSV export shortens the format descriptions the API spells out; the
 # API-only ones say nothing about the record itself and are left out, as in the export.
@@ -79,6 +81,18 @@ class DiscogsClient:
         return MasterEnrichment(
             master_id=master_id,
             original_release_year=data.get("year") or None,
+            fetched_at=datetime.now().replace(microsecond=0),
+        )
+
+    def artist(self, artist_id: int) -> ArtistEnrichment:
+        """The picture of an artist; one without a picture, or that no longer exists, yields none."""
+        data = self._get(f"/artists/{artist_id}") or {}
+        images = data.get("images") or [{}]
+        image = next((i for i in images if i.get("type") == "primary"), images[0])
+        return ArtistEnrichment(
+            discogs_artist_id=artist_id,
+            image_url=image.get("uri") or None,
+            thumb_url=image.get("uri150") or None,
             fetched_at=datetime.now().replace(microsecond=0),
         )
 
@@ -163,6 +177,7 @@ def collection_items(
                 # The small image for lists, and the large one for enlarging a cover.
                 cover_url=information.get("thumb") or None,
                 cover_image_url=information.get("cover_image") or None,
+                artist_discogs_id=_artist_id(information.get("artists") or ()),
             )
         )
     return items
@@ -196,6 +211,14 @@ def format_text(formats: list[dict]) -> str:
         if tokens:
             segments.append(", ".join(tokens))
     return " + ".join(segments)
+
+
+def _artist_id(artists: list[dict]) -> int | None:
+    """The Discogs artist of a release credited to exactly one artist."""
+    if len(artists) != 1:
+        return None
+    artist_id = artists[0].get("id")
+    return artist_id if artist_id and artist_id != VARIOUS_ARTISTS_ID else None
 
 
 def _artist_name(artists: list[dict]) -> str:

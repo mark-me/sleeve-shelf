@@ -22,6 +22,8 @@ class CollectionItem:
     # Only the API gives a cover; the export has none.
     cover_url: str | None = None
     cover_image_url: str | None = None
+    # Only the API names the artist on Discogs, and only for a release credited to one artist.
+    artist_discogs_id: int | None = None
 
 
 def read_collection(

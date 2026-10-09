@@ -12,6 +12,7 @@ from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
+    ArtistEnrichment,
     Cluster,
     Placement,
     Style,
@@ -128,6 +129,14 @@ def edit(artist_id: int):
         render_template(
             "artists/edit.html",
             artist=artist,
+            picture=next(
+                (
+                    picture
+                    for picture in store.load(ArtistEnrichment)
+                    if picture.discogs_artist_id == artist.discogs_artist_id
+                ),
+                None,
+            ),
             errors=errors,
             saved=request.args.get("saved") and not errors,
             clusters=clusters,

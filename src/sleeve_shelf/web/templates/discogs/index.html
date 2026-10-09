@@ -38,7 +38,7 @@
   <section class="ss-card mt-4" id="enrich">
     <div class="ss-card-head"><h2>2 · {{ _('Fetch styles and original years') }}</h2></div>
     <div class="ss-card-body">
-      <p>{{ _('Discogs allows about one lookup per second, and each release takes up to two. You can stop and continue at any time: nothing is fetched twice.') }}</p>
+      <p>{{ _('Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. You can stop and continue at any time: nothing is fetched twice.') }}</p>
 
       {% if token_error %}
       <div class="ss-alert mb-3" role="alert">{{ token_error }}</div>
@@ -81,9 +81,13 @@
           {% else %}
           {{ _('No album is linked to a release yet — import your collection first.') }}
           {% endif %}
+          {% if pictures_to_fetch_count %}
+          {{ ngettext('The picture of %(num)d artist still has to be fetched.', 'The pictures of %(num)d artists still have to be fetched.', pictures_to_fetch_count) }}
+          {% endif %}
         </p>
         <form method="post" action="{{ url_for('discogs.start_enrichment') }}">
-          <button class="ss-button ss-button-primary {{ 'disabled' if not to_fetch_count or not masked_token }}" type="submit" {{ 'disabled' if not to_fetch_count or not masked_token }}>{{ _('Start fetching') }}</button>
+          {% set nothing_to_fetch = not to_fetch_count and not pictures_to_fetch_count %}
+          <button class="ss-button ss-button-primary {{ 'disabled' if nothing_to_fetch or not masked_token }}" type="submit" {{ 'disabled' if nothing_to_fetch or not masked_token }}>{{ _('Start fetching') }}</button>
         </form>
         {% endif %}
       </div>

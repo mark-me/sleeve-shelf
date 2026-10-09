@@ -10,6 +10,7 @@ from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
     Artist,
+    ArtistEnrichment,
     Cabinet,
     LocationRule,
     LocationRuleTarget,
@@ -319,3 +320,38 @@ def test_an_album_that_left_discogs_is_only_removed_after_confirming(app, client
     assert [(v.label, v.album_count) for v in list_versions(store)] == [("before removing an album", 2)]
     assert store.load(Artist)[-1].name == "The Birthday Party"
     assert 'id="gone"' not in client.get("/discogs/").text
+
+
+def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
+    class Pictured(_Client):
+        def collection(self):
+            release = _vinyl(1874289, "Tom Waits", "Closing Time")
+            release["basic_information"]["artists"][0]["id"] = 82294
+            return [release]
+
+        def artist(self, artist_id):
+            return ArtistEnrichment(
+                artist_id, "https://i.discogs.com/tw.jpeg", "https://i.discogs.com/tw150.jpeg",
+                datetime(2026, 10, 9),
+            )
+
+    app.config["DISCOGS_CLIENT_FACTORY"] = Pictured
+    client.post("/discogs/token", data={"token": "secret"})
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+
+    # The sync names the artist on Discogs; the picture itself still has to be fetched.
+    assert [a.discogs_artist_id for a in _store(app).load(Artist)] == [82294, None]
+    assert "The picture of 1 artist still has to be fetched." in client.get("/discogs/").text
+    assert "tw150.jpeg" not in client.get("/artists/1").text
+
+    client.post("/discogs/enrich/start")
+    app.extensions["enrichment_job"].wait(10)
+
+    page = client.get("/artists/1").text
+    assert 'src="https://i.discogs.com/tw150.jpeg"' in page and "Show the picture larger" in page
+    # The large picture is only fetched when the pop-up opens.
+    assert 'data-src="https://i.discogs.com/tw.jpeg"' in page
+    assert "still has to be fetched" not in client.get("/discogs/").text
+    # An artist without a picture has the page as it was.
+    assert "ss-cover-zoom" not in client.get("/artists/2").text

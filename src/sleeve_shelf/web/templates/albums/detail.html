@@ -1,22 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ album.title }}{% endblock %}
 
-{% from "_cover.html" import cover %}
+{% from "_cover.html" import zoomable, zoom_dialog %}
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   {% if artist %}
   <p class="mb-1"><a href="{{ url_for('artists.edit', artist_id=artist.id) }}">&larr; {{ artist.name }}</a></p>
   {% endif %}
   <div class="d-flex flex-wrap align-items-center gap-3">
-    {# The stored cover is Discogs' small image, 150 px square: shown here at its full size.
-       With a large image known, the cover is a button that opens it in a pop-up. #}
-    {% if album.cover_url and album.cover_image_url %}
-    <button class="ss-cover-zoom" type="button" data-bs-toggle="modal" data-bs-target="#cover-large" aria-label="{{ _('Show the cover larger') }}">
-      {{ cover(album.cover_url, true, 150) }}
-    </button>
-    {% else %}
-    {{ cover(album.cover_url, album.cover_url is not none, 150) }}
-    {% endif %}
+    {{ zoomable(album.cover_url, album.cover_image_url, _('Show the cover larger')) }}
     <div>
       <h1>{{ album.title }}</h1>
       <p class="ss-muted mb-0 mt-1">{{ artist.name if artist }}{% if album.original_release_year %} &middot; {{ album.original_release_year }}{% endif %}</p>
@@ -97,21 +89,5 @@
   {% set current_shelf_id = row.shelf_id if row else none %}
   {% include "_rules_and_move.html" %}
 </div>
-{% if album.cover_url and album.cover_image_url %}
-<div class="modal fade" id="cover-large" tabindex="-1" aria-label="{{ _('Cover of %(title)s', title=album.title) }}" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered ss-cover-dialog">
-    <div class="modal-content ss-cover-modal">
-      <button class="btn-close ss-cover-close" type="button" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
-      {# The large image has no src until the pop-up opens, so it is only fetched when asked for. #}
-      <img class="ss-cover-large" data-src="{{ album.cover_image_url }}" alt="{{ _('Cover of %(title)s', title=album.title) }}" referrerpolicy="no-referrer" data-bs-dismiss="modal">
-    </div>
-  </div>
-</div>
-<script>
-  document.getElementById("cover-large").addEventListener("show.bs.modal", function () {
-    const image = this.querySelector("img");
-    if (!image.src) image.src = image.dataset.src;
-  });
-</script>
-{% endif %}
+{{ zoom_dialog(album.cover_url, album.cover_image_url, _('Cover of %(title)s', title=album.title)) }}
 {% endblock %}

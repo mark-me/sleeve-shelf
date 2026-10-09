@@ -149,6 +149,7 @@ erDiagram
     ReleaseEnrichment |o..o{ Album : "release_id"
     MasterEnrichment |o..o{ Album : "master_id"
     MasterEnrichment |o..o{ ReleaseEnrichment : "master_id"
+    ArtistEnrichment |o..o{ Artist : "discogs_artist_id"
     Album ||--o| MatchProposal : "proposed for"
     Artist ||--o| FamilyDismissal : "turned down as anchor"
 
@@ -157,6 +158,7 @@ erDiagram
         string name
         int alias_group_id FK "nullable"
         int start_year "nullable"
+        int discogs_artist_id "nullable, set by a sync"
     }
     AliasGroup {
         int id PK
@@ -256,11 +258,17 @@ erDiagram
         int original_release_year
         datetime fetched_at
     }
+    ArtistEnrichment {
+        int discogs_artist_id PK
+        string image_url "picture at Discogs, nullable"
+        string thumb_url "150 px, nullable"
+        datetime fetched_at
+    }
 ```
 
 **Core entities**
 
-- **Artist**: id, name, alias_group_id (nullable), `start_year` (nullable — the year the artist began, which decides its era band; see Sorting logic §2)
+- **Artist**: id, name, alias_group_id (nullable), `start_year` (nullable — the year the artist began, which decides its era band; see Sorting logic §2), `discogs_artist_id` (nullable — the artist on Discogs, set by a sync: the artist most of its linked releases are credited to, counting only releases credited to a single artist)
 - **AliasGroup**: id, label — an artist family: the Artists pointing at it stand together as one unit (see Sorting logic §1)
 - **FamilyDismissal**: anchor artist id — a suggested family the user turned down, so it is not suggested again
 - **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), `cover_url` (the address of the release's small cover image at Discogs, set by a sync; empty until the first sync), `cover_image_url` (the address of the same cover as a large image, set by the same sync; only used to enlarge the cover on the album's page), `original_year_confirmed` (bool — true when the year is known to be the original rather than a pressing's, so enrichment leaves it alone; see Sorting logic §2), `left_discogs` (bool — true when the last sync or import no longer found the album's release in the Discogs collection; set again at every sync or import)
@@ -271,6 +279,7 @@ erDiagram
 
 - **ReleaseEnrichment**: release_id, styles, master_id, year (the release's own year — the original year when there is no master), fetched_at
 - **MasterEnrichment**: master_id, original_release_year, fetched_at
+- **ArtistEnrichment**: discogs_artist_id, image_url (the artist's picture at Discogs, in full), thumb_url (the same at 150 px), fetched_at — cached result of a Discogs artist lookup. An artist Discogs has no picture of is cached too, with both addresses empty, so it is not looked up again
 - **MatchProposal**: album_id, release_id, artist, title and format of that release, score — an uncertain link between a loaded album and a Discogs release, waiting for confirmation (see [Initial load](#initial-load)); not a cache record, but it lives alongside them
 
 **Sorting/clustering**
@@ -304,7 +313,7 @@ erDiagram
 
 **Master data** (overwritable, no history needed):
 
-- `artists.json`, `alias_groups.json`, `family_dismissals.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_releases.json` and `discogs_masters.json` (the enrichment cache — see Data model), `match_proposals.json`
+- `artists.json`, `alias_groups.json`, `family_dismissals.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_releases.json`, `discogs_masters.json` and `discogs_artists.json` (the enrichment cache — see Data model), `match_proposals.json`
 - `id_marks.json` — the highest id ever handed out per kind of entity (see below)
 
 **Layout with history**:
@@ -451,7 +460,9 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Removing an album that left Discogs** (decided 2026-10-09): each album in that list has a Remove action, which first asks for confirmation on a page of its own, showing the album and where it stands. Only after confirming is the album removed — from the app, from its shelf (also in a waiting proposal), together with its own location rule and a proposed match. The layout as it was is saved as a version first; the artist stays, even without albums. Cancelling changes nothing, and there is no "keep and stop asking": an album that is not removed is listed again after every sync, for now. Only an album marked as gone can be removed this way
 - **Linked albums**: the preview of a sync says how many linked albums get their format brought up to date; an uploaded export leaves linked albums as they are
 - **Formats from the API**: the API spells a format out where the export abbreviates it, so a synced release gets the same tokens as an exported one (`Reissue` → `RE`, …). The export keeps only the first three letters of a format's free text ("Blue Translucent, Gatefold" → `Blu`); a sync searches that text for 180 gram and gatefold instead, so it recognises them where the export misses them
+- **Artists on Discogs**: a sync also notes which Discogs artist each artist is (see Data model). An uploaded export cannot say, and leaves that as it is
 - **Fetch styles and original years**: the personal access token is set here (shown masked, last 4 characters, with a replace action — the same rule as on the Settings screen). The enrichment runs in the background of the app, not inside a page request: the page shows a progress bar that keeps itself up to date, and a Stop button. Stopping, an error, or a restart of the app loses nothing — starting again continues with what is not cached yet. Only one enrichment runs at a time
+- **Artist pictures** (built 2026-10-09): the same run then fetches the picture of every artist a sync has named on Discogs — one lookup per artist, last, since nothing in the sorting waits for it. The screen says how many pictures are still to be fetched, and the run can be started for those alone. Like the covers, a picture is not downloaded: its address is cached and the browser fetches it from Discogs
 - **Matches to confirm**: each proposed match (see [Initial load](#initial-load)) shows the album and the Discogs release side by side, with their similarity. "Same album" links them; "Different" leaves the album without a release and adds the release as a new, unplaced album
 
 ### Sorting proposal screen
@@ -469,6 +480,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **List**: every artist with its cluster, start year, family, and number of albums; searchable by name. A cluster the app proposed is marked "proposed", a start year taken from the albums is marked "from albums"
 - **To check**: a filter for the artists whose albums are sorted but that have no confirmed cluster or no start year of their own. A proposed cluster can be confirmed straight from the list
 - **One artist**: the start year can be set or cleared — cleared, the earliest original year among the artist's albums is used again — with a link that looks the artist up on Wikipedia to verify it. The cluster is chosen from the existing clusters, or a new one is named (an artist's own cluster, for example); the screen also shows which cluster the Discogs styles of the albums point to. Saving a cluster confirms it; choosing none lets the app propose one again
+- **Picture**: next to the artist's name stands its picture from Discogs, at 150 px, once a sync has named the artist and the pictures were fetched (see Discogs screen). It is a button that opens the full picture in a pop-up, exactly as an album cover does; the full picture is only fetched when the pop-up opens. An artist without a picture has the page without one
 - The page lists the artist's albums with year, format, and where each stands, and is reached from the artist name in Browse/Search. This is the artist half of the Detail screen described further down
 - Like families and clusters, these are sorting inputs: they change the next proposal, not the current layout
 
@@ -556,6 +568,7 @@ The detail of an artist and of an album are two pages.
 ## Open questions
 
 - **Covers are fetched from Discogs by the browser**, not kept in the data directory. That was chosen without asking, as the smallest step: no downloads, no extra storage. The alternative — downloading the images once into the data directory, so covers also show offline and do not depend on Discogs keeping the addresses alive — is open
+- **Artist pictures**: fetched as part of "Fetch styles and original years" rather than when an artist's page is opened, and shown on the artist's page only — both chosen without asking. A picture is fetched once and never refreshed. An artist whose releases are all shared with other artists ("A & B") is never named on Discogs and gets no picture; whether a picture should be settable by hand is open
 - **Albums that left Discogs but are kept**: an album that is not removed is listed again after every sync. Whether the user should be able to say "I still own this, stop asking" is left for later
 - **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
