@@ -431,3 +431,100 @@ def test_layout_has_a_tab_per_room_once_there_is_more_than_one(client):
     assert 'data-list="0"' in attic
     # An unknown room falls back to the first.
     assert 'data-shelf="1"' in client.get("/layout/?room=Kelder").text
+
+
+def test_an_album_has_a_page_of_its_own(client):
+    page = client.get("/albums/1").text
+
+    assert "<h1>Chet</h1>" in page and "Chet Baker" in page
+    assert "Kast &middot; a" in page and "Jazz · voor 1960" in page
+    assert "1959 &middot; confirmed by hand" in page
+    assert "No location rule applies" in page
+    assert client.get("/albums/99").status_code == 404
+    # It is reached from the shelf in Browse and from the artist's page.
+    assert 'href="/albums/1"' in client.get("/browse?shelf=1").text
+    assert 'href="/albums/1"' in client.get("/artists/1").text
+
+
+def test_album_page_shows_the_cover_once_there_is_one(client):
+    from sleeve_shelf.domain import Album
+    from sleeve_shelf.persistence import JsonStore
+
+    assert "ss-cover" not in client.get("/albums/1").text
+
+    store = JsonStore(client.application.config["DATA_DIR"])
+    albums = store.load(Album)
+    albums[0].cover_url = "https://i.discogs.com/chet-150.jpg"
+    store.save(Album, albums)
+
+    page = client.get("/albums/1").text
+    assert 'src="https://i.discogs.com/chet-150.jpg"' in page and 'width="150"' in page
+    # Without a large image there is nothing to enlarge.
+    assert "ss-cover-zoom" not in page
+
+    albums[0].cover_image_url = "https://i.discogs.com/chet-600.jpg"
+    store.save(Album, albums)
+    page = client.get("/albums/1").text
+    assert 'data-bs-target="#cover-large"' in page
+    # The large image is named, but not loaded until the pop-up opens.
+    assert 'data-src="https://i.discogs.com/chet-600.jpg"' in page
+    assert 'src="https://i.discogs.com/chet-600.jpg"' not in page.replace("data-src", "data-x")
+    # The other album of the artist has none, and its page keeps no empty square.
+    assert "ss-cover" not in client.get("/albums/2").text
+
+
+def test_the_rules_that_apply_are_shown_with_the_one_that_decides(client):
+    client.post("/storage/cabinets/new", data={"name": "Extern"})
+    client.post("/rules/new", data={"target_type": "cluster", "target": "Jazz", "cabinet_id": "1"})
+    client.post("/rules/new", data={"target_type": "artist", "target": "Chet Baker", "cabinet_id": "2",
+                                    "note": "other room"})
+
+    artist = client.get("/artists/1").text
+    assert "Chet Baker &rarr; Extern" in artist and "Jazz &rarr; Kast" in artist
+    assert artist.index("Rule for the artist") < artist.index("Rule for the cluster")
+    assert artist.count(">decides<") == 1 and "overruled" in artist
+
+    client.post("/rules/new", data={"target_type": "album", "target": "Chet Baker — Sings", "cabinet_id": "1"})
+    album = client.get("/albums/2").text
+    assert album.index("Rule for this album") < album.index("Rule for the artist")
+    # Another artist in the cluster only has the cluster's rule.
+    blakey = client.get("/artists/2").text
+    assert "Rule for the cluster" in blakey and "Rule for the artist" not in blakey
+
+
+def test_an_album_can_be_moved_from_its_page(client):
+    client.post("/albums/1/move", data={"shelf_id": "2"})
+
+    assert "Chet &middot; 1959" not in client.get("/browse?shelf=1").text
+    shelf_b = client.get("/browse?shelf=2").text
+    # It goes to the end of the shelf, after what stood there.
+    assert shelf_b.index("Fun House") < shelf_b.index("Chet &middot; 1959")
+    assert "Kast &middot; b" in client.get("/albums/1").text
+    # A version from before the move can be put back.
+    assert "/restore" in client.get("/versions/").text
+
+    client.post("/albums/1/move", data={"shelf_id": ""})
+    assert "Not on a shelf" in client.get("/albums/1").text
+    assert "Chet" in client.get("/unplaced").text
+    assert client.post("/albums/1/move", data={"shelf_id": "99"}).status_code == 404
+
+
+def test_all_albums_of_an_artist_can_be_moved_at_once(client):
+    client.post("/artists/1/move", data={"shelf_id": "3"})
+
+    shelf_c = client.get("/browse?shelf=3").text
+    # Both albums, in year order: Sings (1954) before Chet (1959).
+    assert shelf_c.index("Sings") < shelf_c.index("Chet &middot; 1959")
+    assert "Moanin" in client.get("/browse?shelf=1").text
+    assert "Moved." in client.get("/artists/1?moved=1").text
+
+
+def test_width_can_be_set_on_the_album_page(client):
+    assert "A box set or bundle" in client.get("/albums/5").text
+
+    client.post("/albums/5/width", data={"width_cm": "1,4", "next": "album"})
+
+    page = client.get("/albums/5").text
+    assert 'value="1.4"' in page and "A box set or bundle" not in page
+    bad = client.post("/albums/5/width", data={"width_cm": "x", "next": "album"}, follow_redirects=True)
+    assert "above zero" in bad.text and "<h1>Box</h1>" in bad.text

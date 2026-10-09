@@ -54,6 +54,7 @@ def _vinyl(release_id, artist, title):
         "basic_information": {
             "title": title,
             "thumb": f"https://i.discogs.com/{release_id}.jpeg",
+            "cover_image": f"https://i.discogs.com/{release_id}-large.jpeg",
             "artists": [{"name": artist, "join": ""}],
             "formats": [{"name": "Vinyl", "qty": "1", "descriptions": ["LP", "Album"]}],
         },
@@ -206,6 +207,7 @@ def test_sync_previews_the_collection_and_only_changes_things_on_confirm(app, cl
     # A sync brings the covers, for albums that were there and for new ones.
     assert albums[0].cover_url == "https://i.discogs.com/1874289.jpeg"
     assert albums[-1].cover_url == "https://i.discogs.com/1965832.jpeg"
+    assert albums[0].cover_image_url == "https://i.discogs.com/1874289-large.jpeg"
     # An export has no covers and leaves them alone.
     _import(client)
     assert _store(app).load(Album)[0].cover_url == "https://i.discogs.com/1874289.jpeg"

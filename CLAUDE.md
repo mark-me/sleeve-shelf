@@ -9,7 +9,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 `docs/requirements.md` is the source of truth for scope, sorting logic, data model, and every screen. Read it before changing behavior. Its last section, **Open questions**, lists what is undecided and what was deliberately parked.
 
 - **Phase 1a (load a layout, browse, search)** is built.
-- **Phase 1b (Discogs, sorting proposal, management screens)** is built, including starting without a workbook. A few leftovers of the detail screen are not: see "Not built from Phase 1" under Open questions.
+- **Phase 1b (Discogs, sorting proposal, management screens)** is built, including starting without a workbook. What the code still lacks of Phase 1 is listed under "Not built from Phase 1" in Open questions.
 - What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and three parked points from 1a (the upload and preview screens never looked at, top-loaders `a` and `b` as a rotating sample, the `Overflow` and `Nieuwe koffer` locations).
 - **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, showcase management, cluster-shift confirmation) is not, and neither is Phase 3.
 

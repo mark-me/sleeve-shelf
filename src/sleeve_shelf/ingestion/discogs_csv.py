@@ -21,6 +21,7 @@ class CollectionItem:
     format_tokens: FormatTokens
     # Only the API gives a cover; the export has none.
     cover_url: str | None = None
+    cover_image_url: str | None = None
 
 
 def read_collection(

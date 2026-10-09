@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 09:02+0200\n"
+"POT-Creation-Date: 2026-10-09 09:13+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -135,6 +135,170 @@ msgstr ""
 msgid "Shelf “%(name)s” still holds albums; move them before removing it."
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/base.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Location rules"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "(cabinet removed)"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "Rule for the cluster"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "Rule for the family"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "Rule for the artist"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "Rule for this album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "decides"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "overruled"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "A sorting proposal places this in the cabinet of the deciding rule."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "No location rule applies: a sorting proposal places this where the sorting puts it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "Move to another shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Not on a shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+msgid "Move"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+msgid "Goes to the end of the chosen shelf, on your shelves as they are; put it in its exact spot in Layout. A version from before the move is kept."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Show the cover larger"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Moved. A version from before the move is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "This album is no longer in your Discogs collection."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "A single or EP: it is kept outside the layout and gets no place in a sorting proposal."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Where it stands"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Sorted under"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Original year"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "confirmed by hand"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "from Discogs or the pressing"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "unknown"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Format"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Discogs styles"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Discogs release"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "not linked"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Width"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Measured width in cm"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/albums/widths.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/shelf_form.html
+msgid "Save"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#, python-format
+msgid "Estimated from the format: %(width).1f cm."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "A box set or bundle: the estimate is rough until you measure it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Leave empty to use the estimate."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Stand this album on"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#, python-format
+msgid "Cover of %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Close"
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/albums/widths.html
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Album widths"
@@ -156,14 +320,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
 msgid "To measure"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/widths.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
-#: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Save"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
@@ -252,6 +408,13 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Cancel"
 msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Stand the %(num)d album of this artist on"
+msgid_plural "Stand all %(num)d albums of this artist on"
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/artists/index.html
@@ -419,11 +582,6 @@ msgid "Clusters"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Location rules"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
 msgid "Setup"
 msgstr ""
 
@@ -432,6 +590,7 @@ msgstr ""
 msgid "Cabinets & shelves"
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Discogs sync"
@@ -590,10 +749,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #, python-format
 msgid "Cluster for %(style)s"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-msgid "Move"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/clusters/edit.html
@@ -1271,10 +1426,6 @@ msgid "This cabinet has no shelves yet."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
-msgid "Not on a shelf"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/layout/index.html
 msgid "LPs without a place. Drag one to a shelf to place it, or drop an album here to take it off its shelf."
 msgstr ""
 
@@ -1367,11 +1518,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/storage/index.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Shelf"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/proposal/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Width"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -1480,10 +1626,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "(no longer exists)"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "(cabinet removed)"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html

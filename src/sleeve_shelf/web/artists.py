@@ -18,11 +18,13 @@ from sleeve_shelf.domain import (
     UnitType,
 )
 from sleeve_shelf.persistence import BrowseQueries
+from sleeve_shelf.placing import move_albums
 from sleeve_shelf.proposal import takes_part
 from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
 from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.places import described_rules, shelf_options
 
 blueprint = Blueprint("artists", __name__, url_prefix="/artists")
 
@@ -120,7 +122,7 @@ def edit(artist_id: int):
         (a for a in store.load(ArtistClusterAssignment) if a.artist_id == artist_id), None
     )
     proposed_id = propose_cluster(sorted_albums, {style.id: style for style in store.load(Style)})
-    located = {row.album_id: row for row in BrowseQueries(store).search(artist.name)}
+    located = {row.album_id: row for row in BrowseQueries(store).artist_albums(artist_id)}
     family = next((g for g in store.load(AliasGroup) if g.id == artist.alias_group_id), None)
     derived_year = _earliest_year(sorted_albums)
     return (
@@ -135,6 +137,10 @@ def edit(artist_id: int):
             derived_year=derived_year,
             band=band_of(artist.start_year or derived_year),
             family=family,
+            rules=described_rules(store, artist_id),
+            shelves=shelf_options(store),
+            movable_count=len(sorted_albums),
+            moved=request.args.get("moved"),
             wikipedia_url="https://en.wikipedia.org/wiki/Special:Search?search="
             + quote(sort_name(artist.name)),
             albums=sorted(
@@ -147,6 +153,21 @@ def edit(artist_id: int):
         ),
         400 if errors else 200,
     )
+
+
+@blueprint.post("/<int:artist_id>/move")
+def move(artist_id: int):
+    """Stand all the artist's albums that take part on one shelf, in year and title order."""
+    store = get_store()
+    shelf_id = request.form.get("shelf_id", type=int)
+    if shelf_id is not None and all(option["id"] != shelf_id for option in shelf_options(store)):
+        abort(404)
+    albums = sorted(
+        _albums_taking_part(store).get(artist_id, []),
+        key=lambda album: (album.original_release_year or 9999, album.title.casefold()),
+    )
+    move_albums(store, [album.id for album in albums], shelf_id)
+    return redirect(url_for("artists.edit", artist_id=artist_id, moved=1))
 
 
 @blueprint.post("/<int:artist_id>/confirm")

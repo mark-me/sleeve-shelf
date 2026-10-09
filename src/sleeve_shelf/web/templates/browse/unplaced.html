@@ -16,7 +16,7 @@
       {{ cover(album.cover_url, lps | selectattr('cover_url') | list | length > 0) }}
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ album.artist }}</span>
-        <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+        <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</a>
       </div>
       {% if album.cluster %}<span class="ss-chip">{{ album.cluster }}</span>{% endif %}
     </div>
@@ -35,7 +35,7 @@
       {{ cover(album.cover_url, others | selectattr('cover_url') | list | length > 0) }}
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ album.artist }}</span>
-        <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+        <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</a>
       </div>
     </div>
     {% endfor %}

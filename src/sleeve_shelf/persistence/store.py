@@ -145,6 +145,7 @@ _TABLES: dict[type, _Table] = {
             "style_ids": "INTEGER[]",
             "era_band_id": "INTEGER",
             "cover_url": "VARCHAR",
+            "cover_image_url": "VARCHAR",
             "original_year_confirmed": "BOOLEAN",
             "left_discogs": "BOOLEAN",
         },

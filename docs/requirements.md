@@ -42,7 +42,7 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
   - **A sync brings the format of linked albums up to date** (decided 2026-10-09): disc count, 180 gram, gatefold and the other tokens are taken from the release, and the estimated width follows. A width measured by hand is not touched. An uploaded export does not do this — it knows the format less well than the API (see Discogs screen)
   - **A sync runs on demand only** (decided 2026-10-09): by the button on the Discogs screen, for now; not at start-up or on a schedule
 - Add album covers to the Layout screen (Album gets a cover_url field)
-  - **Built** (2026-10-09), and wider than Layout: covers also show in Browse/Search, in the Unplaced albums list, and on an artist's page. A sync stores the address of each release's small cover image on the album (`cover_url`); an uploaded export has no covers and leaves them alone. The images are not downloaded: the browser fetches them from Discogs when a page is shown, so covers need an internet connection while everything else keeps working without (see Open questions)
+  - **Built** (2026-10-09), and wider than Layout: covers also show in Browse/Search, in the Unplaced albums list, and on an artist's page. A sync stores the address of each release's small cover image on the album (`cover_url`), and of the large one for enlarging a cover on the album's page (`cover_image_url`, added 2026-10-09); an uploaded export has no covers and leaves them alone. The images are not downloaded: the browser fetches them from Discogs when a page is shown, so covers need an internet connection while everything else keeps working without (see Open questions)
 - Add new purchases, with a suggested spot within the existing layout
 - Suggestions for new location rules based on the existing layout — always requiring confirmation, never applied automatically
 - Showcase management for the top-loaders (rotating samples from the collection)
@@ -182,6 +182,7 @@ erDiagram
         list style_ids FK
         int era_band_id FK "nullable"
         string cover_url "small cover image at Discogs, set by a sync"
+        string cover_image_url "large cover image at Discogs, set by a sync"
         bool original_year_confirmed
         bool left_discogs "release no longer in the Discogs collection"
     }
@@ -273,7 +274,7 @@ erDiagram
 - **Artist**: id, name, Discogs artist ID (optional; a field only — neither the export nor the sync fills it yet), alias_group_id (nullable), `start_year` (nullable — the year the artist began, which decides its era band; see Sorting logic §2)
 - **AliasGroup**: id, label — an artist family: the Artists pointing at it stand together as one unit (see Sorting logic §1)
 - **FamilyDismissal**: anchor artist id — a suggested family the user turned down, so it is not suggested again
-- **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), `cover_url` (the address of the release's small cover image at Discogs, set by a sync; empty until the first sync), `original_year_confirmed` (bool — true when the year is known to be the original rather than a pressing's, so enrichment leaves it alone; see Sorting logic §2), `left_discogs` (bool — true when the last sync or import no longer found the album's release in the Discogs collection; set again at every sync or import)
+- **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), `cover_url` (the address of the release's small cover image at Discogs, set by a sync; empty until the first sync), `cover_image_url` (the address of the same cover as a large image, set by the same sync; only used to enlarge the cover on the album's page), `original_year_confirmed` (bool — true when the year is known to be the original rather than a pressing's, so enrichment leaves it alone; see Sorting logic §2), `left_discogs` (bool — true when the last sync or import no longer found the album's release in the Discogs collection; set again at every sync or import)
 - **Style**: id, name (from Discogs), `cluster_id` — the Cluster this Style points to; set the first time the Style is seen, user-remappable afterward (see Sorting logic §1)
 - **Cluster**: id, name — a user-curated group of artists, decoupled from Discogs' own style taxonomy (see Sorting logic §1); seeded by the initial load, can be renamed or merged via the Clusters screen (see UI). `position` is its place in the curated sequence of clusters
 
@@ -421,7 +422,7 @@ The menu is grouped in the order the app is used — what is done daily on top, 
 
 **Counters in the menu**: an item shows a number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
 
-An artist's page is reached from Layout (the name on a block) and from Browse/Search (the name on a row); there is no page for a single album (see Detail screen).
+An artist's page is reached from Layout (the name on a block) and from Browse/Search (the name on a row); an album's page from its title in Browse/Search, in the Unplaced albums list, and on its artist's page (see Detail screen).
 
 ### Layout screen (core)
 
@@ -490,7 +491,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 - **To measure**: the box sets and bundles (compound formats, see Sorting logic §3) that still count as loose discs, each with its format and the rough estimate, and a field to enter the real width in cm. This is where the Dashboard's width flag resolves to
 - **Measured**: the albums with a width set by hand; a width can be changed, or cleared to go back to the estimate
-- A measured width overrides the estimate everywhere — shelf fill, Layout, proposals — and is not touched when the width settings change. Reached from the Dashboard, the Storage screen, and an album marked "rough width" on its artist's page
+- A measured width overrides the estimate everywhere — shelf fill, Layout, proposals — and is not touched when the width settings change. Reached from the Dashboard, the Storage screen, and an album marked "rough width" on its artist's page; the same width can be set on the album's own page
 
 ### Alias groups screen (artist families)
 
@@ -530,17 +531,22 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 ### Detail screen (artist/album)
 
-The detail screen as first designed is built in part, spread over other screens. What exists:
+The detail of an artist and of an album are two pages.
 
-- **The artist**: the Artists screen's page for one artist (see above) shows the cluster with its confirmation status and lets it be corrected, the start year and era band, the family, and the artist's albums with year, format, and where each stands. It is reached from Layout and from Browse/Search
-- **Width of a box set or bundle**: entered on the Album widths screen (see above); Settings only holds the global constants, not per-album overrides
-- **Moving an album or artist to another shelf**: done by dragging in Layout, not from the artist's page
+**The artist** is the Artists screen's page for one artist (see above): cluster with its confirmation status and the action to correct it, start year and era band, family, and the artist's albums with year, format, and where each stands. Each album links to its own page.
 
-Not built (see Open questions):
+**The album** has a page of its own, reached from its title on a shelf in Browse/Search, in the Unplaced albums list, and on its artist's page. It shows:
 
-- A page for a single album
-- Showing, on the artist's page, a location rule that applies to the artist or its family
-- An action on the artist's page to move the artist or an album to another shelf
+- the cover, at the full size of the small image a sync stores (150 px square) — an album without a cover shows none. **Enlarging**: the cover is a button that opens the large image in a pop-up over the page, closed by the close button, by clicking the image or beside it, or with Escape. The large image is only fetched when the pop-up is opened, so the page stays as light as before, on a phone too; it fits the screen (at most 640 px wide). An album that has no large image yet (synced before this was built) is not enlargeable until the next sync
+- the artist (linking back), and the original year with whether it was confirmed by hand
+- where it stands (linking to that shelf) or that it stands on no shelf, and the cluster and era band it is sorted under
+- format, Discogs styles, and a link to the release on Discogs; a notice when the album is no longer in the Discogs collection, or when it is a single or EP kept outside the layout
+- **Width**: the estimate, and the measured width to set or clear — the same action as on the Album widths screen
+
+**On both pages:**
+
+- **Location rules**: the rules that bear on the artist or album are listed, the deciding one first and marked — an album's own rule, then the artist's, the family's, the cluster's — the others marked as overruled. Without any, the page says so. Rules are changed on the Location rules screen
+- **Move to another shelf**: choose a shelf, or "not on a shelf". On the album's page this moves that album; on the artist's page all of the artist's albums that take part in the layout, in order of year and title. What is moved goes to the end of the chosen shelf, on the shelves as they are — never in a proposal — and a version from before the move is kept (see Versions screen). The exact spot within a shelf is set by dragging in Layout
 
 ## Open questions
 
@@ -552,7 +558,6 @@ Not built (see Open questions):
 
 ### Not built from Phase 1
 
-- **Detail screen leftovers**: there is no page for a single album; the artist's page does not show a location rule that applies to the artist or its family; and it has no action to move the artist or an album to another shelf — that is done by dragging in Layout (see Detail screen)
 - **Placements per artist or era band**: the model and Browse/Search allow them, but every placement is written per album (see Data model). Whether they are still wanted, now that the row runs on album by album, is undecided
 - **`Artist.discogs_artist_id`** is never filled; nothing uses it yet
 

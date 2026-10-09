@@ -160,8 +160,9 @@ def collection_items(
                 title=(information.get("title") or "").strip(),
                 is_vinyl=parsed.is_vinyl,
                 format_tokens=parsed.tokens,
-                # The small image: covers are shown in lists.
+                # The small image for lists, and the large one for enlarging a cover.
                 cover_url=information.get("thumb") or None,
+                cover_image_url=information.get("cover_image") or None,
             )
         )
     return items
