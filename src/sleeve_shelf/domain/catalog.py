@@ -115,6 +115,8 @@ class Album:
     original_year_confirmed: bool = False
     # True when the last sync or import no longer found the release in the Discogs collection.
     left_discogs: bool = False
+    # True when the user keeps the album although it left Discogs, and is not to be asked again.
+    kept_after_discogs: bool = False
 
     @property
     def width_cm(self) -> float | None:

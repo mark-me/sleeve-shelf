@@ -18,6 +18,7 @@ from flask_babel import gettext as _
 from sleeve_shelf.collection import (
     confirm_match,
     import_discogs_collection,
+    keep_departed_album,
     reject_match,
     remove_departed_album,
 )
@@ -108,7 +109,12 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     gone = [
         {"album": album, "artist": artists.get(album.artist_id, "")}
         for album in albums
-        if album.left_discogs
+        if album.left_discogs and not album.kept_after_discogs
+    ]
+    kept = [
+        {"album": album, "artist": artists.get(album.artist_id, "")}
+        for album in albums
+        if album.left_discogs and album.kept_after_discogs
     ]
     return (
         render_template(
@@ -133,6 +139,7 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             seconds_per_lookup=SECONDS_BETWEEN_REQUESTS,
             proposals=proposals,
             gone=gone,
+            kept=kept,
             masked_token=f"••••{token[-4:]}" if token else None,
             job=job,
             error=error,
@@ -269,6 +276,19 @@ def remove_gone(album_id: int):
         artist=artists.get(album.artist_id, ""),
         place=_place(album_id),
     )
+
+
+@blueprint.post("/gone/<int:album_id>/keep")
+def keep_gone(album_id: int):
+    """The user still owns an album that left Discogs: stop asking about it."""
+    keep_departed_album(get_store(), album_id)
+    return redirect(url_for("discogs.index") + "#gone")
+
+
+@blueprint.post("/gone/<int:album_id>/ask-again")
+def ask_again(album_id: int):
+    keep_departed_album(get_store(), album_id, keep=False)
+    return redirect(url_for("discogs.index") + "#gone")
 
 
 def _place(album_id: int) -> str | None:

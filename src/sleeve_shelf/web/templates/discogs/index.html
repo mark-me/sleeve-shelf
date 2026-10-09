@@ -150,7 +150,7 @@
     {% endif %}
   </section>
 
-  {% if gone %}
+  {% if gone or kept %}
   <section class="ss-card mt-4" id="gone">
     <div class="ss-card-head"><h2>{{ _('No longer in your Discogs collection') }}</h2></div>
     {% for entry in gone %}
@@ -159,10 +159,32 @@
         <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=entry.album.artist_id) }}">{{ entry.artist }}</a>
         <span class="ss-row-title">{{ entry.album.title }}</span>
       </div>
-      <a class="ss-button ss-button-small flex-shrink-0" href="{{ url_for('discogs.remove_gone', album_id=entry.album.id) }}">{{ _('Remove…') }}</a>
+      <div class="d-flex gap-2 flex-shrink-0">
+        <form method="post" action="{{ url_for('discogs.keep_gone', album_id=entry.album.id) }}">
+          <button class="ss-button ss-button-small" type="submit">{{ _('I still have it') }}</button>
+        </form>
+        <a class="ss-button ss-button-small" href="{{ url_for('discogs.remove_gone', album_id=entry.album.id) }}">{{ _('Remove…') }}</a>
+      </div>
     </div>
     {% endfor %}
-    <div class="ss-card-body ss-muted small">{{ _('The last sync or import did not find these releases. An album is only removed when you choose Remove and confirm; until then it stays where it is, and it is listed here again after every sync.') }}</div>
+    {% if gone %}
+    <div class="ss-card-body ss-muted small">{{ _('The last sync or import did not find these releases. “I still have it” keeps the album and stops asking; an album is only removed when you choose Remove and confirm. Until you choose, it stays where it is and is listed here after every sync.') }}</div>
+    {% endif %}
+    {% if kept %}
+    <div class="ss-group">{{ ngettext('Kept although not on Discogs (%(num)d)', 'Kept although not on Discogs (%(num)d)', kept | length) }}</div>
+    {% for entry in kept %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=entry.album.artist_id) }}">{{ entry.artist }}</a>
+        <span class="ss-row-title">{{ entry.album.title }}</span>
+      </div>
+      <form class="flex-shrink-0" method="post" action="{{ url_for('discogs.ask_again', album_id=entry.album.id) }}">
+        <button class="ss-button ss-button-small" type="submit">{{ _('Ask again') }}</button>
+      </form>
+    </div>
+    {% endfor %}
+    <div class="ss-card-body ss-muted small">{{ _('You said you still have these. They are no longer counted as waiting; an album that returns to your Discogs collection leaves this list by itself.') }}</div>
+    {% endif %}
   </section>
   {% endif %}
 </div>

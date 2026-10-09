@@ -300,7 +300,10 @@ def import_discogs_collection(
         album.left_discogs = (
             album.release_id is not None and album.release_id not in in_collection
         )
-        if album.left_discogs:
+        if not album.left_discogs:
+            # Back in the collection: should it leave again, the question is asked anew.
+            album.kept_after_discogs = False
+        elif not album.kept_after_discogs:
             gone.append((artist_names[album.artist_id], album.title))
 
     # A cover only comes with a sync; an export leaves the covers as they are.
@@ -491,6 +494,20 @@ def remove_departed_album(store: JsonStore, album_id: int) -> bool:
     if any(proposal.album_id == album_id for proposal in proposals):
         store.save(MatchProposal, [p for p in proposals if p.album_id != album_id])
     store.save(Album, [a for a in albums if a.id != album_id])
+    return True
+
+
+def keep_departed_album(store: JsonStore, album_id: int, keep: bool = True) -> bool:
+    """Note that an album that left the Discogs collection is kept, so it is not asked about again.
+
+    With keep=False the note is taken back and the album is listed as gone once more.
+    """
+    albums = store.load(Album)
+    album = next((a for a in albums if a.id == album_id and a.left_discogs), None)
+    if album is None:
+        return False
+    album.kept_after_discogs = keep
+    store.save(Album, albums)
     return True
 
 

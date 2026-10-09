@@ -169,6 +169,7 @@ _TABLES: dict[type, _Table] = {
             "cover_image_url": "VARCHAR",
             "original_year_confirmed": "BOOLEAN",
             "left_discogs": "BOOLEAN",
+            "kept_after_discogs": "BOOLEAN",
         },
         {"format_tokens": _format_tokens},
     ),

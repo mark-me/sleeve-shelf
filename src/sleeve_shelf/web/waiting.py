@@ -43,7 +43,7 @@ def waiting_counts(store: JsonStore) -> dict[str, int]:
         "artists": sum(1 for a in sorted_artists if a not in confirmed or a not in start_years),
         "widths": sum(1 for album in sorted_albums if not album.width_confirmed),
         "unlinked": sum(1 for album in sorted_albums if album.release_id is None),
-        "gone": sum(1 for album in albums if album.left_discogs),
+        "gone": sum(1 for a in albums if a.left_discogs and not a.kept_after_discogs),
         "overfull": overfull,
         "unplaced": sum(1 for album in sorted_albums if album.id not in placed),
     }

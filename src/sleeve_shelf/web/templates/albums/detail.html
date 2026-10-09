@@ -22,7 +22,7 @@
   <div class="ss-alert mt-3">{{ _('Moved. A version from before the move is kept under Versions.') }}</div>
   {% endif %}
   {% if album.left_discogs %}
-  <div class="ss-alert mt-3">{{ _('This album is no longer in your Discogs collection.') }} <a href="{{ url_for('discogs.index') }}#gone">{{ _('Discogs sync') }}</a></div>
+  <div class="ss-alert mt-3">{% if album.kept_after_discogs %}{{ _('This album is no longer in your Discogs collection; you said you still have it.') }}{% else %}{{ _('This album is no longer in your Discogs collection.') }}{% endif %} <a href="{{ url_for('discogs.index') }}#gone">{{ _('Discogs sync') }}</a></div>
   {% endif %}
   {% if not takes_part %}
   <div class="ss-alert mt-3">{{ _('A single or EP: it is kept outside the layout and gets no place in a sorting proposal.') }}</div>

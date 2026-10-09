@@ -369,3 +369,41 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     # In the list the pictured artist shows its picture, and the other keeps the space.
     listed = client.get("/artists/").text
     assert 'src="https://i.discogs.com/tw150.jpeg"' in listed and "ss-cover-empty" in listed
+
+
+def test_an_album_that_left_discogs_can_be_kept_without_being_asked_again(app, client):
+    client.post("/discogs/token", data={"token": "secret"})
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+    app.config["DISCOGS_CLIENT_FACTORY"] = type(
+        "Sold", (_Client,), {"collection": lambda self: COLLECTION[:1]}
+    )
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+    assert "/discogs/gone/3/remove" in client.get("/discogs/").text
+
+    assert client.post("/discogs/gone/3/keep").status_code == 302
+
+    page = client.get("/discogs/").text
+    assert "/discogs/gone/3/remove" not in page
+    assert "Kept although not on Discogs (1)" in page and "/discogs/gone/3/ask-again" in page
+    assert len(_store(app).load(Album)) == 3
+    # The next sync does not ask again.
+    preview = client.post("/discogs/sync").text
+    client.post("/discogs/import/confirm")
+    assert "no longer in your Discogs collection" not in preview
+    assert "/discogs/gone/3/remove" not in client.get("/discogs/").text
+
+    # Taking it back lists the album as gone once more.
+    client.post("/discogs/gone/3/ask-again")
+    assert "/discogs/gone/3/remove" in client.get("/discogs/").text
+
+    # An album that is still on Discogs cannot be marked, and one that returns loses the mark.
+    client.post("/discogs/gone/1/keep")
+    assert not _store(app).load(Album)[0].kept_after_discogs
+    client.post("/discogs/gone/3/keep")
+    app.config["DISCOGS_CLIENT_FACTORY"] = _Client
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+    album = _store(app).load(Album)[2]
+    assert (album.left_discogs, album.kept_after_discogs) == (False, False)

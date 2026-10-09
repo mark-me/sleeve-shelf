@@ -10,7 +10,15 @@ It's built for collectors who track their collection on [Discogs](https://www.di
 
 ## Status
 
-Phase 1 (the MVP) is built. You can load a worked-out cabinet layout from an Excel workbook and browse or search it in physical shelf order (Phase 1a). You can also link the albums to Discogs, manage cabinets, shelves, clusters, artist families and location rules, generate a sorting proposal, adjust it by hand, and keep versions of the layout (Phase 1b). Phase 2 has started with syncing the collection straight from Discogs and album covers; the rest of Phase 2 and Phase 3 are not built. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
+Phase 1 (the MVP) is built, and most of Phase 2.
+
+- **Load and browse**: load a worked-out cabinet layout from an Excel workbook — or start without one — and browse or search the collection in physical shelf order, with album covers.
+- **Discogs**: sync the collection straight from Discogs (or upload an export), and fetch styles, original release years and artist pictures. Albums that left your Discogs collection are reported; you keep or remove them yourself.
+- **Sorting**: manage cabinets, shelves, clusters, artist families and location rules, generate a sorting proposal, adjust it by dragging, and keep versions of the layout to go back to.
+- **Showcase**: top-loaders that hold a sample of an artist's albums, exchanged one for one with the shelf.
+- **On your phone**: the app can be installed to the home screen (over HTTPS) and opens on Browse / Search.
+
+Not built yet: a suggested spot for new purchases, suggestions for location rules, and a confirmation when a purchase would move an artist to another cluster (the rest of Phase 2), and all of Phase 3. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
 
 ## Running it
 
@@ -62,18 +70,18 @@ docker exec sleeve-shelf python -m sleeve_shelf load /tmp/layout.xlsx
 
 Run the tests with `uv run python -m pytest`.
 
-## Planned tech stack
+## Tech stack
 
-- **Backend**: Python, Flask
-- **Frontend**: Bootstrap, vanilla JavaScript (drag-and-drop via a small library such as SortableJS)
-- **Storage**: flat JSON/CSV files (no database) — single-user, self-hosted
+- **Backend**: Python, Flask (served by Waitress in the Docker image)
+- **Frontend**: server-rendered templates with Bootstrap and vanilla JavaScript; drag-and-drop with SortableJS (both vendored, no CDN)
+- **Storage**: flat JSON files read and written through DuckDB (no database server) — single-user, self-hosted
 - **Deployment**: Docker
 
 ## Roadmap (summary)
 
-- **Phase 1 — MVP**: import a Discogs CSV export, configure storage (cabinets/shelves), generate a sorting proposal (style clustering + era bands), and adjust it manually
-- **Phase 2 — Ongoing use**: live Discogs API integration, album cover art, adding new purchases, showcase rotation for easily-accessible shelves
-- **Phase 3 — Refinement**: deeper musical-kinship logic, search/filtering, other media formats
+- **Phase 1 — MVP** (built): load an existing layout, browse and search it, link the collection to Discogs, configure cabinets and shelves, generate a sorting proposal (curated clusters, era bands by the decade an artist started, artist families), and adjust it by hand
+- **Phase 2 — Ongoing use** (mostly built): syncing with Discogs, album covers and the showcase are there; a suggested spot for new purchases, location-rule suggestions and cluster-shift confirmation are not
+- **Phase 3 — Refinement** (not started): deeper musical-kinship logic, song-level search, more languages, other media formats
 
 Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
 

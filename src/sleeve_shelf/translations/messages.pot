@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 12:15+0200\n"
+"POT-Creation-Date: 2026-10-09 19:59+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -216,6 +216,10 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Moved. A version from before the move is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "This album is no longer in your Discogs collection; you said you still have it."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -945,7 +949,7 @@ msgid "Without a release there are no styles or original year from Discogs."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Sold, or removed on Discogs? They still stand in the layout until you remove them."
+msgid "Sold, or removed on Discogs? Say that you still have them, or remove them."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1315,11 +1319,30 @@ msgid "No longer in your Discogs collection"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "I still have it"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Remove…"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "The last sync or import did not find these releases. An album is only removed when you choose Remove and confirm; until then it stays where it is, and it is listed here again after every sync."
+msgid "The last sync or import did not find these releases. “I still have it” keeps the album and stops asking; an album is only removed when you choose Remove and confirm. Until you choose, it stays where it is and is listed here after every sync."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "Kept although not on Discogs (%(num)d)"
+msgid_plural "Kept although not on Discogs (%(num)d)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Ask again"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "You said you still have these. They are no longer counted as waiting; an album that returns to your Discogs collection leaves this list by itself."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html
