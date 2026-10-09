@@ -201,6 +201,12 @@ def update_layout(
     save_version(store, "loaded")
 
 
+def start_empty(store: JsonStore) -> None:
+    """Begin a collection without a layout workbook: nothing in it yet, to be filled from Discogs."""
+    if not store.exists(Album):
+        store.save(Album, [])
+
+
 def ensure_cluster_order(store: JsonStore) -> None:
     """Give every cluster a position in the sequence of clusters.
 

@@ -365,3 +365,48 @@ def test_app_can_be_installed_from_its_manifest(client):
     page = client.get("/setup/").text
     assert 'rel="manifest" href="/manifest.webmanifest"' in page
     assert client.get("/static/icons/apple-touch-icon.png").status_code == 200
+
+
+def test_a_collection_can_be_started_without_a_workbook(client):
+    welcome = client.get("/setup/").text
+    assert "Start without a workbook" in welcome
+
+    assert client.post("/setup/start").headers["Location"] == "/dashboard/"
+
+    # Every screen opens on an empty collection.
+    for url in ("/dashboard/", "/browse", "/unplaced", "/layout/", "/proposal/", "/artists/",
+                "/clusters/", "/families/", "/rules/", "/storage/", "/discogs/", "/versions/",
+                "/settings/", "/albums/widths", "/setup/upload"):
+        assert client.get(url).status_code == 200, url
+    dashboard = client.get("/dashboard/").text
+    # Taking over the collection and entering shelves are both still to do.
+    assert dashboard.count("1 to do") == 2
+    assert "Add your cabinets and shelves" in client.get("/browse").text
+
+
+def test_from_discogs_to_an_accepted_layout_without_a_workbook(client):
+    client.post("/setup/start")
+    client.post("/storage/cabinets/new", data={"name": "Kast", "location": "Kamer"})
+    client.post("/storage/cabinets/1/shelves/new",
+                data={"name": "a", "width_cm": "10", "type": "", "layer": ""})
+    export = (
+        "Catalog#,Artist,Title,Label,Format,Rating,Released,release_id\n"
+        'A,Nirvana,Bleach,Sub Pop,"LP, Album",,2009,4275916\n'
+        'B,Nirvana,Nevermind,DGC,"LP, Album",,2017,10859343\n'
+        'C,Nirvana,Lithium,DGC,"12"", Ltd, Pic",,1992,505982\n'
+    )
+    client.post("/discogs/import", data={"export": (io.BytesIO(export.encode()), "c.csv")})
+    client.post("/discogs/import/confirm")
+
+    for url in ("/dashboard/", "/browse", "/unplaced", "/layout/", "/storage/", "/artists/"):
+        assert client.get(url).status_code == 200, url
+    unplaced = client.get("/unplaced").text
+    assert "Bleach" in unplaced and "Nevermind" in unplaced
+
+    client.post("/proposal/generate")
+    assert "Do not fit (0)" in client.get("/proposal/").text
+    client.post("/proposal/accept")
+
+    shelf = client.get("/browse").text
+    assert "Bleach" in shelf and "Nevermind" in shelf and "Lithium" not in shelf
+    assert "Saved versions (1)" in client.get("/versions/").text

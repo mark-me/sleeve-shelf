@@ -352,13 +352,13 @@ Two strictly linear flows, matching the two steps of Phase 1. Once a flow is com
 
 ### First use (Phase 1a)
 
-1. **Welcome/intro**
+1. **Welcome/intro** — offers two ways in: upload a layout workbook (the steps below), or **start without a workbook**. The second begins an empty collection and opens the Dashboard, whose "Towards a new layout" list then leads the way: enter the cabinets and shelves, take over the collection from Discogs, and generate a proposal (see Sorting setup). On an empty collection every screen opens, and the Dashboard marks taking over the collection and entering shelves as still to do
 2. **Initial load** — explanation of the expected workbook (sheets and columns), upload, then a preview: the locations and shelves found, record counts per shelf, and the number of unplaced albums (see [Initial load](#initial-load)); nothing needs to be configured
 3. **Done** — the layout is written to `placement_current.json` and saved as the first version in `placements/`; the app opens on Browse/Search
 
 ### Sorting setup (Phase 1b)
 
-Started from the regular app once the user wants a generated layout. Steps 1–4 are not a locked sequence in the app: step 1 is the Storage screen and steps 2–4 are the three parts of the Discogs screen (see UI), each of which can be revisited. A user without a spreadsheet goes straight from the welcome step into this flow.
+Started from the regular app once the user wants a generated layout. Steps 1–4 are not a locked sequence in the app: step 1 is the Storage screen and steps 2–4 are the three parts of the Discogs screen (see UI), each of which can be revisited. A user without a spreadsheet gets here from the welcome step by starting without a workbook (see First use).
 
 1. **Storage structure** — cabinets + shelves (type, layer, width, reachability, showcase flag). After an initial load these already exist and only need reviewing and completing; otherwise they are created here
 2. **Import collection** — explanation of the Discogs CSV export, upload, automatic filtering to vinyl (by parsing the `Format` field), preview of counts

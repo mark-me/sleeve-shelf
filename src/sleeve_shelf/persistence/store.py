@@ -258,7 +258,15 @@ class JsonStore:
     def relation(self, entity: type) -> str:
         """The SQL table expression that reads the entity's file, for use in queries."""
         table = _TABLES[entity]
-        return self._read(table, self.data_dir / table.filename)
+        path = self.data_dir / table.filename
+        if not path.exists():
+            # Nothing of this kind was saved yet: an empty table with the same columns,
+            # so a query that joins it finds no rows instead of failing.
+            columns = ", ".join(
+                f'CAST(NULL AS {kind}) AS "{name}"' for name, kind in table.columns.items()
+            )
+            return f"(SELECT {columns} WHERE false)"
+        return self._read(table, path)
 
     @staticmethod
     def _read(table: _Table, path: Path) -> str:

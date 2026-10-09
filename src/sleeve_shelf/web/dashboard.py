@@ -54,11 +54,21 @@ def index():
     # The way to a new layout, in the order of the menu. "open" counts what is left
     # to do in a step; a step with "info" has nothing to count and is never ticked off.
     steps = [
-        {"kind": "discogs", "url": url_for("discogs.index"), "open": counts["matches"] + to_fetch},
+        # With no album at all, taking over the collection is the thing still to do.
+        {
+            "kind": "discogs",
+            "url": url_for("discogs.index"),
+            "open": counts["matches"] + to_fetch + (0 if albums else 1),
+        },
         {"kind": "families", "url": urls["families"], "open": counts["families"]},
         {"kind": "artists", "url": urls["artists"], "open": counts["artists"]},
         {"kind": "clusters", "url": url_for("clusters.index"), "info": cluster_count},
-        {"kind": "storage", "url": urls["overfull"], "open": unmeasured + counts["overfull"]},
+        # Likewise a collection without a single shelf has its shelves still to enter.
+        {
+            "kind": "storage",
+            "url": urls["overfull"],
+            "open": unmeasured + counts["overfull"] + (0 if shelves else 1),
+        },
         {"kind": "rules", "url": url_for("rules.index"), "info": len(store.load(LocationRule))},
         {"kind": "proposal", "url": url_for("proposal.index"), "info": int(has_proposal(store))},
     ]

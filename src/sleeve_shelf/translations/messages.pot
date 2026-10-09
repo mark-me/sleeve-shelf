@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 01:23+0200\n"
+"POT-Creation-Date: 2026-10-09 08:58+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -536,6 +536,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 msgid "There are no shelves yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/shelf.html
+msgid "Add your cabinets and shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
@@ -1621,11 +1625,23 @@ msgid "Browse your record collection in the order it actually stands on your she
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/setup/welcome.html
-msgid "One step to get started"
+msgid "You already worked out a layout"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/setup/welcome.html
 msgid "Upload the Excel workbook in which you worked out your cabinet layout. Sleeve & Shelf reads your cabinets, shelves and albums from it; nothing else needs to be set up."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/setup/welcome.html
+msgid "You start from your Discogs collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/setup/welcome.html
+msgid "Without a workbook you enter your cabinets and shelves yourself, take over your collection from Discogs, and let the app propose a layout. The Dashboard lists the steps."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/setup/welcome.html
+msgid "Start without a workbook"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
