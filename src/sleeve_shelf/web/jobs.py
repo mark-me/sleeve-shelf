@@ -9,6 +9,14 @@ from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
 from sleeve_shelf.persistence import JsonStore
 
 
+# done and total count the lookups of this run. part is what is being fetched now, and
+# albums and pictures say how many of all of them are in: [done, total].
+_IDLE = {
+    "done": 0, "total": 0, "outcome": None, "error": None,
+    "part": None, "albums": None, "pictures": None,
+}
+
+
 class _Stopped(Exception):
     """Raised inside the job when the user asked it to stop."""
 
@@ -24,7 +32,7 @@ class EnrichmentJob:
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
-        self._state = {"done": 0, "total": 0, "outcome": None, "error": None}
+        self._state = dict(_IDLE)
 
     def start(
         self, data_dir: Path, token: str, client_factory: Callable = DiscogsClient
@@ -34,7 +42,7 @@ class EnrichmentJob:
             if self.running:
                 return False
             self._stop.clear()
-            self._state = {"done": 0, "total": 0, "outcome": None, "error": None}
+            self._state = dict(_IDLE)
             self._thread = threading.Thread(
                 target=self._run, args=(data_dir, token, client_factory), daemon=True
             )
@@ -61,9 +69,12 @@ class EnrichmentJob:
             if self._stop.is_set():
                 raise _Stopped
 
+        def part(name: str, done: int, total: int) -> None:
+            self._state.update({"part": name, name: [done, total]})
+
         try:
             # A store of its own: a DuckDB connection is not shared between threads.
-            enrich_collection(JsonStore(data_dir), client_factory(token), progress)
+            enrich_collection(JsonStore(data_dir), client_factory(token), progress, part)
             self._state["outcome"] = "finished"
         except _Stopped:
             self._state["outcome"] = "stopped"

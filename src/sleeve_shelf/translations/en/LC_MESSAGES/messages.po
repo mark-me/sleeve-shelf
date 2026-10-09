@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 12:07+0200\n"
+"POT-Creation-Date: 2026-10-09 12:15+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1153,7 +1153,7 @@ msgid "Upload and preview"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Fetch styles and original years"
+msgid "Fetch styles, original years and pictures"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1184,12 +1184,50 @@ msgid "Save token"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Enrichment progress"
+msgid "Styles and original years"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
-msgid "%(done)d of about %(total)d lookups"
+msgid "%(done)s of %(total)s linked albums"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Artist pictures"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(done)s of %(total)s artists"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone."
+msgid_plural "%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Now fetching styles and original years."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Now fetching the artist pictures."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(done)s of about %(total)s lookups in this run."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "About %(minutes)s minutes left."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Less than a minute left."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1197,17 +1235,25 @@ msgid "Stop"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Enrichment finished."
+#, python-format
+msgid "Stopped after %(done)d lookups. Start again to continue: nothing is fetched twice."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
-msgid "Enrichment stopped after %(done)d lookups. Start it again to continue."
+msgid "Fetching stopped: %(error)s Start again to continue."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "Enrichment stopped: %(error)s Start it again to continue."
+msgid "No album is linked to a release yet — import your collection first."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Everything has been fetched."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Not everything has been fetched yet."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1218,17 +1264,16 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Every linked album has been fetched."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "No album is linked to a release yet — import your collection first."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
 msgid "The picture of %(num)d artist still has to be fetched."
 msgid_plural "The pictures of %(num)d artists still have to be fetched."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "That takes about %(num)d minute at most."
+msgid_plural "That takes about %(num)d minutes at most."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1276,11 +1321,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "The last sync or import did not find these releases. An album is only removed when you choose Remove and confirm; until then it stays where it is, and it is listed here again after every sync."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(done)s of about %(total)s lookups"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/preview.html

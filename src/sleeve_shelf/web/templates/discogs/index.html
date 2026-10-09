@@ -45,7 +45,7 @@
   </section>
 
   <section class="ss-card mt-4" id="enrich">
-    <div class="ss-card-head"><h2>2 · {{ _('Fetch styles and original years') }}</h2></div>
+    <div class="ss-card-head"><h2>2 · {{ _('Fetch styles, original years and pictures') }}</h2></div>
     <div class="ss-card-body">
       <p>{{ _('Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. You can stop and continue at any time: nothing is fetched twice.') }}</p>
 
@@ -65,37 +65,59 @@
         </div>
       </form>
 
-      <div id="job" data-status-url="{{ url_for('discogs.enrichment_status') }}" data-running="{{ 'true' if job.running else 'false' }}">
-        {% if job.running %}
-        <div class="progress mb-2" role="progressbar" aria-label="{{ _('Enrichment progress') }}">
-          <div id="job-bar" class="progress-bar" style="width: {{ (100 * job.done / job.total) | round | int if job.total else 0 }}%"></div>
+      {# One bar per part: how many of all of them are in, earlier runs included. #}
+      {% macro part_bar(name, label, progress, text) %}
+      <div class="mb-3">
+        <div class="d-flex flex-wrap justify-content-between gap-2 small">
+          <span class="fw-semibold">{{ label }}</span>
+          <span id="{{ name }}-text" class="ss-muted">{{ text }}</span>
         </div>
-        <p id="job-text" class="ss-muted small">{{ _('%(done)d of about %(total)d lookups', done=job.done, total=job.total) }}</p>
+        <div class="progress mt-1" role="progressbar" aria-label="{{ label }}">
+          <div id="{{ name }}-bar" class="progress-bar" style="width: {{ (100 * progress[0] / progress[1]) | round(0, 'floor') | int if progress[1] else 0 }}%"></div>
+        </div>
+      </div>
+      {% endmacro %}
+
+      <div id="job" data-status-url="{{ url_for('discogs.enrichment_status') }}" data-running="{{ 'true' if job.running else 'false' }}" data-seconds-per-lookup="{{ seconds_per_lookup }}">
+        {{ part_bar('albums', _('Styles and original years'), albums_progress, _('%(done)s of %(total)s linked albums', done=albums_progress[0], total=albums_progress[1])) }}
+        {{ part_bar('pictures', _('Artist pictures'), pictures_progress, _('%(done)s of %(total)s artists', done=pictures_progress[0], total=pictures_progress[1])) }}
+        {% if unnamed_count %}
+        <p class="ss-muted small">{{ ngettext('%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone.', '%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone.', unnamed_count) }}</p>
+        {% endif %}
+
+        {% if job.running %}
+        <p class="mb-3">
+          <span class="fw-semibold" id="job-part">{% if job.part == 'pictures' %}{{ _('Now fetching the artist pictures.') }}{% else %}{{ _('Now fetching styles and original years.') }}{% endif %}</span>
+          <span id="job-text">{{ _('%(done)s of about %(total)s lookups in this run.', done=job.done, total=job.total) }}</span>
+          <span id="job-left">{% if minutes_left > 1 %}{{ _('About %(minutes)s minutes left.', minutes=minutes_left) }}{% else %}{{ _('Less than a minute left.') }}{% endif %}</span>
+        </p>
         <form method="post" action="{{ url_for('discogs.stop_enrichment') }}">
           <button class="ss-button" type="submit">{{ _('Stop') }}</button>
         </form>
         {% else %}
-        {% if job.outcome == 'finished' %}
-        <div class="ss-alert mb-3">{{ _('Enrichment finished.') }}</div>
-        {% elif job.outcome == 'stopped' %}
-        <div class="ss-alert mb-3">{{ _('Enrichment stopped after %(done)d lookups. Start it again to continue.', done=job.done) }}</div>
+        {% set nothing_to_fetch = not to_fetch_count and not pictures_to_fetch_count %}
+        {% if job.outcome == 'stopped' %}
+        <div class="ss-alert mb-3">{{ _('Stopped after %(done)d lookups. Start again to continue: nothing is fetched twice.', done=job.done) }}</div>
         {% elif job.outcome == 'failed' %}
-        <div class="ss-alert mb-3" role="alert">{{ _('Enrichment stopped: %(error)s Start it again to continue.', error=job.error) }}</div>
+        <div class="ss-alert mb-3" role="alert">{{ _('Fetching stopped: %(error)s Start again to continue.', error=job.error) }}</div>
         {% endif %}
         <p class="mb-3">
+          {% if not linked_count %}
+          {{ _('No album is linked to a release yet — import your collection first.') }}
+          {% elif nothing_to_fetch %}
+          <span class="fw-semibold">{{ _('Everything has been fetched.') }}</span>
+          {% else %}
+          <span class="fw-semibold">{{ _('Not everything has been fetched yet.') }}</span>
           {% if to_fetch_count %}
           {{ ngettext('%(num)d linked album still has to be fetched.', '%(num)d linked albums still have to be fetched.', to_fetch_count) }}
-          {% elif linked_count %}
-          {{ _('Every linked album has been fetched.') }}
-          {% else %}
-          {{ _('No album is linked to a release yet — import your collection first.') }}
           {% endif %}
           {% if pictures_to_fetch_count %}
           {{ ngettext('The picture of %(num)d artist still has to be fetched.', 'The pictures of %(num)d artists still have to be fetched.', pictures_to_fetch_count) }}
           {% endif %}
+          {{ ngettext('That takes about %(num)d minute at most.', 'That takes about %(num)d minutes at most.', minutes) }}
+          {% endif %}
         </p>
         <form method="post" action="{{ url_for('discogs.start_enrichment') }}">
-          {% set nothing_to_fetch = not to_fetch_count and not pictures_to_fetch_count %}
           <button class="ss-button ss-button-primary {{ 'disabled' if nothing_to_fetch or not masked_token }}" type="submit" {{ 'disabled' if nothing_to_fetch or not masked_token }}>{{ _('Start fetching') }}</button>
         </form>
         {% endif %}
@@ -146,13 +168,26 @@
 </div>
 
 <script>
-  // While the enrichment runs, keep the progress up to date and reload once it ends.
+  // While the fetching runs, keep the progress up to date and reload once it ends.
   (function () {
     const job = document.getElementById("job");
     if (job.dataset.running !== "true") return;
-    const bar = document.getElementById("job-bar");
-    const text = document.getElementById("job-text");
-    const template = {{ _('%(done)s of about %(total)s lookups', done='__done__', total='__total__') | tojson }};
+    const texts = {
+      albums: {{ _('%(done)s of %(total)s linked albums', done='__done__', total='__total__') | tojson }},
+      pictures: {{ _('%(done)s of %(total)s artists', done='__done__', total='__total__') | tojson }},
+      run: {{ _('%(done)s of about %(total)s lookups in this run.', done='__done__', total='__total__') | tojson }},
+      nowAlbums: {{ _('Now fetching styles and original years.') | tojson }},
+      nowPictures: {{ _('Now fetching the artist pictures.') | tojson }},
+      minutes: {{ _('About %(minutes)s minutes left.', minutes='__minutes__') | tojson }},
+      soon: {{ _('Less than a minute left.') | tojson }},
+    };
+    const fill = (text, done, total) => text.replace("__done__", done).replace("__total__", total);
+    const show = function (name, progress) {
+      if (!progress) return;
+      const [done, total] = progress;
+      document.getElementById(name + "-bar").style.width = (total ? Math.floor((100 * done) / total) : 0) + "%";
+      document.getElementById(name + "-text").textContent = fill(texts[name], done, total);
+    };
     const timer = setInterval(async function () {
       try {
         const status = await (await fetch(job.dataset.statusUrl)).json();
@@ -161,12 +196,16 @@
           window.location.reload();
           return;
         }
-        bar.style.width = (status.total ? Math.round((100 * status.done) / status.total) : 0) + "%";
-        text.textContent = template.replace("__done__", status.done).replace("__total__", status.total);
+        show("albums", status.albums);
+        show("pictures", status.pictures);
+        document.getElementById("job-part").textContent = status.part === "pictures" ? texts.nowPictures : texts.nowAlbums;
+        document.getElementById("job-text").textContent = fill(texts.run, status.done, status.total);
+        const minutes = Math.ceil(((status.total - status.done) * Number(job.dataset.secondsPerLookup)) / 60);
+        document.getElementById("job-left").textContent = minutes > 1 ? texts.minutes.replace("__minutes__", minutes) : texts.soon;
       } catch (error) {
         // A missed update is harmless; the next one catches up.
       }
-    }, 3000);
+    }, 2000);
   })();
 </script>
 {% endblock %}
