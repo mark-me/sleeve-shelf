@@ -24,6 +24,7 @@ from sleeve_shelf.domain import (
     EraBand,
     EraBandSource,
     FamilyDismissal,
+    RuleSuggestionDismissal,
     FormatTokens,
     LocationRule,
     LocationRuleTarget,
@@ -125,6 +126,11 @@ _TABLES: dict[type, _Table] = {
         {"target_type": LocationRuleTarget},
     ),
     FamilyDismissal: _Table("family_dismissals.json", {"anchor_artist_id": "INTEGER"}),
+    RuleSuggestionDismissal: _Table(
+        "rule_suggestion_dismissals.json",
+        {"target_type": "VARCHAR", "target_id": "INTEGER", "cabinet_id": "INTEGER"},
+        {"target_type": LocationRuleTarget},
+    ),
     Artist: _Table(
         "artists.json",
         {
@@ -133,6 +139,7 @@ _TABLES: dict[type, _Table] = {
             "alias_group_id": "INTEGER",
             "start_year": "INTEGER",
             "discogs_artist_id": "INTEGER",
+            "picture_file": "VARCHAR",
         },
     ),
     ArtistClusterAssignment: _Table(
@@ -169,6 +176,8 @@ _TABLES: dict[type, _Table] = {
             "cover_image_url": "VARCHAR",
             "original_year_confirmed": "BOOLEAN",
             "left_discogs": "BOOLEAN",
+            "kept_after_discogs": "BOOLEAN",
+            "new_purchase": "BOOLEAN",
         },
         {"format_tokens": _format_tokens},
     ),

@@ -10,6 +10,44 @@
   <div class="ss-alert mt-3" role="alert">{{ error }}</div>
   {% endif %}
 
+  {% if added %}
+  <div class="ss-alert mt-3">{{ ngettext('%(num)d rule added. It takes effect the next time a proposal is generated.', '%(num)d rules added. They take effect the next time a proposal is generated.', added) }}</div>
+  {% endif %}
+  {% if dismissed %}
+  <div class="ss-alert mt-3">{{ ngettext('%(num)d suggestion turned down; it will not be made again.', '%(num)d suggestions turned down; they will not be made again.', dismissed) }}</div>
+  {% endif %}
+
+  {% if suggested %}
+  <h2 class="mt-4" id="suggested">{{ _('Suggested from your layout') }}</h2>
+  <p class="ss-muted mt-1">{{ _('What stands in these cabinets now would be moved elsewhere by a proposal without rules. If that is how you want it, add the rules; nothing is added until you do.') }}</p>
+  {% for group in suggested %}
+  <div class="ss-card mt-3">
+    <div class="ss-card-head">
+      <h3 class="h6 mb-0">{{ group.cabinet.name }}</h3>
+      <div class="d-flex gap-2 flex-shrink-0">
+        <form method="post" action="{{ url_for('rules.decide_suggestions', cabinet_id=group.cabinet.id, choice='accept') }}">
+          <button class="ss-button ss-button-small ss-button-primary" type="submit">{{ ngettext('Add this rule', 'Add these %(num)d rules', group.rules | length) }}</button>
+        </form>
+        <form method="post" action="{{ url_for('rules.decide_suggestions', cabinet_id=group.cabinet.id, choice='dismiss') }}">
+          <button class="ss-button ss-button-small" type="submit">{{ _('Not needed') }}</button>
+        </form>
+      </div>
+    </div>
+    {% for rule in group.rules %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ rule.target }} &rarr; {{ group.cabinet.name }}</span>
+        <span class="ss-row-title">
+          {% if rule.kind == 'cluster' %}{{ _('Cluster') }}{% elif rule.kind == 'alias_group' %}{{ _('Family') }}{% elif rule.kind == 'artist' %}{{ _('Artist') }}{% else %}{{ _('Album') }}{% endif %}
+          &middot; {{ ngettext('%(num)d album', '%(num)d albums', rule.albums) }}{% if rule.proposed %} &middot; {{ _('a proposal would put it in %(cabinet)s', cabinet=rule.proposed) }}{% endif %}
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  {% endif %}
+
   <form class="ss-card mt-4" method="post" action="{{ url_for('rules.create') }}">
     <div class="ss-card-head"><h2>{{ _('Add a rule') }}</h2></div>
     <div class="ss-card-body d-flex flex-column gap-3">
@@ -40,6 +78,7 @@
       </div>
       <div><button class="ss-button ss-button-primary" type="submit">{{ _('Add rule') }}</button></div>
     </div>
+    <div class="ss-card-body ss-muted small" style="border-top: 1px solid var(--ss-border);">{{ _('A rule makes a cabinet exclusive: once a cabinet has a rule, a proposal fills it with what its rules bind there and nothing else.') }} {{ _('If this cabinet should be left out of sorting altogether, mark it so under Cabinets & shelves instead — then it needs no rule.') }}</div>
     {% for kind, names in options.items() %}
     <datalist id="options-{{ kind }}">{% for name in names %}<option value="{{ name }}"></option>{% endfor %}</datalist>
     {% endfor %}

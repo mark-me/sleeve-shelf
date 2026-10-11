@@ -11,7 +11,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 - **Phase 1a (load a layout, browse, search)** is built.
 - **Phase 1b (Discogs, sorting proposal, management screens)** is built, including starting without a workbook.
 - What remains from Phase 1 is listed under Open questions: two estimates to tune against real measurements, and one parked point from 1a (the upload and preview screens never looked at).
-- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync), artist pictures (hotlinked too; a sync names the artist, the enrichment fetches the picture) and the showcase (a top-loader holding a sample of an artist's albums, exchanged one for one with the shelf). The rest of Phase 2 (a suggested spot for new purchases, rule suggestions, cluster-shift confirmation) is not, and neither is Phase 3.
+- **Phase 2** has started: syncing the collection through the Discogs API on demand is built, and so are album covers (hotlinked from Discogs, filled by a sync), artist pictures (hotlinked too; a sync names the artist, the enrichment fetches the picture) and the showcase (a top-loader holding a sample of an artist's albums, exchanged one for one with the shelf). A new purchase whose styles point an artist to another cluster is reported and waits for a decision (`shifts.py`). Location rules are suggested from the layout as it stands (`rule_suggestions.py`), and covers and pictures are stored in `data/covers/` by the fetch run (`covers.py`). What is left of Phase 2 is a suggested spot for new purchases; Phase 3 is not started.
 
 ## Commands
 
@@ -21,6 +21,7 @@ uv run python -m pytest                            # run the tests
 uv run python -m sleeve_shelf load <workbook.xlsx> # load a layout workbook
 uv run python -m sleeve_shelf import-discogs <collection.csv>
 uv run python -m sleeve_shelf enrich               # fetch styles and original years from Discogs
+uv run python -m sleeve_shelf set-picture "<artist>" <image>  # add your own picture of an artist
 ```
 
 After changing UI copy, extract the translation template again and bring the catalogues up to date (a test fails otherwise):
@@ -44,7 +45,7 @@ Strict separation of concerns; keep it that way.
 | `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API (collection, release, master and artist), the format-string parser. |
 | `src/sleeve_shelf/sorting/` | The sorting engine: pure functions on domain objects (era bands, families, order, placement). |
 | `src/sleeve_shelf/persistence/` | `JsonStore` (one JSON file per entity, read and written through DuckDB) and the read queries for Browse. |
-| `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
+| `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `placing` (moving an album or artist by hand, and the rules that bind it), `showcase`, `shifts` (a purchase that points an artist to another cluster), `rule_suggestions`, `covers` (images kept in the data directory), `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
 | `src/sleeve_shelf/web/` | Flask blueprints, templates, static files. One blueprint per screen. |
 | `src/sleeve_shelf/web/pwa.py`, `web/static/icons/` | The web app manifest and the icons for installing the app on a phone. No service worker, on purpose. |
 | `docker/` | Dockerfile and Compose examples; `.github/workflows/docker.yml` builds and publishes the image. |
@@ -57,11 +58,11 @@ Things that are easy to get wrong:
 - **A new id comes from `store.next_id(Entity, items)`**, never from "highest + 1": ids of removed items stay taken, because saved versions and location rules still name them.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
 - **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
-- **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN. Album covers are the one exception: the browser fetches them from Discogs, and every page has to work without them.
+- **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN. Covers and pictures are shown from `data/covers/` once the fetch run has stored them (template filter `local_cover`), and from Discogs until then; every page has to work without them.
 
 ## Data
 
-The `data/` directory is git-ignored. It holds the collection as JSON files, the Discogs cache, saved layout versions in `placements/`, and `config.yaml` — which contains the Discogs token. Never commit it, and never print the token in full; the UI shows only its last four characters.
+The `data/` directory is git-ignored. It holds the collection as JSON files, the Discogs cache, saved layout versions in `placements/`, stored covers and pictures in `covers/`, pictures of artists Mark added himself in `artist_pictures/` (his own: never delete or overwrite them; the `.thumb.jpg` files next to them are small copies made with Pillow), and `config.yaml` — which contains the Discogs token. Never commit it, and never print the token in full; the UI shows only its last four characters.
 
 The Discogs cache (`discogs_releases.json`, `discogs_masters.json`, `discogs_artists.json`) took hours to fetch at Discogs' rate limit. Don't delete it, and don't start an enrichment while another is running.
 

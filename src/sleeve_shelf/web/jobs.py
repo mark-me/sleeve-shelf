@@ -5,7 +5,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 from sleeve_shelf.collection import enrich_collection
-from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
+from sleeve_shelf.ingestion.discogs_api import (
+    SECONDS_BETWEEN_IMAGES,
+    SECONDS_BETWEEN_REQUESTS,
+    DiscogsClient,
+    DiscogsError,
+)
 from sleeve_shelf.persistence import JsonStore
 
 
@@ -13,7 +18,7 @@ from sleeve_shelf.persistence import JsonStore
 # albums and pictures say how many of all of them are in: [done, total].
 _IDLE = {
     "done": 0, "total": 0, "outcome": None, "error": None,
-    "part": None, "albums": None, "pictures": None,
+    "part": None, "albums": None, "pictures": None, "covers": None,
 }
 
 
@@ -61,7 +66,12 @@ class EnrichmentJob:
         return self._thread is not None and self._thread.is_alive()
 
     def status(self) -> dict:
-        return {**self._state, "running": self.running}
+        state = dict(self._state)
+        # Images are fetched faster than lookups, so the time left counts them apart.
+        images = state["covers"][1] - state["covers"][0] if state["covers"] else 0
+        lookups = max(state["total"] - state["done"] - images, 0)
+        seconds = lookups * SECONDS_BETWEEN_REQUESTS + images * SECONDS_BETWEEN_IMAGES
+        return {**state, "running": self.running, "seconds_left": round(seconds)}
 
     def _run(self, data_dir: Path, token: str, client_factory: Callable) -> None:
         def progress(done: int, total: int) -> None:

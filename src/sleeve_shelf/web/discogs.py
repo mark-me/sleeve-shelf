@@ -18,10 +18,12 @@ from flask_babel import gettext as _
 from sleeve_shelf.collection import (
     confirm_match,
     import_discogs_collection,
+    keep_departed_album,
     reject_match,
     remove_departed_album,
 )
 from sleeve_shelf.config import load_settings, save_settings
+from sleeve_shelf.covers import cover_name, image_urls, missing_images, stored_names
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -33,6 +35,7 @@ from sleeve_shelf.domain import (
     Shelf,
 )
 from sleeve_shelf.ingestion.discogs_api import (
+    SECONDS_BETWEEN_IMAGES,
     SECONDS_BETWEEN_REQUESTS,
     DiscogsClient,
     DiscogsError,
@@ -105,10 +108,20 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     named = {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
     pictured = {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
     job = _job().status()
+    pictures_stored = store.load(ArtistEnrichment)
+    images = image_urls(albums, pictures_stored)
+    images_missing = len(missing_images(store, albums, pictures_stored))
+    names = stored_names(store.data_dir)
+    images_stored = sum(cover_name(url) in names for url in images)
     gone = [
         {"album": album, "artist": artists.get(album.artist_id, "")}
         for album in albums
-        if album.left_discogs
+        if album.left_discogs and not album.kept_after_discogs
+    ]
+    kept = [
+        {"album": album, "artist": artists.get(album.artist_id, "")}
+        for album in albums
+        if album.left_discogs and album.kept_after_discogs
     ]
     return (
         render_template(
@@ -125,14 +138,23 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             # How far each part is, as [done, total]; a running job knows it more precisely.
             albums_progress=job["albums"] or [len(linked & fetched), len(linked)],
             pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
+            covers_to_fetch_count=images_missing,
+            covers_progress=job["covers"] or [images_stored, len(images)],
+            covers_gone_count=len(images) - images_stored - images_missing,
             unnamed_count=sum(artist.discogs_artist_id is None for artist in artist_list),
             minutes=ceil(
-                (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS / 60
+                (
+                    (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS
+                    # Covers and pictures that are still to be named come on top of these.
+                    + images_missing * SECONDS_BETWEEN_IMAGES
+                )
+                / 60
             ),
-            minutes_left=ceil((job["total"] - job["done"]) * SECONDS_BETWEEN_REQUESTS / 60),
+            minutes_left=ceil(job["seconds_left"] / 60),
             seconds_per_lookup=SECONDS_BETWEEN_REQUESTS,
             proposals=proposals,
             gone=gone,
+            kept=kept,
             masked_token=f"••••{token[-4:]}" if token else None,
             job=job,
             error=error,
@@ -269,6 +291,19 @@ def remove_gone(album_id: int):
         artist=artists.get(album.artist_id, ""),
         place=_place(album_id),
     )
+
+
+@blueprint.post("/gone/<int:album_id>/keep")
+def keep_gone(album_id: int):
+    """The user still owns an album that left Discogs: stop asking about it."""
+    keep_departed_album(get_store(), album_id)
+    return redirect(url_for("discogs.index") + "#gone")
+
+
+@blueprint.post("/gone/<int:album_id>/ask-again")
+def ask_again(album_id: int):
+    keep_departed_album(get_store(), album_id, keep=False)
+    return redirect(url_for("discogs.index") + "#gone")
 
 
 def _place(album_id: int) -> str | None:

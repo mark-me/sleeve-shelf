@@ -3,7 +3,7 @@
 {% macro cover(url, show=true, size=44) %}
 {% if show %}
 {% if url %}
-<img class="ss-cover" src="{{ url }}" alt="" width="{{ size }}" height="{{ size }}" loading="lazy" referrerpolicy="no-referrer">
+<img class="ss-cover" src="{{ url | local_cover }}" alt="" width="{{ size }}" height="{{ size }}" loading="lazy" referrerpolicy="no-referrer">
 {% else %}
 <span class="ss-cover ss-cover-empty" style="width: {{ size }}px; height: {{ size }}px;" aria-hidden="true"></span>
 {% endif %}
@@ -29,7 +29,7 @@
     <div class="modal-content ss-cover-modal">
       <button class="btn-close ss-cover-close" type="button" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
       {# The large image has no src until the pop-up opens, so it is only fetched when asked for. #}
-      <img class="ss-cover-large" data-src="{{ large }}" alt="{{ label }}" referrerpolicy="no-referrer" data-bs-dismiss="modal">
+      <img class="ss-cover-large" data-src="{{ large | local_cover }}" alt="{{ label }}" referrerpolicy="no-referrer" data-bs-dismiss="modal">
     </div>
   </div>
 </div>

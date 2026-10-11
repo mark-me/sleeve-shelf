@@ -11,7 +11,7 @@
   {% if block.albums | length > 1 %}
   <button class="ss-block-count" type="button" data-split
           data-titles="{{ block.albums | map(attribute='title') | join('|') }}"
-          data-covers="{{ block.albums | map(attribute='cover_url') | map('default', '', true) | join('|') }}"
+          data-covers="{{ block.albums | map(attribute='cover_url') | map('default', '', true) | map('local_cover') | join('|') }}"
           aria-label="{{ _('Split %(artist)s into single albums', artist=block.artist) }}">{{ block.albums | length }}</button>
   {% else %}
   <span class="ss-block-title">{{ block.albums[0].title }}</span>

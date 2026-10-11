@@ -15,6 +15,8 @@ API_ROOT = "https://api.discogs.com"
 USER_AGENT = "SleeveShelf/0.1 +https://github.com/mark-me/sleeve-shelf"
 # Authenticated requests are limited to 60 per minute.
 SECONDS_BETWEEN_REQUESTS = 1.05
+# Images come from Discogs' image servers, not from the API, and are paced more lightly.
+SECONDS_BETWEEN_IMAGES = 0.25
 RATE_LIMIT_PAUSE_SECONDS = 60
 MAX_ATTEMPTS = 3
 COLLECTION_PAGE_SIZE = 100
@@ -115,6 +117,27 @@ class DiscogsClient:
                 return releases
             page += 1
 
+    def image(self, url: str) -> bytes | None:
+        """The bytes of a cover or picture; None when Discogs no longer has it."""
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            self._pace(SECONDS_BETWEEN_IMAGES)
+            try:
+                return self._fetch(request)
+            except urllib.error.HTTPError as error:
+                if error.code in (403, 404, 410):
+                    return None
+                if error.code == 429 and attempt < MAX_ATTEMPTS:
+                    self._sleep(RATE_LIMIT_PAUSE_SECONDS)
+                    continue
+                raise DiscogsError(f"Discogs answered with HTTP {error.code}.") from error
+            except (urllib.error.URLError, TimeoutError) as error:
+                if attempt < MAX_ATTEMPTS:
+                    self._sleep(5)
+                    continue
+                raise DiscogsError(f"Discogs could not be reached: {error}") from error
+        raise DiscogsError("Discogs kept limiting the requests.")
+
     def _get(self, path: str) -> dict | None:
         request = urllib.request.Request(
             API_ROOT + path,
@@ -143,10 +166,10 @@ class DiscogsClient:
                 raise DiscogsError(f"Discogs could not be reached: {error}") from error
         raise DiscogsError("Discogs kept limiting the requests.")
 
-    def _pace(self) -> None:
+    def _pace(self, seconds: float = SECONDS_BETWEEN_REQUESTS) -> None:
         now = self._clock()
         if self._last_request is not None:
-            wait = SECONDS_BETWEEN_REQUESTS - (now - self._last_request)
+            wait = seconds - (now - self._last_request)
             if wait > 0:
                 self._sleep(wait)
         self._last_request = self._clock()

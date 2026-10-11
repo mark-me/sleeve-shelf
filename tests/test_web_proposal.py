@@ -387,6 +387,9 @@ def test_dashboard_sums_up_and_lists_what_is_waiting(client):
     albums[0].left_discogs = True
     store.save(Album, albums)
     assert "1 album no longer in your Discogs collection" in client.get("/dashboard/").text
+    albums[0].kept_after_discogs = True
+    store.save(Album, albums)
+    assert "no longer in your Discogs collection" not in client.get("/dashboard/").text
     assert client.get("/").headers["Location"] == "/dashboard/"
 
 

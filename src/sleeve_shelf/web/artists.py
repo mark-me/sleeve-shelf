@@ -3,7 +3,16 @@
 from collections import Counter, defaultdict
 from urllib.parse import quote
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    redirect,
+    render_template,
+    request,
+    send_from_directory,
+    url_for,
+)
 from flask_babel import gettext as _
 
 from sleeve_shelf import artists as artist_service
@@ -20,6 +29,8 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
 from sleeve_shelf.proposal import takes_part
+from sleeve_shelf.shifts import cluster_shifts, keep_cluster
+from sleeve_shelf.artists import PICTURE_DIR, picture_thumb, remove_picture, set_picture
 from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
@@ -63,12 +74,23 @@ def index():
         picture.discogs_artist_id: picture.thumb_url for picture in store.load(ArtistEnrichment)
     }
 
+    def picture_of(artist: Artist) -> str | None:
+        # The user's own picture goes before the one from Discogs.
+        if artist.picture_file:
+            # The small copy: a list never loads a picture in full.
+            return url_for("artists.picture", name=picture_thumb(store, artist))
+        return pictures.get(artist.discogs_artist_id)
+
+
+    shifts = {shift.artist_id: shift for shift in cluster_shifts(store)}
+
     rows = []
     for artist in store.load(Artist):
         assignment = assignments.get(artist.id)
         sorted_albums = by_artist.get(artist.id, [])
         # Only artists that are sorted need a cluster and a start year.
-        attention = bool(sorted_albums) and (
+        shift = shifts.get(artist.id)
+        attention = shift is not None or bool(sorted_albums) and (
             assignment is None or not assignment.confirmed or artist.start_year is None
         )
         if (search and search not in artist.name.casefold()) or (only_attention and not attention):
@@ -78,13 +100,14 @@ def index():
         rows.append(
             {
                 "artist": artist,
-                "picture": pictures.get(artist.discogs_artist_id),
+                "picture": picture_of(artist),
                 "albums": album_counts[artist.id],
                 "cluster": cluster_names.get(assignment.cluster_id) if assignment else None,
                 "cluster_confirmed": bool(assignment and assignment.confirmed),
                 "derived_year": _earliest_year(sorted_albums),
                 "family": families.get(artist.alias_group_id),
                 "attention": attention,
+                "shift_to": cluster_names.get(shift.proposed_cluster_id) if shift else None,
                 "sorted": bool(sorted_albums),
             }
         )
@@ -129,19 +152,21 @@ def edit(artist_id: int):
     located = {row.album_id: row for row in BrowseQueries(store).artist_albums(artist_id)}
     family = next((g for g in store.load(AliasGroup) if g.id == artist.alias_group_id), None)
     derived_year = _earliest_year(sorted_albums)
+    shift = next((s for s in cluster_shifts(store) if s.artist_id == artist_id), None)
+    cluster_names = {cluster.id: cluster.name for cluster in clusters}
     return (
         render_template(
             "artists/edit.html",
             artist=artist,
-            picture=next(
-                (
-                    picture
-                    for picture in store.load(ArtistEnrichment)
-                    if picture.discogs_artist_id == artist.discogs_artist_id
-                ),
-                None,
-            ),
+            picture=_picture(store, artist),
+            picture_error=request.args.get("picture_error"),
             errors=errors,
+            shift=shift
+            and {
+                "current": cluster_names.get(shift.cluster_id),
+                "proposed": cluster_names.get(shift.proposed_cluster_id),
+                "titles": [album.title for album in albums if album.id in shift.album_ids],
+            },
             saved=request.args.get("saved") and not errors,
             clusters=clusters,
             assignment=assignment,
@@ -186,3 +211,62 @@ def move(artist_id: int):
 def confirm(artist_id: int):
     artist_service.confirm_cluster(get_store(), artist_id)
     return redirect(request.form.get("next") or url_for("artists.index"))
+
+
+@blueprint.post("/<int:artist_id>/shift/<any(accept, keep):choice>")
+def decide_shift(artist_id: int, choice: str):
+    """A new purchase points the artist to another cluster: move it there, or keep it where it is."""
+    store = get_store()
+    shift = next((s for s in cluster_shifts(store) if s.artist_id == artist_id), None)
+    if shift is not None and choice == "accept":
+        artist_service.set_cluster(store, artist_id, shift.proposed_cluster_id)
+    elif shift is not None:
+        keep_cluster(store, artist_id)
+    return redirect(request.form.get("next") or url_for("artists.edit", artist_id=artist_id))
+
+
+def _picture(store, artist: Artist):
+    """What the artist's page shows as its picture: the user's own, else the one from Discogs."""
+    if artist.picture_file:
+        return {
+            "thumb_url": url_for("artists.picture", name=picture_thumb(store, artist)),
+            "image_url": url_for("artists.picture", name=artist.picture_file),
+            "own": True,
+        }
+    found = next(
+        (
+            picture
+            for picture in store.load(ArtistEnrichment)
+            if picture.discogs_artist_id == artist.discogs_artist_id
+        ),
+        None,
+    )
+    if found is None:
+        return None
+    return {"thumb_url": found.thumb_url, "image_url": found.image_url, "own": False}
+
+
+@blueprint.get("/pictures/<name>")
+def picture(name: str):
+    """A picture the user added; its name changes with its contents, so it can be cached for long."""
+    return send_from_directory(
+        current_app.config["DATA_DIR"] / PICTURE_DIR, name, max_age=365 * 24 * 60 * 60
+    )
+
+
+@blueprint.post("/<int:artist_id>/picture")
+def upload_picture(artist_id: int):
+    file = request.files.get("picture")
+    data = file.read() if file is not None and file.filename else b""
+    error = None
+    if not data:
+        error = _("Choose an image to upload.")
+    elif not set_picture(get_store(), artist_id, data):
+        error = _("That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB.")
+    return redirect(url_for("artists.edit", artist_id=artist_id, picture_error=error))
+
+
+@blueprint.post("/<int:artist_id>/picture/remove")
+def delete_picture(artist_id: int):
+    remove_picture(get_store(), artist_id)
+    return redirect(url_for("artists.edit", artist_id=artist_id))
