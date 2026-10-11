@@ -86,6 +86,13 @@ Run the tests with `uv run python -m pytest`.
 
 Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
 
+## AI Transparency
+
+AI tools, including Claude by Anthropic, were used during
+the development of this project.
+
+See [AI_DISCLOSURE.md](./AI_DISCLOSURE.md) for details.
+
 ## License
 
 Sleeve & Shelf is licensed under the [MIT License](LICENSE).
