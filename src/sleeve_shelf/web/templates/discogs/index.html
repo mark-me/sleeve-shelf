@@ -47,7 +47,7 @@
   <section class="ss-card mt-4" id="enrich">
     <div class="ss-card-head"><h2>2 · {{ _('Fetch styles, original years and pictures') }}</h2></div>
     <div class="ss-card-body">
-      <p>{{ _('Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. You can stop and continue at any time: nothing is fetched twice.') }}</p>
+      <p>{{ _('Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. Last, the covers and pictures themselves are stored here, so the pages show them without Discogs. You can stop and continue at any time: nothing is fetched twice.') }}</p>
 
       {% if token_error %}
       <div class="ss-alert mb-3" role="alert">{{ token_error }}</div>
@@ -81,13 +81,17 @@
       <div id="job" data-status-url="{{ url_for('discogs.enrichment_status') }}" data-running="{{ 'true' if job.running else 'false' }}" data-seconds-per-lookup="{{ seconds_per_lookup }}">
         {{ part_bar('albums', _('Styles and original years'), albums_progress, _('%(done)s of %(total)s linked albums', done=albums_progress[0], total=albums_progress[1])) }}
         {{ part_bar('pictures', _('Artist pictures'), pictures_progress, _('%(done)s of %(total)s artists', done=pictures_progress[0], total=pictures_progress[1])) }}
+        {{ part_bar('covers', _('Images stored here'), covers_progress, _('%(done)s of %(total)s images', done=covers_progress[0], total=covers_progress[1])) }}
+        {% if covers_gone_count %}
+        <p class="ss-muted small">{{ ngettext('%(num)d image is no longer at Discogs and could not be stored.', '%(num)d images are no longer at Discogs and could not be stored.', covers_gone_count) }}</p>
+        {% endif %}
         {% if unnamed_count %}
         <p class="ss-muted small">{{ ngettext('%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone.', '%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone.', unnamed_count) }}</p>
         {% endif %}
 
         {% if job.running %}
         <p class="mb-3">
-          <span class="fw-semibold" id="job-part">{% if job.part == 'pictures' %}{{ _('Now fetching the artist pictures.') }}{% else %}{{ _('Now fetching styles and original years.') }}{% endif %}</span>
+          <span class="fw-semibold" id="job-part">{% if job.part == 'pictures' %}{{ _('Now fetching the artist pictures.') }}{% elif job.part == 'covers' %}{{ _('Now storing the covers and pictures here.') }}{% else %}{{ _('Now fetching styles and original years.') }}{% endif %}</span>
           <span id="job-text">{{ _('%(done)s of about %(total)s lookups in this run.', done=job.done, total=job.total) }}</span>
           <span id="job-left">{% if minutes_left > 1 %}{{ _('About %(minutes)s minutes left.', minutes=minutes_left) }}{% else %}{{ _('Less than a minute left.') }}{% endif %}</span>
         </p>
@@ -95,7 +99,7 @@
           <button class="ss-button" type="submit">{{ _('Stop') }}</button>
         </form>
         {% else %}
-        {% set nothing_to_fetch = not to_fetch_count and not pictures_to_fetch_count %}
+        {% set nothing_to_fetch = not to_fetch_count and not pictures_to_fetch_count and not covers_to_fetch_count %}
         {% if job.outcome == 'stopped' %}
         <div class="ss-alert mb-3">{{ _('Stopped after %(done)d lookups. Start again to continue: nothing is fetched twice.', done=job.done) }}</div>
         {% elif job.outcome == 'failed' %}
@@ -113,6 +117,9 @@
           {% endif %}
           {% if pictures_to_fetch_count %}
           {{ ngettext('The picture of %(num)d artist still has to be fetched.', 'The pictures of %(num)d artists still have to be fetched.', pictures_to_fetch_count) }}
+          {% endif %}
+          {% if covers_to_fetch_count %}
+          {{ ngettext('The image of %(num)d cover or artist still has to be stored.', 'The images of %(num)d covers and artists still have to be stored.', covers_to_fetch_count) }}
           {% endif %}
           {{ ngettext('That takes about %(num)d minute at most.', 'That takes about %(num)d minutes at most.', minutes) }}
           {% endif %}
@@ -197,6 +204,8 @@
     const texts = {
       albums: {{ _('%(done)s of %(total)s linked albums', done='__done__', total='__total__') | tojson }},
       pictures: {{ _('%(done)s of %(total)s artists', done='__done__', total='__total__') | tojson }},
+      covers: {{ _('%(done)s of %(total)s images', done='__done__', total='__total__') | tojson }},
+      nowCovers: {{ _('Now storing the covers and pictures here.') | tojson }},
       run: {{ _('%(done)s of about %(total)s lookups in this run.', done='__done__', total='__total__') | tojson }},
       nowAlbums: {{ _('Now fetching styles and original years.') | tojson }},
       nowPictures: {{ _('Now fetching the artist pictures.') | tojson }},
@@ -220,9 +229,11 @@
         }
         show("albums", status.albums);
         show("pictures", status.pictures);
-        document.getElementById("job-part").textContent = status.part === "pictures" ? texts.nowPictures : texts.nowAlbums;
+        show("covers", status.covers);
+        document.getElementById("job-part").textContent =
+          status.part === "pictures" ? texts.nowPictures : status.part === "covers" ? texts.nowCovers : texts.nowAlbums;
         document.getElementById("job-text").textContent = fill(texts.run, status.done, status.total);
-        const minutes = Math.ceil(((status.total - status.done) * Number(job.dataset.secondsPerLookup)) / 60);
+        const minutes = Math.ceil(status.seconds_left / 60);
         document.getElementById("job-left").textContent = minutes > 1 ? texts.minutes.replace("__minutes__", minutes) : texts.soon;
       } catch (error) {
         // A missed update is harmless; the next one catches up.

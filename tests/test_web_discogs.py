@@ -7,6 +7,7 @@ import pytest
 
 from sleeve_shelf import create_app
 from sleeve_shelf.config import load_settings
+from sleeve_shelf.covers import cover_name
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -43,6 +44,9 @@ class _Client:
 
     def master(self, master_id):
         return MasterEnrichment(master_id, 1973, datetime(2026, 10, 8))
+
+    def image(self, url):
+        return b"jpeg"
 
     def collection(self):
         return COLLECTION
@@ -358,9 +362,13 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     app.extensions["enrichment_job"].wait(10)
 
     page = client.get("/artists/1").text
-    assert 'src="https://i.discogs.com/tw150.jpeg"' in page and "Show the picture larger" in page
-    # The large picture is only fetched when the pop-up opens.
-    assert 'data-src="https://i.discogs.com/tw.jpeg"' in page
+    # Fetched, the picture is shown from the data directory, not from Discogs any more.
+    thumb = cover_name("https://i.discogs.com/tw150.jpeg")
+    large = cover_name("https://i.discogs.com/tw.jpeg")
+    assert f'src="/covers/{thumb}"' in page and "Show the picture larger" in page
+    assert f'data-src="/covers/{large}"' in page
+    assert "i.discogs.com/tw" not in page
+    assert client.get(f"/covers/{thumb}").data == b"jpeg"
     done = client.get("/discogs/").text
     assert "still has to be fetched" not in done
     assert "Everything has been fetched." in done and "1 of 1 artists" in done
@@ -368,7 +376,7 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     assert "ss-cover-zoom" not in client.get("/artists/2").text
     # In the list the pictured artist shows its picture, and the other keeps the space.
     listed = client.get("/artists/").text
-    assert 'src="https://i.discogs.com/tw150.jpeg"' in listed and "ss-cover-empty" in listed
+    assert f'src="/covers/{thumb}"' in listed and "ss-cover-empty" in listed
 
 
 def test_an_album_that_left_discogs_can_be_kept_without_being_asked_again(app, client):

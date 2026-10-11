@@ -23,6 +23,7 @@ from sleeve_shelf.collection import (
     remove_departed_album,
 )
 from sleeve_shelf.config import load_settings, save_settings
+from sleeve_shelf.covers import cover_name, image_urls, missing_images, stored_names
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -34,6 +35,7 @@ from sleeve_shelf.domain import (
     Shelf,
 )
 from sleeve_shelf.ingestion.discogs_api import (
+    SECONDS_BETWEEN_IMAGES,
     SECONDS_BETWEEN_REQUESTS,
     DiscogsClient,
     DiscogsError,
@@ -106,6 +108,11 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     named = {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
     pictured = {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
     job = _job().status()
+    pictures_stored = store.load(ArtistEnrichment)
+    images = image_urls(albums, pictures_stored)
+    images_missing = len(missing_images(store, albums, pictures_stored))
+    names = stored_names(store.data_dir)
+    images_stored = sum(cover_name(url) in names for url in images)
     gone = [
         {"album": album, "artist": artists.get(album.artist_id, "")}
         for album in albums
@@ -131,11 +138,19 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             # How far each part is, as [done, total]; a running job knows it more precisely.
             albums_progress=job["albums"] or [len(linked & fetched), len(linked)],
             pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
+            covers_to_fetch_count=images_missing,
+            covers_progress=job["covers"] or [images_stored, len(images)],
+            covers_gone_count=len(images) - images_stored - images_missing,
             unnamed_count=sum(artist.discogs_artist_id is None for artist in artist_list),
             minutes=ceil(
-                (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS / 60
+                (
+                    (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS
+                    # Covers and pictures that are still to be named come on top of these.
+                    + images_missing * SECONDS_BETWEEN_IMAGES
+                )
+                / 60
             ),
-            minutes_left=ceil((job["total"] - job["done"]) * SECONDS_BETWEEN_REQUESTS / 60),
+            minutes_left=ceil(job["seconds_left"] / 60),
             seconds_per_lookup=SECONDS_BETWEEN_REQUESTS,
             proposals=proposals,
             gone=gone,

@@ -44,6 +44,7 @@ def index():
         "families": url_for("families.index"),
         "artists": url_for("artists.index", show="attention"),
         "shifts": url_for("artists.index", show="attention"),
+        "rule_suggestions": url_for("rules.index") + "#suggested",
         "widths": url_for("albums.widths"),
         "unlinked": url_for("discogs.index"),
         "gone": url_for("discogs.index") + "#gone",

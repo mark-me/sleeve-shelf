@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 20:05+0200\n"
+"POT-Creation-Date: 2026-10-11 20:12+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,10 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
+
+#: src/sleeve_shelf/rule_suggestions.py
+msgid "Suggested from the layout"
+msgstr ""
 
 #: src/sleeve_shelf/web/albums.py
 msgid "A width has to be a number of centimetres above zero."
@@ -732,6 +736,7 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
 #, python-format
 msgid "%(num)d album"
@@ -931,6 +936,13 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
+msgid "%(num)d location rule suggested from your layout"
+msgid_plural "%(num)d location rules suggested from your layout"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
 msgid "%(num)d box set or bundle with a rough width"
 msgid_plural "%(num)d box sets and bundles with a rough width"
 msgstr[0] ""
@@ -979,6 +991,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Move the artist to that cluster, or keep it where it is; nothing moves by itself."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Add them or turn them down; none is made by itself."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1201,7 +1217,7 @@ msgid "Fetch styles, original years and pictures"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. You can stop and continue at any time: nothing is fetched twice."
+msgid "Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. Last, the covers and pictures themselves are stored here, so the pages show them without Discogs. You can stop and continue at any time: nothing is fetched twice."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1246,11 +1262,31 @@ msgid "%(done)s of %(total)s artists"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Images stored here"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(done)s of %(total)s images"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d image is no longer at Discogs and could not be stored."
+msgid_plural "%(num)d images are no longer at Discogs and could not be stored."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
 msgid "%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone."
 msgid_plural "%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone."
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Now storing the covers and pictures here."
+msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Now fetching styles and original years."
@@ -1311,6 +1347,13 @@ msgstr[1] ""
 #, python-format
 msgid "The picture of %(num)d artist still has to be fetched."
 msgid_plural "The pictures of %(num)d artists still have to be fetched."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "The image of %(num)d cover or artist still has to be stored."
+msgid_plural "The images of %(num)d covers and artists still have to be stored."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1737,6 +1780,48 @@ msgid "A rule binds a cluster, a family, an artist, or a single album to a cabin
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
+#, python-format
+msgid "%(num)d rule added. It takes effect the next time a proposal is generated."
+msgid_plural "%(num)d rules added. They take effect the next time a proposal is generated."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+#, python-format
+msgid "%(num)d suggestion turned down; it will not be made again."
+msgid_plural "%(num)d suggestions turned down; they will not be made again."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Suggested from your layout"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "What stands in these cabinets now would be moved elsewhere by a proposal without rules. If that is how you want it, add the rules; nothing is added until you do."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+#, python-format
+msgid "Add this rule"
+msgid_plural "Add these %(num)d rules"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Not needed"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+#, python-format
+msgid "a proposal would put it in %(cabinet)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Add a rule"
 msgstr ""
 
@@ -1777,15 +1862,19 @@ msgid "Add rule"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
+msgid "A rule makes a cabinet exclusive: once a cabinet has a rule, a proposal fills it with what its rules bind there and nothing else."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "If this cabinet should be left out of sorting altogether, mark it so under Cabinets & shelves instead — then it needs no rule."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Rules"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "(no longer exists)"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Album"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html

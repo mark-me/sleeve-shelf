@@ -29,6 +29,7 @@ from sleeve_shelf.domain import (
     WidthConstants,
     settle_order,
 )
+from sleeve_shelf.covers import download_images, image_urls, missing_images
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
 from sleeve_shelf.ingestion.initial_load import InitialLoad
@@ -588,7 +589,18 @@ def enrich_collection(
     finally:
         _save_cache(store, releases, masters, pictures)
     apply_enrichment(store)
-    return done
+    # Last of all: the images themselves, so the pages show them without Discogs.
+    urls = missing_images(store, albums, pictures.values())
+    total += len(urls)
+    stored = len(image_urls(albums, pictures.values())) - len(urls)
+    part("covers", stored, stored + len(urls))
+
+    def image_progress(count: int) -> None:
+        part("covers", stored + count, stored + len(urls))
+        progress(done + count, total)
+
+    download_images(store, client, urls, image_progress)
+    return done + len(urls)
 
 
 def _save_cache(store: JsonStore, releases: dict, masters: dict, pictures: dict) -> None:

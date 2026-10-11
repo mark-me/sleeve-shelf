@@ -13,6 +13,11 @@ from sleeve_shelf.domain import (
     LocationRuleTarget,
     in_order,
 )
+from sleeve_shelf.rule_suggestions import (
+    accept_suggestions,
+    dismiss_suggestions,
+    rule_suggestions,
+)
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("rules", __name__, url_prefix="/rules")
@@ -46,9 +51,26 @@ def index():
         }
         for rule in store.load(LocationRule)
     ]
+    suggested: dict[int, list[dict]] = {}
+    for suggestion in rule_suggestions(store):
+        suggested.setdefault(suggestion.cabinet_id, []).append(
+            {
+                "kind": suggestion.target_type.value,
+                "target": targets[suggestion.target_type].get(suggestion.target_id, ""),
+                "albums": suggestion.album_count,
+                "proposed": cabinet_names.get(suggestion.proposed_cabinet_id),
+            }
+        )
     return render_template(
         "rules/index.html",
         rules=rules,
+        suggested=[
+            {"cabinet": cabinet, "rules": suggested[cabinet.id]}
+            for cabinet in cabinets
+            if cabinet.id in suggested
+        ],
+        added=request.args.get("added", type=int),
+        dismissed=request.args.get("dismissed", type=int),
         cabinets=cabinets,
         options={
             kind.value: sorted(set(names.values()), key=str.casefold)
@@ -98,6 +120,15 @@ def delete(rule_id: int):
     store = get_store()
     store.save(LocationRule, [rule for rule in store.load(LocationRule) if rule.id != rule_id])
     return _back()
+
+
+@blueprint.post("/suggestions/<int:cabinet_id>/<any(accept, dismiss):choice>")
+def decide_suggestions(cabinet_id: int, choice: str):
+    """Make the rules the layout hints at for a cabinet, or turn them down for good."""
+    store = get_store()
+    if choice == "accept":
+        return redirect(url_for("rules.index", added=accept_suggestions(store, cabinet_id)))
+    return redirect(url_for("rules.index", dismissed=dismiss_suggestions(store, cabinet_id)))
 
 
 def _back(error: str | None = None):

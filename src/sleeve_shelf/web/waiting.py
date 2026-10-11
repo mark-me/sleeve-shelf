@@ -16,6 +16,7 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
 from sleeve_shelf.proposal import takes_part
+from sleeve_shelf.rule_suggestions import rule_suggestions
 from sleeve_shelf.shifts import cluster_shifts
 
 # The shelf fill is a query over all of these; it fails while one is missing.
@@ -45,6 +46,7 @@ def waiting_counts(store: JsonStore) -> dict[str, int]:
         "families": len(family_suggestions(store)),
         "artists": len(to_check),
         "shifts": len(shifted),
+        "rule_suggestions": len(rule_suggestions(store)),
         # An artist can be in both; the menu and the steps count it once.
         "artists_in_all": len(to_check | shifted),
         "widths": sum(1 for album in sorted_albums if not album.width_confirmed),
@@ -78,5 +80,6 @@ def _menu_counts(store: JsonStore) -> dict[str, int]:
         "artists": counts["artists_in_all"],
         "families": counts["families"],
         "storage": counts["overfull"],
+        "rules": counts["rule_suggestions"],
         "discogs": counts["matches"] + counts["gone"],
     }

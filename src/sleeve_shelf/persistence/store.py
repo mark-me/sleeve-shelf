@@ -24,6 +24,7 @@ from sleeve_shelf.domain import (
     EraBand,
     EraBandSource,
     FamilyDismissal,
+    RuleSuggestionDismissal,
     FormatTokens,
     LocationRule,
     LocationRuleTarget,
@@ -125,6 +126,11 @@ _TABLES: dict[type, _Table] = {
         {"target_type": LocationRuleTarget},
     ),
     FamilyDismissal: _Table("family_dismissals.json", {"anchor_artist_id": "INTEGER"}),
+    RuleSuggestionDismissal: _Table(
+        "rule_suggestion_dismissals.json",
+        {"target_type": "VARCHAR", "target_id": "INTEGER", "cabinet_id": "INTEGER"},
+        {"target_type": LocationRuleTarget},
+    ),
     Artist: _Table(
         "artists.json",
         {

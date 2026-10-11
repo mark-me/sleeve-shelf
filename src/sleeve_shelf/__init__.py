@@ -22,6 +22,7 @@ from sleeve_shelf.web import (
     artists,
     browse,
     clusters,
+    covers,
     dashboard,
     discogs,
     families,
@@ -66,6 +67,8 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(dashboard.blueprint)
     app.register_blueprint(albums.blueprint)
     app.register_blueprint(pwa.blueprint)
+    app.register_blueprint(covers.blueprint)
+    app.add_template_filter(covers.local_cover, "local_cover")
 
     @app.before_request
     def reject_cross_site_posts():
