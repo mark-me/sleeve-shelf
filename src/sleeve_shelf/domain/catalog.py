@@ -31,6 +31,8 @@ class Artist:
     start_year: int | None = None
     # The artist on Discogs, as a sync found it on the artist's releases.
     discogs_artist_id: int | None = None
+    # The file of a picture the user added, in the data directory; it goes before Discogs' own.
+    picture_file: str | None = None
 
 
 @dataclass(slots=True)

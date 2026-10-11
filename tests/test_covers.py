@@ -147,3 +147,96 @@ def test_discogs_screen_says_how_many_images_are_stored(app, client):
     assert "3 of 4 images" in page
     assert "still have to be stored" not in page
     assert "1 image is no longer at Discogs and could not be stored." in page
+
+
+def _image(kind, size, colour="red"):
+    import io
+
+    from PIL import Image
+
+    out = io.BytesIO()
+    Image.new("RGBA" if kind == "PNG" else "RGB", size, colour).save(out, kind)
+    return out.getvalue()
+
+
+PNG = _image("PNG", (1200, 800))
+JPEG = _image("JPEG", (40, 40), "blue")
+
+
+def test_user_can_add_a_picture_of_an_artist_that_goes_before_discogs(app, client):
+    import io
+
+    from PIL import Image
+
+    page = client.get("/artists/1").text
+    assert "This picture comes from Discogs." in page and f'src="{PICTURE}"' in page
+
+    client.post("/artists/1/picture", data={"picture": (io.BytesIO(PNG), "low.png")})
+
+    artist = _store(app).load(Artist)[0]
+    assert artist.picture_file.startswith("1-") and artist.picture_file.endswith(".png")
+    own = f"/artists/pictures/{artist.picture_file}"
+    page = client.get("/artists/1").text
+    # A small copy was made at once; the list and the page show that, the pop-up the full one.
+    small = own.replace(".png", ".thumb.jpg")
+    assert f'src="{small}"' in page and f'data-src="{own}"' in page and PICTURE not in page
+    assert "This is a picture you added" in page
+    listed = client.get("/artists/").text
+    assert f'src="{small}"' in listed and own not in listed
+    assert client.get(own).data == PNG
+    thumb = Image.open(io.BytesIO(client.get(small).data))
+    assert (thumb.format, thumb.size) == ("JPEG", (300, 200))
+    assert len(client.get(small).data) < len(PNG)
+    # It is kept in the data directory, apart from what was downloaded from Discogs.
+    assert (_store(app).data_dir / "artist_pictures" / artist.picture_file).exists()
+
+    # Replacing it leaves one file; removing it brings the Discogs picture back.
+    client.post("/artists/1/picture", data={"picture": (io.BytesIO(JPEG), "low.jpg")})
+    names = sorted(p.name for p in (_store(app).data_dir / "artist_pictures").iterdir())
+    assert len(names) == 2 and names[1] == names[0].replace(".jpg", ".thumb.jpg")
+    client.post("/artists/1/picture/remove")
+    assert _store(app).load(Artist)[0].picture_file is None
+    assert not list((_store(app).data_dir / "artist_pictures").iterdir())
+    assert f'src="{PICTURE}"' in client.get("/artists/1").text
+
+
+def test_a_file_that_is_no_image_is_refused_as_a_picture(app, client):
+    import io
+
+    response = client.post(
+        "/artists/1/picture",
+        # It starts like a PNG, but there is no picture in it.
+        data={"picture": (io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"not an image"), "x.png")},
+        follow_redirects=True,
+    )
+
+    assert "not a JPEG, PNG, GIF or WebP image" in response.text
+    assert _store(app).load(Artist)[0].picture_file is None
+
+
+def test_a_picture_can_be_set_from_the_command_line(app, tmp_path, monkeypatch, capsys):
+    from sleeve_shelf import main
+
+    image = tmp_path / "low.jpg"
+    image.write_bytes(JPEG)
+    monkeypatch.setenv("SLEEVE_SHELF_DATA_DIR", str(app.config["DATA_DIR"]))
+
+    main(["set-picture", "low", str(image)])
+
+    assert "Picture of Low set" in capsys.readouterr().out
+    assert _store(app).load(Artist)[0].picture_file.endswith(".jpg")
+
+
+def test_a_picture_from_before_gets_its_small_copy_when_first_shown(app, client):
+    store = _store(app)
+    directory = store.data_dir / "artist_pictures"
+    directory.mkdir()
+    (directory / "1-old.png").write_bytes(PNG)
+    artists = store.load(Artist)
+    artists[0].picture_file = "1-old.png"
+    store.save(Artist, artists)
+
+    listed = client.get("/artists/").text
+
+    assert 'src="/artists/pictures/1-old.thumb.jpg"' in listed
+    assert (directory / "1-old.thumb.jpg").exists()

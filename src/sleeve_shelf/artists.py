@@ -1,4 +1,10 @@
-"""Application services for curating an artist: start year and cluster."""
+"""Application services for curating an artist: start year, cluster and picture."""
+
+import hashlib
+import io
+from pathlib import Path
+
+from PIL import Image, ImageOps
 
 from sleeve_shelf.collection import ensure_cluster_order
 from sleeve_shelf.domain import Album, Artist, ArtistClusterAssignment, Cluster
@@ -57,3 +63,113 @@ def _clear_purchases(store: JsonStore, artist_id: int) -> None:
         for album in marked:
             album.new_purchase = False
         store.save(Album, albums)
+
+
+PICTURE_DIR = "artist_pictures"
+MAX_PICTURE_BYTES = 5 * 1024 * 1024
+# The longest side of the small copy made for lists: twice the 150 px a picture is shown at
+# on the artist's page, so it stays sharp on a phone.
+THUMB_PIXELS = 300
+# What an image file starts with, and the extension it is kept under.
+_IMAGE_KINDS = (
+    (b"\xff\xd8\xff", "jpg"),
+    (b"\x89PNG\r\n\x1a\n", "png"),
+    (b"GIF87a", "gif"),
+    (b"GIF89a", "gif"),
+)
+
+
+def picture_extension(data: bytes) -> str | None:
+    """The kind of image the bytes are — JPEG, PNG, GIF or WebP — or None for anything else."""
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    return next((ext for start, ext in _IMAGE_KINDS if data.startswith(start)), None)
+
+
+def thumb_name(picture_file: str) -> str:
+    """The file the small copy of a picture is kept under, next to the picture itself."""
+    return Path(picture_file).stem + ".thumb.jpg"
+
+
+def _thumbnail(data: bytes) -> bytes | None:
+    """A small JPEG copy of an image, upright and without transparency; None if it can't be read."""
+    try:
+        with Image.open(io.BytesIO(data)) as image:
+            image = ImageOps.exif_transpose(image)
+            image.thumbnail((THUMB_PIXELS, THUMB_PIXELS))
+            if image.mode != "RGB":
+                # JPEG has no transparency: lay the picture on white.
+                image = image.convert("RGBA")
+                background = Image.new("RGB", image.size, "white")
+                background.paste(image, mask=image.getchannel("A"))
+                image = background
+            out = io.BytesIO()
+            image.save(out, "JPEG", quality=85, optimize=True)
+            return out.getvalue()
+    except Exception:  # noqa: BLE001 - whatever is wrong with the file, it is no usable image
+        return None
+
+
+def picture_thumb(store: JsonStore, artist: Artist) -> str | None:
+    """The small copy of the user's own picture, made now if a picture from before has none.
+
+    Returns its file name, or the picture's own when no small copy can be made.
+    """
+    if not artist.picture_file:
+        return None
+    directory = Path(store.data_dir) / PICTURE_DIR
+    name = thumb_name(artist.picture_file)
+    if (directory / name).exists():
+        return name
+    source = directory / artist.picture_file
+    small = _thumbnail(source.read_bytes()) if source.exists() else None
+    if small is None:
+        return artist.picture_file
+    (directory / name).write_bytes(small)
+    return name
+
+
+def set_picture(store: JsonStore, artist_id: int, data: bytes) -> bool:
+    """Keep the user's own picture of an artist; it is shown instead of the one from Discogs.
+
+    The file goes into the data directory, apart from the images downloaded from
+    Discogs, under a name that changes with its contents. Returns False when the
+    bytes are no image the app can show, or are too large. A small copy is
+    made at once, for the lists: those never load the picture in full.
+    """
+    extension = picture_extension(data)
+    if extension is None or len(data) > MAX_PICTURE_BYTES:
+        return False
+    small = _thumbnail(data)
+    if small is None:
+        return False
+    artists = store.load(Artist)
+    artist = next((a for a in artists if a.id == artist_id), None)
+    if artist is None:
+        return False
+    directory = Path(store.data_dir) / PICTURE_DIR
+    directory.mkdir(parents=True, exist_ok=True)
+    name = f"{artist_id}-{hashlib.sha1(data).hexdigest()[:10]}.{extension}"
+    partial = directory / (name + ".part")
+    partial.write_bytes(data)
+    partial.replace(directory / name)
+    (directory / thumb_name(name)).write_bytes(small)
+    if artist.picture_file and artist.picture_file != name:
+        (directory / artist.picture_file).unlink(missing_ok=True)
+        (directory / thumb_name(artist.picture_file)).unlink(missing_ok=True)
+    artist.picture_file = name
+    store.save(Artist, artists)
+    return True
+
+
+def remove_picture(store: JsonStore, artist_id: int) -> None:
+    """Take the user's own picture away again; the one from Discogs, if any, shows once more."""
+    artists = store.load(Artist)
+    artist = next((a for a in artists if a.id == artist_id), None)
+    if artist is None or not artist.picture_file:
+        return
+    directory = Path(store.data_dir) / PICTURE_DIR
+    (directory / artist.picture_file).unlink(missing_ok=True)
+    (directory / thumb_name(artist.picture_file)).unlink(missing_ok=True)
+    artist.picture_file = None
+    store.save(Artist, artists)

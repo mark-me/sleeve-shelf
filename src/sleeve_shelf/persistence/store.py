@@ -139,6 +139,7 @@ _TABLES: dict[type, _Table] = {
             "alias_group_id": "INTEGER",
             "start_year": "INTEGER",
             "discogs_artist_id": "INTEGER",
+            "picture_file": "VARCHAR",
         },
     ),
     ArtistClusterAssignment: _Table(

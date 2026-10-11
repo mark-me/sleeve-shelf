@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-11 20:12+0200\n"
+"POT-Creation-Date: 2026-10-11 20:24+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -28,6 +28,14 @@ msgstr ""
 
 #: src/sleeve_shelf/web/artists.py
 msgid "The start year has to be a year, like 1969."
+msgstr ""
+
+#: src/sleeve_shelf/web/artists.py
+msgid "Choose an image to upload."
+msgstr ""
+
+#: src/sleeve_shelf/web/artists.py
+msgid "That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB."
 msgstr ""
 
 #: src/sleeve_shelf/web/clusters.py
@@ -461,6 +469,42 @@ msgid "Stand the %(num)d album of this artist on"
 msgid_plural "Stand all %(num)d albums of this artist on"
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Picture"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "This is a picture you added; it is shown instead of the one from Discogs."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "This picture comes from Discogs. Add your own to show that one instead."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Discogs has no picture for this artist. You can add one yourself."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Image file"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Replace picture"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Add picture"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Remove my picture"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "JPEG, PNG, GIF or WebP, at most 5 MB. It is kept with your data and never replaced by a sync."
+msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/artists/index.html

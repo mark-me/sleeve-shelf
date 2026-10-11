@@ -21,6 +21,7 @@ uv run python -m pytest                            # run the tests
 uv run python -m sleeve_shelf load <workbook.xlsx> # load a layout workbook
 uv run python -m sleeve_shelf import-discogs <collection.csv>
 uv run python -m sleeve_shelf enrich               # fetch styles and original years from Discogs
+uv run python -m sleeve_shelf set-picture "<artist>" <image>  # add your own picture of an artist
 ```
 
 After changing UI copy, extract the translation template again and bring the catalogues up to date (a test fails otherwise):
@@ -61,7 +62,7 @@ Things that are easy to get wrong:
 
 ## Data
 
-The `data/` directory is git-ignored. It holds the collection as JSON files, the Discogs cache, saved layout versions in `placements/`, stored covers and pictures in `covers/`, and `config.yaml` — which contains the Discogs token. Never commit it, and never print the token in full; the UI shows only its last four characters.
+The `data/` directory is git-ignored. It holds the collection as JSON files, the Discogs cache, saved layout versions in `placements/`, stored covers and pictures in `covers/`, pictures of artists Mark added himself in `artist_pictures/` (his own: never delete or overwrite them; the `.thumb.jpg` files next to them are small copies made with Pillow), and `config.yaml` — which contains the Discogs token. Never commit it, and never print the token in full; the UI shows only its last four characters.
 
 The Discogs cache (`discogs_releases.json`, `discogs_masters.json`, `discogs_artists.json`) took hours to fetch at Discogs' rate limit. Don't delete it, and don't start an enrichment while another is running.
 
