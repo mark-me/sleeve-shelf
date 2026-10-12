@@ -6,7 +6,7 @@ import shutil
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field, is_dataclass
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -178,6 +178,7 @@ _TABLES: dict[type, _Table] = {
             "left_discogs": "BOOLEAN",
             "kept_after_discogs": "BOOLEAN",
             "new_purchase": "BOOLEAN",
+            "added_on": "DATE",
         },
         {"format_tokens": _format_tokens},
     ),
@@ -245,6 +246,8 @@ def _encode(value: Any) -> Any:
         return value.value
     if isinstance(value, datetime):
         return value.isoformat(sep=" ")
+    if isinstance(value, date):
+        return value.isoformat()
     if is_dataclass(value):
         return {key: _encode(item) for key, item in asdict(value).items()}
     if isinstance(value, (list, tuple)):

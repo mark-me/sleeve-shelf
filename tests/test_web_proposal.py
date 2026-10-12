@@ -734,3 +734,128 @@ def test_a_band_shared_by_two_artists_is_an_indication_and_the_styles_decide(cli
 
     proposed = next(a for a in store.load(ArtistClusterAssignment) if a.artist_id == 4)
     assert (proposed.cluster_id, proposed.confirmed) == (1, False)
+
+
+def _buy(client, artist, title, release_id=222):
+    export = (
+        "Catalog#,Artist,Title,Label,Format,Rating,Released,release_id\n"
+        f'X,{artist},{title},Label,"LP, Album",,1973,{release_id}\n'
+    )
+    client.post("/discogs/import", data={"export": (io.BytesIO(export.encode()), "c.csv")})
+    client.post("/discogs/import/confirm")
+    # The albums on the shelves have no release yet, so the purchase is first taken for one
+    # of them; saying it is a different album adds it.
+    from sleeve_shelf.domain import MatchProposal
+
+    store = JsonStore(client.application.config["DATA_DIR"])
+    for proposal in store.load(MatchProposal):
+        client.post(f"/discogs/matches/{proposal.album_id}/reject")
+
+
+def test_a_new_album_of_an_artist_on_the_shelves_is_suggested_a_spot_and_put_there(client):
+    _buy(client, "The Stooges", "Raw Power")
+    before = client.get("/browse?shelf=2").text
+
+    listed = client.get("/unplaced").text
+    # Next to the artist's own albums on shelf b; the shelf (1.5 cm, 3.5 cm of albums) is full.
+    assert "Suggested:" in listed and "Kast &rsaquo; b" in listed
+    assert "The shelf then holds" in listed and "Put it there" in listed
+    # Nothing has moved yet.
+    assert client.get("/browse?shelf=2").text == before
+    page = client.get("/albums/6").text
+    assert "Suggested spot" in page and "With the other albums of the artist, by year." in page
+
+    placed = client.post("/albums/6/place", data={"back": "list"}, follow_redirects=True)
+
+    assert "Raw Power now stands on" in placed.text and "Suggested:" not in placed.text
+    shelf = client.get("/browse?shelf=2").text
+    assert "Raw Power" in shelf and shelf.index("Fun House") < shelf.index("Raw Power")
+    assert "/restore" in client.get("/versions/").text
+    assert "Suggested spot" not in client.get("/albums/6").text
+
+
+def test_an_album_of_an_artist_without_a_cluster_gets_no_spot_until_the_artist_has_one(client):
+    _add_new_artist(client)
+
+    assert "No spot yet: the artist has no cluster." in client.get("/unplaced").text
+    assert "No spot can be suggested yet" in client.get("/albums/6").text
+    # Asking to place it does nothing.
+    client.post("/albums/6/place", data={"back": "album"})
+    assert "Debut" in client.get("/unplaced").text
+
+    client.post("/artists/4", data={"start_year": "", "cluster_id": "1", "new_cluster": ""})
+
+    page = client.get("/albums/6").text
+    # A new artist in Jazz: on shelf a, with the Jazz artists that stand there.
+    assert "Suggested spot" in page and "Kast &rsaquo; a" in page
+    client.post("/albums/6/place", data={"back": "album"})
+    assert "Debut" in client.get("/browse?shelf=1").text
+    assert "Put at the suggested spot." in client.get("/albums/6?placed=1").text
+
+
+def test_a_spot_follows_a_location_rule_and_leaves_kept_shelves_alone(client):
+    from sleeve_shelf.domain import LocationRule, LocationRuleTarget
+
+    _buy(client, "The Stooges", "Raw Power")
+    client.post("/storage/cabinets/new", data={"name": "Case", "location": ""})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "width_cm": "5", "type": "",
+                                                         "layer": ""})
+    store = JsonStore(client.application.config["DATA_DIR"])
+    store.save(LocationRule, [LocationRule(1, LocationRuleTarget.ALBUM, 6, 2)])
+
+    # Bound to a cabinet nothing stands in: it opens that cabinet, and fits there.
+    page = client.get("/albums/6").text
+    assert "Case &rsaquo; x" in page and "as the first album there" in page
+    assert "Nothing stands in that cabinet yet." in page and "It fits: 4.5 cm is left" in page
+
+    # Without the rule, and with the artist's shelf kept outside the sorting, the spot is
+    # found elsewhere: with the cluster's neighbours in the order of the clusters.
+    store.save(LocationRule, [])
+    client.post("/storage/cabinets/1", data={"name": "Kast", "location": "", "outside_sorting": "on"})
+    page = client.get("/albums/6").text
+    assert "Suggested spot" not in page
+    assert "nothing stands on the shelves it could go to" in page
+
+
+def test_the_dashboard_lists_what_is_to_place_until_it_stands_on_a_shelf(client):
+    assert "To place" not in client.get("/dashboard/").text
+    _buy(client, "The Stooges", "Raw Power")
+
+    page = client.get("/dashboard/").text
+    assert "To place" in page and "Raw Power" in page
+    # What a sync or import added is marked as new, with the day it came in.
+    from datetime import date
+
+    assert f'title="Added on {date.today().isoformat()}">New</span>' in page
+    assert ">New</span>" in client.get("/unplaced").text
+    assert "Suggested:" in page and "Kast &rsaquo; b" in page
+    assert "1 LP without a place" in page
+
+    placed = client.post("/albums/6/place", data={"back": "dashboard"}, follow_redirects=True)
+
+    # Put on its shelf from the Dashboard, it is gone from the list and from the counters.
+    assert "Raw Power now stands on" in placed.text
+    assert "To place" not in placed.text and "LP without a place" not in placed.text
+    assert "Raw Power" in client.get("/browse?shelf=2").text
+
+
+def test_the_dashboard_shows_the_first_few_to_place_and_links_to_the_rest(client):
+    for number, title in enumerate(("One", "Two", "Three", "Four", "Five", "Six", "Seven")):
+        _buy(client, "The Stooges", title, 300 + number)
+
+    page = client.get("/dashboard/").text
+
+    assert page.count("Put it there") == 5
+    assert "And 2 more to place" in page
+
+
+def test_an_album_from_the_workbook_is_not_marked_as_new_and_a_purchase_comes_first(client):
+    # The box set leaves its shelf: an album that was there from the start, now without a place.
+    client.post("/albums/5/move", data={"shelf_id": ""})
+    assert ">New</span>" not in client.get("/dashboard/").text
+
+    _buy(client, "The Stooges", "Raw Power")
+
+    page = client.get("/dashboard/").text
+    assert page.count(">New</span>") == 1
+    assert page.index("Raw Power") < page.index("Box &middot; 2010")

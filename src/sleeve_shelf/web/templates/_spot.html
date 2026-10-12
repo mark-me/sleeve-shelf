@@ -1,0 +1,34 @@
+{# A suggested spot for an album that stands on no shelf yet: where, between which albums, and why.
+   `spot` comes from described_spots (web/places.py). #}
+{% macro neighbour(album) %}<a href="{{ url_for('browse.browse', shelf=album.shelf_id) }}#album-{{ album.id }}">{{ album.artist }} &ndash; {{ album.title }}</a>{% endmacro %}
+
+{% macro where(spot) %}
+<a href="{{ url_for('browse.browse', shelf=spot.shelf_id) }}">{{ spot.cabinet }} &rsaquo; {{ spot.shelf }}</a>,
+{% if spot.after and spot.before %}{{ _('between') }} {{ neighbour(spot.after) }} {{ _('and') }} {{ neighbour(spot.before) }}
+{% elif spot.after %}{{ _('at the end, after') }} {{ neighbour(spot.after) }}
+{% elif spot.before %}{{ _('at the front, before') }} {{ neighbour(spot.before) }}
+{% else %}{{ _('as the first album there') }}{% endif %}
+{% endmacro %}
+
+{% macro why(spot) %}
+{% if spot.basis == 'artist' %}{{ _('With the other albums of the artist, by year.') }}
+{% elif spot.basis == 'band' %}{{ _('With the artists of the same era in its cluster, by name.') }}
+{% elif spot.basis == 'empty' %}{{ _('Nothing stands in that cabinet yet.') }}
+{% elif spot.basis == 'cluster' %}{{ _('In its cluster; no artist of the same era stands there yet.') }}
+{% else %}{{ _('Where its cluster comes in the order of the clusters; nothing of the cluster stands on a shelf yet.') }}{% endif %}
+{% if spot.by_rule %}{{ _('Within the cabinet a location rule binds it to.') }}{% endif %}
+{% endmacro %}
+
+{% macro room(spot) %}
+{% if spot.room_cm is not none %}
+{% if spot.room_cm >= 0 %}{{ _('It fits: %(cm)s cm is left on the shelf.', cm='%.1f' | format(spot.room_cm)) }}
+{% else %}<span class="ss-over">{{ _('The shelf then holds %(cm)s cm more than its width.', cm='%.1f' | format(-spot.room_cm)) }}</span>{% endif %}
+{% endif %}
+{% endmacro %}
+
+{% macro place_button(album_id, back) %}
+<form class="d-inline" method="post" action="{{ url_for('albums.place', album_id=album_id) }}">
+  <input type="hidden" name="back" value="{{ back }}">
+  <button class="ss-button ss-button-small" type="submit">{{ _('Put it there') }}</button>
+</form>
+{% endmacro %}

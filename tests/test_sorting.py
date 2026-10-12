@@ -22,7 +22,9 @@ from sleeve_shelf.sorting.connections import (
     connections_of,
 )
 from sleeve_shelf.sorting.families import suggest_families
+from sleeve_shelf.sorting.spots import SuggestedSpot, suggest_spots
 from sleeve_shelf.sorting.order import (
+    OrderedAlbum,
     build_units,
     cluster_order_from_layout,
     order_albums,
@@ -371,3 +373,64 @@ def test_connections_are_read_from_either_record_and_named_by_what_they_are():
     assert connections_of(2, artists, records) == Connections(members=(1,))
     assert connections_of(4, artists, records) == Connections(other_names=(1,))
     assert connections_of(5, artists, records) == Connections()
+
+
+def _spot_case():
+    """Shelf 1 holds artist A (albums 1, 2) and B (3), of one cluster and era; shelf 2 holds
+    C (4), of that cluster in another era, and D (5), of another cluster."""
+    ordered = [
+        OrderedAlbum(1, 10, "1960s", "a"),
+        OrderedAlbum(11, 10, "1960s", "a"),      # new, by artist A
+        OrderedAlbum(16, 10, "1960s", "aa"),     # new artist, sorting inside A's row
+        OrderedAlbum(2, 10, "1960s", "a"),
+        OrderedAlbum(3, 10, "1960s", "b"),
+        OrderedAlbum(12, 10, "1960s", "e"),      # new artist of the same era
+        OrderedAlbum(4, 10, "1970s", "c"),
+        OrderedAlbum(13, 10, "1980s", "f"),      # new artist of an era no one stands in
+        OrderedAlbum(5, 20, "1960s", "d"),
+        OrderedAlbum(14, 30, "1960s", "g"),      # new artist of a cluster no one stands in
+        OrderedAlbum(15, None, "unknown", "h"),  # no cluster
+    ]
+    units = {1: "a", 2: "a", 11: "a", 16: "aa", 3: "b", 12: "e", 4: "c", 13: "f", 5: "d", 14: "g", 15: "h"}
+    layout = [(1, 1), (2, 1), (3, 1), (4, 2), (5, 2)]
+    return ordered, units, layout
+
+
+def test_a_new_album_goes_next_to_what_it_belongs_with_most_closely():
+    ordered, units, layout = _spot_case()
+
+    spots = suggest_spots([11, 12, 13, 14, 15, 16], ordered, units, layout)
+
+    # Among the artist's own albums, by year.
+    assert spots[11] == SuggestedSpot(11, 1, 1, 2, "artist")
+    # After the last artist of its era that sorts before it; that happens to end the shelf.
+    assert spots[12] == SuggestedSpot(12, 1, 3, None, "band")
+    # No one of its era stands anywhere: after the last of its cluster.
+    assert spots[13] == SuggestedSpot(13, 2, 4, 5, "cluster")
+    # No one of its cluster: where the order of the clusters puts it.
+    assert spots[14] == SuggestedSpot(14, 2, 5, None, "order")
+    # Without a cluster there is nothing to go by.
+    assert 15 not in spots
+    # It sorts between two albums of artist A, but never goes inside that artist's row.
+    assert spots[16] == SuggestedSpot(16, 1, 2, 3, "band")
+
+
+def test_a_spot_stays_within_the_shelves_a_rule_allows_and_before_what_sorts_after_it():
+    ordered, units, layout = _spot_case()
+
+    spots = suggest_spots([12], ordered, units, layout, {12: {2}})
+
+    # Bound to the cabinet of shelf 2, where only a later era of its cluster stands.
+    assert spots[12] == SuggestedSpot(12, 2, None, 4, "cluster")
+    assert suggest_spots([12], ordered, units, layout, {12: {3}}) == {}
+
+
+def test_a_few_albums_kept_elsewhere_are_no_place_to_add_to():
+    ordered = [OrderedAlbum(i, 10, "1960s", "a") for i in (1, 2, 6, 17)]
+    units = {1: "a", 2: "a", 6: "a", 17: "a"}
+    # Album 6 of the artist is kept in another cabinet; the new one sorts right after it.
+    layout = [(1, 1), (2, 1), (6, 2)]
+
+    assert suggest_spots([17], ordered, units, layout)[17].shelf_id == 2
+    home = suggest_spots([17], ordered, units, layout, None, {1: 100, 2: 200})
+    assert home[17] == SuggestedSpot(17, 1, 2, None, "artist")

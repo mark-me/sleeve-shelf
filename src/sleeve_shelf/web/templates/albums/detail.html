@@ -2,6 +2,7 @@
 {% block title %}{{ album.title }}{% endblock %}
 
 {% from "_cover.html" import zoomable, zoom_dialog %}
+{% import "_spot.html" as spots %}
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   {% if artist %}
@@ -23,6 +24,25 @@
   {% endif %}
   {% if album.left_discogs %}
   <div class="ss-alert mt-3">{% if album.kept_after_discogs %}{{ _('This album is no longer in your Discogs collection; you said you still have it.') }}{% else %}{{ _('This album is no longer in your Discogs collection.') }}{% endif %} <a href="{{ url_for('discogs.index') }}#gone">{{ _('Discogs sync') }}</a></div>
+  {% endif %}
+  {% if placed %}
+  <div class="ss-alert mt-3">{{ _('Put at the suggested spot. A version from before is kept under Versions.') }}</div>
+  {% endif %}
+  {% if spot %}
+  <div class="ss-card mt-3" id="spot">
+    <div class="ss-card-body">
+      <div class="fw-semibold">{{ _('Suggested spot') }}</div>
+      <p class="mt-1 mb-1">{{ spots.where(spot) }}</p>
+      <p class="ss-muted small mb-3">{{ spots.why(spot) }} {{ spots.room(spot) }}</p>
+      {{ spots.place_button(album.id, 'album') }}
+    </div>
+  </div>
+  {% elif takes_part and not is_placed %}
+  {% if row and row.cluster %}
+  <div class="ss-alert mt-3">{{ _('No spot can be suggested: nothing stands on the shelves it could go to.') }}</div>
+  {% else %}
+  <div class="ss-alert mt-3">{{ _('No spot can be suggested yet: the artist has no cluster.') }} {% if artist %}<a href="{{ url_for('artists.edit', artist_id=artist.id) }}">{{ _('Give the artist a cluster') }}</a>{% endif %}</div>
+  {% endif %}
   {% endif %}
   {% if not takes_part %}
   <div class="ss-alert mt-3">{{ _('A single or EP: it is kept outside the layout and gets no place in a sorting proposal.') }}</div>

@@ -1,6 +1,7 @@
 """Collection entities: artists, albums, and the style/cluster taxonomy."""
 
 import re
+from datetime import date
 from dataclasses import dataclass, field
 
 _LP = re.compile(r"^(?:\d+x)?LP$")
@@ -122,6 +123,8 @@ class Album:
     # True for an album a sync or import added to an artist whose cluster was already
     # confirmed, until it has been weighed against that cluster (see shifts.py).
     new_purchase: bool = False
+    # The day a sync or import added the album; None for one that came with the workbook.
+    added_on: date | None = None
 
     @property
     def width_cm(self) -> float | None:

@@ -6,6 +6,7 @@ from sleeve_shelf.domain import ProposedPlacement
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.proposal import has_proposal
 from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.places import described_spots
 
 blueprint = Blueprint("browse", __name__)
 
@@ -50,6 +51,15 @@ def browse():
 
 @blueprint.get("/unplaced")
 def unplaced():
+    store = get_store()
+    albums = BrowseQueries(store).unplaced()
+    placed = request.args.get("placed", type=int)
     return render_template(
-        "browse/unplaced.html", albums=BrowseQueries(get_store()).unplaced()
+        "browse/unplaced.html",
+        albums=albums,
+        spots=described_spots(store),
+        # The album that was just put at its spot, to say where it went.
+        placed=next((row for row in BrowseQueries(store).everything() if row.album_id == placed), None)
+        if placed
+        else None,
     )

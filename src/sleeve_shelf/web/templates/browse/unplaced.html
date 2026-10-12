@@ -2,10 +2,14 @@
 {% block title %}{{ _('Unplaced albums') }}{% endblock %}
 
 {% from "_cover.html" import cover %}
+{% import "_spot.html" as spot_text %}
 {% block content %}
 <div class="ss-page">
   <h1>{{ _('Unplaced albums') }}</h1>
-  <p class="ss-muted mt-1">{{ _('Albums that have no spot on a shelf yet.') }}</p>
+  <p class="ss-muted mt-1">{{ _('Albums that have no spot on a shelf yet. For an LP a spot is suggested on the shelves as they stand, next to what it belongs with; nothing moves until you put it there.') }}</p>
+  {% if placed and placed.shelf_id is not none %}
+  <div class="ss-alert mt-3">{{ _('%(title)s now stands on', title=placed.title) }} <a href="{{ url_for('browse.browse', shelf=placed.shelf_id) }}#album-{{ placed.album_id }}">{{ placed.cabinet }} &rsaquo; {{ placed.shelf }}</a>. {{ _('A version from before is kept under Versions.') }}</div>
+  {% endif %}
 
   {% set lps = albums | selectattr('is_lp') | list %}
   {% set others = albums | rejectattr('is_lp') | list %}
@@ -15,10 +19,19 @@
     <div class="ss-row" id="album-{{ album.album_id }}">
       {{ cover(album.cover_url, lps | selectattr('cover_url') | list | length > 0) }}
       <div class="ss-row-text">
-        <span class="ss-row-artist">{{ album.artist }}</span>
+        <span class="ss-row-artist">{% if album.added_on %}<span class="ss-chip" title="{{ _('Added on %(date)s', date=album.added_on.isoformat()) }}">{{ _('New') }}</span> {% endif %}{{ album.artist }}</span>
         <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</a>
+        {% set spot = spots.get(album.album_id) %}
+        {% if spot %}
+        <span class="ss-row-title mt-1">{{ _('Suggested:') }} {{ spot_text.where(spot) }}</span>
+        <span class="ss-row-title">{{ spot_text.room(spot) }}</span>
+        {% elif album.cluster %}
+        <span class="ss-row-title mt-1">{{ _('No spot: nothing stands on the shelves it could go to.') }}</span>
+        {% else %}
+        <span class="ss-row-title mt-1">{{ _('No spot yet: the artist has no cluster.') }}</span>
+        {% endif %}
       </div>
-      {% if album.cluster %}<span class="ss-chip">{{ album.cluster }}</span>{% endif %}
+      {% if spot %}{{ spot_text.place_button(album.album_id, 'list') }}{% elif album.cluster %}<span class="ss-chip">{{ album.cluster }}</span>{% endif %}
     </div>
     {% endfor %}
   </div>
@@ -34,7 +47,7 @@
     <div class="ss-row" id="album-{{ album.album_id }}">
       {{ cover(album.cover_url, others | selectattr('cover_url') | list | length > 0) }}
       <div class="ss-row-text">
-        <span class="ss-row-artist">{{ album.artist }}</span>
+        <span class="ss-row-artist">{% if album.added_on %}<span class="ss-chip" title="{{ _('Added on %(date)s', date=album.added_on.isoformat()) }}">{{ _('New') }}</span> {% endif %}{{ album.artist }}</span>
         <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</a>
       </div>
     </div>

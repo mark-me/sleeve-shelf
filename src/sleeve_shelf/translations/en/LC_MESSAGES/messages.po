@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-12 09:44+0200\n"
+"POT-Creation-Date: 2026-10-12 11:02+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -222,6 +222,64 @@ msgstr ""
 msgid "Goes to the end of the chosen shelf, on your shelves as they are; put it in its exact spot in Layout. A version from before the move is kept."
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "between"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "and"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "at the end, after"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "at the front, before"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "as the first album there"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "With the other albums of the artist, by year."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "With the artists of the same era in its cluster, by name."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Nothing stands in that cabinet yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "In its cluster; no artist of the same era stands there yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Where its cluster comes in the order of the clusters; nothing of the cluster stands on a shelf yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Within the cabinet a location rule binds it to."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+#, python-format
+msgid "It fits: %(cm)s cm is left on the shelf."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+#, python-format
+msgid "The shelf then holds %(cm)s cm more than its width."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Put it there"
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Show the cover larger"
 msgstr ""
@@ -237,6 +295,26 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "This album is no longer in your Discogs collection."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Put at the suggested spot. A version from before is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Suggested spot"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "No spot can be suggested: nothing stands on the shelves it could go to."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "No spot can be suggested yet: the artist has no cluster."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Give the artist a cluster"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -866,7 +944,44 @@ msgid "Song-level search comes in a later phase — that needs tracklist data th
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
-msgid "Albums that have no spot on a shelf yet."
+msgid "Albums that have no spot on a shelf yet. For an LP a spot is suggested on the shelves as they stand, next to what it belongs with; nothing moves until you put it there."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "%(title)s now stands on"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "A version from before is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "Added on %(date)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "New"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Suggested:"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "No spot: nothing stands on the shelves it could go to."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "No spot yet: the artist has no cluster."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
@@ -994,6 +1109,21 @@ msgid "A proposal is waiting"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "To place"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "LPs that stand on no shelf yet, each with the spot suggested for it. They stay here until they are put on a shelf; what a sync or import added is marked as new and comes first."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "And %(num)d more to place"
+msgid_plural "And %(num)d more to place"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
 msgid "%(num)d Discogs match to confirm"
 msgid_plural "%(num)d Discogs matches to confirm"
@@ -1101,7 +1231,7 @@ msgid "The shelf width is an estimate, or the shelf really is too full."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Place them by hand in Layout, or generate a proposal."
+msgid "Put them at the spot suggested for them, place them by hand in Layout, or generate a proposal."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html

@@ -19,7 +19,7 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.proposal import _mandatory_cabinets, _sort, kept_shelf_ids, takes_part, usable_shelves
+from sleeve_shelf.proposal import mandatory_cabinets, sort_collection, kept_shelf_ids, takes_part, usable_shelves
 from sleeve_shelf.sorting.placement import place
 
 # A cluster or artist is only read as "kept apart" from this many albums on.
@@ -209,7 +209,7 @@ def dismiss_suggestions(store: JsonStore, cabinet_id: int) -> int:
 def _proposed_cabinets(store: JsonStore) -> dict[int, int | None] | None:
     """Where a proposal without any location rule would stand each album; None if it cannot run."""
     constants = load_settings(store.data_dir).width_constants
-    result = _sort(store)
+    result = sort_collection(store)
     kept = kept_shelf_ids(store)
     shown = {p.album_id for p in store.load(Placement) if p.shelf_id in kept}
     albums = [

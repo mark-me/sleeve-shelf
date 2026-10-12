@@ -3,7 +3,7 @@
 from collections import Counter, defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, replace
-from datetime import datetime
+from datetime import date, datetime
 from difflib import SequenceMatcher
 
 from sleeve_shelf.domain import (
@@ -385,6 +385,7 @@ def import_discogs_collection(
                 release_id=item.release_id,
                 format_tokens=item.format_tokens,
                 new_purchase=artist_id in settled,
+                added_on=date.today(),
             )
         )
 
@@ -460,6 +461,7 @@ def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> 
             a.artist_id == artist.id and a.confirmed
             for a in store.load(ArtistClusterAssignment)
         ),
+        added_on=date.today(),
     )
     estimate_widths([album], constants)
     albums.append(album)
