@@ -1,6 +1,6 @@
 # Requirements — Sleeve & Shelf
 
-*As of: October 10, 2026*
+*As of: October 12, 2026*
 
 **Sleeve & Shelf** is a self-hosted, open-source Python Flask web application (Bootstrap + JavaScript) that organizes a vinyl collection (~1,190 vinyl titles out of ~1,455 tracked releases on Discogs) across a record cabinet, based on musical kinship, artist era, and physical shelf space.
 
@@ -147,7 +147,9 @@ erDiagram
     Cluster |o--o{ ArtistClusterAssignment : "assigned to"
     Cabinet ||--o{ Shelf : "has"
     Cabinet ||--o{ LocationRule : "mandatory cabinet of"
+    Cabinet ||--o{ RuleSuggestionDismissal : "turned down for"
     Shelf ||--o{ Placement : "holds"
+    Shelf ||--o{ ProposedPlacement : "would hold"
 
     Artist |o..o{ LocationRule : "target"
     AliasGroup |o..o{ LocationRule : "target"
@@ -155,6 +157,7 @@ erDiagram
     Album |o..o{ LocationRule : "target"
 
     Album ||--o| Placement : "stands at"
+    Album ||--o| ProposedPlacement : "would stand at"
 
     ReleaseEnrichment |o..o{ Album : "release_id"
     MasterEnrichment |o..o{ Album : "master_id"
@@ -169,9 +172,6 @@ erDiagram
         int alias_group_id FK "nullable"
         int start_year "nullable"
         int discogs_artist_id "nullable, set by a sync"
-        list member_ids "Discogs ids of a band's members; nullable"
-        list group_ids "Discogs ids of the bands a person is in; nullable"
-        list alias_ids "Discogs ids of the artist's other names; nullable"
         string picture_file "the user's own picture; nullable"
     }
     AliasGroup {
@@ -251,6 +251,17 @@ erDiagram
         int position "order within the shelf"
         string source "algorithm, manual or initial load"
     }
+    ProposedPlacement {
+        int album_id FK
+        int shelf_id FK
+        int position "order within the shelf"
+        string source "algorithm, manual or initial load"
+    }
+    RuleSuggestionDismissal {
+        string target_type "artist, alias group, cluster or album"
+        int target_id FK
+        int cabinet_id FK
+    }
     ReleaseEnrichment {
         int release_id PK
         list styles "style names"
@@ -311,10 +322,12 @@ erDiagram
 - **Cabinet**: id, name, location (room; nullable — not known after an initial load), `position` (its place in the order the cabinets are walked), `outside_sorting` (bool; a sorting proposal leaves the cabinet as it is — see Sorting logic §3)
 - **Shelf**: id, cabinet_id, name (the label of the shelf within its cabinet, e.g. "a"), width (cm), type (top-/front-loader), layer, reachability score, is_showcase (bool). Width, type, layer, and reachability are nullable: a shelf seeded by the initial load has only a name (and a reachability score when the workbook gives one) until it is completed in the storage structure (Phase 1b). `position` is its place among the shelves of its cabinet
 - **LocationRule**: id, target (`artist_id`, `alias_group_id`, `cluster_id`, **or `album_id`**), mandatory cabinet_id, note — always created manually. The `album_id` level is a specific-title exception: it detaches one release from its artist's normal placement (breaking the "artist stays together" rule in Sorting logic §1) without affecting the rest of that artist's catalog — needed for cases like a single boxset or compilation that lives in external storage while the rest of the artist stays in the main cabinet
+- **RuleSuggestionDismissal**: target (as for a LocationRule), cabinet_id — a suggested location rule the user turned down, so it is not suggested again (see Location rules screen). It points at its target and cabinet the way a LocationRule does
 
 **Placement**
 
 - **Placement**: album_id, shelf_id, order position within the shelf, source (algorithm proposal, manually overridden, or initial load) — this is the one, canonical location, consuming shelf width (see Sorting logic §3). **A placement is always of one album**: the initial load, a proposal, and a move in Layout all place single albums, which is what lets an artist run on across shelves and one title be moved on its own. Until October 2026 the model also allowed a placement for a whole artist or era band; nothing ever wrote one, and that was removed. Files from before then name the album as `unit_id` and are still read
+- **ProposedPlacement**: the same fields as a Placement — where an album would stand in the sorting proposal that is waiting. Kept in a file of its own next to the current layout until the proposal is accepted, when it becomes the Placements, or discarded (see Sorting logic §4)
 - **Showcase**: not an entity. A shelf marked `is_showcase` holds a sample, and an album on display has its one Placement there — it stands in the top-loader, not on the artist's shelf, so nothing is counted twice and no room is kept free for it elsewhere. The earlier design, a `ShowcaseFeature` pointing at a Placement elsewhere, was dropped (2026-10-09): albums are exchanged one for one between the showcase and the shelf, so both always hold as many albums as before
 
 ## Architecture, storage, and deployment
@@ -601,7 +614,6 @@ The detail of an artist and of an album are two pages.
 - **Stored images**: both sizes of every cover and picture are stored, which was chosen without asking; the large ones take most of the room. Files of albums that were removed, or whose image got a new address, stay in `covers/` — decided 2026-10-11: they may stay for now, nothing cleans them up
 - **Rule suggestions** look only at where things stand compared with a proposal without rules. They do not weigh why something stands there, so a cabinet that simply overflowed into its neighbour two steps on would be suggested as a rule; the thresholds (2 albums for a cluster, family or artist; 4 albums and 75% for an album apart) were chosen without asking
 - **Artist pictures**: fetched as part of "Fetch styles, original years and pictures" rather than when an artist's page is opened, — chosen without asking. A picture is fetched once and never refreshed. An artist whose releases are all shared with other artists ("A & B") is never named on Discogs and gets no picture from Discogs; the user can add one by hand (see Artists screen)
-- **Vinyl detection edge case**: whether a "bonus disc" bundle (e.g. `"CD + LP"`) counts as vinyl is now a configurable setting (`count_bonus_discs_as_vinyl`, default `true` — see Configuration) rather than a fixed rule, so this no longer needs to be settled up front
 - **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
 
 ### Showcase
