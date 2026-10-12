@@ -64,7 +64,20 @@
         </select>
         <div class="form-text">
           {% if assignment and not assignment.confirmed %}{{ _('This cluster was proposed by the app; saving confirms it.') }}{% endif %}
-          {% if proposed_cluster %}{{ _('Going by the Discogs styles of the albums: %(cluster)s.', cluster=proposed_cluster.name) }}{% endif %}
+          {% if connected_cluster %}
+          {% if connection_decides %}
+          {{ _('Going by whom Discogs connects this artist to: %(cluster)s, the cluster of', cluster=connected_cluster.name) }}
+          {% else %}
+          {{ _('Discogs loosely connects this artist to %(cluster)s, the cluster of', cluster=connected_cluster.name) }}
+          {% endif %}
+          {% for other in connected_artists %}<a href="{{ url_for('artists.edit', artist_id=other.id) }}">{{ other.name }}</a>{{ ', ' if not loop.last else '.' }}{% endfor %}
+          {% if connection_decides %}
+          {{ _('A sorting proposal goes by that, before the styles.') }}
+          {% else %}
+          {{ _('That is an indication only — a band shared with others, or a session player — and a sorting proposal goes by the styles.') }}
+          {% endif %}
+          {% endif %}
+          {% if proposed_cluster and (proposed_cluster != connected_cluster or not connection_decides) %}{{ _('Going by the Discogs styles of the albums: %(cluster)s.', cluster=proposed_cluster.name) }}{% endif %}
         </div>
         <label for="new_cluster" class="form-label mt-3">{{ _('…or a new cluster') }}</label>
         <input id="new_cluster" class="form-control" name="new_cluster" placeholder="{{ _('Name of a new cluster') }}" value="{{ request.form.get('new_cluster', '') }}">

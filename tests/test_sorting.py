@@ -15,6 +15,7 @@ from sleeve_shelf.domain import (
     Style,
 )
 from sleeve_shelf.sorting.eras import band_of
+from sleeve_shelf.sorting.connections import ClusterHint, clusters_by_connection
 from sleeve_shelf.sorting.families import suggest_families
 from sleeve_shelf.sorting.order import (
     build_units,
@@ -270,3 +271,80 @@ def test_a_location_rule_binds_albums_to_a_cabinet_and_keeps_others_out():
 def test_records_fetched_before_membership_was_kept_are_fetched_again():
     assert ArtistEnrichment(1, None, None, NOW).member_ids is None
     assert ArtistEnrichment(1, None, None, NOW, member_ids=()).member_ids == ()
+
+
+def _record(discogs_id, members=(), groups=(), aliases=()):
+    return ArtistEnrichment(discogs_id, None, None, datetime(2026, 10, 12), members, groups, aliases)
+
+
+def test_an_artist_without_a_cluster_takes_that_of_whom_discogs_connects_it_to():
+    artists = [
+        Artist(1, "Nick Cave", discogs_artist_id=10),
+        Artist(2, "Grinderman", discogs_artist_id=20),
+        Artist(3, "Warren Ellis", discogs_artist_id=30),
+        Artist(4, "Dirty Three", discogs_artist_id=40),
+        Artist(5, "Stranger", discogs_artist_id=50),
+        Artist(6, "Other Name", discogs_artist_id=60),
+    ]
+    assignments = [
+        ArtistClusterAssignment(1, 7, True),
+        ArtistClusterAssignment(3, 8, True),
+        # A cluster that was only proposed is no ground to stand on.
+        ArtistClusterAssignment(4, 9, False),
+    ]
+    records = [
+        # The band names its members; one of them names the band back, the other does not.
+        _record(20, members=(10, 30)),
+        _record(10, groups=(20,)),
+        _record(40, members=(30,)),
+        _record(60, aliases=(30,)),
+    ]
+    counts = {1: 5, 3: 2}
+
+    hints = clusters_by_connection(artists, assignments, records, counts)
+
+    # Grinderman is shared by two artists: a loose connection, an indication only — the
+    # cluster of the member with the most albums.
+    assert hints[2] == ClusterHint(7, (1,), decisive=False)
+    # Dirty Three is Warren Ellis's own band here, and the other name is his too: close
+    # connections, which decide. Nothing is chained on to Grinderman or Nick Cave.
+    assert hints[4] == ClusterHint(8, (3,)) and hints[6] == ClusterHint(8, (3,))
+    assert hints[4].decisive and hints[6].decisive
+    # An artist with a confirmed cluster, or without connections, gets no hint.
+    assert set(hints) == {2, 4, 6}
+
+
+def test_a_sidemans_bands_are_a_loose_connection_and_a_close_one_goes_before_them():
+    artists = [Artist(i, f"Artist {i}", discogs_artist_id=i * 10) for i in range(1, 8)]
+    # Artist 1 is in four bands of the collection: a sideman.
+    records = [_record(10, groups=(20, 30, 40, 50)), _record(60, groups=(20,)), _record(70, groups=(20,))]
+    assignments = [ArtistClusterAssignment(1, 7, True), ArtistClusterAssignment(6, 8, True)]
+
+    hints = clusters_by_connection(artists, assignments, records, {1: 9, 6: 1})
+
+    # Band 3 knows only the sideman: an indication.
+    assert hints[3] == ClusterHint(7, (1,), decisive=False)
+    # Band 2 is shared by the sideman and two others, which makes all of it loose.
+    assert hints[2] == ClusterHint(7, (1,), decisive=False)
+    # Artist 7 is only connected to a band without a cluster, which gives nothing to go by.
+    assert set(hints) == {2, 3, 4, 5}
+
+
+def test_a_connection_goes_before_the_styles_and_a_curated_cluster_before_both():
+    artists = [Artist(1, "Nick Cave"), Artist(2, "Grinderman"), Artist(3, "Unconnected")]
+    albums = [
+        Album(1, 1, "Tender Prey", style_ids=[1]),
+        Album(2, 2, "Grinderman", style_ids=[1]),
+        Album(3, 3, "Debut", style_ids=[1]),
+    ]
+    styles = [Style(1, "Garage Rock", 2)]
+    assignments = [ArtistClusterAssignment(1, 7, True)]
+
+    units = {
+        unit.name: unit
+        for unit in build_units(artists, albums, assignments, [], styles, {1: 9, 2: 7})
+    }
+
+    assert (units["nick cave"].cluster_id, units["nick cave"].cluster_is_proposed) == (7, False)
+    assert (units["grinderman"].cluster_id, units["grinderman"].cluster_is_proposed) == (7, True)
+    assert units["unconnected"].cluster_id == 2

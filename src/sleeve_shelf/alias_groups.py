@@ -2,8 +2,16 @@
 
 from collections import Counter
 
-from sleeve_shelf.domain import Album, AliasGroup, Artist, ArtistEnrichment, FamilyDismissal
+from sleeve_shelf.domain import (
+    Album,
+    AliasGroup,
+    Artist,
+    ArtistClusterAssignment,
+    ArtistEnrichment,
+    FamilyDismissal,
+)
 from sleeve_shelf.persistence import JsonStore
+from sleeve_shelf.sorting.connections import ClusterHint, clusters_by_connection
 from sleeve_shelf.sorting.families import FamilySuggestion, suggest_families
 
 
@@ -13,6 +21,21 @@ def family_suggestions(store: JsonStore) -> list[FamilySuggestion]:
     album_counts = Counter(album.artist_id for album in store.load(Album))
     return suggest_families(
         store.load(Artist), dismissed, store.load(ArtistEnrichment), album_counts
+    )
+
+
+def cluster_hints(store: JsonStore) -> dict[int, ClusterHint]:
+    """Per artist without a confirmed cluster: the cluster of whom Discogs connects it to.
+
+    Also for an artist a family is suggested for: the cluster is proposed whether or not
+    the family is accepted.
+    """
+    album_counts = Counter(album.artist_id for album in store.load(Album))
+    return clusters_by_connection(
+        store.load(Artist),
+        store.load(ArtistClusterAssignment),
+        store.load(ArtistEnrichment),
+        album_counts,
     )
 
 

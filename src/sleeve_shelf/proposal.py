@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from sleeve_shelf.alias_groups import cluster_hints
 from sleeve_shelf.collection import ensure_cluster_order
 from sleeve_shelf.domain import (
     Album,
@@ -87,8 +88,14 @@ def _sort(store: JsonStore) -> _Sorted:
     albums = [album for album in store.load(Album) if takes_part(album, placed_ids)]
     # Only confirmed assignments are curated; a proposed cluster is worked out afresh.
     confirmed = [a for a in store.load(ArtistClusterAssignment) if a.confirmed]
+    # A loose connection is an indication for the user, not something to sort by.
+    connected = {
+        artist_id: hint.cluster_id
+        for artist_id, hint in cluster_hints(store).items()
+        if hint.decisive
+    }
     units = build_units(
-        store.load(Artist), albums, confirmed, store.load(AliasGroup), store.load(Style)
+        store.load(Artist), albums, confirmed, store.load(AliasGroup), store.load(Style), connected
     )
     ordered = order_albums(units, albums, store.load(Cluster))
     return _Sorted(units, ordered, {album.id: album for album in albums})

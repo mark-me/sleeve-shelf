@@ -29,6 +29,7 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
 from sleeve_shelf.proposal import takes_part
+from sleeve_shelf.alias_groups import cluster_hints
 from sleeve_shelf.shifts import cluster_shifts, keep_cluster
 from sleeve_shelf.artists import PICTURE_DIR, picture_thumb, remove_picture, set_picture
 from sleeve_shelf.sorting.eras import band_of
@@ -149,6 +150,9 @@ def edit(artist_id: int):
         (a for a in store.load(ArtistClusterAssignment) if a.artist_id == artist_id), None
     )
     proposed_id = propose_cluster(sorted_albums, {style.id: style for style in store.load(Style)})
+    # Whom Discogs connects the artist to goes before its styles, when the connection is close.
+    hint = cluster_hints(store).get(artist_id)
+    names = {a.id: a.name for a in store.load(Artist)}
     located = {row.album_id: row for row in BrowseQueries(store).artist_albums(artist_id)}
     family = next((g for g in store.load(AliasGroup) if g.id == artist.alias_group_id), None)
     derived_year = _earliest_year(sorted_albums)
@@ -171,6 +175,12 @@ def edit(artist_id: int):
             clusters=clusters,
             assignment=assignment,
             proposed_cluster=next((c for c in clusters if c.id == proposed_id), None),
+            connected_cluster=next((c for c in clusters if hint and c.id == hint.cluster_id), None),
+            connection_decides=bool(hint and hint.decisive),
+            connected_artists=[
+                {"id": other_id, "name": names[other_id]}
+                for other_id in (hint.via_artist_ids if hint else ())
+            ],
             derived_year=derived_year,
             band=band_of(artist.start_year or derived_year),
             family=family,

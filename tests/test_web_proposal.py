@@ -663,3 +663,66 @@ def test_the_switch_can_be_turned_off_again(client):
 
     page = client.get("/proposal/").text
     assert "outside the sorting" not in page and "Do not fit (0)" in page
+
+
+def _connect_new_band(client, member_ids):
+    """New Band, with a style that points to Jazz, as a band of the given Discogs artists."""
+    from datetime import datetime
+
+    from sleeve_shelf.domain import Artist, ArtistEnrichment, Style
+
+    _add_new_artist(client)
+    store = JsonStore(client.application.config["DATA_DIR"])
+    artists = store.load(Artist)
+    for artist in artists:
+        artist.discogs_artist_id = artist.id * 100
+    store.save(Artist, artists)
+    store.save(Style, [Style(1, "Hard Bop", 1)])
+    albums = store.load(Album)
+    albums[-1].style_ids = [1]
+    store.save(Album, albums)
+    store.save(
+        ArtistEnrichment,
+        [ArtistEnrichment(400, None, None, datetime(2026, 10, 12), member_ids, (), ())],
+    )
+    return store
+
+
+def test_a_new_artist_is_proposed_the_cluster_of_whom_discogs_connects_it_to(client):
+    from sleeve_shelf.domain import ArtistClusterAssignment
+
+    # Only The Stooges (Rock) are in New Band: a band of their own. A family is suggested
+    # for it too, but the cluster is proposed whether or not that is accepted.
+    store = _connect_new_band(client, (300,))
+
+    assert "New Band" in client.get("/families/").text
+    page = client.get("/artists/4").text
+    assert "Going by whom Discogs connects this artist to: Rock, the cluster of" in page
+    assert '<a href="/artists/3">The Stooges</a>.' in page
+    assert "A sorting proposal goes by that, before the styles." in page
+    # The styles say something else, and are still shown next to it.
+    assert "Going by the Discogs styles of the albums: Jazz." in page
+
+    client.post("/proposal/generate")
+    client.post("/proposal/accept")
+
+    proposed = next(a for a in store.load(ArtistClusterAssignment) if a.artist_id == 4)
+    assert (proposed.cluster_id, proposed.confirmed) == (2, False)
+
+
+def test_a_band_shared_by_two_artists_is_an_indication_and_the_styles_decide(client):
+    from sleeve_shelf.domain import ArtistClusterAssignment
+
+    # Art Blakey (Jazz, one album) and The Stooges (Rock, two) are both in New Band.
+    store = _connect_new_band(client, (200, 300))
+
+    page = client.get("/artists/4").text
+    assert "Discogs loosely connects this artist to Rock, the cluster of" in page
+    assert "a sorting proposal goes by the styles" in page
+    assert "Going by the Discogs styles of the albums: Jazz." in page
+
+    client.post("/proposal/generate")
+    client.post("/proposal/accept")
+
+    proposed = next(a for a in store.load(ArtistClusterAssignment) if a.artist_id == 4)
+    assert (proposed.cluster_id, proposed.confirmed) == (1, False)

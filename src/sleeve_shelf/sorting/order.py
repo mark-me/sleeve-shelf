@@ -57,8 +57,14 @@ def build_units(
     assignments: list[ArtistClusterAssignment],
     alias_groups: list[AliasGroup],
     styles: list[Style],
+    connected: dict[int, int] | None = None,
 ) -> list[Unit]:
-    """Group the artists into units and settle each unit's cluster and era band."""
+    """Group the artists into units and settle each unit's cluster and era band.
+
+    A unit none of whose artists has a cluster gets one proposed: the cluster of the
+    artists Discogs connects it to (connected: artist id to cluster id), and without
+    such a connection the cluster its albums' styles point to.
+    """
     albums_by_artist: dict[int, list[Album]] = defaultdict(list)
     for album in albums:
         albums_by_artist[album.artist_id].append(album)
@@ -84,8 +90,17 @@ def build_units(
             if member.id in assigned
             for _ in albums_by_artist[member.id]
         )
+        by_connection = Counter(
+            connected[member.id]
+            for member in members
+            if connected and member.id in connected
+            for _ in albums_by_artist[member.id]
+        )
         if curated:
             cluster_id, proposed = curated.most_common(1)[0][0], False
+        elif by_connection:
+            # Who the artist belongs with says more than what the style tags say.
+            cluster_id, proposed = by_connection.most_common(1)[0][0], True
         else:
             cluster_id = propose_cluster(unit_albums, style_by_id)
             proposed = cluster_id is not None

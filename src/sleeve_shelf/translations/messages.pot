@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-12 01:32+0200\n"
+"POT-Creation-Date: 2026-10-12 09:40+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -435,6 +435,24 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "This cluster was proposed by the app; saving confirms it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Going by whom Discogs connects this artist to: %(cluster)s, the cluster of"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Discogs loosely connects this artist to %(cluster)s, the cluster of"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "A sorting proposal goes by that, before the styles."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "That is an indication only — a band shared with others, or a session player — and a sorting proposal goes by the styles."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
