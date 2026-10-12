@@ -15,7 +15,12 @@ from sleeve_shelf.domain import (
     Style,
 )
 from sleeve_shelf.sorting.eras import band_of
-from sleeve_shelf.sorting.connections import ClusterHint, clusters_by_connection
+from sleeve_shelf.sorting.connections import (
+    ClusterHint,
+    Connections,
+    clusters_by_connection,
+    connections_of,
+)
 from sleeve_shelf.sorting.families import suggest_families
 from sleeve_shelf.sorting.order import (
     build_units,
@@ -348,3 +353,21 @@ def test_a_connection_goes_before_the_styles_and_a_curated_cluster_before_both()
     assert (units["nick cave"].cluster_id, units["nick cave"].cluster_is_proposed) == (7, False)
     assert (units["grinderman"].cluster_id, units["grinderman"].cluster_is_proposed) == (7, True)
     assert units["unconnected"].cluster_id == 2
+
+
+def test_connections_are_read_from_either_record_and_named_by_what_they_are():
+    artists = [
+        Artist(1, "Nick Cave", discogs_artist_id=10),
+        Artist(2, "Grinderman", discogs_artist_id=20),
+        Artist(3, "The Birthday Party", discogs_artist_id=30),
+        Artist(4, "Nicholas Cave", discogs_artist_id=40),
+        Artist(5, "Unnamed On Discogs"),
+    ]
+    # Grinderman names its member, and one outside the collection; the person names another
+    # band; and the other name is only listed on that name's own record.
+    records = [_record(20, members=(10, 999)), _record(10, groups=(30,)), _record(40, aliases=(10,))]
+
+    assert connections_of(1, artists, records) == Connections(other_names=(4,), bands=(2, 3))
+    assert connections_of(2, artists, records) == Connections(members=(1,))
+    assert connections_of(4, artists, records) == Connections(other_names=(1,))
+    assert connections_of(5, artists, records) == Connections()

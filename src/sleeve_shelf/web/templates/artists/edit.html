@@ -95,6 +95,26 @@
   {% set current_shelf_id = none %}
   {% include "_rules_and_move.html" %}
 
+  {% if related.other_names or related.bands or related.members %}
+  <h2 class="mt-5" id="related">{{ _('Related artists') }}</h2>
+  <p class="ss-muted mt-1">{{ _('Whom Discogs connects this artist to, among the artists in your collection.') }}</p>
+  <div class="ss-card mt-3">
+    {% for label, others in [(_('Other names'), related.other_names), (_('Member of'), related.bands), (_('Members'), related.members)] %}
+    {% if others %}
+    <div class="ss-group">{{ label }}</div>
+    {% for other in others %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=other.id) }}">{{ other.name }}</a>
+        <span class="ss-row-title">{{ other.cluster or _('no cluster yet') }}</span>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <h2 class="mt-5" id="picture">{{ _('Picture') }}</h2>
   {% if picture_error %}
   <div class="ss-alert mt-3" role="alert">{{ picture_error }}</div>

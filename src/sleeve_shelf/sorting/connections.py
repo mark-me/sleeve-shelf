@@ -20,6 +20,51 @@ class ClusterHint:
     decisive: bool = True
 
 
+@dataclass(frozen=True, slots=True)
+class Connections:
+    """The artists in the collection Discogs connects one artist to: artist ids."""
+
+    other_names: tuple[int, ...] = ()
+    # The bands the artist is in, and the members of the artist when it is a band.
+    bands: tuple[int, ...] = ()
+    members: tuple[int, ...] = ()
+
+
+def connections_of(
+    artist_id: int, artists: list[Artist], enrichments: list[ArtistEnrichment]
+) -> Connections:
+    """Whom Discogs connects the artist to, by what they are to each other.
+
+    Read from both records: a band is listed when the artist's record names it or
+    the band's record names the artist. Only artists in the collection are known.
+    """
+    by_did = {a.discogs_artist_id: a.id for a in artists if a.discogs_artist_id is not None}
+    names: set[int] = set()
+    bands: set[int] = set()
+    members: set[int] = set()
+    for record in enrichments:
+        owner = by_did.get(record.discogs_artist_id)
+        if owner is None:
+            continue
+        aliases = {by_did[d] for d in record.alias_ids or () if d in by_did}
+        groups = {by_did[d] for d in record.group_ids or () if d in by_did}
+        listed = {by_did[d] for d in record.member_ids or () if d in by_did}
+        if owner == artist_id:
+            names |= aliases
+            bands |= groups
+            members |= listed
+        else:
+            if artist_id in aliases:
+                names.add(owner)
+            if artist_id in groups:
+                members.add(owner)
+            if artist_id in listed:
+                bands.add(owner)
+    return Connections(
+        *(tuple(sorted(found - {artist_id})) for found in (names, bands, members))
+    )
+
+
 def clusters_by_connection(
     artists: list[Artist],
     assignments: list[ArtistClusterAssignment],

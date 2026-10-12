@@ -32,6 +32,7 @@ from sleeve_shelf.proposal import takes_part
 from sleeve_shelf.alias_groups import cluster_hints
 from sleeve_shelf.shifts import cluster_shifts, keep_cluster
 from sleeve_shelf.artists import PICTURE_DIR, picture_thumb, remove_picture, set_picture
+from sleeve_shelf.sorting.connections import connections_of
 from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
@@ -150,6 +151,19 @@ def edit(artist_id: int):
         (a for a in store.load(ArtistClusterAssignment) if a.artist_id == artist_id), None
     )
     proposed_id = propose_cluster(sorted_albums, {style.id: style for style in store.load(Style)})
+    all_artists = store.load(Artist)
+    cluster_of = {
+        a.artist_id: a.cluster_id for a in store.load(ArtistClusterAssignment)
+    }
+    connections = connections_of(artist_id, all_artists, store.load(ArtistEnrichment))
+
+    def related(artist_ids: tuple[int, ...]) -> list[dict]:
+        found = [a for a in all_artists if a.id in artist_ids]
+        return [
+            {"id": a.id, "name": a.name, "cluster": cluster_names.get(cluster_of.get(a.id))}
+            for a in sorted(found, key=lambda a: sort_name(a.name))
+        ]
+
     # Whom Discogs connects the artist to goes before its styles, when the connection is close.
     hint = cluster_hints(store).get(artist_id)
     names = {a.id: a.name for a in store.load(Artist)}
@@ -177,6 +191,11 @@ def edit(artist_id: int):
             proposed_cluster=next((c for c in clusters if c.id == proposed_id), None),
             connected_cluster=next((c for c in clusters if hint and c.id == hint.cluster_id), None),
             connection_decides=bool(hint and hint.decisive),
+            related={
+                "other_names": related(connections.other_names),
+                "bands": related(connections.bands),
+                "members": related(connections.members),
+            },
             connected_artists=[
                 {"id": other_id, "name": names[other_id]}
                 for other_id in (hint.via_artist_ids if hint else ())

@@ -719,6 +719,14 @@ def test_a_band_shared_by_two_artists_is_an_indication_and_the_styles_decide(cli
     page = client.get("/artists/4").text
     assert "Discogs loosely connects this artist to Rock, the cluster of" in page
     assert "a sorting proposal goes by the styles" in page
+    # The members are listed with a link, whether or not they decide anything; and each of
+    # them lists the band in turn, though its own cluster is long confirmed.
+    assert "Related artists" in page and "Members" in page
+    assert '<a class="ss-row-artist" href="/artists/2">Art Blakey</a>' in page
+    stooges = client.get("/artists/3").text
+    assert "Member of" in stooges and 'href="/artists/4">New Band</a>' in stooges
+    assert "no cluster yet" in stooges
+    assert "Related artists" not in client.get("/artists/1").text
     assert "Going by the Discogs styles of the albums: Jazz." in page
 
     client.post("/proposal/generate")
