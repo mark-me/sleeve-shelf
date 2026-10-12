@@ -9,6 +9,9 @@ from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.persistence import JsonStore
 
 COVER_DIR = "covers"
+# Within it, the album covers and the artist pictures each have a folder of their own.
+ALBUM_DIR = "albums"
+ARTIST_DIR = "artists"
 # An image Discogs no longer has is marked with an empty file of this kind, so it is not
 # asked for again at every run.
 MISSING = ".missing"
@@ -20,9 +23,24 @@ def cover_name(url: str) -> str:
 
 
 def stored_names(data_dir: Path) -> set[str]:
-    """The names of everything in the cover directory, images and "missing" marks alike."""
-    directory = Path(data_dir) / COVER_DIR
-    return {path.name for path in directory.iterdir()} if directory.is_dir() else set()
+    """Everything stored, images and "missing" marks alike, as "folder/name"."""
+    names: set[str] = set()
+    for folder in (ALBUM_DIR, ARTIST_DIR):
+        directory = Path(data_dir) / COVER_DIR / folder
+        if directory.is_dir():
+            names.update(f"{folder}/{path.name}" for path in directory.iterdir())
+    return names
+
+
+def image_paths(albums: Iterable[Album], pictures: Iterable[ArtistEnrichment]) -> dict[str, str]:
+    """Per image the pages show: where it is kept, as "folder/name", in the order of image_urls."""
+    albums = list(albums)
+    pictures = list(pictures)
+    of_albums = {url for album in albums for url in (album.cover_url, album.cover_image_url)}
+    return {
+        url: f"{ALBUM_DIR if url in of_albums else ARTIST_DIR}/{cover_name(url)}"
+        for url in image_urls(albums, pictures)
+    }
 
 
 def image_urls(albums: Iterable[Album], pictures: Iterable[ArtistEnrichment]) -> list[str]:
@@ -43,14 +61,14 @@ def missing_images(
 ) -> list[str]:
     """The images not yet in the data directory, and not marked as gone at Discogs."""
     stored = stored_names(store.data_dir)
+    paths = image_paths(
+        store.load(Album) if albums is None else albums,
+        store.load(ArtistEnrichment) if pictures is None else pictures,
+    )
     return [
         url
-        for url in image_urls(
-            store.load(Album) if albums is None else albums,
-            store.load(ArtistEnrichment) if pictures is None else pictures,
-        )
-        if cover_name(url) not in stored
-        and cover_name(url).replace(".jpg", MISSING) not in stored
+        for url, path in paths.items()
+        if path not in stored and path.replace(".jpg", MISSING) not in stored
     ]
 
 
@@ -62,16 +80,20 @@ def download_images(
 ) -> int:
     """Fetch the images into the data directory; returns how many came in.
 
-    An image Discogs no longer has is marked as such and skipped from then on.
+    A cover goes into the folder of the albums, an artist's picture into that of the
+    artists. An image Discogs no longer has is marked as such and skipped from then on.
     Each file is written whole or not at all, so a run that is stopped — the
     progress callback may raise to stop it — leaves nothing half-written.
     """
     directory = store.data_dir / COVER_DIR
-    directory.mkdir(parents=True, exist_ok=True)
+    paths = image_paths(store.load(Album), store.load(ArtistEnrichment))
+    for folder in (ALBUM_DIR, ARTIST_DIR):
+        (directory / folder).mkdir(parents=True, exist_ok=True)
     fetched = 0
     for count, url in enumerate(urls, start=1):
         data = client.image(url)
-        target = directory / cover_name(url)
+        # An address no album has is an artist's: albums are the ones that come and go.
+        target = directory / paths.get(url, f"{ARTIST_DIR}/{cover_name(url)}")
         if data:
             partial = target.with_suffix(".part")
             partial.write_bytes(data)
@@ -81,3 +103,28 @@ def download_images(
             target.with_suffix(MISSING).touch()
         progress(count)
     return fetched
+
+
+def sort_into_folders(store: JsonStore) -> int:
+    """Move images stored before covers and pictures had folders of their own into them.
+
+    Returns how many files were moved. A file no album or artist points to any more
+    stays where it is: nothing is removed.
+    """
+    directory = store.data_dir / COVER_DIR
+    loose = [path for path in directory.iterdir() if path.is_file()] if directory.is_dir() else []
+    if not loose:
+        return 0
+    folder_of = {
+        Path(path).name: Path(path).parent.name
+        for path in image_paths(store.load(Album), store.load(ArtistEnrichment)).values()
+    }
+    moved = 0
+    for path in loose:
+        folder = folder_of.get(path.with_suffix(".jpg").name)
+        if folder is None or path.suffix not in (".jpg", MISSING):
+            continue
+        (directory / folder).mkdir(exist_ok=True)
+        path.replace(directory / folder / path.name)
+        moved += 1
+    return moved

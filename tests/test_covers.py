@@ -9,6 +9,7 @@ from sleeve_shelf.covers import (
     download_images,
     image_urls,
     missing_images,
+    sort_into_folders,
 )
 from sleeve_shelf.domain import (
     Album,
@@ -96,9 +97,13 @@ def test_images_are_stored_once_and_one_that_is_gone_is_not_asked_for_again(app)
 
     assert fetched == 3 and counts == [1, 2, 3, 4]
     directory = store.data_dir / COVER_DIR
-    assert (directory / cover_name(THUMB)).read_bytes() == b"jpeg " + THUMB.encode()
-    assert not (directory / cover_name(GONE)).exists()
-    assert not list(directory.glob("*.part"))
+    # Covers and pictures each go into a folder of their own.
+    assert (directory / "albums" / cover_name(THUMB)).read_bytes() == b"jpeg " + THUMB.encode()
+    assert (directory / "albums" / cover_name(LARGE)).exists()
+    assert (directory / "artists" / cover_name(PICTURE)).exists()
+    assert not (directory / "albums" / cover_name(GONE)).exists()
+    assert not [path for path in directory.rglob("*") if path.suffix == ".part"]
+    assert sorted(path.name for path in directory.iterdir()) == ["albums", "artists"]
     # Nothing is left to fetch, the image Discogs no longer has included.
     assert missing_images(store) == []
     download_images(store, images, missing_images(store))
@@ -113,26 +118,51 @@ def test_pages_show_the_stored_copy_and_discogs_for_the_rest(app, client):
     download_images(store, _Images(), [THUMB, LARGE, PICTURE])
 
     shelf = client.get("/browse").text
-    assert f'src="/covers/{cover_name(THUMB)}"' in shelf and THUMB not in shelf
+    assert f'src="/covers/albums/{cover_name(THUMB)}"' in shelf and THUMB not in shelf
     # The cover that could not be stored is still shown from Discogs.
     assert f'src="{GONE}"' in shelf
     album = client.get("/albums/1").text
-    assert f'data-src="/covers/{cover_name(LARGE)}"' in album
+    assert f'data-src="/covers/albums/{cover_name(LARGE)}"' in album
     layout = client.get("/layout/").text
-    assert f'data-covers="/covers/{cover_name(THUMB)}|{GONE}"' in layout
-    assert f'src="/covers/{cover_name(PICTURE)}"' in client.get("/artists/").text
+    assert f'data-covers="/covers/albums/{cover_name(THUMB)}|{GONE}"' in layout
+    assert f'src="/covers/artists/{cover_name(PICTURE)}"' in client.get("/artists/").text
 
 
 def test_stored_images_are_served_from_the_data_directory(app, client):
     download_images(_store(app), _Images(), [THUMB])
 
-    response = client.get(f"/covers/{cover_name(THUMB)}")
+    response = client.get(f"/covers/albums/{cover_name(THUMB)}")
 
     assert response.data == b"jpeg " + THUMB.encode()
     assert response.mimetype == "image/jpeg"
     assert "max-age=31536000" in response.headers["Cache-Control"]
-    assert client.get("/covers/unknown.jpg").status_code == 404
-    assert client.get(f"/covers/{cover_name(GONE).replace('.jpg', '.missing')}").status_code == 404
+    assert client.get("/covers/albums/unknown.jpg").status_code == 404
+    assert client.get(f"/covers/artists/{cover_name(THUMB)}").status_code == 404
+    assert client.get(f"/covers/elsewhere/{cover_name(THUMB)}").status_code == 404
+    gone = cover_name(GONE).replace(".jpg", ".missing")
+    assert client.get(f"/covers/albums/{gone}").status_code == 404
+
+
+def test_images_from_before_the_folders_are_sorted_into_them(app, tmp_path):
+    store = _store(app)
+    directory = store.data_dir / COVER_DIR
+    directory.mkdir()
+    for name in (cover_name(THUMB), cover_name(PICTURE), cover_name(GONE).replace(".jpg", ".missing")):
+        (directory / name).write_bytes(b"kept")
+    # Of an album that was removed since: no album or artist points to it any more.
+    (directory / "orphan.jpg").write_bytes(b"kept")
+
+    assert sort_into_folders(store) == 3
+
+    assert (directory / "albums" / cover_name(THUMB)).read_bytes() == b"kept"
+    assert (directory / "artists" / cover_name(PICTURE)).exists()
+    assert (directory / "albums" / cover_name(GONE).replace(".jpg", ".missing")).exists()
+    assert (directory / "orphan.jpg").exists()
+    # Nothing is fetched again for what was moved, and starting the app does the sorting too.
+    assert missing_images(store) == [LARGE]
+    (directory / cover_name(LARGE)).write_bytes(b"kept")
+    create_app(store.data_dir)
+    assert (directory / "albums" / cover_name(LARGE)).exists() and missing_images(store) == []
 
 
 def test_discogs_screen_says_how_many_images_are_stored(app, client):

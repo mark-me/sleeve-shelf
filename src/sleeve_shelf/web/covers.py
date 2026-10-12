@@ -2,7 +2,7 @@
 
 from flask import Blueprint, abort, current_app, g, send_from_directory, url_for
 
-from sleeve_shelf.covers import COVER_DIR, cover_name, stored_names
+from sleeve_shelf.covers import ALBUM_DIR, ARTIST_DIR, COVER_DIR, cover_name, stored_names
 
 blueprint = Blueprint("covers", __name__, url_prefix="/covers")
 
@@ -10,12 +10,12 @@ blueprint = Blueprint("covers", __name__, url_prefix="/covers")
 CACHE_SECONDS = 365 * 24 * 60 * 60
 
 
-@blueprint.get("/<name>")
-def file(name: str):
-    if not name.endswith(".jpg"):
+@blueprint.get("/<folder>/<name>")
+def file(folder: str, name: str):
+    if folder not in (ALBUM_DIR, ARTIST_DIR) or not name.endswith(".jpg"):
         abort(404)
     return send_from_directory(
-        current_app.config["DATA_DIR"] / COVER_DIR, name, max_age=CACHE_SECONDS
+        current_app.config["DATA_DIR"] / COVER_DIR / folder, name, max_age=CACHE_SECONDS
     )
 
 
@@ -26,4 +26,7 @@ def local_cover(url: str | None) -> str | None:
     if "cover_names" not in g:
         g.cover_names = stored_names(current_app.config["DATA_DIR"])
     name = cover_name(url)
-    return url_for("covers.file", name=name) if name in g.cover_names else url
+    for folder in (ALBUM_DIR, ARTIST_DIR):
+        if f"{folder}/{name}" in g.cover_names:
+            return url_for("covers.file", folder=folder, name=name)
+    return url

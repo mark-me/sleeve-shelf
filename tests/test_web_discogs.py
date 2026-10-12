@@ -365,10 +365,10 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     # Fetched, the picture is shown from the data directory, not from Discogs any more.
     thumb = cover_name("https://i.discogs.com/tw150.jpeg")
     large = cover_name("https://i.discogs.com/tw.jpeg")
-    assert f'src="/covers/{thumb}"' in page and "Show the picture larger" in page
-    assert f'data-src="/covers/{large}"' in page
+    assert f'src="/covers/artists/{thumb}"' in page and "Show the picture larger" in page
+    assert f'data-src="/covers/artists/{large}"' in page
     assert "i.discogs.com/tw" not in page
-    assert client.get(f"/covers/{thumb}").data == b"jpeg"
+    assert client.get(f"/covers/artists/{thumb}").data == b"jpeg"
     done = client.get("/discogs/").text
     assert "still has to be fetched" not in done
     assert "Everything has been fetched." in done and "1 of 1 artists" in done
@@ -376,7 +376,7 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     assert "ss-cover-zoom" not in client.get("/artists/2").text
     # In the list the pictured artist shows its picture, and the other keeps the space.
     listed = client.get("/artists/").text
-    assert f'src="/covers/{thumb}"' in listed and "ss-cover-empty" in listed
+    assert f'src="/covers/artists/{thumb}"' in listed and "ss-cover-empty" in listed
 
 
 def test_an_album_that_left_discogs_can_be_kept_without_being_asked_again(app, client):

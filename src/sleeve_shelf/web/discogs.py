@@ -23,7 +23,7 @@ from sleeve_shelf.collection import (
     remove_departed_album,
 )
 from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.covers import cover_name, image_urls, missing_images, stored_names
+from sleeve_shelf.covers import image_paths, missing_images, stored_names
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -110,10 +110,10 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     pictured = set(pictures_by_id)
     job = _job().status()
     pictures_stored = store.load(ArtistEnrichment)
-    images = image_urls(albums, pictures_stored)
+    images = image_paths(albums, pictures_stored)
     images_missing = len(missing_images(store, albums, pictures_stored))
     names = stored_names(store.data_dir)
-    images_stored = sum(cover_name(url) in names for url in images)
+    images_stored = sum(path in names for path in images.values())
     gone = [
         {"album": album, "artist": artists.get(album.artist_id, "")}
         for album in albums

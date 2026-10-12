@@ -14,6 +14,7 @@ from sleeve_shelf.collection import (
     load_layout,
 )
 from sleeve_shelf.config import load_settings
+from sleeve_shelf.covers import COVER_DIR, sort_into_folders
 from sleeve_shelf.domain import Artist
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
 from sleeve_shelf.ingestion.discogs_csv import read_collection
@@ -52,6 +53,9 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     # Set by the Docker image build; a local run has no version.
     app.config["VERSION"] = os.environ.get("SLEEVE_SHELF_VERSION", "dev")
     Babel(app, default_locale="en")
+    if any(path.is_file() for path in (app.config["DATA_DIR"] / COVER_DIR).glob("*")):
+        # Images stored before covers and pictures each had a folder: sort them out once.
+        sort_into_folders(JsonStore(app.config["DATA_DIR"]))
 
     app.register_blueprint(setup.blueprint)
     app.register_blueprint(browse.blueprint)
