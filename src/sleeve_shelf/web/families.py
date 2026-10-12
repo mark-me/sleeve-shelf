@@ -32,10 +32,14 @@ def index():
             "cluster": cluster_of.get(artist_id),
         }
 
+    labels = {group.id: group.label for group in store.load(AliasGroup)}
     suggestions = [
         {
             "anchor": describe(suggestion.anchor_id),
             "members": [describe(member_id) for member_id in suggestion.member_ids],
+            # The family the members would be added to, when the suggestion is not a new one.
+            "family": labels.get(suggestion.group_id),
+            "source": suggestion.source,
         }
         for suggestion in alias_groups.family_suggestions(store)
     ]

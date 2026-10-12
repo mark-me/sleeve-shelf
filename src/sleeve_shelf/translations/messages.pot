@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-11 20:24+0200\n"
+"POT-Creation-Date: 2026-10-12 01:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1563,7 +1563,7 @@ msgid "A family keeps an artist’s other billings and side projects next to eac
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
-msgid "Suggested from the names"
+msgid "Suggested families"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
@@ -1571,7 +1571,24 @@ msgid "Accept all"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
-msgid "No suggestions: no ungrouped artist’s name appears inside another’s."
+msgid "No suggestions: neither the artist names nor Discogs point to artists that belong together and are not grouped yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "Add to the family “%(family)s”"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Discogs lists them as members, groups or other names of each other"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "from the names"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Add to this family"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html

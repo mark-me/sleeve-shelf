@@ -184,7 +184,7 @@ def test_enrichment_fetches_each_artists_picture_once(tmp_path):
     class Pictured(_Client):
         def artist(self, artist_id):
             self.calls.append(("artist", artist_id))
-            return ArtistEnrichment(artist_id, f"https://i/{artist_id}.jpeg", None, NOW)
+            return ArtistEnrichment(artist_id, f"https://i/{artist_id}.jpeg", None, NOW, member_ids=())
 
     store = JsonStore(tmp_path)
     store.save(Artist, [Artist(1, "Chet Baker", discogs_artist_id=30), Artist(2, "Unknown")])
@@ -211,3 +211,25 @@ def test_enrichment_fetches_each_artists_picture_once(tmp_path):
     assert store.load(ArtistEnrichment)[0].image_url == "https://i/30.jpeg"
     enrich_collection(store, client)
     assert len(client.calls) == 2
+
+
+def test_enrichment_fetches_membership_for_records_from_before_it_was_kept(tmp_path):
+    class Members(_Client):
+        def artist(self, artist_id):
+            self.calls.append(("artist", artist_id))
+            return ArtistEnrichment(
+                artist_id, None, None, NOW, member_ids=(5,), group_ids=(), alias_ids=()
+            )
+
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Chet Baker", discogs_artist_id=30)])
+    store.save(Album, [Album(1, 1, "Chet", release_id=12, style_ids=[1], master_id=None)])
+    store.save(ReleaseEnrichment, [ReleaseEnrichment(12, ("Cool Jazz",), None, NOW, 1959)])
+    # An artist record from before membership was kept: no member_ids at all.
+    store.save(ArtistEnrichment, [ArtistEnrichment(30, None, None, NOW)])
+    client = Members()
+
+    enrich_collection(store, client)
+
+    assert ("artist", 30) in client.calls
+    assert store.load(ArtistEnrichment)[0].member_ids == (5,)

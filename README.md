@@ -14,7 +14,7 @@ Phase 1 (the MVP) is built, and most of Phase 2.
 
 - **Load and browse**: load a worked-out cabinet layout from an Excel workbook — or start without one — and browse or search the collection in physical shelf order, with album covers. Covers and artist pictures are stored with your data, so they also show offline.
 - **Discogs**: sync the collection straight from Discogs (or upload an export), and fetch styles, original release years and artist pictures. Albums that left your Discogs collection are reported; you keep or remove them yourself.
-- **Sorting**: manage cabinets, shelves, clusters, artist families and location rules (the app suggests rules from the layout you already have), generate a sorting proposal, adjust it by dragging, and keep versions of the layout to go back to.
+- **Sorting**: manage cabinets, shelves, clusters, artist families and location rules (the app suggests families from the artist names and from Discogs' members and aliases, and rules from the layout you already have), generate a sorting proposal, adjust it by dragging, and keep versions of the layout to go back to.
 - **New purchases**: when a purchase makes an artist's Discogs styles point to another cluster, the app says so and waits for you to move the artist or keep it where it is.
 - **Showcase**: top-loaders that hold a sample of an artist's albums, exchanged one for one with the shelf.
 - **On your phone**: the app can be installed to the home screen (over HTTPS) and opens on Browse / Search.

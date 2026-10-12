@@ -206,7 +206,11 @@ _TABLES: dict[type, _Table] = {
             "image_url": "VARCHAR",
             "thumb_url": "VARCHAR",
             "fetched_at": "TIMESTAMP",
+            "member_ids": "INTEGER[]",
+            "group_ids": "INTEGER[]",
+            "alias_ids": "INTEGER[]",
         },
+        {"member_ids": tuple, "group_ids": tuple, "alias_ids": tuple},
     ),
     MatchProposal: _Table(
         "match_proposals.json",

@@ -91,11 +91,23 @@ class DiscogsClient:
         data = self._get(f"/artists/{artist_id}") or {}
         images = data.get("images") or [{}]
         image = next((i for i in images if i.get("type") == "primary"), images[0])
+
+        def ids(kind: str, active_only: bool = False) -> tuple[int, ...]:
+            return tuple(
+                int(entry["id"])
+                for entry in data.get(kind) or []
+                if entry.get("id") and not (active_only and entry.get("active") is False)
+            )
+
         return ArtistEnrichment(
             discogs_artist_id=artist_id,
             image_url=image.get("uri") or None,
             thumb_url=image.get("uri150") or None,
             fetched_at=datetime.now().replace(microsecond=0),
+            # Former members belong to the group's family too.
+            member_ids=ids("members"),
+            group_ids=ids("groups"),
+            alias_ids=ids("aliases"),
         )
 
     def collection(self) -> list[dict]:

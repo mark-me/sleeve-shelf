@@ -340,7 +340,7 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
         def artist(self, artist_id):
             return ArtistEnrichment(
                 artist_id, "https://i.discogs.com/tw.jpeg", "https://i.discogs.com/tw150.jpeg",
-                datetime(2026, 10, 9),
+                datetime(2026, 10, 9), member_ids=(),
             )
 
     app.config["DISCOGS_CLIENT_FACTORY"] = Pictured

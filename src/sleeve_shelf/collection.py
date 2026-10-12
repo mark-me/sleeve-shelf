@@ -544,15 +544,21 @@ def enrich_collection(
         {a.release_id for a in albums if a.release_id is not None} - releases.keys()
     )
     artist_ids = sorted(
-        {a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None}
-        - pictures.keys()
+        discogs_id
+        for discogs_id in {
+            a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None
+        }
+        # A record from before membership was kept is fetched again, once.
+        if discogs_id not in pictures or pictures[discogs_id].member_ids is None
     )
     # Each new release may bring one master lookup with it.
     done, saved, total = 0, 0, 2 * len(release_ids) + len(artist_ids)
     linked_count = len(release_ids) + len(
         {a.release_id for a in albums if a.release_id is not None} & releases.keys()
     )
-    named_count = len(artist_ids) + len(pictures)
+    named_count = len(
+        {a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None}
+    )
     part("pictures", named_count - len(artist_ids), named_count)
     part("albums", linked_count - len(release_ids), linked_count)
     try:

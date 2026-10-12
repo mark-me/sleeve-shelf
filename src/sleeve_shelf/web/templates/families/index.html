@@ -20,7 +20,7 @@
   </datalist>
 
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-4" id="suggestions">
-    <h2>{{ _('Suggested from the names') }} ({{ suggestions | length }})</h2>
+    <h2>{{ _('Suggested families') }} ({{ suggestions | length }})</h2>
     {% if suggestions %}
     <form method="post" action="{{ url_for('families.accept_all') }}">
       <button class="ss-button ss-button-small" type="submit">{{ _('Accept all') }}</button>
@@ -28,12 +28,12 @@
     {% endif %}
   </div>
   {% if not suggestions %}
-  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('No suggestions: no ungrouped artist’s name appears inside another’s.') }}</div></div>
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('No suggestions: neither the artist names nor Discogs point to artists that belong together and are not grouped yet.') }}</div></div>
   {% endif %}
   {% for suggestion in suggestions %}
   <div class="ss-card mt-3">
     <form method="post" action="{{ url_for('families.accept', anchor_id=suggestion.anchor.id) }}">
-      <div class="ss-group">{{ suggestion.anchor.name }}</div>
+      <div class="ss-group">{% if suggestion.family %}{{ _('Add to the family “%(family)s”', family=suggestion.family) }}{% else %}{{ suggestion.anchor.name }}{% endif %} <span class="ss-muted fw-normal">&middot; {% if suggestion.source == 'discogs' %}{{ _('Discogs lists them as members, groups or other names of each other') }}{% else %}{{ _('from the names') }}{% endif %}</span></div>
       <div class="ss-row"><div class="ss-row-text">{{ member_line(suggestion.anchor) }}</div></div>
       {% for member in suggestion.members %}
       <label class="ss-row" for="member-{{ member.id }}">
@@ -42,7 +42,7 @@
       </label>
       {% endfor %}
       <div class="ss-card-body d-flex gap-2">
-        <button class="ss-button ss-button-small ss-button-primary" type="submit">{{ _('Make this a family') }}</button>
+        <button class="ss-button ss-button-small ss-button-primary" type="submit">{% if suggestion.family %}{{ _('Add to this family') }}{% else %}{{ _('Make this a family') }}{% endif %}</button>
         <button class="ss-button ss-button-small" type="submit" formaction="{{ url_for('families.dismiss', anchor_id=suggestion.anchor.id) }}">{{ _('Not a family') }}</button>
       </div>
     </form>

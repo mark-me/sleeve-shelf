@@ -1,5 +1,7 @@
 """Tests for the sorting engine: era bands, families, units, and shelf order."""
 
+from datetime import datetime
+
 import pytest
 
 from sleeve_shelf.domain import (
@@ -7,6 +9,7 @@ from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
+    ArtistEnrichment,
     Cluster,
     FormatTokens,
     Style,
@@ -20,6 +23,8 @@ from sleeve_shelf.sorting.order import (
     propose_cluster,
 )
 
+NOW = datetime(2026, 10, 12)
+
 
 @pytest.mark.parametrize(
     ("year", "band"),
@@ -28,6 +33,90 @@ from sleeve_shelf.sorting.order import (
 )
 def test_era_band_is_the_decade_of_the_start_year(year, band):
     assert band_of(year) == band
+
+
+def _enrichment(artist_id, members=(), groups=(), aliases=()):
+    return ArtistEnrichment(
+        artist_id, None, None, NOW,
+        member_ids=tuple(members), group_ids=tuple(groups), alias_ids=tuple(aliases),
+    )
+
+
+def test_families_are_suggested_from_discogs_membership_groups_and_aliases():
+    artists = [
+        Artist(1, "Nick Cave", discogs_artist_id=101),
+        Artist(2, "Grinderman", discogs_artist_id=102),
+        Artist(3, "The Birthday Party", discogs_artist_id=103),
+        Artist(4, "Bonnie 'Prince' Billy", discogs_artist_id=104),
+        Artist(5, "Palace Music", discogs_artist_id=105),
+        Artist(6, "Session Player", discogs_artist_id=106),
+        Artist(7, "Band One", discogs_artist_id=107),
+        Artist(8, "Band Two", discogs_artist_id=108),
+        Artist(9, "Band Three", discogs_artist_id=109),
+        Artist(10, "Band Four", discogs_artist_id=110),
+        Artist(11, "Paul Simon", discogs_artist_id=111),
+        Artist(12, "Art Garfunkel", discogs_artist_id=112),
+        Artist(13, "Simon & Garfunkel (2)", discogs_artist_id=113),
+        Artist(14, "Not On Discogs"),
+    ]
+    enrichments = [
+        # A person: Discogs lists the bands he is in, also ones outside the collection.
+        _enrichment(101, groups=(102, 999)),
+        _enrichment(102, members=(101, 998)),
+        # A band can name a member whose own record does not name the band.
+        _enrichment(103, members=(101,)),
+        # Two names of one artist; the second has the most albums.
+        _enrichment(104, aliases=(105,)),
+        _enrichment(105, aliases=(104,)),
+        # A sideman is in more bands of the collection than says anything.
+        _enrichment(106, groups=(107, 108, 109, 110)),
+        _enrichment(107, members=(106,)),
+        # A band of two artists in the collection belongs to neither.
+        _enrichment(113, members=(111, 112)),
+        # A record from before membership was kept.
+        ArtistEnrichment(108, None, None, NOW),
+    ]
+
+    suggestions = suggest_families(artists, enrichments=enrichments, album_counts={5: 3, 4: 1})
+
+    assert [(s.anchor_id, s.member_ids, s.group_id, s.source) for s in suggestions] == [
+        # The person anchors the family of his bands, which is named after him.
+        (1, (2, 3), None, "discogs"),
+        (5, (4,), None, "discogs"),
+    ]
+    # Turning down the artist a family would be named after settles it.
+    assert suggest_families(artists, {1, 5}, enrichments) == []
+
+
+def test_discogs_adds_to_an_existing_family_and_leaves_what_names_suggest():
+    artists = [
+        Artist(1, "Nick Cave", discogs_artist_id=101, alias_group_id=9),
+        Artist(2, "Grinderman", discogs_artist_id=102, alias_group_id=9),
+        Artist(3, "The Birthday Party", discogs_artist_id=103),
+        Artist(4, "Nick Cave & Warren Ellis", discogs_artist_id=104, alias_group_id=9),
+        Artist(5, "Jason Molina", discogs_artist_id=105),
+        Artist(6, "Jason Molina Band", discogs_artist_id=106),
+        Artist(7, "Songs: Ohia", discogs_artist_id=107, alias_group_id=3),
+        Artist(8, "Magnolia Electric Co.", discogs_artist_id=108, alias_group_id=4),
+        Artist(9, "Pyramid Electric", discogs_artist_id=109),
+    ]
+    enrichments = [
+        _enrichment(101, groups=(102, 103)),
+        # Names already suggest this pair: Discogs does not suggest it a second time.
+        _enrichment(105, groups=(106,)),
+        # Other names in two families of the user's own making: left alone.
+        _enrichment(109, aliases=(107, 108)),
+    ]
+
+    suggestions = suggest_families(artists, enrichments=enrichments)
+
+    assert [(s.anchor_id, s.member_ids, s.group_id, s.source) for s in suggestions] == [
+        (5, (6,), None, "names"),
+        # Offered to the family Nick Cave is in, shown by its artist with the lowest id.
+        (1, (3,), 9, "discogs"),
+    ]
+    # Turning down the artist to add settles it.
+    assert [s.source for s in suggest_families(artists, {3}, enrichments)] == ["names"]
 
 
 def test_families_are_suggested_from_names():
@@ -176,3 +265,8 @@ def test_a_location_rule_binds_albums_to_a_cabinet_and_keeps_others_out():
     # The free albums skip cabinet 9; the bound ones go there and nowhere else.
     assert {(s.album_id, s.shelf_id) for s in spots} == {(1, 10), (3, 30), (2, 20), (4, 20)}
     assert left_out == [5]
+
+
+def test_records_fetched_before_membership_was_kept_are_fetched_again():
+    assert ArtistEnrichment(1, None, None, NOW).member_ids is None
+    assert ArtistEnrichment(1, None, None, NOW, member_ids=()).member_ids == ()

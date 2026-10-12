@@ -38,6 +38,11 @@ class ArtistEnrichment:
     image_url: str | None
     thumb_url: str | None
     fetched_at: datetime
+    # Who Discogs says the artist is made of, belongs to, or is also known as: artist ids.
+    # None means a record from before these were kept, which is fetched again.
+    member_ids: tuple[int, ...] | None = None
+    group_ids: tuple[int, ...] | None = None
+    alias_ids: tuple[int, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)

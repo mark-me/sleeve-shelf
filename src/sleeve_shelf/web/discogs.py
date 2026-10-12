@@ -106,7 +106,8 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     ]
     token = settings.discogs_token
     named = {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
-    pictured = {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
+    pictures_by_id = {p.discogs_artist_id: p for p in store.load(ArtistEnrichment)}
+    pictured = set(pictures_by_id)
     job = _job().status()
     pictures_stored = store.load(ArtistEnrichment)
     images = image_urls(albums, pictures_stored)
@@ -134,7 +135,15 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             waiting="sync" if (_data_dir() / PENDING_SYNC).exists()
             else "export" if (_data_dir() / PENDING_EXPORT).exists()
             else None,
-            pictures_to_fetch_count=len(named - pictured),
+            pictures_to_fetch_count=sum(
+                1
+                for a in artist_list
+                if a.discogs_artist_id is not None
+                and (
+                    a.discogs_artist_id not in pictures_by_id
+                    or pictures_by_id[a.discogs_artist_id].member_ids is None
+                )
+            ),
             # How far each part is, as [done, total]; a running job knows it more precisely.
             albums_progress=job["albums"] or [len(linked & fetched), len(linked)],
             pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
