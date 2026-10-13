@@ -15,6 +15,8 @@ API_ROOT = "https://api.discogs.com"
 USER_AGENT = "SleeveShelf/0.1 +https://github.com/mark-me/sleeve-shelf"
 # Authenticated requests are limited to 60 per minute.
 SECONDS_BETWEEN_REQUESTS = 1.05
+# Images come from Discogs' image servers, not from the API, and are paced more lightly.
+SECONDS_BETWEEN_IMAGES = 0.25
 RATE_LIMIT_PAUSE_SECONDS = 60
 MAX_ATTEMPTS = 3
 COLLECTION_PAGE_SIZE = 100
@@ -89,11 +91,23 @@ class DiscogsClient:
         data = self._get(f"/artists/{artist_id}") or {}
         images = data.get("images") or [{}]
         image = next((i for i in images if i.get("type") == "primary"), images[0])
+
+        def ids(kind: str, active_only: bool = False) -> tuple[int, ...]:
+            return tuple(
+                int(entry["id"])
+                for entry in data.get(kind) or []
+                if entry.get("id") and not (active_only and entry.get("active") is False)
+            )
+
         return ArtistEnrichment(
             discogs_artist_id=artist_id,
             image_url=image.get("uri") or None,
             thumb_url=image.get("uri150") or None,
             fetched_at=datetime.now().replace(microsecond=0),
+            # Former members belong to the group's family too.
+            member_ids=ids("members"),
+            group_ids=ids("groups"),
+            alias_ids=ids("aliases"),
         )
 
     def collection(self) -> list[dict]:
@@ -114,6 +128,27 @@ class DiscogsClient:
             if page >= (data.get("pagination") or {}).get("pages", 1):
                 return releases
             page += 1
+
+    def image(self, url: str) -> bytes | None:
+        """The bytes of a cover or picture; None when Discogs no longer has it."""
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            self._pace(SECONDS_BETWEEN_IMAGES)
+            try:
+                return self._fetch(request)
+            except urllib.error.HTTPError as error:
+                if error.code in (403, 404, 410):
+                    return None
+                if error.code == 429 and attempt < MAX_ATTEMPTS:
+                    self._sleep(RATE_LIMIT_PAUSE_SECONDS)
+                    continue
+                raise DiscogsError(f"Discogs answered with HTTP {error.code}.") from error
+            except (urllib.error.URLError, TimeoutError) as error:
+                if attempt < MAX_ATTEMPTS:
+                    self._sleep(5)
+                    continue
+                raise DiscogsError(f"Discogs could not be reached: {error}") from error
+        raise DiscogsError("Discogs kept limiting the requests.")
 
     def _get(self, path: str) -> dict | None:
         request = urllib.request.Request(
@@ -143,10 +178,10 @@ class DiscogsClient:
                 raise DiscogsError(f"Discogs could not be reached: {error}") from error
         raise DiscogsError("Discogs kept limiting the requests.")
 
-    def _pace(self) -> None:
+    def _pace(self, seconds: float = SECONDS_BETWEEN_REQUESTS) -> None:
         now = self._clock()
         if self._last_request is not None:
-            wait = SECONDS_BETWEEN_REQUESTS - (now - self._last_request)
+            wait = seconds - (now - self._last_request)
             if wait > 0:
                 self._sleep(wait)
         self._last_request = self._clock()

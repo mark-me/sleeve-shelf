@@ -387,6 +387,9 @@ def test_dashboard_sums_up_and_lists_what_is_waiting(client):
     albums[0].left_discogs = True
     store.save(Album, albums)
     assert "1 album no longer in your Discogs collection" in client.get("/dashboard/").text
+    albums[0].kept_after_discogs = True
+    store.save(Album, albums)
+    assert "no longer in your Discogs collection" not in client.get("/dashboard/").text
     assert client.get("/").headers["Location"] == "/dashboard/"
 
 
@@ -660,3 +663,252 @@ def test_the_switch_can_be_turned_off_again(client):
 
     page = client.get("/proposal/").text
     assert "outside the sorting" not in page and "Do not fit (0)" in page
+
+
+def _connect_new_band(client, member_ids):
+    """New Band, with a style that points to Jazz, as a band of the given Discogs artists."""
+    from datetime import datetime
+
+    from sleeve_shelf.domain import Artist, ArtistEnrichment, Style
+
+    _add_new_artist(client)
+    store = JsonStore(client.application.config["DATA_DIR"])
+    artists = store.load(Artist)
+    for artist in artists:
+        artist.discogs_artist_id = artist.id * 100
+    store.save(Artist, artists)
+    store.save(Style, [Style(1, "Hard Bop", 1)])
+    albums = store.load(Album)
+    albums[-1].style_ids = [1]
+    store.save(Album, albums)
+    store.save(
+        ArtistEnrichment,
+        [ArtistEnrichment(400, None, None, datetime(2026, 10, 12), member_ids, (), ())],
+    )
+    return store
+
+
+def test_a_new_artist_is_proposed_the_cluster_of_whom_discogs_connects_it_to(client):
+    from sleeve_shelf.domain import ArtistClusterAssignment
+
+    # Only The Stooges (Rock) are in New Band: a band of their own. A family is suggested
+    # for it too, but the cluster is proposed whether or not that is accepted.
+    store = _connect_new_band(client, (300,))
+
+    assert "New Band" in client.get("/families/").text
+    page = client.get("/artists/4").text
+    assert "Going by whom Discogs connects this artist to: Rock, the cluster of" in page
+    assert '<a href="/artists/3">The Stooges</a>.' in page
+    assert "A sorting proposal goes by that, before the styles." in page
+    # The styles say something else, and are still shown next to it.
+    assert "Going by the Discogs styles of the albums: Jazz." in page
+
+    client.post("/proposal/generate")
+    client.post("/proposal/accept")
+
+    proposed = next(a for a in store.load(ArtistClusterAssignment) if a.artist_id == 4)
+    assert (proposed.cluster_id, proposed.confirmed) == (2, False)
+
+
+def test_a_band_shared_by_two_artists_is_an_indication_and_the_styles_decide(client):
+    from sleeve_shelf.domain import ArtistClusterAssignment
+
+    # Art Blakey (Jazz, one album) and The Stooges (Rock, two) are both in New Band.
+    store = _connect_new_band(client, (200, 300))
+
+    page = client.get("/artists/4").text
+    assert "Discogs loosely connects this artist to Rock, the cluster of" in page
+    assert "a sorting proposal goes by the styles" in page
+    # The members are listed with a link, whether or not they decide anything; and each of
+    # them lists the band in turn, though its own cluster is long confirmed.
+    assert "Related artists" in page and "Members" in page
+    assert '<a class="ss-row-artist" href="/artists/2">Art Blakey</a>' in page
+    stooges = client.get("/artists/3").text
+    assert "Member of" in stooges and 'href="/artists/4">New Band</a>' in stooges
+    assert "no cluster yet" in stooges
+    assert "Related artists" not in client.get("/artists/1").text
+    assert "Going by the Discogs styles of the albums: Jazz." in page
+
+    client.post("/proposal/generate")
+    client.post("/proposal/accept")
+
+    proposed = next(a for a in store.load(ArtistClusterAssignment) if a.artist_id == 4)
+    assert (proposed.cluster_id, proposed.confirmed) == (1, False)
+
+
+def _buy(client, artist, title, release_id=222):
+    export = (
+        "Catalog#,Artist,Title,Label,Format,Rating,Released,release_id\n"
+        f'X,{artist},{title},Label,"LP, Album",,1973,{release_id}\n'
+    )
+    client.post("/discogs/import", data={"export": (io.BytesIO(export.encode()), "c.csv")})
+    client.post("/discogs/import/confirm")
+    # The albums on the shelves have no release yet, so the purchase is first taken for one
+    # of them; saying it is a different album adds it.
+    from sleeve_shelf.domain import MatchProposal
+
+    store = JsonStore(client.application.config["DATA_DIR"])
+    for proposal in store.load(MatchProposal):
+        client.post(f"/discogs/matches/{proposal.album_id}/reject")
+
+
+def test_a_new_album_of_an_artist_on_the_shelves_is_suggested_a_spot_and_put_there(client):
+    _buy(client, "The Stooges", "Raw Power")
+    before = client.get("/browse?shelf=2").text
+
+    listed = client.get("/unplaced").text
+    # Next to the artist's own albums on shelf b; the shelf (1.5 cm, 3.5 cm of albums) is full.
+    assert "Suggested:" in listed and "Kast &rsaquo; b" in listed
+    assert "The shelf then holds" in listed and "Put it there" in listed
+    # Nothing has moved yet.
+    assert client.get("/browse?shelf=2").text == before
+    page = client.get("/albums/6").text
+    assert "Suggested spot" in page and "With the other albums of the artist, by year." in page
+
+    placed = client.post("/albums/6/place", data={"back": "list"}, follow_redirects=True)
+
+    assert "Raw Power now stands on" in placed.text and "Suggested:" not in placed.text
+    shelf = client.get("/browse?shelf=2").text
+    assert "Raw Power" in shelf and shelf.index("Fun House") < shelf.index("Raw Power")
+    assert "/restore" in client.get("/versions/").text
+    assert "Suggested spot" not in client.get("/albums/6").text
+
+
+def test_an_album_of_an_artist_without_a_cluster_gets_no_spot_until_the_artist_has_one(client):
+    _add_new_artist(client)
+
+    assert "No spot yet: the artist has no cluster." in client.get("/unplaced").text
+    assert "No spot can be suggested yet" in client.get("/albums/6").text
+    # Asking to place it does nothing.
+    client.post("/albums/6/place", data={"back": "album"})
+    assert "Debut" in client.get("/unplaced").text
+
+    client.post("/artists/4", data={"start_year": "", "cluster_id": "1", "new_cluster": ""})
+
+    page = client.get("/albums/6").text
+    # A new artist in Jazz: on shelf a, with the Jazz artists that stand there.
+    assert "Suggested spot" in page and "Kast &rsaquo; a" in page
+    client.post("/albums/6/place", data={"back": "album"})
+    assert "Debut" in client.get("/browse?shelf=1").text
+    assert "Put at the suggested spot." in client.get("/albums/6?placed=1").text
+
+
+def test_a_spot_follows_a_location_rule_and_leaves_kept_shelves_alone(client):
+    from sleeve_shelf.domain import LocationRule, LocationRuleTarget
+
+    _buy(client, "The Stooges", "Raw Power")
+    client.post("/storage/cabinets/new", data={"name": "Case", "location": ""})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "width_cm": "5", "type": "",
+                                                         "layer": ""})
+    store = JsonStore(client.application.config["DATA_DIR"])
+    store.save(LocationRule, [LocationRule(1, LocationRuleTarget.ALBUM, 6, 2)])
+
+    # Bound to a cabinet nothing stands in: it opens that cabinet, and fits there.
+    page = client.get("/albums/6").text
+    assert "Case &rsaquo; x" in page and "as the first album there" in page
+    assert "Nothing stands in that cabinet yet." in page and "It fits: 4.5 cm is left" in page
+
+    # Without the rule, and with the artist's shelf kept outside the sorting, the spot is
+    # found elsewhere: with the cluster's neighbours in the order of the clusters.
+    store.save(LocationRule, [])
+    client.post("/storage/cabinets/1", data={"name": "Kast", "location": "", "outside_sorting": "on"})
+    page = client.get("/albums/6").text
+    assert "Suggested spot" not in page
+    assert "nothing stands on the shelves it could go to" in page
+
+
+def test_the_dashboard_lists_what_is_to_place_until_it_stands_on_a_shelf(client):
+    assert "To place" not in client.get("/dashboard/").text
+    _buy(client, "The Stooges", "Raw Power")
+
+    page = client.get("/dashboard/").text
+    assert "To place" in page and "Raw Power" in page
+    # What a sync or import added is marked as new, with the day it came in.
+    from datetime import date
+
+    assert f'title="Added on {date.today().isoformat()}">New</span>' in page
+    assert ">New</span>" in client.get("/unplaced").text
+    assert "Suggested:" in page and "Kast &rsaquo; b" in page
+    assert "1 LP without a place" in page
+
+    placed = client.post("/albums/6/place", data={"back": "dashboard"}, follow_redirects=True)
+
+    # Put on its shelf from the Dashboard, it is gone from the list and from the counters.
+    assert "Raw Power now stands on" in placed.text
+    assert "To place" not in placed.text and "LP without a place" not in placed.text
+    assert "Raw Power" in client.get("/browse?shelf=2").text
+
+
+def test_the_dashboard_shows_the_first_few_to_place_and_links_to_the_rest(client):
+    for number, title in enumerate(("One", "Two", "Three", "Four", "Five", "Six", "Seven")):
+        _buy(client, "The Stooges", title, 300 + number)
+
+    page = client.get("/dashboard/").text
+
+    assert page.count("Put it there") == 5
+    assert "And 2 more to place" in page
+
+
+def test_an_album_from_the_workbook_is_not_marked_as_new_and_a_purchase_comes_first(client):
+    # The box set leaves its shelf: an album that was there from the start, now without a place.
+    client.post("/albums/5/move", data={"shelf_id": ""})
+    assert ">New</span>" not in client.get("/dashboard/").text
+
+    _buy(client, "The Stooges", "Raw Power")
+
+    page = client.get("/dashboard/").text
+    assert page.count(">New</span>") == 1
+    assert page.index("Raw Power") < page.index("Box &middot; 2010")
+
+
+def test_a_block_can_be_sent_to_the_end_of_a_shelf_without_dragging(client):
+    page = client.get("/layout/").text
+    # Every block has the button, and the list names every shelf with how full it is.
+    assert page.count("data-send ") == 3 and 'data-send-to="3"' in page and 'data-send-to="0"' in page
+
+    # Chet Baker's block goes from shelf a to the end of shelf b, behind what stands there.
+    sent = client.post("/layout/send", json={"albums": [1, 2], "shelf": 2})
+
+    assert sent.status_code == 200
+    assert sent.get_json()["shelves"] == {
+        "1": {"albums": 1, "filled_cm": 0.5},
+        "2": {"albums": 4, "filled_cm": 4.5},
+    }
+    shelf = client.get("/browse?shelf=2").text
+    assert shelf.index("Box") < shelf.index("Chet &middot; 1959") < shelf.index("Sings")
+    assert "Chet &middot; 1959" not in client.get("/browse?shelf=1").text
+    assert "/restore" in client.get("/versions/").text
+
+    # To the tray takes it off its shelf; an unknown shelf or album is refused.
+    client.post("/layout/send", json={"albums": [1], "shelf": 0})
+    assert "Chet" in client.get("/unplaced").text
+    assert client.post("/layout/send", json={"albums": [1], "shelf": 99}).status_code == 409
+    assert client.post("/layout/send", json={"albums": [99], "shelf": 1}).status_code == 409
+    assert client.post("/layout/send", json={"albums": [], "shelf": 1}).status_code == 409
+    assert client.post("/layout/send", json={"albums": ["x"], "shelf": 1}).status_code == 400
+
+
+def test_sending_a_block_to_a_shelf_in_another_room_names_the_room_to_jump_to(client):
+    client.post("/storage/cabinets/1", data={"name": "Kast", "location": "Living room"})
+    client.post("/storage/cabinets/new", data={"name": "Case", "location": "Attic"})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "width_cm": "5", "type": "",
+                                                         "layer": ""})
+    page = client.get("/layout/").text
+    # The list covers the shelves of every room, each with the tab it is on.
+    assert 'data-url="/layout/?room=Attic"' in page and "Case &middot; Attic" in page
+
+    sent = client.post("/layout/send", json={"albums": [3], "shelf": 4})
+
+    assert sent.get_json()["room"] == "Attic"
+    assert 'data-albums="3"' in client.get("/layout/?room=Attic").text
+
+
+def test_sending_a_block_in_the_proposal_leaves_the_shelves_alone(client):
+    client.post("/proposal/generate")
+    before = client.get("/browse?shelf=1").text
+
+    sent = client.post("/layout/send?layout=proposal", json={"albums": [3], "shelf": 3})
+
+    assert sent.status_code == 200
+    assert client.get("/browse?shelf=1").text == before
+    assert "Moanin" in client.get("/browse?layout=proposal&shelf=3").text

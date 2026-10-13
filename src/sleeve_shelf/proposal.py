@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+from sleeve_shelf.alias_groups import cluster_hints
 from sleeve_shelf.collection import ensure_cluster_order
 from sleeve_shelf.domain import (
     Album,
@@ -30,7 +31,7 @@ from sleeve_shelf.versions import save_if_unsaved, save_version
 
 
 @dataclass(frozen=True, slots=True)
-class _Sorted:
+class Sorted:
     units: list[Unit]
     ordered: list[OrderedAlbum]
     albums: dict[int, Album]
@@ -79,7 +80,7 @@ def usable_shelves(store: JsonStore) -> tuple[list[Shelf], list[Shelf]]:
     return usable, [shelf for shelf in walked if shelf not in usable]
 
 
-def _sort(store: JsonStore) -> _Sorted:
+def sort_collection(store: JsonStore) -> Sorted:
     ensure_cluster_order(store)
     placed_ids = {
         p.album_id for p in store.load(Placement)
@@ -87,18 +88,24 @@ def _sort(store: JsonStore) -> _Sorted:
     albums = [album for album in store.load(Album) if takes_part(album, placed_ids)]
     # Only confirmed assignments are curated; a proposed cluster is worked out afresh.
     confirmed = [a for a in store.load(ArtistClusterAssignment) if a.confirmed]
+    # A loose connection is an indication for the user, not something to sort by.
+    connected = {
+        artist_id: hint.cluster_id
+        for artist_id, hint in cluster_hints(store).items()
+        if hint.decisive
+    }
     units = build_units(
-        store.load(Artist), albums, confirmed, store.load(AliasGroup), store.load(Style)
+        store.load(Artist), albums, confirmed, store.load(AliasGroup), store.load(Style), connected
     )
     ordered = order_albums(units, albums, store.load(Cluster))
-    return _Sorted(units, ordered, {album.id: album for album in albums})
+    return Sorted(units, ordered, {album.id: album for album in albums})
 
 
 def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
     """Sort the collection and fill the shelves, saved as a proposal next to the current layout."""
-    result = _sort(store)
+    result = sort_collection(store)
     usable, _skipped = usable_shelves(store)
-    cabinet_of = _mandatory_cabinets(store, result)
+    cabinet_of = mandatory_cabinets(store, result)
     # What stands in a showcase, or in a cabinet kept outside the sorting, is the user's
     # own choice: it stays there, and is left out of the row that fills the other shelves.
     kept_ids = kept_shelf_ids(store)
@@ -132,7 +139,7 @@ def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
     )
 
 
-def _mandatory_cabinets(store: JsonStore, result: _Sorted) -> dict[int, int]:
+def mandatory_cabinets(store: JsonStore, result: Sorted) -> dict[int, int]:
     """The cabinet each album is bound to by a location rule, the most specific rule winning:
     the album's own, then its artist's, its family's, its cluster's."""
     rules: dict[LocationRuleTarget, dict[int, int]] = {target: {} for target in LocationRuleTarget}
@@ -165,7 +172,7 @@ def accept_proposal(store: JsonStore) -> None:
         return
     proposed = store.load(ProposedPlacement)
     save_if_unsaved(store, "before proposal")
-    result = _sort(store)
+    result = sort_collection(store)
     unit_of = {artist_id: unit for unit in result.units for artist_id in unit.artist_ids}
 
     # A cluster the engine proposed for an artist is recorded as such: unconfirmed.

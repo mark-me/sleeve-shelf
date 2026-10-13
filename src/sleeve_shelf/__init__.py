@@ -2,17 +2,21 @@
 
 import argparse
 import os
+import threading
 from pathlib import Path
 
 from flask import Flask, abort, redirect, request, url_for
 from flask_babel import Babel
 
+from sleeve_shelf.artists import set_picture
 from sleeve_shelf.collection import (
     enrich_collection,
     import_discogs_collection,
     load_layout,
 )
 from sleeve_shelf.config import load_settings
+from sleeve_shelf.covers import COVER_DIR, sharpen_small_images, sort_into_folders
+from sleeve_shelf.domain import Artist
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.initial_load import load_initial_layout
@@ -22,6 +26,7 @@ from sleeve_shelf.web import (
     artists,
     browse,
     clusters,
+    covers,
     dashboard,
     discogs,
     families,
@@ -49,6 +54,16 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     # Set by the Docker image build; a local run has no version.
     app.config["VERSION"] = os.environ.get("SLEEVE_SHELF_VERSION", "dev")
     Babel(app, default_locale="en")
+    if any(path.is_file() for path in (app.config["DATA_DIR"] / COVER_DIR).glob("*")):
+        # Images stored before covers and pictures each had a folder: sort them out once.
+        sort_into_folders(JsonStore(app.config["DATA_DIR"]))
+    if (app.config["DATA_DIR"] / COVER_DIR).is_dir():
+        # Small images stored as Discogs gives them are grainy: make them afresh from the
+        # large ones. Done aside, as it takes a while the first time and the pages do not
+        # wait for it; it fetches nothing, and there is nothing left to do afterwards.
+        threading.Thread(
+            target=lambda: sharpen_small_images(JsonStore(app.config["DATA_DIR"])), daemon=True
+        ).start()
 
     app.register_blueprint(setup.blueprint)
     app.register_blueprint(browse.blueprint)
@@ -66,6 +81,8 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(dashboard.blueprint)
     app.register_blueprint(albums.blueprint)
     app.register_blueprint(pwa.blueprint)
+    app.register_blueprint(covers.blueprint)
+    app.add_template_filter(covers.local_cover, "local_cover")
 
     @app.before_request
     def reject_cross_site_posts():
@@ -103,6 +120,11 @@ def main(arguments: list[str] | None = None) -> None:
     )
     import_discogs.add_argument("export", type=Path)
     commands.add_parser("enrich", help="fetch styles and original years from Discogs")
+    set_picture_command = commands.add_parser(
+        "set-picture", help="add your own picture of an artist, for when a browser can't upload"
+    )
+    set_picture_command.add_argument("artist")
+    set_picture_command.add_argument("image", type=Path)
     options = parser.parse_args(arguments)
 
     data_dir = _data_dir()
@@ -128,6 +150,16 @@ def main(arguments: list[str] | None = None) -> None:
             f" confirmation, {outcome.added} added as new albums;"
             f" {outcome.unmatched_albums} loaded albums have no release."
         )
+        return
+
+    if options.command == "set-picture":
+        name = options.artist.casefold()
+        artist = next((a for a in store.load(Artist) if a.name.casefold() == name), None)
+        if artist is None:
+            parser.exit(1, f"No artist is called {options.artist!r}\n")
+        if not set_picture(store, artist.id, options.image.read_bytes()):
+            parser.exit(1, "That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB\n")
+        print(f"Picture of {artist.name} set")
         return
 
     if options.command == "enrich":

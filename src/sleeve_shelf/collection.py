@@ -3,7 +3,7 @@
 from collections import Counter, defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, replace
-from datetime import datetime
+from datetime import date, datetime
 from difflib import SequenceMatcher
 
 from sleeve_shelf.domain import (
@@ -29,6 +29,7 @@ from sleeve_shelf.domain import (
     WidthConstants,
     settle_order,
 )
+from sleeve_shelf.covers import download_images, image_urls, missing_images
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
 from sleeve_shelf.ingestion.initial_load import InitialLoad
@@ -300,7 +301,10 @@ def import_discogs_collection(
         album.left_discogs = (
             album.release_id is not None and album.release_id not in in_collection
         )
-        if album.left_discogs:
+        if not album.left_discogs:
+            # Back in the collection: should it leave again, the question is asked anew.
+            album.kept_after_discogs = False
+        elif not album.kept_after_discogs:
             gone.append((artist_names[album.artist_id], album.title))
 
     # A cover only comes with a sync; an export leaves the covers as they are.
@@ -361,10 +365,14 @@ def import_discogs_collection(
                     item.title,
                     round(score, 3),
                     item.format_tokens,
+                    item.cover_url,
+                    item.cover_image_url,
                 )
             )
 
     artist_ids = {artist.name: artist.id for artist in artists}
+    # A new album of an artist whose cluster is settled is a purchase to weigh against it.
+    settled = {a.artist_id for a in store.load(ArtistClusterAssignment) if a.confirmed}
     for item in remaining:
         artist_id = artist_ids.get(item.artist)
         if artist_id is None:
@@ -378,6 +386,8 @@ def import_discogs_collection(
                 title=item.title,
                 release_id=item.release_id,
                 format_tokens=item.format_tokens,
+                new_purchase=artist_id in settled,
+                added_on=date.today(),
             )
         )
 
@@ -426,6 +436,9 @@ def confirm_match(store: JsonStore, album_id: int, constants: WidthConstants) ->
     album.release_id = proposal.release_id
     if album.format_tokens is None:
         album.format_tokens = proposal.format_tokens
+    # The cover comes along, so the album need not wait for the next sync to have one.
+    album.cover_url = proposal.cover_url or album.cover_url
+    album.cover_image_url = proposal.cover_image_url or album.cover_image_url
     estimate_widths([album], constants)
     store.save(Album, albums)
     store.save(MatchProposal, [p for p in proposals if p is not proposal])
@@ -449,6 +462,13 @@ def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> 
         title=proposal.title,
         release_id=proposal.release_id,
         format_tokens=proposal.format_tokens,
+        cover_url=proposal.cover_url,
+        cover_image_url=proposal.cover_image_url,
+        new_purchase=any(
+            a.artist_id == artist.id and a.confirmed
+            for a in store.load(ArtistClusterAssignment)
+        ),
+        added_on=date.today(),
     )
     estimate_widths([album], constants)
     albums.append(album)
@@ -494,6 +514,20 @@ def remove_departed_album(store: JsonStore, album_id: int) -> bool:
     return True
 
 
+def keep_departed_album(store: JsonStore, album_id: int, keep: bool = True) -> bool:
+    """Note that an album that left the Discogs collection is kept, so it is not asked about again.
+
+    With keep=False the note is taken back and the album is listed as gone once more.
+    """
+    albums = store.load(Album)
+    album = next((a for a in albums if a.id == album_id and a.left_discogs), None)
+    if album is None:
+        return False
+    album.kept_after_discogs = keep
+    store.save(Album, albums)
+    return True
+
+
 def _key(artist: str, title: str) -> tuple[str, str]:
     return " ".join(artist.casefold().split()), " ".join(title.casefold().split())
 
@@ -519,15 +553,21 @@ def enrich_collection(
         {a.release_id for a in albums if a.release_id is not None} - releases.keys()
     )
     artist_ids = sorted(
-        {a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None}
-        - pictures.keys()
+        discogs_id
+        for discogs_id in {
+            a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None
+        }
+        # A record from before membership was kept is fetched again, once.
+        if discogs_id not in pictures or pictures[discogs_id].member_ids is None
     )
     # Each new release may bring one master lookup with it.
     done, saved, total = 0, 0, 2 * len(release_ids) + len(artist_ids)
     linked_count = len(release_ids) + len(
         {a.release_id for a in albums if a.release_id is not None} & releases.keys()
     )
-    named_count = len(artist_ids) + len(pictures)
+    named_count = len(
+        {a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None}
+    )
     part("pictures", named_count - len(artist_ids), named_count)
     part("albums", linked_count - len(release_ids), linked_count)
     try:
@@ -564,7 +604,18 @@ def enrich_collection(
     finally:
         _save_cache(store, releases, masters, pictures)
     apply_enrichment(store)
-    return done
+    # Last of all: the images themselves, so the pages show them without Discogs.
+    urls = missing_images(store, albums, pictures.values())
+    total += len(urls)
+    stored = len(image_urls(albums, pictures.values())) - len(urls)
+    part("covers", stored, stored + len(urls))
+
+    def image_progress(count: int) -> None:
+        part("covers", stored + count, stored + len(urls))
+        progress(done + count, total)
+
+    download_images(store, client, urls, image_progress)
+    return done + len(urls)
 
 
 def _save_cache(store: JsonStore, releases: dict, masters: dict, pictures: dict) -> None:

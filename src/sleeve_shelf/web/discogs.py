@@ -18,10 +18,12 @@ from flask_babel import gettext as _
 from sleeve_shelf.collection import (
     confirm_match,
     import_discogs_collection,
+    keep_departed_album,
     reject_match,
     remove_departed_album,
 )
 from sleeve_shelf.config import load_settings, save_settings
+from sleeve_shelf.covers import image_paths, missing_images, stored_names
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -33,6 +35,7 @@ from sleeve_shelf.domain import (
     Shelf,
 )
 from sleeve_shelf.ingestion.discogs_api import (
+    SECONDS_BETWEEN_IMAGES,
     SECONDS_BETWEEN_REQUESTS,
     DiscogsClient,
     DiscogsError,
@@ -102,13 +105,48 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
         if proposal.album_id in by_id
     ]
     token = settings.discogs_token
+    # A sync or export that was fetched but not taken over yet: what taking it over would do.
+    preview = None
+    try:
+        pending = _pending_items()
+    except ValueError as problem:
+        pending, error = None, error or str(problem)
+        _clear_pending()
+    if pending is not None:
+        items, synced = pending
+        preview = {
+            "synced": synced,
+            "outcome": import_discogs_collection(
+                store, items, settings.width_constants, dry_run=True, refresh_formats=synced
+            ),
+        }
     named = {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
-    pictured = {picture.discogs_artist_id for picture in store.load(ArtistEnrichment)}
+    pictures_by_id = {p.discogs_artist_id: p for p in store.load(ArtistEnrichment)}
+    pictured = set(pictures_by_id)
     job = _job().status()
+    pictures_stored = store.load(ArtistEnrichment)
+    images = image_paths(albums, pictures_stored)
+    images_missing = len(missing_images(store, albums, pictures_stored))
+    names = stored_names(store.data_dir)
+    images_stored = sum(path in names for path in images.values())
+    to_fetch_pictures = sum(
+        1
+        for a in artist_list
+        if a.discogs_artist_id is not None
+        and (
+            a.discogs_artist_id not in pictures_by_id
+            or pictures_by_id[a.discogs_artist_id].member_ids is None
+        )
+    )
     gone = [
         {"album": album, "artist": artists.get(album.artist_id, "")}
         for album in albums
-        if album.left_discogs
+        if album.left_discogs and not album.kept_after_discogs
+    ]
+    kept = [
+        {"album": album, "artist": artists.get(album.artist_id, "")}
+        for album in albums
+        if album.left_discogs and album.kept_after_discogs
     ]
     return (
         render_template(
@@ -117,22 +155,38 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             linked_count=sum(album.release_id is not None for album in albums),
             fetched_count=len(linked & fetched),
             to_fetch_count=len(linked - fetched),
-            # A preview that was left without taking it over or importing it.
-            waiting="sync" if (_data_dir() / PENDING_SYNC).exists()
-            else "export" if (_data_dir() / PENDING_EXPORT).exists()
+            preview=preview,
+            # Whether anything is left to fetch, also while an earlier step waits.
+            fetch_open=bool(linked - fetched or to_fetch_pictures or images_missing),
+            # The step that waits for the user, from top to bottom; none when all is done.
+            current="sync"
+            if preview
+            else "matches"
+            if proposals
+            else "enrich"
+            if token and (linked - fetched or to_fetch_pictures or images_missing)
             else None,
-            pictures_to_fetch_count=len(named - pictured),
+            pictures_to_fetch_count=to_fetch_pictures,
             # How far each part is, as [done, total]; a running job knows it more precisely.
             albums_progress=job["albums"] or [len(linked & fetched), len(linked)],
             pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
+            covers_to_fetch_count=images_missing,
+            covers_progress=job["covers"] or [images_stored, len(images)],
+            covers_gone_count=len(images) - images_stored - images_missing,
             unnamed_count=sum(artist.discogs_artist_id is None for artist in artist_list),
             minutes=ceil(
-                (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS / 60
+                (
+                    (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS
+                    # Covers and pictures that are still to be named come on top of these.
+                    + images_missing * SECONDS_BETWEEN_IMAGES
+                )
+                / 60
             ),
-            minutes_left=ceil((job["total"] - job["done"]) * SECONDS_BETWEEN_REQUESTS / 60),
+            minutes_left=ceil(job["seconds_left"] / 60),
             seconds_per_lookup=SECONDS_BETWEEN_REQUESTS,
             proposals=proposals,
             gone=gone,
+            kept=kept,
             masked_token=f"••••{token[-4:]}" if token else None,
             job=job,
             error=error,
@@ -158,9 +212,8 @@ def upload():
     except ValueError as error:
         pending.unlink(missing_ok=True)
         return index(error=str(error), status=400)
-    settings = load_settings(_data_dir())
-    outcome = import_discogs_collection(get_store(), items, settings.width_constants, dry_run=True)
-    return render_template("discogs/preview.html", outcome=outcome, synced=False)
+    # What importing it would do is shown in the first step of the screen.
+    return redirect(url_for("discogs.index") + "#sync")
 
 
 @blueprint.post("/sync")
@@ -182,11 +235,8 @@ def sync():
     _data_dir().mkdir(parents=True, exist_ok=True)
     _clear_pending()
     (_data_dir() / PENDING_SYNC).write_text(json.dumps(releases), encoding="utf-8")
-    items = collection_items(releases, settings.count_bonus_discs_as_vinyl)
-    outcome = import_discogs_collection(
-        get_store(), items, settings.width_constants, dry_run=True, refresh_formats=True
-    )
-    return render_template("discogs/preview.html", outcome=outcome, synced=True)
+    # What taking it over would do is shown in the first step of the screen.
+    return redirect(url_for("discogs.index") + "#sync")
 
 
 @blueprint.post("/import/confirm")
@@ -202,10 +252,19 @@ def confirm_import():
     items, synced = pending
     settings = load_settings(_data_dir())
     # Only a sync knows the format well enough to correct albums that are already linked.
-    import_discogs_collection(
-        get_store(), items, settings.width_constants, refresh_formats=synced
+    store = get_store()
+    import_discogs_collection(store, items, settings.width_constants, refresh_formats=synced)
+    # On to the next step: the matches when some wait, else the fetching.
+    return redirect(
+        url_for("discogs.index") + ("#matches" if store.load(MatchProposal) else "#enrich")
     )
-    return redirect(url_for("discogs.index"))
+
+
+@blueprint.post("/import/discard")
+def discard_import():
+    """Drop a sync or export that was fetched but not taken over; nothing has changed."""
+    _clear_pending()
+    return redirect(url_for("discogs.index") + "#sync")
 
 
 @blueprint.post("/token")
@@ -269,6 +328,19 @@ def remove_gone(album_id: int):
         artist=artists.get(album.artist_id, ""),
         place=_place(album_id),
     )
+
+
+@blueprint.post("/gone/<int:album_id>/keep")
+def keep_gone(album_id: int):
+    """The user still owns an album that left Discogs: stop asking about it."""
+    keep_departed_album(get_store(), album_id)
+    return redirect(url_for("discogs.index") + "#gone")
+
+
+@blueprint.post("/gone/<int:album_id>/ask-again")
+def ask_again(album_id: int):
+    keep_departed_album(get_store(), album_id, keep=False)
+    return redirect(url_for("discogs.index") + "#gone")
 
 
 def _place(album_id: int) -> str | None:

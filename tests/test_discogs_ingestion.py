@@ -108,6 +108,28 @@ def test_release_and_master_lookups():
     assert api.slept == [pytest.approx(1.05)]
 
 
+def test_artist_lookup_also_gives_members_groups_and_aliases():
+    api = _Api(
+        {
+            "images": [{"type": "primary", "uri": "https://i.discogs.com/a.jpeg", "uri150": "https://i.discogs.com/a150.jpeg"}],
+            "members": [{"id": 101, "name": "Jason Molina", "active": True}, {"id": 102, "name": "Past Member", "active": False}],
+            "groups": [{"id": 201, "name": "Songs: Ohia", "active": True}],
+            "aliases": [{"id": 301, "name": "Pyramid Electric Co."}],
+        },
+        {"name": "No Membership"},
+        404,
+    )
+    client = api.client()
+
+    band, plain, gone = client.artist(82294), client.artist(2), client.artist(3)
+
+    # Members and groups are kept as Discogs gives them, former members included.
+    assert (band.member_ids, band.group_ids, band.alias_ids) == ((101, 102), (201,), (301,))
+    # A record without those lists is complete: there is simply nothing to list.
+    assert (plain.member_ids, plain.group_ids, plain.alias_ids) == ((), (), ())
+    assert gone.member_ids == ()
+
+
 def test_release_without_master_and_missing_release():
     api = _Api({"styles": [], "master_id": 0, "year": 0}, 404)
     client = api.client()

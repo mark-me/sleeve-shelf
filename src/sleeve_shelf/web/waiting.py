@@ -16,6 +16,8 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
 from sleeve_shelf.proposal import takes_part
+from sleeve_shelf.rule_suggestions import rule_suggestions
+from sleeve_shelf.shifts import cluster_shifts
 
 # The shelf fill is a query over all of these; it fails while one is missing.
 _LAYOUT_ENTITIES = (Album, Artist, ArtistClusterAssignment, Cabinet, Cluster, EraBand, Placement, Shelf)
@@ -37,13 +39,19 @@ def waiting_counts(store: JsonStore) -> dict[str, int]:
             for shelf in store.load(Shelf)
             if shelf.width_cm and fill.get(shelf.id, (0, 0.0))[1] > shelf.width_cm
         )
+    to_check = {a for a in sorted_artists if a not in confirmed or a not in start_years}
+    shifted = {shift.artist_id for shift in cluster_shifts(store)}
     return {
         "matches": len(store.load(MatchProposal)),
         "families": len(family_suggestions(store)),
-        "artists": sum(1 for a in sorted_artists if a not in confirmed or a not in start_years),
+        "artists": len(to_check),
+        "shifts": len(shifted),
+        "rule_suggestions": len(rule_suggestions(store)),
+        # An artist can be in both; the menu and the steps count it once.
+        "artists_in_all": len(to_check | shifted),
         "widths": sum(1 for album in sorted_albums if not album.width_confirmed),
         "unlinked": sum(1 for album in sorted_albums if album.release_id is None),
-        "gone": sum(1 for album in albums if album.left_discogs),
+        "gone": sum(1 for a in albums if a.left_discogs and not a.kept_after_discogs),
         "overfull": overfull,
         "unplaced": sum(1 for album in sorted_albums if album.id not in placed),
     }
@@ -69,8 +77,9 @@ def _menu_counts(store: JsonStore) -> dict[str, int]:
     counts = waiting_counts(store)
     return {
         "unplaced": counts["unplaced"],
-        "artists": counts["artists"],
+        "artists": counts["artists_in_all"],
         "families": counts["families"],
         "storage": counts["overfull"],
+        "rules": counts["rule_suggestions"],
         "discogs": counts["matches"] + counts["gone"],
     }

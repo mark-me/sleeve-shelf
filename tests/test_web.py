@@ -237,14 +237,62 @@ def test_family_suggestions_can_be_accepted_or_turned_down(client):
     _load(client, layout=FAMILY_LAYOUT)
 
     page = client.get("/families/").text
-    assert "Suggested from the names (2)" in page and "Chet Baker Quartet" in page
+    assert "Suggested families (2)" in page and "Chet Baker Quartet" in page
 
     client.post("/families/suggestions/3/dismiss")
     client.post("/families/suggestions/1/accept", data={"member": "2"})
 
     page = client.get("/families/").text
-    assert "Suggested from the names (0)" in page
+    assert "Suggested families (0)" in page
     assert "Families (1)" in page and 'value="Chet Baker"' in page
+
+
+def test_discogs_membership_suggests_families_and_additions_to_them(client):
+    from datetime import datetime
+
+    from sleeve_shelf.domain import Artist, ArtistEnrichment
+
+    _load(client, layout=[
+        ["Kast", "a", "Rock", "1980s", "Nick Cave", "Solo", 1984],
+        ["Kast", "a", "Rock", "1980s", "Grinderman", "Grinderman", 2007],
+        ["Kast", "a", "Rock", "1980s", "The Birthday Party", "Junkyard", 1982],
+        ["Kast", "a", "Rock", "1980s", "The Boys Next Door", "Door, Door", 1979],
+    ])
+    store = JsonStore(client.application.config["DATA_DIR"])
+    artists = store.load(Artist)
+    ids = {artist.name: artist.id for artist in artists}
+    for artist in artists:
+        artist.discogs_artist_id = 100 + artist.id
+    store.save(Artist, artists)
+    now = datetime(2026, 10, 12)
+    cave, grinderman = ids["Nick Cave"], ids["Grinderman"]
+    store.save(ArtistEnrichment, [
+        ArtistEnrichment(100 + cave, None, None, now, (), (100 + grinderman,), ()),
+        ArtistEnrichment(100 + ids["The Birthday Party"], None, None, now, (100 + cave,), (), ()),
+        ArtistEnrichment(100 + ids["The Boys Next Door"], None, None, now, (100 + cave,), (), ()),
+    ])
+
+    page = client.get("/families/").text
+    assert "Suggested families (1)" in page and "Discogs lists them" in page
+    client.post(
+        f"/families/suggestions/{cave}/accept", data={"member": str(grinderman)}
+    )
+
+    # The two bands left unticked are now offered to the family that exists.
+    page = client.get("/families/").text
+    assert "Add to the family “Nick Cave”" in page and "Suggested families (1)" in page
+    anchor = min(cave, grinderman)
+    client.post(
+        f"/families/suggestions/{anchor}/accept", data={"member": str(ids["The Birthday Party"])}
+    )
+    assert {a.name for a in store.load(Artist) if a.alias_group_id} == {
+        "Nick Cave", "Grinderman", "The Birthday Party"
+    }
+    assert "Families (1)" in client.get("/families/").text
+
+    # Turning the last one down keeps it out, without hiding later additions to the family.
+    client.post(f"/families/suggestions/{anchor}/dismiss")
+    assert "Suggested families (0)" in client.get("/families/").text
 
 
 def test_a_family_can_be_made_and_changed_by_hand(client):

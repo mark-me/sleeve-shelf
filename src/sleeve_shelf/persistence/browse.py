@@ -1,6 +1,7 @@
 """Read queries behind Browse/Search: the collection in physical shelf order."""
 
 from dataclasses import dataclass
+from datetime import date
 
 from sleeve_shelf.domain import (
     Album,
@@ -44,6 +45,8 @@ class AlbumRow:
     is_lp: bool = True
     artist_id: int | None = None
     cover_url: str | None = None
+    # The day a sync or import added the album; None for one that came with the workbook.
+    added_on: date | None = None
 
 
 class BrowseQueries:
@@ -99,8 +102,9 @@ class BrowseQueries:
         return self._albums("", [])
 
     def unplaced(self) -> list[AlbumRow]:
-        """Albums without a spot on any shelf."""
-        return self._albums("WHERE shelf_id IS NULL", [])
+        """Albums without a spot on any shelf: what was added last first, then the rest."""
+        rows = self._albums("WHERE shelf_id IS NULL", [])
+        return sorted(rows, key=lambda row: -(row.added_on.toordinal() if row.added_on else 0))
 
     def search(self, text: str) -> list[AlbumRow]:
         """Albums whose artist or title contains every word of the text."""
@@ -118,7 +122,7 @@ class BrowseQueries:
             f"""
             {self._located_albums()}
             SELECT album_id, artist, title, year, cluster, era_band, shelf_id, cabinet, shelf,
-                   is_lp, artist_id, cover_url
+                   is_lp, artist_id, cover_url, added_on
             FROM located
             {where}
             ORDER BY cabinet_order NULLS LAST, cabinet_id, shelf_order, shelf_id,
@@ -135,7 +139,7 @@ class BrowseQueries:
             WITH placement AS (SELECT * FROM {relation(self._placements)}),
             located AS (
                 SELECT album.id AS album_id, artist.name AS artist, artist.id AS artist_id,
-                       album.title, album.cover_url,
+                       album.title, album.cover_url, album.added_on,
                        album.original_release_year AS year, cluster.name AS cluster,
                        era_band.label AS era_band, shelf.id AS shelf_id,
                        cabinet.id AS cabinet_id, cabinet.name AS cabinet, shelf.name AS shelf,

@@ -55,7 +55,7 @@
       {{ item('artists.index', _('Artists'), request.blueprint == 'artists', menu_counts.artists) }}
       {{ item('families.index', _('Artist families'), request.blueprint == 'families', menu_counts.families) }}
       {{ item('clusters.index', _('Clusters'), request.blueprint == 'clusters') }}
-      {{ item('rules.index', _('Location rules'), request.blueprint == 'rules') }}
+      {{ item('rules.index', _('Location rules'), request.blueprint == 'rules', menu_counts.rules) }}
       <div class="ss-nav-group">{{ _('Setup') }}</div>
       {{ item('storage.index', _('Cabinets & shelves'), request.blueprint == 'storage' or request.endpoint == 'albums.widths', menu_counts.storage) }}
       {{ item('discogs.index', _('Discogs sync'), request.blueprint == 'discogs', menu_counts.discogs) }}

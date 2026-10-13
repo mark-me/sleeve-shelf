@@ -34,6 +34,15 @@ class Cabinet:
     outside_sorting: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class RuleSuggestionDismissal:
+    """A location rule the layout hinted at, which the user turned down for good."""
+
+    target_type: LocationRuleTarget
+    target_id: int
+    cabinet_id: int
+
+
 @dataclass(slots=True)
 class Shelf:
     """A shelf within a cabinet; its width determines how many records fit.

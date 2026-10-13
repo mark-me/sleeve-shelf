@@ -82,14 +82,84 @@ def index():
         if (cabinet.location or "") == room
     ]
     tray = [row for row in queries.unplaced() if row.is_lp]
+    # Every shelf of every room, to send a block to without dragging it there.
+    destinations = [
+        {
+            "cabinet": cabinet,
+            "room": cabinet.location or "",
+            "shelves": [
+                {
+                    "shelf": shelf,
+                    "albums": fill.get(shelf.id, (0, 0.0))[0],
+                    "filled_cm": fill.get(shelf.id, (0, 0.0))[1],
+                }
+                for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
+            ],
+        }
+        for cabinet in all_cabinets
+    ]
     return render_template(
         "layout/index.html",
         cabinets=cabinets,
+        destinations=[entry for entry in destinations if entry["shelves"]],
         tray=_blocks(sorted(tray, key=lambda row: (row.artist.casefold(), row.year or 9999))),
         layout=layout,
         has_proposal=has_proposal(store),
         rooms=rooms if len(rooms) > 1 else [],
         room=room,
+    )
+
+
+@blueprint.post("/send")
+def send():
+    """Stand albums at the end of a shelf, in the order given: {albums: [ids], shelf: id}.
+
+    For a move without dragging: the exact spot is then set by dragging within the shelf.
+    Shelf 0 is the tray, which takes the albums off their shelf.
+    """
+    store = get_store()
+    entity, _layout = _entity(store)
+    payload = request.get_json(silent=True) or {}
+    try:
+        moving = [int(album_id) for album_id in payload.get("albums") or []]
+        target = int(payload.get("shelf"))
+    except (TypeError, ValueError):
+        return jsonify(error="Albums and the shelf are given by number."), 400
+    shelves = {shelf.id: shelf for shelf in store.load(Shelf)}
+    album_ids = {album.id for album in store.load(Album)}
+    if (
+        not moving
+        or len(moving) != len(set(moving))
+        or not set(moving) <= album_ids
+        or (target != TRAY and target not in shelves)
+    ):
+        return jsonify(error="The shelves have changed; reload the page."), 409
+
+    placements = store.load(entity)
+    touched = {p.shelf_id for p in placements if p.album_id in moving} | {target}
+    kept = [p for p in placements if p.album_id not in moving]
+    if target != TRAY:
+        following = max((p.position for p in kept if p.shelf_id == target), default=-1) + 1
+        kept += [
+            entity(album_id, target, following + offset, PlacementSource.MANUAL)
+            for offset, album_id in enumerate(moving)
+        ]
+    if entity is Placement:
+        keep_restore_point(store)
+    store.save(entity, kept)
+    fill = BrowseQueries(store, entity).shelf_fill()
+    cabinets = {cabinet.id: cabinet for cabinet in store.load(Cabinet)}
+    return jsonify(
+        shelves={
+            str(shelf_id): {
+                "albums": fill.get(shelf_id, (0, 0.0))[0],
+                "filled_cm": round(fill.get(shelf_id, (0, 0.0))[1], 1),
+            }
+            for shelf_id in touched
+            if shelf_id != TRAY
+        },
+        # The room the shelf is in, for a jump to a shelf that is on another tab.
+        room=(cabinets[shelves[target].cabinet_id].location or "") if target != TRAY else None,
     )
 
 

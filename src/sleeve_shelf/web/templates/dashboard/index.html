@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Dashboard') }}{% endblock %}
 
+{% from "_cover.html" import cover %}
+{% import "_spot.html" as spot_text %}
 {% block content %}
 <div class="ss-page" style="max-width: 900px;">
   <h1>{{ _('Dashboard') }}</h1>
@@ -23,6 +25,39 @@
     <a class="ss-button" href="{{ url_for('proposal.index') }}">{% if has_proposal %}{{ _('A proposal is waiting') }}{% else %}{{ _('Sorting proposal') }}{% endif %}</a>
   </div>
 
+  {% if placed and placed.shelf_id is not none %}
+  <div class="ss-alert mt-4">{{ _('%(title)s now stands on', title=placed.title) }} <a href="{{ url_for('browse.browse', shelf=placed.shelf_id) }}#album-{{ placed.album_id }}">{{ placed.cabinet }} &rsaquo; {{ placed.shelf }}</a>. {{ _('A version from before is kept under Versions.') }}</div>
+  {% endif %}
+  {% if to_place %}
+  <h2 class="mt-5" id="to-place">{{ _('To place') }} <span class="ss-chip align-middle">{{ to_place_count }}</span></h2>
+  <p class="ss-muted mt-1">{{ _('LPs that stand on no shelf yet, each with the spot suggested for it. They stay here until they are put on a shelf; what a sync or import added is marked as new and comes first.') }}</p>
+  <div class="ss-card mt-3">
+    {% set covers = to_place | selectattr('cover_url') | list | length > 0 %}
+    {% for album in to_place %}
+    <div class="ss-row">
+      {{ cover(album.cover_url, covers) }}
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{% if album.added_on %}<span class="ss-chip" title="{{ _('Added on %(date)s', date=album.added_on.isoformat()) }}">{{ _('New') }}</span> {% endif %}{{ album.artist }}</span>
+        <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</a>
+        {% set spot = spots.get(album.album_id) %}
+        {% if spot %}
+        <span class="ss-row-title mt-1">{{ _('Suggested:') }} {{ spot_text.where(spot) }}</span>
+        <span class="ss-row-title">{{ spot_text.room(spot) }}</span>
+        {% elif album.cluster %}
+        <span class="ss-row-title mt-1">{{ _('No spot: nothing stands on the shelves it could go to.') }}</span>
+        {% else %}
+        <span class="ss-row-title mt-1">{{ _('No spot yet: the artist has no cluster.') }}</span>
+        {% endif %}
+      </div>
+      {% if spot %}{{ spot_text.place_button(album.album_id, 'dashboard') }}{% endif %}
+    </div>
+    {% endfor %}
+    {% if to_place_count > to_place | length %}
+    <a class="ss-row" href="{{ url_for('browse.unplaced') }}"><span class="ss-row-artist">{{ ngettext('And %(num)d more to place', 'And %(num)d more to place', to_place_count - to_place | length) }} &rarr;</span></a>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <h2 class="mt-5">{{ _('Waiting for you') }}</h2>
   {% if waiting %}
   <div class="ss-card mt-3">
@@ -33,6 +68,8 @@
           {% if item.kind == 'matches' %}{{ ngettext('%(num)d Discogs match to confirm', '%(num)d Discogs matches to confirm', item.count) }}
           {% elif item.kind == 'families' %}{{ ngettext('%(num)d suggested artist family to look at', '%(num)d suggested artist families to look at', item.count) }}
           {% elif item.kind == 'artists' %}{{ ngettext('%(num)d artist without a confirmed cluster or a start year', '%(num)d artists without a confirmed cluster or a start year', item.count) }}
+          {% elif item.kind == 'shifts' %}{{ ngettext('%(num)d artist a new purchase points to another cluster', '%(num)d artists a new purchase points to another cluster', item.count) }}
+          {% elif item.kind == 'rule_suggestions' %}{{ ngettext('%(num)d location rule suggested from your layout', '%(num)d location rules suggested from your layout', item.count) }}
           {% elif item.kind == 'widths' %}{{ ngettext('%(num)d box set or bundle with a rough width', '%(num)d box sets and bundles with a rough width', item.count) }}
           {% elif item.kind == 'unlinked' %}{{ ngettext('%(num)d album without a Discogs release', '%(num)d albums without a Discogs release', item.count) }}
           {% elif item.kind == 'gone' %}{{ ngettext('%(num)d album no longer in your Discogs collection', '%(num)d albums no longer in your Discogs collection', item.count) }}
@@ -43,11 +80,13 @@
           {% if item.kind == 'matches' %}{{ _('Is the Discogs release the same album?') }}
           {% elif item.kind == 'families' %}{{ _('Families decide which artists stand together.') }}
           {% elif item.kind == 'artists' %}{{ _('They are sorted on a proposed cluster or a year taken from their albums.') }}
+          {% elif item.kind == 'shifts' %}{{ _('Move the artist to that cluster, or keep it where it is; nothing moves by itself.') }}
+          {% elif item.kind == 'rule_suggestions' %}{{ _('Add them or turn them down; none is made by itself.') }}
           {% elif item.kind == 'widths' %}{{ _('Measure them and enter the real width; until then they count as loose discs.') }}
           {% elif item.kind == 'unlinked' %}{{ _('Without a release there are no styles or original year from Discogs.') }}
-          {% elif item.kind == 'gone' %}{{ _('Sold, or removed on Discogs? They still stand in the layout until you remove them.') }}
+          {% elif item.kind == 'gone' %}{{ _('Sold, or removed on Discogs? Say that you still have them, or remove them.') }}
           {% elif item.kind == 'overfull' %}{{ _('The shelf width is an estimate, or the shelf really is too full.') }}
-          {% else %}{{ _('Place them by hand in Layout, or generate a proposal.') }}{% endif %}
+          {% else %}{{ _('Put them at the spot suggested for them, place them by hand in Layout, or generate a proposal.') }}{% endif %}
         </span>
       </div>
     {% if item.url %}</a>{% else %}</div>{% endif %}

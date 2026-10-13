@@ -99,6 +99,11 @@ class _Client:
         self.calls.append(("master", master_id))
         return MasterEnrichment(master_id, 1959, NOW)
 
+    def image(self, url):
+        # Kept apart from the lookups: the tests on those don't care about images.
+        self.images = [*getattr(self, "images", []), url]
+        return b"jpeg"
+
 
 def test_enrichment_fetches_once_and_fills_the_albums(tmp_path):
     store = JsonStore(tmp_path)
@@ -179,7 +184,7 @@ def test_enrichment_fetches_each_artists_picture_once(tmp_path):
     class Pictured(_Client):
         def artist(self, artist_id):
             self.calls.append(("artist", artist_id))
-            return ArtistEnrichment(artist_id, f"https://i/{artist_id}.jpeg", None, NOW)
+            return ArtistEnrichment(artist_id, f"https://i/{artist_id}.jpeg", None, NOW, member_ids=())
 
     store = JsonStore(tmp_path)
     store.save(Artist, [Artist(1, "Chet Baker", discogs_artist_id=30), Artist(2, "Unknown")])
@@ -194,10 +199,37 @@ def test_enrichment_fetches_each_artists_picture_once(tmp_path):
     )
 
     # Each part says how far it is; the pictures are named first so their count is known at once.
-    assert parts == [("pictures", 0, 1), ("albums", 0, 1), ("albums", 1, 1), ("pictures", 1, 1)]
-    # The picture comes last, after what the sorting needs.
+    assert parts == [
+        ("pictures", 0, 1), ("albums", 0, 1), ("albums", 1, 1), ("pictures", 1, 1),
+        # Last of all the images themselves: here only the picture, the album has no cover.
+        ("covers", 0, 1), ("covers", 1, 1),
+    ]
+    # The picture comes after what the sorting needs.
     assert client.calls == [("release", 12), ("artist", 30)]
-    assert seen[-1] == (2, 2)
+    assert client.images == ["https://i/30.jpeg"]
+    assert seen[-1] == (3, 3)
     assert store.load(ArtistEnrichment)[0].image_url == "https://i/30.jpeg"
     enrich_collection(store, client)
     assert len(client.calls) == 2
+
+
+def test_enrichment_fetches_membership_for_records_from_before_it_was_kept(tmp_path):
+    class Members(_Client):
+        def artist(self, artist_id):
+            self.calls.append(("artist", artist_id))
+            return ArtistEnrichment(
+                artist_id, None, None, NOW, member_ids=(5,), group_ids=(), alias_ids=()
+            )
+
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Chet Baker", discogs_artist_id=30)])
+    store.save(Album, [Album(1, 1, "Chet", release_id=12, style_ids=[1], master_id=None)])
+    store.save(ReleaseEnrichment, [ReleaseEnrichment(12, ("Cool Jazz",), None, NOW, 1959)])
+    # An artist record from before membership was kept: no member_ids at all.
+    store.save(ArtistEnrichment, [ArtistEnrichment(30, None, None, NOW)])
+    client = Members()
+
+    enrich_collection(store, client)
+
+    assert ("artist", 30) in client.calls
+    assert store.load(ArtistEnrichment)[0].member_ids == (5,)

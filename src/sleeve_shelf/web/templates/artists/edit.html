@@ -22,6 +22,20 @@
   {% for error in errors %}
   <div class="ss-alert mt-3" role="alert">{{ error }}</div>
   {% endfor %}
+  {% if shift %}
+  <div class="ss-alert mt-3" id="shift">
+    <p class="fw-semibold mb-1">{{ _('A new purchase points to another cluster') }}</p>
+    <p class="mb-2">{{ ngettext('With %(titles)s the Discogs styles of the albums now point to “%(proposed)s”; the artist stands in “%(current)s”.', 'With %(titles)s the Discogs styles of the albums now point to “%(proposed)s”; the artist stands in “%(current)s”.', shift.titles | length, titles=shift.titles | join(', '), proposed=shift.proposed, current=shift.current) }} {{ _('Nothing changes until you choose.') }}</p>
+    <div class="d-flex flex-wrap gap-2">
+      <form method="post" action="{{ url_for('artists.decide_shift', artist_id=artist.id, choice='keep') }}">
+        <button class="ss-button ss-button-primary" type="submit">{{ _('Keep in %(cluster)s', cluster=shift.current) }}</button>
+      </form>
+      <form method="post" action="{{ url_for('artists.decide_shift', artist_id=artist.id, choice='accept') }}">
+        <button class="ss-button" type="submit">{{ _('Move to %(cluster)s', cluster=shift.proposed) }}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
   {% if moved %}
   <div class="ss-alert mt-3">{{ _('Moved. A version from before the move is kept under Versions.') }}</div>
   {% endif %}
@@ -50,7 +64,20 @@
         </select>
         <div class="form-text">
           {% if assignment and not assignment.confirmed %}{{ _('This cluster was proposed by the app; saving confirms it.') }}{% endif %}
-          {% if proposed_cluster %}{{ _('Going by the Discogs styles of the albums: %(cluster)s.', cluster=proposed_cluster.name) }}{% endif %}
+          {% if connected_cluster %}
+          {% if connection_decides %}
+          {{ _('Going by whom Discogs connects this artist to: %(cluster)s, the cluster of', cluster=connected_cluster.name) }}
+          {% else %}
+          {{ _('Discogs loosely connects this artist to %(cluster)s, the cluster of', cluster=connected_cluster.name) }}
+          {% endif %}
+          {% for other in connected_artists %}<a href="{{ url_for('artists.edit', artist_id=other.id) }}">{{ other.name }}</a>{{ ', ' if not loop.last else '.' }}{% endfor %}
+          {% if connection_decides %}
+          {{ _('A sorting proposal goes by that, before the styles.') }}
+          {% else %}
+          {{ _('That is an indication only — a band shared with others, or a session player — and a sorting proposal goes by the styles.') }}
+          {% endif %}
+          {% endif %}
+          {% if proposed_cluster and (proposed_cluster != connected_cluster or not connection_decides) %}{{ _('Going by the Discogs styles of the albums: %(cluster)s.', cluster=proposed_cluster.name) }}{% endif %}
         </div>
         <label for="new_cluster" class="form-label mt-3">{{ _('…or a new cluster') }}</label>
         <input id="new_cluster" class="form-control" name="new_cluster" placeholder="{{ _('Name of a new cluster') }}" value="{{ request.form.get('new_cluster', '') }}">
@@ -67,6 +94,53 @@
   {% set move_label = ngettext('Stand the %(num)d album of this artist on', 'Stand all %(num)d albums of this artist on', movable_count) %}
   {% set current_shelf_id = none %}
   {% include "_rules_and_move.html" %}
+
+  {% if related.other_names or related.bands or related.members %}
+  <h2 class="mt-5" id="related">{{ _('Related artists') }}</h2>
+  <p class="ss-muted mt-1">{{ _('Whom Discogs connects this artist to, among the artists in your collection.') }}</p>
+  <div class="ss-card mt-3">
+    {% for label, others in [(_('Other names'), related.other_names), (_('Member of'), related.bands), (_('Members'), related.members)] %}
+    {% if others %}
+    <div class="ss-group">{{ label }}</div>
+    {% for other in others %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=other.id) }}">{{ other.name }}</a>
+        <span class="ss-row-title">{{ other.cluster or _('no cluster yet') }}</span>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <h2 class="mt-5" id="picture">{{ _('Picture') }}</h2>
+  {% if picture_error %}
+  <div class="ss-alert mt-3" role="alert">{{ picture_error }}</div>
+  {% endif %}
+  <div class="ss-card mt-3">
+    <div class="ss-card-body">
+      <p class="ss-muted small">
+        {% if picture and picture.own %}{{ _('This is a picture you added; it is shown instead of the one from Discogs.') }}
+        {% elif picture %}{{ _('This picture comes from Discogs. Add your own to show that one instead.') }}
+        {% else %}{{ _('Discogs has no picture for this artist. You can add one yourself.') }}{% endif %}
+      </p>
+      <form class="d-flex flex-wrap align-items-end gap-2" method="post" action="{{ url_for('artists.upload_picture', artist_id=artist.id) }}" enctype="multipart/form-data">
+        <div>
+          <label for="picture-file" class="form-label fw-semibold">{{ _('Image file') }}</label>
+          <input id="picture-file" class="form-control" type="file" name="picture" accept="image/jpeg,image/png,image/gif,image/webp" required>
+        </div>
+        <button class="ss-button" type="submit">{% if picture and picture.own %}{{ _('Replace picture') }}{% else %}{{ _('Add picture') }}{% endif %}</button>
+      </form>
+      {% if picture and picture.own %}
+      <form class="mt-3" method="post" action="{{ url_for('artists.delete_picture', artist_id=artist.id) }}">
+        <button class="ss-link-button" type="submit">{{ _('Remove my picture') }}</button>
+      </form>
+      {% endif %}
+      <div class="form-text">{{ _('JPEG, PNG, GIF or WebP, at most 5 MB. It is kept with your data and never replaced by a sync.') }}</div>
+    </div>
+  </div>
 
   <h2 class="mt-5">{{ _('Albums') }} ({{ albums | length }})</h2>
   <div class="ss-card mt-3">

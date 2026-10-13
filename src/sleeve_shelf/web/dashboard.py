@@ -1,6 +1,6 @@
 """Dashboard: the collection at a glance, and what is waiting for a decision."""
 
-from flask import Blueprint, redirect, render_template, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 
 from sleeve_shelf.domain import (
     Album,
@@ -13,10 +13,15 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.proposal import has_proposal, takes_part
 from sleeve_shelf.versions import list_versions
+from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.places import described_spots
 from sleeve_shelf.web.waiting import waiting_counts
 
 blueprint = Blueprint("dashboard", __name__, url_prefix="/dashboard")
+
+# How many albums to place are shown on the Dashboard itself; the rest is one click away.
+TO_PLACE_SHOWN = 5
 
 
 @blueprint.before_request
@@ -43,6 +48,8 @@ def index():
         "matches": url_for("discogs.index") + "#matches",
         "families": url_for("families.index"),
         "artists": url_for("artists.index", show="attention"),
+        "shifts": url_for("artists.index", show="attention"),
+        "rule_suggestions": url_for("rules.index") + "#suggested",
         "widths": url_for("albums.widths"),
         "unlinked": url_for("discogs.index"),
         "gone": url_for("discogs.index") + "#gone",
@@ -66,7 +73,7 @@ def index():
         # Families and artists come with the albums: without any, these steps are
         # neither to do nor done.
         {"kind": "families", "url": urls["families"], **_countable(counts["families"], albums)},
-        {"kind": "artists", "url": urls["artists"], **_countable(counts["artists"], albums)},
+        {"kind": "artists", "url": urls["artists"], **_countable(counts["artists_in_all"], albums)},
         {"kind": "clusters", "url": url_for("clusters.index"), "info": cluster_count},
         # Likewise a collection without a single shelf has its shelves still to enter.
         {
@@ -77,8 +84,19 @@ def index():
         {"kind": "rules", "url": url_for("rules.index"), "info": len(store.load(LocationRule))},
         {"kind": "proposal", "url": url_for("proposal.index"), "info": int(has_proposal(store))},
     ]
+    # The LPs that wait for a place, each with the spot suggested for it, until they stand there.
+    queries = BrowseQueries(store)
+    to_place = [row for row in queries.unplaced() if row.is_lp] if counts["unplaced"] else []
+    spots = described_spots(store) if to_place else {}
+    just_placed = request.args.get("placed", type=int)
     return render_template(
         "dashboard/index.html",
+        to_place=to_place[:TO_PLACE_SHOWN],
+        to_place_count=len(to_place),
+        spots=spots,
+        placed=next((row for row in queries.everything() if row.album_id == just_placed), None)
+        if just_placed
+        else None,
         album_count=len(sorted_albums),
         placed_count=len(placed),
         single_count=len(albums) - len(sorted_albums),

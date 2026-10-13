@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-09 12:15+0200\n"
+"POT-Creation-Date: 2026-10-13 16:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,12 +17,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: src/sleeve_shelf/rule_suggestions.py
+msgid "Suggested from the layout"
+msgstr ""
+
 #: src/sleeve_shelf/web/albums.py
 msgid "A width has to be a number of centimetres above zero."
 msgstr ""
 
 #: src/sleeve_shelf/web/artists.py
 msgid "The start year has to be a year, like 1969."
+msgstr ""
+
+#: src/sleeve_shelf/web/artists.py
+msgid "Choose an image to upload."
+msgstr ""
+
+#: src/sleeve_shelf/web/artists.py
+msgid "That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB."
 msgstr ""
 
 #: src/sleeve_shelf/web/clusters.py
@@ -144,6 +156,7 @@ msgid "Shelf “%(name)s” still holds albums; move them before removing it."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_cover.html
+#: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Close"
 msgstr ""
 
@@ -191,6 +204,7 @@ msgid "No location rule applies: a sorting proposal places this where the sortin
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Move to another shelf"
 msgstr ""
 
@@ -209,6 +223,64 @@ msgstr ""
 msgid "Goes to the end of the chosen shelf, on your shelves as they are; put it in its exact spot in Layout. A version from before the move is kept."
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "between"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "and"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "at the end, after"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "at the front, before"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "as the first album there"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "With the other albums of the artist, by year."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "With the artists of the same era in its cluster, by name."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Nothing stands in that cabinet yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "In its cluster; no artist of the same era stands there yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Where its cluster comes in the order of the clusters; nothing of the cluster stands on a shelf yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Within the cabinet a location rule binds it to."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+#, python-format
+msgid "It fits: %(cm)s cm is left on the shelf."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+#, python-format
+msgid "The shelf then holds %(cm)s cm more than its width."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Put it there"
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Show the cover larger"
 msgstr ""
@@ -219,7 +291,31 @@ msgid "Moved. A version from before the move is kept under Versions."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "This album is no longer in your Discogs collection; you said you still have it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "This album is no longer in your Discogs collection."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Put at the suggested spot. A version from before is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Suggested spot"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "No spot can be suggested: nothing stands on the shelves it could go to."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "No spot can be suggested yet: the artist has no cluster."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Give the artist a cluster"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -360,6 +456,31 @@ msgid "Family:"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "A new purchase points to another cluster"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "With %(titles)s the Discogs styles of the albums now point to “%(proposed)s”; the artist stands in “%(current)s”."
+msgid_plural "With %(titles)s the Discogs styles of the albums now point to “%(proposed)s”; the artist stands in “%(current)s”."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Nothing changes until you choose."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Keep in %(cluster)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Move to %(cluster)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Saved. Generate the proposal again to see the effect."
 msgstr ""
 
@@ -398,6 +519,24 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #, python-format
+msgid "Going by whom Discogs connects this artist to: %(cluster)s, the cluster of"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
+msgid "Discogs loosely connects this artist to %(cluster)s, the cluster of"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "A sorting proposal goes by that, before the styles."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "That is an indication only — a band shared with others, or a session player — and a sorting proposal goes by the styles."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#, python-format
 msgid "Going by the Discogs styles of the albums: %(cluster)s."
 msgstr ""
 
@@ -414,7 +553,6 @@ msgid "For an artist that deserves a cluster of its own, for example. A new clus
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/discogs/preview.html
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
@@ -427,6 +565,66 @@ msgid "Stand the %(num)d album of this artist on"
 msgid_plural "Stand all %(num)d albums of this artist on"
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Related artists"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Whom Discogs connects this artist to, among the artists in your collection."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Other names"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Member of"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Members"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "no cluster yet"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Picture"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "This is a picture you added; it is shown instead of the one from Discogs."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "This picture comes from Discogs. Add your own to show that one instead."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Discogs has no picture for this artist. You can add one yourself."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Image file"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Replace picture"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Add picture"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Remove my picture"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "JPEG, PNG, GIF or WebP, at most 5 MB. It is kept with your data and never replaced by a sync."
+msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/artists/index.html
@@ -484,7 +682,7 @@ msgid "Show all"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
-msgid "“To check” lists sorted artists without a confirmed cluster or without a start year of their own."
+msgid "“To check” lists sorted artists without a confirmed cluster or without a start year of their own, and artists a new purchase points to another cluster."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
@@ -507,6 +705,11 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
 msgid "proposed"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#, python-format
+msgid "new purchase points to %(cluster)s"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
@@ -698,6 +901,7 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
 #, python-format
 msgid "%(num)d album"
@@ -740,7 +944,44 @@ msgid "Song-level search comes in a later phase — that needs tracklist data th
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
-msgid "Albums that have no spot on a shelf yet."
+msgid "Albums that have no spot on a shelf yet. For an LP a spot is suggested on the shelves as they stand, next to what it belongs with; nothing moves until you put it there."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "%(title)s now stands on"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "A version from before is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "Added on %(date)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "New"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Suggested:"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "No spot: nothing stands on the shelves it could go to."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "No spot yet: the artist has no cluster."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
@@ -868,6 +1109,21 @@ msgid "A proposal is waiting"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "To place"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "LPs that stand on no shelf yet, each with the spot suggested for it. They stay here until they are put on a shelf; what a sync or import added is marked as new and comes first."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "And %(num)d more to place"
+msgid_plural "And %(num)d more to place"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
 msgid "%(num)d Discogs match to confirm"
 msgid_plural "%(num)d Discogs matches to confirm"
@@ -885,6 +1141,20 @@ msgstr[1] ""
 #, python-format
 msgid "%(num)d artist without a confirmed cluster or a start year"
 msgid_plural "%(num)d artists without a confirmed cluster or a start year"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "%(num)d artist a new purchase points to another cluster"
+msgid_plural "%(num)d artists a new purchase points to another cluster"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "%(num)d location rule suggested from your layout"
+msgid_plural "%(num)d location rules suggested from your layout"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -937,6 +1207,14 @@ msgid "They are sorted on a proposed cluster or a year taken from their albums."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Move the artist to that cluster, or keep it where it is; nothing moves by itself."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Add them or turn them down; none is made by itself."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Measure them and enter the real width; until then they count as loose discs."
 msgstr ""
 
@@ -945,7 +1223,7 @@ msgid "Without a release there are no styles or original year from Discogs."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Sold, or removed on Discogs? They still stand in the layout until you remove them."
+msgid "Sold, or removed on Discogs? Say that you still have them, or remove them."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -953,7 +1231,7 @@ msgid "The shelf width is an estimate, or the shelf really is too full."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Place them by hand in Layout, or generate a proposal."
+msgid "Put them at the spot suggested for them, place them by hand in Layout, or generate a proposal."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1028,6 +1306,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "done"
 msgstr ""
 
@@ -1074,7 +1353,7 @@ msgid "No version saved yet"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Link your albums to your Discogs collection, then fetch their styles and original release years."
+msgid "Bring your collection in from Discogs, in three steps from top to bottom: sync, confirm the matches, fetch. The step that waits for you is marked."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1091,72 +1370,20 @@ msgid "enriched"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/discogs/preview.html
 msgid "matches to confirm"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "A sync was previewed but not taken over yet: nothing has changed so far."
+msgid "Discogs access token"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "An export was previewed but not imported yet: nothing has changed so far."
+#, python-format
+msgid "set: %(token)s"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "Take over"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-#: src/sleeve_shelf/web/templates/setup/upload.html
-msgid "Import"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Import your collection"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Sync with Discogs"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Fetches your collection straight from Discogs, so new purchases come in without an export. It takes about a second per hundred releases; you get a preview before anything changes."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Sync and preview"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Set your token below first."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Or upload an export"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you get a preview before anything changes."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs export (.csv)"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/setup/upload.html
-msgid "Upload and preview"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Fetch styles, original years and pictures"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. You can stop and continue at any time: nothing is fetched twice."
+msgid "needed first"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1183,6 +1410,177 @@ msgid "Save token"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Sync with Discogs"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "to take over"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "This is what taking over your Discogs collection would do. Nothing has changed yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "This is what importing the export would do. Nothing has changed yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Taking it over also brings the album covers, and notes which artist on Discogs each artist is — which the artist pictures need."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "vinyl releases in your collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "vinyl releases in the export"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "linked to your albums"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "new, unplaced albums"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d release that is not vinyl is skipped."
+msgid_plural "%(num)d releases that are not vinyl are skipped."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d of your albums stays without a release."
+msgid_plural "%(num)d of your albums stay without a release."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d linked album gets its format, and with it its estimated width, brought up to date."
+msgid_plural "%(num)d linked albums get their format, and with it their estimated width, brought up to date."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Albums that are already linked are left as they are."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d album is no longer in your Discogs collection"
+msgid_plural "%(num)d albums are no longer in your Discogs collection"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "They are kept as they are, on their shelf, and listed at the bottom of this screen and on the Dashboard. There you can remove one, after confirming."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Take over"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/setup/upload.html
+msgid "Import"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Discard"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Fetches your collection straight from Discogs, so new purchases come in without an export. It takes about a second per hundred releases; you see what it would do, here, before anything changes."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Sync"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Set your token above first."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Or upload a Discogs export instead"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you see what it would do before anything changes."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Discogs export (.csv)"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Upload"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Confirm the matches"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d to confirm"
+msgid_plural "%(num)d to confirm"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "A release that looks like one of your albums but is not titled the same waits here. Until you say so the album has no release, and nothing can be fetched for it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "Discogs: %(artist)s — %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(score)d%% alike"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Same album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Different"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "“Different” keeps your album without a release and adds the Discogs release as a new, unplaced album."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "No matches are waiting for confirmation."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Fetch styles, original years and pictures"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "running"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "to do"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. Last, the covers and pictures themselves are stored here, so the pages show them without Discogs. You can stop and continue at any time: nothing is fetched twice."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Styles and original years"
 msgstr ""
 
@@ -1201,11 +1599,31 @@ msgid "%(done)s of %(total)s artists"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Images stored here"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(done)s of %(total)s images"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d image is no longer at Discogs and could not be stored."
+msgid_plural "%(num)d images are no longer at Discogs and could not be stored."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
 msgid "%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone."
 msgid_plural "%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone."
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Now storing the covers and pictures here."
+msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Now fetching styles and original years."
@@ -1271,6 +1689,13 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
+msgid "The image of %(num)d cover or artist still has to be stored."
+msgid_plural "The images of %(num)d covers and artists still have to be stored."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
 msgid "That takes about %(num)d minute at most."
 msgid_plural "That takes about %(num)d minutes at most."
 msgstr[0] ""
@@ -1281,37 +1706,11 @@ msgid "Start fetching"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Matches to confirm"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "Discogs: %(artist)s — %(title)s"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(score)d%% alike"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Same album"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Different"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "“Different” keeps your album without a release and adds the Discogs release as a new, unplaced album."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "No matches are waiting for confirmation."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "No longer in your Discogs collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "I still have it"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1319,76 +1718,22 @@ msgid "Remove…"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "The last sync or import did not find these releases. An album is only removed when you choose Remove and confirm; until then it stays where it is, and it is listed here again after every sync."
+msgid "The last sync or import did not find these releases. “I still have it” keeps the album and stops asking; an album is only removed when you choose Remove and confirm. Until you choose, it stays where it is and is listed here after every sync."
 msgstr ""
 
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-#: src/sleeve_shelf/web/templates/setup/preview.html
-msgid "Preview"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "This is what taking over your Discogs collection would do. Nothing has changed yet."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "Taking it over also brings the album covers, and notes which artist on Discogs each artist is — which the artist pictures need."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "This is what importing the export would do. Nothing has changed yet."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "vinyl releases in your collection"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "vinyl releases in the export"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "linked to your albums"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "new, unplaced albums"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
-msgid "%(num)d release that is not vinyl is skipped."
-msgid_plural "%(num)d releases that are not vinyl are skipped."
+msgid "Kept although not on Discogs (%(num)d)"
+msgid_plural "Kept although not on Discogs (%(num)d)"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-#, python-format
-msgid "%(num)d of your albums stays without a release."
-msgid_plural "%(num)d of your albums stay without a release."
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-#, python-format
-msgid "%(num)d linked album gets its format, and with it its estimated width, brought up to date."
-msgid_plural "%(num)d linked albums get their format, and with it their estimated width, brought up to date."
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "Albums that are already linked are left as they are."
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Ask again"
 msgstr ""
 
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-#, python-format
-msgid "%(num)d album is no longer in your Discogs collection"
-msgid_plural "%(num)d albums are no longer in your Discogs collection"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/sleeve_shelf/web/templates/discogs/preview.html
-msgid "They are kept as they are, on their shelf, and listed on the Discogs screen and the Dashboard. There you can remove one, after confirming."
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "You said you still have these. They are no longer counted as waiting; an album that returns to your Discogs collection leaves this list by itself."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/remove.html
@@ -1412,7 +1757,7 @@ msgid "A family keeps an artist’s other billings and side projects next to eac
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
-msgid "Suggested from the names"
+msgid "Suggested families"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
@@ -1420,7 +1765,24 @@ msgid "Accept all"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
-msgid "No suggestions: no ungrouped artist’s name appears inside another’s."
+msgid "No suggestions: neither the artist names nor Discogs point to artists that belong together and are not grouped yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "Add to the family “%(family)s”"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Discogs lists them as members, groups or other names of each other"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "from the names"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Add to this family"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
@@ -1481,7 +1843,16 @@ msgid "Split %(artist)s into single albums"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
+#, python-format
+msgid "Move %(artist)s to another shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Drag artists between and within shelves. A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "For a shelf far away, use the ⋮ on a block (or right-click it) and pick the shelf: the block goes to the end of it and the page jumps there, where you drag it to its exact spot."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
@@ -1519,6 +1890,30 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "LPs without a place. Drag one to a shelf to place it, or drop an album here to take it off its shelf."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "It goes to the end of the shelf you pick; drag it to its exact spot there."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Take it off its shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "it stands here"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+#, python-format
+msgid "%(artist)s · %(num)s album"
+msgid_plural "%(artist)s · %(num)s albums"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+#, python-format
+msgid "%(artist)s · %(title)s"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
@@ -1599,10 +1994,6 @@ msgid "Generate again"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Discard"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Accepting saves the result as a new version; albums that do not fit become unplaced. “Generate again” takes changes to families, clusters, storage and widths into account."
 msgstr ""
 
@@ -1673,6 +2064,48 @@ msgid "A rule binds a cluster, a family, an artist, or a single album to a cabin
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
+#, python-format
+msgid "%(num)d rule added. It takes effect the next time a proposal is generated."
+msgid_plural "%(num)d rules added. They take effect the next time a proposal is generated."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+#, python-format
+msgid "%(num)d suggestion turned down; it will not be made again."
+msgid_plural "%(num)d suggestions turned down; they will not be made again."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Suggested from your layout"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "What stands in these cabinets now would be moved elsewhere by a proposal without rules. If that is how you want it, add the rules; nothing is added until you do."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+#, python-format
+msgid "Add this rule"
+msgid_plural "Add these %(num)d rules"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Not needed"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+#, python-format
+msgid "a proposal would put it in %(cabinet)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Add a rule"
 msgstr ""
 
@@ -1713,15 +2146,19 @@ msgid "Add rule"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
+msgid "A rule makes a cabinet exclusive: once a cabinet has a rule, a proposal fills it with what its rules bind there and nothing else."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "If this cabinet should be left out of sorting altogether, mark it so under Cabinets & shelves instead — then it needs no rule."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Rules"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "(no longer exists)"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Album"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
@@ -1806,6 +2243,10 @@ msgid "No token is set yet."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/setup/preview.html
+msgid "Preview"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/setup/preview.html
 msgid "This is what was found in the workbook. Nothing has been loaded yet."
 msgstr ""
 
@@ -1840,6 +2281,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/setup/upload.html
 msgid "Workbook"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/setup/upload.html
+msgid "Upload and preview"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/setup/upload.html

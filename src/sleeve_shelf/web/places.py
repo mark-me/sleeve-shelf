@@ -11,7 +11,9 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.placing import applicable_rules
+from sleeve_shelf.spots import suggested_spots
 
 
 def shelf_options(store: JsonStore) -> list[dict]:
@@ -46,3 +48,37 @@ def described_rules(store: JsonStore, artist_id: int, album_id: int | None = Non
         }
         for position, rule in enumerate(rules)
     ]
+
+
+def described_spots(store: JsonStore) -> dict[int, dict]:
+    """Per album that waits for a place: its suggested spot, with the albums it would stand between."""
+    spots = suggested_spots(store, load_settings(store.data_dir).width_constants)
+    if not spots:
+        return {}
+    albums = {album.id: album for album in store.load(Album)}
+    artists = {artist.id: artist.name for artist in store.load(Artist)}
+
+    def named(album_id: int | None, shelf_id: int) -> dict | None:
+        album = albums.get(album_id)
+        if album is None:
+            return None
+        return {
+            "id": album.id,
+            "artist": artists.get(album.artist_id, ""),
+            "title": album.title,
+            "shelf_id": shelf_id,
+        }
+
+    return {
+        album_id: {
+            "shelf_id": spot.shelf_id,
+            "cabinet": spot.cabinet,
+            "shelf": spot.shelf,
+            "after": named(spot.suggestion.after_album_id, spot.shelf_id),
+            "before": named(spot.suggestion.before_album_id, spot.shelf_id),
+            "basis": spot.suggestion.basis,
+            "room_cm": spot.room_cm,
+            "by_rule": spot.by_rule,
+        }
+        for album_id, spot in spots.items()
+    }

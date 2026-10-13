@@ -6,7 +6,7 @@ import shutil
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field, is_dataclass
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -24,6 +24,7 @@ from sleeve_shelf.domain import (
     EraBand,
     EraBandSource,
     FamilyDismissal,
+    RuleSuggestionDismissal,
     FormatTokens,
     LocationRule,
     LocationRuleTarget,
@@ -125,6 +126,11 @@ _TABLES: dict[type, _Table] = {
         {"target_type": LocationRuleTarget},
     ),
     FamilyDismissal: _Table("family_dismissals.json", {"anchor_artist_id": "INTEGER"}),
+    RuleSuggestionDismissal: _Table(
+        "rule_suggestion_dismissals.json",
+        {"target_type": "VARCHAR", "target_id": "INTEGER", "cabinet_id": "INTEGER"},
+        {"target_type": LocationRuleTarget},
+    ),
     Artist: _Table(
         "artists.json",
         {
@@ -133,6 +139,7 @@ _TABLES: dict[type, _Table] = {
             "alias_group_id": "INTEGER",
             "start_year": "INTEGER",
             "discogs_artist_id": "INTEGER",
+            "picture_file": "VARCHAR",
         },
     ),
     ArtistClusterAssignment: _Table(
@@ -169,6 +176,9 @@ _TABLES: dict[type, _Table] = {
             "cover_image_url": "VARCHAR",
             "original_year_confirmed": "BOOLEAN",
             "left_discogs": "BOOLEAN",
+            "kept_after_discogs": "BOOLEAN",
+            "new_purchase": "BOOLEAN",
+            "added_on": "DATE",
         },
         {"format_tokens": _format_tokens},
     ),
@@ -197,7 +207,11 @@ _TABLES: dict[type, _Table] = {
             "image_url": "VARCHAR",
             "thumb_url": "VARCHAR",
             "fetched_at": "TIMESTAMP",
+            "member_ids": "INTEGER[]",
+            "group_ids": "INTEGER[]",
+            "alias_ids": "INTEGER[]",
         },
+        {"member_ids": tuple, "group_ids": tuple, "alias_ids": tuple},
     ),
     MatchProposal: _Table(
         "match_proposals.json",
@@ -208,6 +222,8 @@ _TABLES: dict[type, _Table] = {
             "title": "VARCHAR",
             "score": "DOUBLE",
             "format_tokens": _FORMAT_TOKENS_TYPE,
+            "cover_url": "VARCHAR",
+            "cover_image_url": "VARCHAR",
         },
         {"format_tokens": _format_tokens},
     ),
@@ -232,6 +248,8 @@ def _encode(value: Any) -> Any:
         return value.value
     if isinstance(value, datetime):
         return value.isoformat(sep=" ")
+    if isinstance(value, date):
+        return value.isoformat()
     if is_dataclass(value):
         return {key: _encode(item) for key, item in asdict(value).items()}
     if isinstance(value, (list, tuple)):

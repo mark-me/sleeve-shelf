@@ -1,6 +1,7 @@
 """Collection entities: artists, albums, and the style/cluster taxonomy."""
 
 import re
+from datetime import date
 from dataclasses import dataclass, field
 
 _LP = re.compile(r"^(?:\d+x)?LP$")
@@ -31,6 +32,8 @@ class Artist:
     start_year: int | None = None
     # The artist on Discogs, as a sync found it on the artist's releases.
     discogs_artist_id: int | None = None
+    # The file of a picture the user added, in the data directory; it goes before Discogs' own.
+    picture_file: str | None = None
 
 
 @dataclass(slots=True)
@@ -115,6 +118,13 @@ class Album:
     original_year_confirmed: bool = False
     # True when the last sync or import no longer found the release in the Discogs collection.
     left_discogs: bool = False
+    # True when the user keeps the album although it left Discogs, and is not to be asked again.
+    kept_after_discogs: bool = False
+    # True for an album a sync or import added to an artist whose cluster was already
+    # confirmed, until it has been weighed against that cluster (see shifts.py).
+    new_purchase: bool = False
+    # The day a sync or import added the album; None for one that came with the workbook.
+    added_on: date | None = None
 
     @property
     def width_cm(self) -> float | None:
