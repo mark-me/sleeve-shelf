@@ -94,7 +94,8 @@ def _store(app):
 
 def _import(client):
     preview = client.post(
-        "/discogs/import", data={"export": (io.BytesIO(EXPORT.encode()), "collection.csv")}
+        "/discogs/import", data={"export": (io.BytesIO(EXPORT.encode()), "collection.csv")},
+        follow_redirects=True,
     )
     assert preview.status_code == 200
     assert client.post("/discogs/import/confirm").status_code == 302
@@ -103,7 +104,8 @@ def _import(client):
 
 def test_import_previews_and_only_changes_things_on_confirm(app, client):
     preview = client.post(
-        "/discogs/import", data={"export": (io.BytesIO(EXPORT.encode()), "collection.csv")}
+        "/discogs/import", data={"export": (io.BytesIO(EXPORT.encode()), "collection.csv")},
+        follow_redirects=True,
     )
 
     assert "3</div>" in preview.text and "linked to your albums" in preview.text
@@ -198,16 +200,16 @@ def test_sync_previews_the_collection_and_only_changes_things_on_confirm(app, cl
     assert client.post("/discogs/sync").status_code == 400
     client.post("/discogs/token", data={"token": "secret"})
 
-    preview = client.post("/discogs/sync")
+    preview = client.post("/discogs/sync", follow_redirects=True)
 
     assert "taking over your Discogs collection" in preview.text
     assert "2</div>" in preview.text and "vinyl releases in your collection" in preview.text
     assert all(album.release_id is None for album in _store(app).load(Album))
     # Left without taking it over, the Discogs screen says the sync is still waiting.
-    assert "previewed but not taken over yet" in client.get("/discogs/").text
+    assert "Nothing has changed yet." in client.get("/discogs/").text
 
     assert client.post("/discogs/import/confirm").status_code == 302
-    assert "previewed but not" not in client.get("/discogs/").text
+    assert "Nothing has changed yet." not in client.get("/discogs/").text
 
     albums = _store(app).load(Album)
     assert albums[0].release_id == 1874289
@@ -230,7 +232,7 @@ def test_sync_reports_albums_that_left_the_collection_and_keeps_them(app, client
     client.post("/discogs/import/confirm")
     monkeypatch.setitem(globals(), "COLLECTION", COLLECTION[:1])
 
-    preview = client.post("/discogs/sync")
+    preview = client.post("/discogs/sync", follow_redirects=True)
     client.post("/discogs/import/confirm")
 
     assert "1 album is no longer in your Discogs collection" in preview.text
@@ -255,7 +257,7 @@ def test_sync_brings_the_format_of_linked_albums_up_to_date_and_an_export_does_n
     heavy["basic_information"]["formats"][0].update(qty="2", text="Blue, Gatefold, 180g")
     app.config["DISCOGS_CLIENT_FACTORY"] = type("Heavy", (_Client,), {"collection": lambda self: [heavy]})
 
-    preview = client.post("/discogs/sync")
+    preview = client.post("/discogs/sync", follow_redirects=True)
     assert "1 linked album gets its format" in preview.text
     assert _store(app).load(Album)[0].computed_width_cm == 0.5
     client.post("/discogs/import/confirm")
@@ -397,7 +399,7 @@ def test_an_album_that_left_discogs_can_be_kept_without_being_asked_again(app, c
     assert "Kept although not on Discogs (1)" in page and "/discogs/gone/3/ask-again" in page
     assert len(_store(app).load(Album)) == 3
     # The next sync does not ask again.
-    preview = client.post("/discogs/sync").text
+    preview = client.post("/discogs/sync", follow_redirects=True).text
     client.post("/discogs/import/confirm")
     assert "no longer in your Discogs collection" not in preview
     assert "/discogs/gone/3/remove" not in client.get("/discogs/").text
@@ -415,3 +417,76 @@ def test_an_album_that_left_discogs_can_be_kept_without_being_asked_again(app, c
     client.post("/discogs/import/confirm")
     album = _store(app).load(Album)[2]
     assert (album.left_discogs, album.kept_after_discogs) == (False, False)
+
+
+def test_a_match_confirmed_after_a_sync_brings_the_cover_of_its_release(app, client):
+    class Renamed(_Client):
+        def collection(self):
+            # The release is titled a little differently than the album was loaded.
+            return [_vinyl(1874289, "Tom Waits", "Closing Time (Remastered)")]
+
+    app.config["DISCOGS_CLIENT_FACTORY"] = Renamed
+    client.post("/discogs/token", data={"token": "secret"})
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+
+    # Not the same title, so the link waits for a yes — and the album has no release yet.
+    album = _store(app).load(Album)[0]
+    assert (album.release_id, album.cover_url) == (None, None)
+    assert "1</div>" in client.get("/discogs/").text
+
+    client.post("/discogs/matches/1/accept")
+
+    album = _store(app).load(Album)[0]
+    assert album.release_id == 1874289
+    assert album.cover_url == "https://i.discogs.com/1874289.jpeg"
+    assert album.cover_image_url == "https://i.discogs.com/1874289-large.jpeg"
+
+
+def test_the_screen_marks_the_step_that_waits_and_leads_on_to_the_next(app, client):
+    class Renamed(_Client):
+        def collection(self):
+            return [_vinyl(1874289, "Tom Waits", "Closing Time (Remastered)")]
+
+    app.config["DISCOGS_CLIENT_FACTORY"] = Renamed
+    # Without a token that is the thing to do, and the token block stands open.
+    page = client.get("/discogs/").text
+    assert "needed first" in page and '<details class="ss-card mt-4" id="token-block" open>' in page
+    client.post("/discogs/token", data={"token": "secret"})
+    page = client.get("/discogs/").text
+    assert "set: ••••cret" in page and 'id="token-block" >' in page
+    # The steps stand in the order they are done: sync, matches, fetch.
+    assert page.index('id="sync"') < page.index('id="matches"') < page.index('id="enrich"')
+
+    # A sync shows what it would do inside the first step, which is then the one that waits.
+    synced = client.post("/discogs/sync")
+    assert synced.headers["Location"] == "/discogs/#sync"
+    page = client.get("/discogs/").text
+    assert "ss-step-current\" id=\"sync\"" in page and "to take over" in page
+    assert "Take over" in page and ">Sync</button>" not in page
+
+    # Taking it over leads to the matches, which wait next; confirming them to the fetching.
+    taken = client.post("/discogs/import/confirm")
+    assert taken.headers["Location"] == "/discogs/#matches"
+    page = client.get("/discogs/").text
+    assert "ss-step-current\" id=\"matches\"" in page and "1 to confirm" in page
+    client.post("/discogs/matches/1/accept")
+    page = client.get("/discogs/").text
+    assert "ss-step-current\" id=\"enrich\"" in page and "ss-step-current\" id=\"matches\"" not in page
+
+    client.post("/discogs/enrich/start")
+    app.extensions["enrichment_job"].wait(10)
+    assert "ss-step-current" not in client.get("/discogs/").text
+
+
+def test_a_sync_that_was_fetched_can_be_discarded(app, client):
+    client.post("/discogs/token", data={"token": "secret"})
+    client.post("/discogs/sync")
+    assert "Nothing has changed yet." in client.get("/discogs/").text
+
+    discarded = client.post("/discogs/import/discard")
+
+    assert discarded.headers["Location"] == "/discogs/#sync"
+    page = client.get("/discogs/").text
+    assert "Nothing has changed yet." not in page and ">Sync</button>" in page
+    assert all(album.release_id is None for album in _store(app).load(Album))

@@ -859,3 +859,56 @@ def test_an_album_from_the_workbook_is_not_marked_as_new_and_a_purchase_comes_fi
     page = client.get("/dashboard/").text
     assert page.count(">New</span>") == 1
     assert page.index("Raw Power") < page.index("Box &middot; 2010")
+
+
+def test_a_block_can_be_sent_to_the_end_of_a_shelf_without_dragging(client):
+    page = client.get("/layout/").text
+    # Every block has the button, and the list names every shelf with how full it is.
+    assert page.count("data-send ") == 3 and 'data-send-to="3"' in page and 'data-send-to="0"' in page
+
+    # Chet Baker's block goes from shelf a to the end of shelf b, behind what stands there.
+    sent = client.post("/layout/send", json={"albums": [1, 2], "shelf": 2})
+
+    assert sent.status_code == 200
+    assert sent.get_json()["shelves"] == {
+        "1": {"albums": 1, "filled_cm": 0.5},
+        "2": {"albums": 4, "filled_cm": 4.5},
+    }
+    shelf = client.get("/browse?shelf=2").text
+    assert shelf.index("Box") < shelf.index("Chet &middot; 1959") < shelf.index("Sings")
+    assert "Chet &middot; 1959" not in client.get("/browse?shelf=1").text
+    assert "/restore" in client.get("/versions/").text
+
+    # To the tray takes it off its shelf; an unknown shelf or album is refused.
+    client.post("/layout/send", json={"albums": [1], "shelf": 0})
+    assert "Chet" in client.get("/unplaced").text
+    assert client.post("/layout/send", json={"albums": [1], "shelf": 99}).status_code == 409
+    assert client.post("/layout/send", json={"albums": [99], "shelf": 1}).status_code == 409
+    assert client.post("/layout/send", json={"albums": [], "shelf": 1}).status_code == 409
+    assert client.post("/layout/send", json={"albums": ["x"], "shelf": 1}).status_code == 400
+
+
+def test_sending_a_block_to_a_shelf_in_another_room_names_the_room_to_jump_to(client):
+    client.post("/storage/cabinets/1", data={"name": "Kast", "location": "Living room"})
+    client.post("/storage/cabinets/new", data={"name": "Case", "location": "Attic"})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "width_cm": "5", "type": "",
+                                                         "layer": ""})
+    page = client.get("/layout/").text
+    # The list covers the shelves of every room, each with the tab it is on.
+    assert 'data-url="/layout/?room=Attic"' in page and "Case &middot; Attic" in page
+
+    sent = client.post("/layout/send", json={"albums": [3], "shelf": 4})
+
+    assert sent.get_json()["room"] == "Attic"
+    assert 'data-albums="3"' in client.get("/layout/?room=Attic").text
+
+
+def test_sending_a_block_in_the_proposal_leaves_the_shelves_alone(client):
+    client.post("/proposal/generate")
+    before = client.get("/browse?shelf=1").text
+
+    sent = client.post("/layout/send?layout=proposal", json={"albums": [3], "shelf": 3})
+
+    assert sent.status_code == 200
+    assert client.get("/browse?shelf=1").text == before
+    assert "Moanin" in client.get("/browse?layout=proposal&shelf=3").text

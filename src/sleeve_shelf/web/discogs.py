@@ -105,6 +105,21 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
         if proposal.album_id in by_id
     ]
     token = settings.discogs_token
+    # A sync or export that was fetched but not taken over yet: what taking it over would do.
+    preview = None
+    try:
+        pending = _pending_items()
+    except ValueError as problem:
+        pending, error = None, error or str(problem)
+        _clear_pending()
+    if pending is not None:
+        items, synced = pending
+        preview = {
+            "synced": synced,
+            "outcome": import_discogs_collection(
+                store, items, settings.width_constants, dry_run=True, refresh_formats=synced
+            ),
+        }
     named = {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
     pictures_by_id = {p.discogs_artist_id: p for p in store.load(ArtistEnrichment)}
     pictured = set(pictures_by_id)
@@ -114,6 +129,15 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     images_missing = len(missing_images(store, albums, pictures_stored))
     names = stored_names(store.data_dir)
     images_stored = sum(path in names for path in images.values())
+    to_fetch_pictures = sum(
+        1
+        for a in artist_list
+        if a.discogs_artist_id is not None
+        and (
+            a.discogs_artist_id not in pictures_by_id
+            or pictures_by_id[a.discogs_artist_id].member_ids is None
+        )
+    )
     gone = [
         {"album": album, "artist": artists.get(album.artist_id, "")}
         for album in albums
@@ -131,19 +155,18 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             linked_count=sum(album.release_id is not None for album in albums),
             fetched_count=len(linked & fetched),
             to_fetch_count=len(linked - fetched),
-            # A preview that was left without taking it over or importing it.
-            waiting="sync" if (_data_dir() / PENDING_SYNC).exists()
-            else "export" if (_data_dir() / PENDING_EXPORT).exists()
+            preview=preview,
+            # Whether anything is left to fetch, also while an earlier step waits.
+            fetch_open=bool(linked - fetched or to_fetch_pictures or images_missing),
+            # The step that waits for the user, from top to bottom; none when all is done.
+            current="sync"
+            if preview
+            else "matches"
+            if proposals
+            else "enrich"
+            if token and (linked - fetched or to_fetch_pictures or images_missing)
             else None,
-            pictures_to_fetch_count=sum(
-                1
-                for a in artist_list
-                if a.discogs_artist_id is not None
-                and (
-                    a.discogs_artist_id not in pictures_by_id
-                    or pictures_by_id[a.discogs_artist_id].member_ids is None
-                )
-            ),
+            pictures_to_fetch_count=to_fetch_pictures,
             # How far each part is, as [done, total]; a running job knows it more precisely.
             albums_progress=job["albums"] or [len(linked & fetched), len(linked)],
             pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
@@ -189,9 +212,8 @@ def upload():
     except ValueError as error:
         pending.unlink(missing_ok=True)
         return index(error=str(error), status=400)
-    settings = load_settings(_data_dir())
-    outcome = import_discogs_collection(get_store(), items, settings.width_constants, dry_run=True)
-    return render_template("discogs/preview.html", outcome=outcome, synced=False)
+    # What importing it would do is shown in the first step of the screen.
+    return redirect(url_for("discogs.index") + "#sync")
 
 
 @blueprint.post("/sync")
@@ -213,11 +235,8 @@ def sync():
     _data_dir().mkdir(parents=True, exist_ok=True)
     _clear_pending()
     (_data_dir() / PENDING_SYNC).write_text(json.dumps(releases), encoding="utf-8")
-    items = collection_items(releases, settings.count_bonus_discs_as_vinyl)
-    outcome = import_discogs_collection(
-        get_store(), items, settings.width_constants, dry_run=True, refresh_formats=True
-    )
-    return render_template("discogs/preview.html", outcome=outcome, synced=True)
+    # What taking it over would do is shown in the first step of the screen.
+    return redirect(url_for("discogs.index") + "#sync")
 
 
 @blueprint.post("/import/confirm")
@@ -233,10 +252,19 @@ def confirm_import():
     items, synced = pending
     settings = load_settings(_data_dir())
     # Only a sync knows the format well enough to correct albums that are already linked.
-    import_discogs_collection(
-        get_store(), items, settings.width_constants, refresh_formats=synced
+    store = get_store()
+    import_discogs_collection(store, items, settings.width_constants, refresh_formats=synced)
+    # On to the next step: the matches when some wait, else the fetching.
+    return redirect(
+        url_for("discogs.index") + ("#matches" if store.load(MatchProposal) else "#enrich")
     )
-    return redirect(url_for("discogs.index"))
+
+
+@blueprint.post("/import/discard")
+def discard_import():
+    """Drop a sync or export that was fetched but not taken over; nothing has changed."""
+    _clear_pending()
+    return redirect(url_for("discogs.index") + "#sync")
 
 
 @blueprint.post("/token")

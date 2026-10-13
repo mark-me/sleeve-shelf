@@ -222,6 +222,8 @@ _TABLES: dict[type, _Table] = {
             "title": "VARCHAR",
             "score": "DOUBLE",
             "format_tokens": _FORMAT_TOKENS_TYPE,
+            "cover_url": "VARCHAR",
+            "cover_image_url": "VARCHAR",
         },
         {"format_tokens": _format_tokens},
     ),

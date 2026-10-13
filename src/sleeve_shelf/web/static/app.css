@@ -123,6 +123,13 @@ h2 { font-size: 1.15rem; margin: 0; }
 }
 .ss-step-done { background: var(--ss-accent); color: #1E293B; }
 
+/* A screen of steps: the step that waits for the user stands out. */
+.ss-step-current { border-color: var(--ss-accent); box-shadow: 0 0 0 1px var(--ss-accent); }
+.ss-chip.ss-chip-now { background: var(--ss-accent); color: #1E293B; }
+details.ss-card > summary { cursor: pointer; list-style: revert; }
+details.ss-card > summary h2 { display: inline; }
+details.ss-card:not([open]) > summary { border-bottom: none; }
+
 /* The menu in groups, in the order the app is used. */
 .ss-nav-group {
   margin-top: 14px;
@@ -446,6 +453,27 @@ a.ss-block-name:hover { color: var(--ss-accent) !important; }
   font-size: 0.72rem;
   font-weight: 600;
 }
+
+/* Sending a block to a shelf from a list instead of dragging it there. */
+.ss-block-send {
+  margin: -4px -6px -4px 0;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--ss-muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.ss-block-send:hover, .ss-block-send:focus-visible { background: var(--ss-chip); color: var(--ss-chip-text); }
+.ss-block-moved { border-color: var(--ss-accent); box-shadow: 0 0 0 3px var(--ss-accent); transition: box-shadow 0.4s; }
+.ss-send { background: var(--ss-surface); color: var(--ss-text); }
+.ss-send .modal-body { padding: 12px 0 0; }
+.ss-send .modal-body > p { padding: 0 16px; }
+.ss-send-option { width: 100%; border: none; border-top: 1px solid var(--ss-border); background: none; color: inherit; text-align: left; justify-content: space-between; }
+.ss-send-option:hover:not(:disabled), .ss-send-option:focus-visible { background: var(--ss-chip); }
+.ss-send-option:disabled { opacity: 0.55; }
 
 .sortable-ghost { opacity: 0.35; }
 .sortable-chosen { border-color: var(--ss-accent); }

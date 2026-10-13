@@ -55,3 +55,6 @@ class MatchProposal:
     title: str
     score: float
     format_tokens: FormatTokens | None = None
+    # The cover of that release, as a sync gave it, for the album to take with the release.
+    cover_url: str | None = None
+    cover_image_url: str | None = None

@@ -16,16 +16,17 @@
   {% else %}
   <span class="ss-block-title">{{ block.albums[0].title }}</span>
   {% endif %}
+  <button class="ss-block-send" type="button" data-send aria-label="{{ _('Move %(artist)s to another shelf', artist=block.artist) }}" title="{{ _('Move to another shelf') }}">&#8942;</button>
 </li>
 {% endfor %}
 {% endmacro %}
 
 {% block content %}
-<div class="ss-page" id="layout" data-move-url="{{ url_for('layout.move', layout=layout) }}">
+<div class="ss-page" id="layout" data-move-url="{{ url_for('layout.move', layout=layout) }}" data-send-url="{{ url_for('layout.send', layout=layout) }}" data-room="{{ room }}">
   <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
     <div>
       <h1>{{ _('Layout') }}</h1>
-      <p class="ss-muted mb-0 mt-1">{{ _('Drag artists between and within shelves. A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist.') }}</p>
+      <p class="ss-muted mb-0 mt-1">{{ _('Drag artists between and within shelves. A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist.') }} {{ _('For a shelf far away, use the ⋮ on a block (or right-click it) and pick the shelf: the block goes to the end of it and the page jumps there, where you drag it to its exact spot.') }}</p>
     </div>
     {% if has_proposal %}
     <div class="d-flex gap-2">
@@ -87,8 +88,44 @@
   </section>
 </div>
 
+{# The shelves to send a block to; one list for all blocks, filled in when it opens. #}
+<div class="modal fade" id="send" tabindex="-1" aria-labelledby="send-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content ss-send">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title fs-5" id="send-title">{{ _('Move to another shelf') }}</h2>
+          <div class="ss-muted small" id="send-what"></div>
+        </div>
+        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p class="ss-muted small">{{ _('It goes to the end of the shelf you pick; drag it to its exact spot there.') }}</p>
+        {% for entry in destinations %}
+        <div class="ss-group">{{ entry.cabinet.name }}{% if entry.room and rooms %} &middot; {{ entry.room }}{% endif %}</div>
+        {% for row in entry.shelves %}
+        <button class="ss-row ss-send-option" type="button" data-send-to="{{ row.shelf.id }}"
+                data-url="{{ url_for('layout.index', layout=layout, room=entry.room or none) }}"
+                data-width="{{ row.shelf.width_cm if row.shelf.width_cm is not none else '' }}">
+          <span class="ss-row-artist">{{ row.shelf.name }}</span>
+          <span class="ss-row-place" data-albums="{{ row.albums }}" data-filled="{{ '%.1f' | format(row.filled_cm) }}"></span>
+        </button>
+        {% endfor %}
+        {% endfor %}
+        <div class="ss-group">{{ _('Not on a shelf') }}</div>
+        <button class="ss-row ss-send-option" type="button" data-send-to="0">
+          <span class="ss-row-artist">{{ _('Take it off its shelf') }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   window.layoutText = {
+    current: {{ _('it stands here') | tojson }},
+    sendWhat: {{ ngettext('%(artist)s · %(num)s album', '%(artist)s · %(num)s albums', 2, artist='__artist__', num='__num__') | tojson }},
+    sendOne: {{ _('%(artist)s · %(title)s', artist='__artist__', title='__title__') | tojson }},
     fill: {{ _('%(albums)s albums · %(filled)s of %(width)s cm', albums='__albums__', filled='__filled__', width='__width__') | tojson }},
     fillNoWidth: {{ _('%(albums)s albums · %(filled)s cm', albums='__albums__', filled='__filled__') | tojson }}
   };

@@ -365,6 +365,8 @@ def import_discogs_collection(
                     item.title,
                     round(score, 3),
                     item.format_tokens,
+                    item.cover_url,
+                    item.cover_image_url,
                 )
             )
 
@@ -434,6 +436,9 @@ def confirm_match(store: JsonStore, album_id: int, constants: WidthConstants) ->
     album.release_id = proposal.release_id
     if album.format_tokens is None:
         album.format_tokens = proposal.format_tokens
+    # The cover comes along, so the album need not wait for the next sync to have one.
+    album.cover_url = proposal.cover_url or album.cover_url
+    album.cover_image_url = proposal.cover_image_url or album.cover_image_url
     estimate_widths([album], constants)
     store.save(Album, albums)
     store.save(MatchProposal, [p for p in proposals if p is not proposal])
@@ -457,6 +462,8 @@ def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> 
         title=proposal.title,
         release_id=proposal.release_id,
         format_tokens=proposal.format_tokens,
+        cover_url=proposal.cover_url,
+        cover_image_url=proposal.cover_image_url,
         new_purchase=any(
             a.artist_id == artist.id and a.confirmed
             for a in store.load(ArtistClusterAssignment)

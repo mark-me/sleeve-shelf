@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import threading
 from pathlib import Path
 
 from flask import Flask, abort, redirect, request, url_for
@@ -14,7 +15,7 @@ from sleeve_shelf.collection import (
     load_layout,
 )
 from sleeve_shelf.config import load_settings
-from sleeve_shelf.covers import COVER_DIR, sort_into_folders
+from sleeve_shelf.covers import COVER_DIR, sharpen_small_images, sort_into_folders
 from sleeve_shelf.domain import Artist
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
 from sleeve_shelf.ingestion.discogs_csv import read_collection
@@ -56,6 +57,13 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     if any(path.is_file() for path in (app.config["DATA_DIR"] / COVER_DIR).glob("*")):
         # Images stored before covers and pictures each had a folder: sort them out once.
         sort_into_folders(JsonStore(app.config["DATA_DIR"]))
+    if (app.config["DATA_DIR"] / COVER_DIR).is_dir():
+        # Small images stored as Discogs gives them are grainy: make them afresh from the
+        # large ones. Done aside, as it takes a while the first time and the pages do not
+        # wait for it; it fetches nothing, and there is nothing left to do afterwards.
+        threading.Thread(
+            target=lambda: sharpen_small_images(JsonStore(app.config["DATA_DIR"])), daemon=True
+        ).start()
 
     app.register_blueprint(setup.blueprint)
     app.register_blueprint(browse.blueprint)

@@ -9,6 +9,7 @@ from sleeve_shelf.covers import (
     download_images,
     image_urls,
     missing_images,
+    sharpen_small_images,
     sort_into_folders,
 )
 from sleeve_shelf.domain import (
@@ -270,3 +271,56 @@ def test_a_picture_from_before_gets_its_small_copy_when_first_shown(app, client)
 
     assert 'src="/artists/pictures/1-old.thumb.jpg"' in listed
     assert (directory / "1-old.thumb.jpg").exists()
+
+
+class _Pictures:
+    """Discogs' image servers with real images: a grainy small one and a large one."""
+
+    def image(self, url):
+        if "gone" in url:
+            return None
+        large = "600" in url
+        return _image("JPEG", (600, 600) if large else (150, 150), "green" if large else "red")
+
+
+def _size(path):
+    from PIL import Image
+
+    with Image.open(path) as image:
+        return image.size, image.getpixel((5, 5))
+
+
+def test_the_small_image_is_made_afresh_from_the_large_one_once_both_are_in(app):
+    store = _store(app)
+    directory = store.data_dir / COVER_DIR
+
+    download_images(store, _Pictures(), missing_images(store))
+
+    # The cover has both sizes: its small image is now 300 px, cut from the large (green) one.
+    size, colour = _size(directory / "albums" / cover_name(THUMB))
+    assert size == (300, 300) and colour[1] > colour[0]
+    # The large image itself is untouched, and the artist's picture, which has no large
+    # one, stays as Discogs gave it.
+    assert _size(directory / "albums" / cover_name(LARGE))[0] == (600, 600)
+    assert _size(directory / "artists" / cover_name(PICTURE))[0] == (150, 150)
+    assert not [path for path in directory.rglob("*.part")]
+    # Nothing is left to fetch or to make.
+    assert missing_images(store) == [] and sharpen_small_images(store) == 0
+
+
+def test_small_images_stored_before_are_made_afresh_without_fetching(app):
+    store = _store(app)
+    directory = store.data_dir / COVER_DIR / "albums"
+    directory.mkdir(parents=True)
+    (directory / cover_name(THUMB)).write_bytes(_image("JPEG", (150, 150), "red"))
+    (directory / cover_name(LARGE)).write_bytes(_image("JPEG", (600, 400), "green"))
+
+    assert sharpen_small_images(store) == 1
+
+    # The shape of the large image is kept.
+    assert _size(directory / cover_name(THUMB))[0] == (300, 200)
+    assert sharpen_small_images(store) == 0
+    # A file that is no image is left as it is.
+    (directory / cover_name(THUMB)).write_bytes(b"not an image")
+    assert sharpen_small_images(store) == 0
+    assert (directory / cover_name(THUMB)).read_bytes() == b"not an image"
