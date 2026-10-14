@@ -3,11 +3,11 @@
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf.collection import estimate_widths
 from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import Album, Placement
 from sleeve_shelf.proposal import kept_shelf_ids, takes_part, usable_shelves
 from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.widths import apply_width_constants
 
 blueprint = Blueprint("settings", __name__, url_prefix="/settings")
 
@@ -49,11 +49,7 @@ def index():
             if token:
                 settings.discogs_token = token
             save_settings(data_dir, settings)
-            if has_collection():
-                # The album widths follow the constants; shelf widths are the user's own.
-                albums = store.load(Album)
-                estimate_widths(albums, settings.width_constants)
-                store.save(Album, albums)
+            apply_width_constants(store, settings.width_constants)
             return redirect(url_for("settings.index", saved=1))
 
     needed = offered = None

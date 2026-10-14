@@ -18,6 +18,7 @@ from sleeve_shelf.rule_suggestions import (
     dismiss_suggestions,
     rule_suggestions,
 )
+from sleeve_shelf.placing import remove_rule, set_rule
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("rules", __name__, url_prefix="/rules")
@@ -96,29 +97,13 @@ def create():
         return _back(_("Choose a name from the list."))
     if all(cabinet.id != cabinet_id for cabinet in store.load(Cabinet)):
         return _back(_("Choose a cabinet."))
-    rules = [
-        rule
-        for rule in store.load(LocationRule)
-        # One rule per target: a new one replaces the old.
-        if (rule.target_type, rule.target_id) != (kind, target_id)
-    ]
-    rules.append(
-        LocationRule(
-            store.next_id(LocationRule, rules),
-            kind,
-            target_id,
-            cabinet_id,
-            request.form.get("note", "").strip(),
-        )
-    )
-    store.save(LocationRule, rules)
+    set_rule(store, kind, target_id, cabinet_id, request.form.get("note", "").strip())
     return _back()
 
 
 @blueprint.post("/<int:rule_id>/delete")
 def delete(rule_id: int):
-    store = get_store()
-    store.save(LocationRule, [rule for rule in store.load(LocationRule) if rule.id != rule_id])
+    remove_rule(get_store(), rule_id)
     return _back()
 
 

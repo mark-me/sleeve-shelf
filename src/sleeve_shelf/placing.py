@@ -108,3 +108,22 @@ def applicable_rules(
     ]
     rules = {(rule.target_type, rule.target_id): rule for rule in store.load(LocationRule)}
     return [rules[target] for target in targets if target[1] is not None and target in rules]
+
+
+def set_rule(
+    store: JsonStore, target_type: LocationRuleTarget, target_id: int, cabinet_id: int, note: str = ""
+) -> LocationRule:
+    """Bind a cluster, family, artist or album to a cabinet. A target has one rule: a new
+    rule for it replaces the old."""
+    rules = [
+        rule
+        for rule in store.load(LocationRule)
+        if (rule.target_type, rule.target_id) != (target_type, target_id)
+    ]
+    rule = LocationRule(store.next_id(LocationRule, rules), target_type, target_id, cabinet_id, note)
+    store.save(LocationRule, [*rules, rule])
+    return rule
+
+
+def remove_rule(store: JsonStore, rule_id: int) -> None:
+    store.save(LocationRule, [rule for rule in store.load(LocationRule) if rule.id != rule_id])

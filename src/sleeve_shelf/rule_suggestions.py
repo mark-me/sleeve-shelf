@@ -19,6 +19,7 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
+from sleeve_shelf.placing import set_rule
 from sleeve_shelf.proposal import kept_shelf_ids, sort_collection, takes_part, usable_shelves
 from sleeve_shelf.sorting.placement import place
 
@@ -178,18 +179,10 @@ def accept_suggestions(store: JsonStore, cabinet_id: int) -> int:
     chosen = [s for s in rule_suggestions(store) if s.cabinet_id == cabinet_id]
     if not chosen:
         return 0
-    rules = store.load(LocationRule)
     for suggestion in chosen:
-        rules.append(
-            LocationRule(
-                store.next_id(LocationRule, rules),
-                suggestion.target_type,
-                suggestion.target_id,
-                cabinet_id,
-                _("Suggested from the layout"),
-            )
+        set_rule(
+            store, suggestion.target_type, suggestion.target_id, cabinet_id, _("Suggested from the layout")
         )
-    store.save(LocationRule, rules)
     return len(chosen)
 
 

@@ -36,6 +36,7 @@ from sleeve_shelf.ingestion.initial_load import InitialLoad
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
 from sleeve_shelf.sorting.order import cluster_order_from_layout
 from sleeve_shelf.versions import save_if_unsaved, save_version
+from sleeve_shelf.widths import estimate_widths
 
 # Below this similarity a loaded album and a Discogs release are not even proposed as a match.
 PROPOSAL_THRESHOLD = 0.6
@@ -243,17 +244,6 @@ def ensure_cluster_order(store: JsonStore) -> None:
             cluster.position = following
             following += 1
     store.save(Cluster, clusters)
-
-
-def estimate_widths(albums: list[Album], constants: WidthConstants) -> None:
-    """Compute each album's width from its format; compound formats await a manual width."""
-    for album in albums:
-        if album.format_tokens is None:
-            continue
-        album.computed_width_cm = round(album.format_tokens.estimated_width_cm(constants), 2)
-        album.width_confirmed = (
-            not album.format_tokens.is_compound or album.manual_width_cm is not None
-        )
 
 
 @dataclass(frozen=True, slots=True)

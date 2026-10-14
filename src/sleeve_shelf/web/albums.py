@@ -8,6 +8,7 @@ from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
 from sleeve_shelf.proposal import takes_part
 from sleeve_shelf.web.context import get_store
+from sleeve_shelf.widths import set_measured_width
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.web.places import described_rules, described_spots, shelf_options
@@ -110,14 +111,8 @@ def set_width(album_id: int):
         if on_album:
             return redirect(url_for("albums.detail", album_id=album_id, error=message))
         return redirect(url_for("albums.widths", error=message) + f"#album-{album_id}")
-    albums = store.load(Album)
-    for album in albums:
-        if album.id == album_id:
-            # An empty width goes back to the estimate; a compound format then awaits one again.
-            album.manual_width_cm = width
-            compound = bool(album.format_tokens and album.format_tokens.is_compound)
-            album.width_confirmed = width is not None or not compound
-    store.save(Album, albums)
+    # An empty width goes back to the estimate.
+    set_measured_width(store, album_id, width)
     if on_album:
         return redirect(url_for("albums.detail", album_id=album_id))
     return redirect(url_for("albums.widths") + f"#album-{album_id}")

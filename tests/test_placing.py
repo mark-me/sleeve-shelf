@@ -1,4 +1,4 @@
-"""Tests for moving albums by hand: standing them on a shelf, and rearranging shelves."""
+"""Tests for moving albums by hand, rearranging shelves, and the location rules."""
 
 import pytest
 
@@ -6,13 +6,15 @@ from sleeve_shelf.domain import (
     Album,
     Artist,
     Cabinet,
+    LocationRule,
+    LocationRuleTarget,
     Placement,
     PlacementSource,
     ProposedPlacement,
     Shelf,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.placing import ShelvesChanged, move_albums, rearrange_shelves
+from sleeve_shelf.placing import ShelvesChanged, move_albums, rearrange_shelves, remove_rule, set_rule
 from sleeve_shelf.versions import list_versions
 
 
@@ -85,3 +87,17 @@ def test_the_proposal_is_changed_without_touching_the_shelves_or_keeping_a_versi
     assert _shelves(store, ProposedPlacement) == {2: [1, 2]}
     assert _shelves(store) == {1: [1, 2], 2: [3]}
     assert list_versions(store) == []
+
+
+def test_a_target_has_one_rule_and_a_new_one_replaces_it(store):
+    first = set_rule(store, LocationRuleTarget.ARTIST, 1, 1, "by the door")
+    set_rule(store, LocationRuleTarget.ALBUM, 2, 1)
+    second = set_rule(store, LocationRuleTarget.ARTIST, 1, 2)
+
+    rules = {(r.target_type, r.target_id): r for r in store.load(LocationRule)}
+    assert len(rules) == 2 and rules[(LocationRuleTarget.ARTIST, 1)].cabinet_id == 2
+    # A replaced rule's id is not handed out again.
+    assert second.id != first.id
+
+    remove_rule(store, second.id)
+    assert [r.target_type for r in store.load(LocationRule)] == [LocationRuleTarget.ALBUM]
