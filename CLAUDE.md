@@ -45,7 +45,7 @@ Strict separation of concerns; keep it that way.
 | `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API (collection, release, master and artist), the format-string parser. |
 | `src/sleeve_shelf/sorting/` | The sorting engine: pure functions on domain objects (era bands, families, order, placement). |
 | `src/sleeve_shelf/persistence/` | `JsonStore` (one JSON file per entity, read and written through DuckDB) and the read queries for Browse. |
-| `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `placing` (moving albums by hand — from an album or artist page, or by dragging on Layout — with the check that nothing drops off a shelf, and the rules that bind an album or artist), `showcase`, `shifts` (a purchase that points an artist to another cluster), `rule_suggestions`, `spots` (a suggested spot for a new purchase), `covers` (images kept in the data directory), `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
+| `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `placing` (moving albums by hand — from an album or artist page, or by dragging on Layout — with the check that nothing drops off a shelf, and the rules that bind an album or artist), `showcase`, `shifts` (a purchase that points an artist to another cluster), `rule_suggestions`, `spots` (a suggested spot for a new purchase), `storage` (cabinets and shelves: adding, changing, ordering, and removing only what is empty), `covers` (images kept in the data directory), `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
 | `src/sleeve_shelf/web/` | Flask blueprints, templates, static files. One blueprint per screen. The menu's five sections and their tabs are declared in `web/navigation.py`; a new screen gets its tab there. |
 | `src/sleeve_shelf/web/pwa.py`, `web/static/icons/` | The web app manifest and the icons for installing the app on a phone. No service worker, on purpose. |
 | `docker/` | Dockerfile and Compose examples; `.github/workflows/docker.yml` builds and publishes the image. |
@@ -53,7 +53,7 @@ Strict separation of concerns; keep it that way.
 Things that are easy to get wrong:
 
 - **Adding a field to an entity** means three places: the dataclass in `domain/`, its column list in `persistence/store.py` (`_TABLES`), and the data model in `docs/requirements.md` (the entity list and the Mermaid diagram).
-- **A service module and a blueprint can share a name** (`sleeve_shelf/versions.py` and `sleeve_shelf/web/versions.py`). In web modules import names explicitly — `from sleeve_shelf.versions import save_version` — not `from sleeve_shelf import versions`, which can resolve to the blueprint.
+- **A service module and a blueprint can share a name** (`sleeve_shelf/versions.py` and `sleeve_shelf/web/versions.py`, `storage.py` likewise). In web modules import names explicitly — `from sleeve_shelf.versions import save_version` — not `from sleeve_shelf import versions`, which can resolve to the blueprint.
 - **`JsonStore.save` rewrites the whole file.** Load the list, change it, save the list.
 - **A new id comes from `store.next_id(Entity, items)`**, never from "highest + 1": ids of removed items stay taken, because saved versions and location rules still name them.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
