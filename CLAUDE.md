@@ -59,7 +59,7 @@ Things that are easy to get wrong:
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
 - **A screen that needs a collection** is listed in `NEEDS_COLLECTION` in `src/sleeve_shelf/__init__.py`; without a collection it then leads to the wizard. Don't add a guard of its own to the blueprint.
 - **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
-- **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN. Covers and pictures are shown from `data/covers/albums/` and `data/covers/artists/` once the fetch run has stored them (template filter `local_cover`), and from Discogs until then; every page has to work without them.
+- **Bootstrap, SortableJS and the menu icons are vendored** in `web/static/vendor/` so the app works offline. The icons are five Bootstrap Icons in one sprite, `menu-icons.svg`, each named after its section's key in `web/navigation.py`. Don't switch them to a CDN. Covers and pictures are shown from `data/covers/albums/` and `data/covers/artists/` once the fetch run has stored them (template filter `local_cover`), and from Discogs until then; every page has to work without them.
 
 ## Data
 

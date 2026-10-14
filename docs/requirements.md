@@ -450,7 +450,7 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 
 ### Main navigation (after the wizard)
 
-The menu has five sections (decided 2026-10-14): what is done daily on top, what is rarely touched at the bottom. A section opens on its first screen, and its screens are tabs above the page — on a phone they scroll sideways — so the menu itself stays five lines. A detail page belongs to the section it is reached from: an artist to Sorting, an album to Collection. All screens are built, except where a later phase is marked.
+The menu has five sections (decided 2026-10-14): what is done daily on top, what is rarely touched at the bottom. A section opens on its first screen, and its screens are tabs above the page — on a phone they scroll sideways — so the menu itself stays five lines. Each section has an icon before its name (decided 2026-10-15): a speedometer for Dashboard, a record for Collection, a bookshelf for Shelves, an A–Z arrow for Sorting, a gear for Settings — from Bootstrap Icons, kept with the app. The name always stays; the tabs have no icons. A tab carries a short name, since the menu names the section and the page has its fuller title: Unplaced, Proposal, Cabinets, Families, Rules (decided 2026-10-15). A detail page belongs to the section it is reached from: an artist to Sorting, an album to Collection. All screens are built, except where a later phase is marked.
 
 - **Dashboard** — overview and open confirmations (see below)
 - **Collection** — the records themselves

@@ -121,7 +121,7 @@ def test_an_album_apart_from_the_rest_of_its_artist_gets_a_rule_of_its_own(store
 def test_an_existing_rule_or_a_cabinet_outside_the_sorting_needs_no_suggestion(stored):
     store, rule, target, rule_suggestions = stored
     _stand(store, [(1, 3), (2, 3), (3, 3), (4, 3)])
-    store.save(LocationRule := rule, [rule(1, target.CLUSTER, 1, 2)])
+    store.save(rule, [rule(1, target.CLUSTER, 1, 2)])
     # A rule on the cluster covers its artists, whatever cabinet it names.
     assert rule_suggestions(store) == []
 

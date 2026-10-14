@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-14 22:25+0200\n"
+"POT-Creation-Date: 2026-10-15 00:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -101,8 +101,10 @@ msgid "Browse / Search"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/browse/unplaced.html
-msgid "Unplaced albums"
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/browse/results.html
+#: src/sleeve_shelf/web/templates/discogs/remove.html
+msgid "Unplaced"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -122,9 +124,7 @@ msgid "Layout"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Sorting proposal"
+msgid "Proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -141,9 +141,7 @@ msgid "Versions"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/showcase/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Cabinets & shelves"
+msgid "Cabinets"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -159,7 +157,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/families/index.html
-msgid "Artist families"
+msgid "Families"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -169,9 +167,8 @@ msgid "Clusters"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/_rules_and_move.html
 #: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Location rules"
+msgid "Rules"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -252,6 +249,11 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/_cover.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Close"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Location rules"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_rules_and_move.html
@@ -730,12 +732,6 @@ msgid "rough width"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/browse/results.html
-#: src/sleeve_shelf/web/templates/discogs/remove.html
-msgid "Unplaced"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
 #, python-format
 msgid "Picture of %(name)s"
 msgstr ""
@@ -927,6 +923,10 @@ msgid "Song-level search comes in a later phase — that needs tracklist data th
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
+msgid "Unplaced albums"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
 msgid "Albums that have no spot on a shelf yet. For an LP a spot is suggested on the shelves as they stand, next to what it belongs with; nothing moves until you put it there."
 msgstr ""
 
@@ -1089,6 +1089,11 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "A proposal is waiting"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Sorting proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1748,6 +1753,10 @@ msgid "The layout as it is now is saved as a version first. If you still own the
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
+msgid "Artist families"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
 msgid "A family keeps an artist’s other billings and side projects next to each other on the shelf, in one cluster."
 msgstr ""
 
@@ -1786,10 +1795,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
 msgid "Not a family"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/families/index.html
-msgid "Families"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
@@ -2149,10 +2154,6 @@ msgid "If this cabinet should be left out of sorting altogether, mark it so unde
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Rules"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/rules/index.html
 msgid "(no longer exists)"
 msgstr ""
 
@@ -2357,6 +2358,11 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/showcase/index.html
 msgid "No shelf is a showcase yet. Mark a top-loader as showcase under Cabinets & shelves; the albums that stand on it then become its sample."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Cabinets & shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/showcase/index.html
