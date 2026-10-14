@@ -9,14 +9,12 @@ from flask import Flask, abort, redirect, request, url_for
 from flask_babel import Babel
 
 from sleeve_shelf.artists import set_picture
-from sleeve_shelf.collection import (
-    enrich_collection,
-    import_discogs_collection,
-    load_layout,
-)
+from sleeve_shelf.collection import load_layout
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.covers import COVER_DIR, sharpen_small_images, sort_into_folders
+from sleeve_shelf.discogs_import import import_discogs_collection
 from sleeve_shelf.domain import Artist
+from sleeve_shelf.enrichment import enrich_collection
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.initial_load import load_initial_layout

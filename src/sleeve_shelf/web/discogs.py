@@ -15,7 +15,7 @@ from flask import (
 )
 from flask_babel import gettext as _
 
-from sleeve_shelf.collection import (
+from sleeve_shelf.discogs_import import (
     confirm_match,
     import_discogs_collection,
     keep_departed_album,
