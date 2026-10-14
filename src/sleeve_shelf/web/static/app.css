@@ -532,3 +532,6 @@ a.ss-row-title { text-decoration: none; }
   background-color: rgba(255, 255, 255, 0.85);
   opacity: 1;
 }
+
+/* The app icon next to the name: its own cream tile keeps the black record visible on the dark sidebar. */
+.ss-brand-icon { display: block; flex-shrink: 0; }
