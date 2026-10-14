@@ -36,37 +36,27 @@
     </div>
     <nav id="main-nav" class="ss-nav collapse d-lg-flex">
       {% block nav %}
-      {% macro item(endpoint, label, active, count=0) %}
-      <a href="{{ url_for(endpoint) }}" class="{{ 'active' if active }}">
-        <span>{{ label }}</span>
+      {% for section in nav_sections %}
+      {% set count = section_count(section, menu_counts) %}
+      <a href="{{ url_for(section.tabs[0].endpoint) }}" class="{{ 'active' if section == nav_section }}">
+        <span>{{ section.label | string }}</span>
         {% if count %}<span class="ss-nav-count" title="{{ _('Waiting for you') }}">{{ count }}</span>{% endif %}
       </a>
-      {% endmacro %}
-      {{ item('dashboard.index', _('Dashboard'), request.blueprint == 'dashboard') }}
-      <div class="ss-nav-group">{{ _('Collection') }}</div>
-      {{ item('browse.browse', _('Browse / Search'), request.endpoint == 'browse.browse') }}
-      {{ item('browse.unplaced', _('Unplaced albums'), request.endpoint == 'browse.unplaced', menu_counts.unplaced) }}
-      <div class="ss-nav-group">{{ _('Arrange') }}</div>
-      {{ item('layout.index', _('Layout'), request.blueprint == 'layout') }}
-      {{ item('proposal.index', _('Sorting proposal'), request.blueprint == 'proposal') }}
-      {{ item('showcase.index', _('Showcase'), request.blueprint == 'showcase') }}
-      {{ item('versions.index', _('Versions'), request.blueprint == 'versions') }}
-      <div class="ss-nav-group">{{ _('Sorting rules') }}</div>
-      {{ item('artists.index', _('Artists'), request.blueprint == 'artists', menu_counts.artists) }}
-      {{ item('families.index', _('Artist families'), request.blueprint == 'families', menu_counts.families) }}
-      {{ item('clusters.index', _('Clusters'), request.blueprint == 'clusters') }}
-      {{ item('rules.index', _('Location rules'), request.blueprint == 'rules', menu_counts.rules) }}
-      <div class="ss-nav-group">{{ _('Setup') }}</div>
-      {{ item('storage.index', _('Cabinets & shelves'), request.blueprint == 'storage' or request.endpoint == 'albums.widths', menu_counts.storage) }}
-      {{ item('discogs.index', _('Discogs sync'), request.blueprint == 'discogs', menu_counts.discogs) }}
-      {{ item('setup.upload_form', _('Import workbook'), request.blueprint == 'setup') }}
-      {{ item('settings.index', _('Settings'), request.blueprint == 'settings') }}
+      {% endfor %}
       {% endblock %}
-      <button class="ss-theme-toggle" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
-      <div class="ss-version">{{ _('Version %(version)s', version=config.VERSION) }}</div>
     </nav>
   </header>
   <main class="ss-main">
+    {% if nav_section and nav_section.tabs | length > 1 %}
+    <nav class="ss-section-tabs" aria-label="{{ nav_section.label | string }}">
+      {% for tab in nav_section.tabs %}
+      <a href="{{ url_for(tab.endpoint) }}" class="{{ 'active' if tab == nav_tab }}"{% if tab == nav_tab %} aria-current="page"{% endif %}>
+        {{ tab.label | string }}
+        {% if tab.count and menu_counts.get(tab.count) %}<span class="ss-nav-count">{{ menu_counts[tab.count] }}</span>{% endif %}
+      </a>
+      {% endfor %}
+    </nav>
+    {% endif %}
     {% block content %}{% endblock %}
   </main>
 </div>

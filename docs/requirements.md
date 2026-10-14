@@ -449,29 +449,27 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 
 ### Main navigation (after the wizard)
 
-The menu is grouped in the order the app is used — what is done daily on top, what is rarely touched at the bottom. All items are built, except where a later phase is marked.
+The menu has five sections (decided 2026-10-14): what is done daily on top, what is rarely touched at the bottom. A section opens on its first screen, and its screens are tabs above the page — on a phone they scroll sideways — so the menu itself stays five lines. A detail page belongs to the section it is reached from: an artist to Sorting, an album to Collection. All screens are built, except where a later phase is marked.
 
 - **Dashboard** — overview and open confirmations (see below)
-- **Collection**
+- **Collection** — the records themselves
   - **Browse / Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1)
   - **Unplaced albums** — albums without a spot on a shelf (see Initial load), so they can be resolved rather than silently dropped. Each LP shows its suggested spot — the shelf, the albums it would stand between, and whether it fits — with a button to put it there; after that the page says where it now stands, with a link. An LP without a spot says why: the artist has no cluster yet, or nothing stands where it could go (see Sorting logic §4)
-- **Arrange**
+  - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below). Loading a layout workbook (see Initial load) is reached from the bottom of this screen
+- **Shelves** — the physical cabinets and what stands in them
   - **Layout** — core screen (see below)
   - **Sorting proposal** — generate a proposal, compare it with the current layout, accept or discard it (see below)
   - **Showcase** — the samples on display in the top-loaders, and exchanging albums with the shelf (see below)
   - **Versions** — saved layouts, with the option to put one back (see below)
-- **Sorting rules** — what decides how a proposal sorts, in the order they are best gone through
+  - **Cabinets & shelves** — the Storage structure screen: manage cabinets and shelves, and the album widths
+- **Sorting** — what decides how a proposal sorts, in the order they are best gone through
   - **Artists** — the list of artists, and per artist its start year and cluster (see below)
   - **Artist families** — the alias groups: accept or turn down suggested families, and manage them by hand (see below)
   - **Clusters** — the clusters in their order: reorder, rename, merge, and re-point styles (see below)
   - **Location rules** — bind a cluster, a family, an artist, or an album to a cabinet (see below)
-- **Setup**
-  - **Cabinets & shelves** — the Storage structure screen: manage cabinets and shelves
-  - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below)
-  - **Import workbook** — load a layout workbook (see Initial load)
-  - **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); see below
+- **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); also the light/dark switch and the app's version (see below)
 
-**Counters in the menu**: an item shows a number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year, or with a new purchase pointing to another cluster (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
+**Counters in the menu**: a section shows the total of what waits in its screens, and each tab its own number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year, or with a new purchase pointing to another cluster (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
 
 An artist's page is reached from Layout (the name on a block) and from Browse/Search (the name on a row); an album's page from its title in Browse/Search, in the Unplaced albums list, and on its artist's page (see Detail screen).
 
@@ -523,6 +521,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Images stored here** (built 2026-10-11): last of all the run downloads the images themselves — small and large album covers, small and large artist pictures — into `covers/albums/` and `covers/artists/` in the data directory, about four per second. A third bar shows how many of the images the pages show are stored. The run can be started for the images alone, and stopped and continued like the rest; an image that is no longer at Discogs is counted apart and not tried again
 - **Artist pictures** (built 2026-10-09): the same run then fetches the picture of every artist a sync has named on Discogs — one lookup per artist, last, since nothing in the sorting waits for it. The same lookup brings the artist's members, groups and aliases, which the family suggestions use; an artist fetched before these were kept is fetched again once, and shows as still to be fetched until then. The screen says how many pictures are still to be fetched, and the run can be started for those alone. Its address is cached; the image itself is stored with the covers (see Images stored here)
 - **Matches to confirm**: each proposed match (see [Initial load](#initial-load)) shows the album and the Discogs release side by side, with their similarity. "Same album" links them; "Different" leaves the album without a release and adds the release as a new, unplaced album
+- **Layout workbook** (2026-10-14): at the bottom of the screen, a link to load a layout workbook (see Initial load) — kept here rather than in the menu, since it is rarely needed once the collection is loaded
 
 ### Sorting proposal screen
 
@@ -553,6 +552,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Room**: the screen shows how many cm the albums of a proposal need, how many the shelves it fills offer, and the difference — the quickest way to see whether the estimates add up. Albums that a proposal leaves where they are (in a showcase, or in a cabinet kept outside the sorting) are not counted, and neither are their shelves
 - **Showcase**: how full a showcase may be, as a percentage of its width (see Showcase screen)
 - **Discogs**: whether a bundle such as "CD + LP" counts as vinyl (applies at the next import), and the personal access token, shown masked
+- **Appearance**: the switch between light and dark (see Non-functional requirements), and below it the app's version
 
 ### Album widths screen
 
