@@ -36,16 +36,10 @@ from sleeve_shelf.sorting.connections import connections_of
 from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.places import described_rules, shelf_options
 
 blueprint = Blueprint("artists", __name__, url_prefix="/artists")
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 def _albums_taking_part(store) -> dict[int, list[Album]]:

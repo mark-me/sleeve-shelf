@@ -1,6 +1,6 @@
 """Dashboard: the collection at a glance, and what is waiting for a decision."""
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, render_template, request, url_for
 
 from sleeve_shelf.domain import (
     Album,
@@ -14,7 +14,7 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.proposal import has_proposal, takes_part
 from sleeve_shelf.versions import list_versions
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.places import described_spots
 from sleeve_shelf.web.waiting import waiting_counts
 
@@ -22,12 +22,6 @@ blueprint = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
 # How many albums to place are shown on the Dashboard itself; the rest is one click away.
 TO_PLACE_SHOWN = 5
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 def _countable(open_count: int, albums: list[Album]) -> dict:

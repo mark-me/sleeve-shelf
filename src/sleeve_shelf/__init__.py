@@ -47,6 +47,13 @@ from sleeve_shelf.web.waiting import menu_counts
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 
+# The blueprints whose screens need a collection; the others work without one (the wizard,
+# cabinets and shelves, Discogs, families, rules, settings, and the files the pages use).
+NEEDS_COLLECTION = frozenset(
+    {"albums", "artists", "browse", "clusters", "dashboard", "layout", "proposal", "showcase", "versions"}
+)
+
+
 def create_app(data_dir: str | Path | None = None) -> Flask:
     """Create and configure the Flask application instance."""
     app = Flask(__name__, template_folder="web/templates", static_folder="web/static")
@@ -84,6 +91,12 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(pwa.blueprint)
     app.register_blueprint(covers.blueprint)
     app.add_template_filter(covers.local_cover, "local_cover")
+
+    @app.before_request
+    def require_collection():
+        # Screens that show or change the collection lead to the wizard until there is one.
+        if request.blueprint in NEEDS_COLLECTION and not has_collection():
+            return redirect(url_for("setup.welcome"))
 
     @app.before_request
     def reject_cross_site_posts():

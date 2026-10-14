@@ -1,20 +1,14 @@
 """Browse/Search: the collection in physical shelf order, and the unplaced albums."""
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, render_template, request
 
 from sleeve_shelf.domain import ProposedPlacement
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.proposal import has_proposal
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.places import described_spots
 
 blueprint = Blueprint("browse", __name__)
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 @blueprint.get("/browse")

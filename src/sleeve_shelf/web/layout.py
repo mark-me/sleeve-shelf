@@ -2,7 +2,7 @@
 
 from itertools import groupby
 
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, jsonify, render_template, request
 
 from sleeve_shelf.domain import (
     Album,
@@ -16,18 +16,12 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries
 from sleeve_shelf.proposal import has_proposal
 from sleeve_shelf.versions import keep_restore_point
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store, shelf_fill
 
 blueprint = Blueprint("layout", __name__, url_prefix="/layout")
 
 # The tray of albums that stand on no shelf is addressed as shelf 0.
 TRAY = 0
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 def _entity(store) -> tuple[type[Placement], str | None]:
@@ -71,8 +65,7 @@ def index():
             "shelves": [
                 {
                     "shelf": shelf,
-                    "albums": fill.get(shelf.id, (0, 0.0))[0],
-                    "filled_cm": fill.get(shelf.id, (0, 0.0))[1],
+                    **shelf_fill(fill, shelf.id),
                     "blocks": _blocks(queries.shelf_albums(shelf.id)),
                 }
                 for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
@@ -90,8 +83,7 @@ def index():
             "shelves": [
                 {
                     "shelf": shelf,
-                    "albums": fill.get(shelf.id, (0, 0.0))[0],
-                    "filled_cm": fill.get(shelf.id, (0, 0.0))[1],
+                    **shelf_fill(fill, shelf.id),
                 }
                 for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
             ],
@@ -147,17 +139,11 @@ def send():
     if entity is Placement:
         keep_restore_point(store)
     store.save(entity, kept)
-    fill = BrowseQueries(store, entity).shelf_fill()
     cabinets = {cabinet.id: cabinet for cabinet in store.load(Cabinet)}
-    return jsonify(
-        shelves={
-            str(shelf_id): {
-                "albums": fill.get(shelf_id, (0, 0.0))[0],
-                "filled_cm": round(fill.get(shelf_id, (0, 0.0))[1], 1),
-            }
-            for shelf_id in touched
-            if shelf_id != TRAY
-        },
+    return _filled(
+        store,
+        entity,
+        touched,
         # The room the shelf is in, for a jump to a shelf that is on another tab.
         room=(cabinets[shelves[target].cabinet_id].location or "") if target != TRAY else None,
     )
@@ -203,14 +189,13 @@ def move():
     if entity is Placement:
         keep_restore_point(store)
     store.save(entity, kept + moved)
+    return _filled(store, entity, contents)
+
+
+def _filled(store, entity, shelf_ids, **extra):
+    """The answer to a move: how full each shelf it touched now is, besides the tray."""
     fill = BrowseQueries(store, entity).shelf_fill()
     return jsonify(
-        shelves={
-            str(shelf_id): {
-                "albums": fill.get(shelf_id, (0, 0.0))[0],
-                "filled_cm": round(fill.get(shelf_id, (0, 0.0))[1], 1),
-            }
-            for shelf_id in contents
-            if shelf_id != TRAY
-        }
+        shelves={str(shelf_id): shelf_fill(fill, shelf_id, digits=1) for shelf_id in shelf_ids if shelf_id != TRAY},
+        **extra,
     )

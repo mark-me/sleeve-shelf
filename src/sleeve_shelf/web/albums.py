@@ -7,18 +7,12 @@ from sleeve_shelf.domain import Album, Artist, Placement, Style
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
 from sleeve_shelf.proposal import takes_part
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.web.places import described_rules, described_spots, shelf_options
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 @blueprint.get("/<int:album_id>")

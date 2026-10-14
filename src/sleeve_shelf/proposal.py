@@ -1,7 +1,6 @@
 """Application services for the sorting proposal: a layout kept next to the current one."""
 
 from dataclasses import dataclass
-from datetime import datetime
 
 from sleeve_shelf.alias_groups import cluster_hints
 from sleeve_shelf.collection import ensure_cluster_order

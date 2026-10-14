@@ -7,15 +7,9 @@ from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Cabinet, Shelf, in_order
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.showcase import samples, swap
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("showcase", __name__, url_prefix="/showcase")
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 @blueprint.get("/")

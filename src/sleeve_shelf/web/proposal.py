@@ -14,15 +14,9 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("proposal", __name__, url_prefix="/proposal")
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 @blueprint.get("/")

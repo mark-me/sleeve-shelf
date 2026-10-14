@@ -5,7 +5,7 @@ from flask_babel import gettext as _
 
 from sleeve_shelf.domain import Cabinet, Shelf, ShelfLayer, ShelfType, in_order, move, settle_order
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store, has_collection, shelf_fill
 
 blueprint = Blueprint("storage", __name__, url_prefix="/storage")
 
@@ -19,8 +19,7 @@ def index():
         {
             "cabinet": cabinet,
             "shelves": [
-                {"shelf": shelf, "albums": fill.get(shelf.id, (0, 0.0))[0],
-                 "filled_cm": fill.get(shelf.id, (0, 0.0))[1]}
+                {"shelf": shelf, **shelf_fill(fill, shelf.id)}
                 for shelf in in_order(shelves)
                 if shelf.cabinet_id == cabinet.id
             ],

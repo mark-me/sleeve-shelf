@@ -53,7 +53,12 @@ def _load(client, layout=LAYOUT, unplaced=()):
 
 def test_without_a_collection_everything_leads_to_the_wizard(client):
     assert client.get("/").headers["Location"] == "/setup/"
-    assert client.get("/browse").headers["Location"] == "/setup/"
+    for screen in ("/browse", "/unplaced", "/albums/1", "/artists/", "/clusters/", "/dashboard/",
+                   "/layout/", "/proposal/", "/showcase/", "/versions/"):
+        assert client.get(screen).headers.get("Location") == "/setup/", screen
+    # What can be set up before there is a collection stays open.
+    for screen in ("/storage/", "/discogs/", "/families/", "/rules/", "/settings/"):
+        assert client.get(screen).status_code == 200, screen
     assert client.get("/setup/").status_code == 200
     assert client.get("/setup/upload").status_code == 200
 

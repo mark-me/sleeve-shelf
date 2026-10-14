@@ -15,15 +15,9 @@ from sleeve_shelf.clusters import (
     rename_cluster,
 )
 from sleeve_shelf.domain import ArtistClusterAssignment, Cluster, Style
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("clusters", __name__, url_prefix="/clusters")
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 @blueprint.get("/")

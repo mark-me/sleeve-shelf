@@ -3,7 +3,7 @@
 from collections import Counter, defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, replace
-from datetime import date, datetime
+from datetime import date
 from difflib import SequenceMatcher
 
 from sleeve_shelf.domain import (
