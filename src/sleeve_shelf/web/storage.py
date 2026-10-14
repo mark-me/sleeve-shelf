@@ -3,7 +3,7 @@
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf.domain import Cabinet, Shelf, ShelfLayer, ShelfType, in_order
+from sleeve_shelf.domain import Cabinet, Shelf, ShelfLayer, ShelfType, find_by_id, in_order
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.storage import (
     StillInUse,
@@ -14,7 +14,7 @@ from sleeve_shelf.storage import (
     save_cabinet,
     save_shelf,
 )
-from sleeve_shelf.web.context import get_store, has_collection, shelf_fill
+from sleeve_shelf.web.context import get_store, has_collection, parse_number, shelf_fill
 
 blueprint = Blueprint("storage", __name__, url_prefix="/storage")
 
@@ -178,7 +178,7 @@ def delete_shelf(shelf_id: int):
 
 
 def _find(items: list, item_id: int | None):
-    item = next((item for item in items if item.id == item_id), None)
+    item = find_by_id(items, item_id)
     if item is None:
         abort(404)
     return item
@@ -186,11 +186,8 @@ def _find(items: list, item_id: int | None):
 
 def _positive_number(text: str) -> float | None:
     """A number above zero, accepting a decimal comma; None when it isn't one."""
-    try:
-        number = float(text.replace(",", "."))
-    except ValueError:
-        return None
-    return number if number > 0 else None
+    number = parse_number(text)
+    return number if number is not None and number > 0 else None
 
 
 def _refuse(message: str):

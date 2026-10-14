@@ -1,13 +1,14 @@
 """Application services for curating an artist: start year, cluster and picture."""
 
 import hashlib
+from collections import Counter
 import io
 from pathlib import Path
 
 from PIL import Image, ImageOps
 
 from sleeve_shelf.collection import ensure_cluster_order
-from sleeve_shelf.domain import Album, Artist, ArtistClusterAssignment, Cluster
+from sleeve_shelf.domain import Album, Artist, ArtistClusterAssignment, Cluster, find_by_id
 from sleeve_shelf.persistence import JsonStore
 
 
@@ -144,7 +145,7 @@ def set_picture(store: JsonStore, artist_id: int, data: bytes) -> bool:
     if small is None:
         return False
     artists = store.load(Artist)
-    artist = next((a for a in artists if a.id == artist_id), None)
+    artist = find_by_id(artists, artist_id)
     if artist is None:
         return False
     directory = Path(store.data_dir) / PICTURE_DIR
@@ -165,7 +166,7 @@ def set_picture(store: JsonStore, artist_id: int, data: bytes) -> bool:
 def remove_picture(store: JsonStore, artist_id: int) -> None:
     """Take the user's own picture away again; the one from Discogs, if any, shows once more."""
     artists = store.load(Artist)
-    artist = next((a for a in artists if a.id == artist_id), None)
+    artist = find_by_id(artists, artist_id)
     if artist is None or not artist.picture_file:
         return
     directory = Path(store.data_dir) / PICTURE_DIR
@@ -173,3 +174,8 @@ def remove_picture(store: JsonStore, artist_id: int) -> None:
     (directory / thumb_name(artist.picture_file)).unlink(missing_ok=True)
     artist.picture_file = None
     store.save(Artist, artists)
+
+
+def albums_per_artist(store: JsonStore) -> Counter[int]:
+    """How many albums each artist has in the collection, singles included."""
+    return Counter(album.artist_id for album in store.load(Album))

@@ -1,6 +1,15 @@
 """Application services for the storage structure: cabinets and their shelves."""
 
-from sleeve_shelf.domain import Album, Cabinet, Shelf, ShelfLayer, ShelfType, move, settle_order
+from sleeve_shelf.domain import (
+    Album,
+    Cabinet,
+    Shelf,
+    ShelfLayer,
+    ShelfType,
+    find_by_id,
+    move,
+    settle_order,
+)
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
 
 
@@ -104,7 +113,7 @@ def move_shelf(store: JsonStore, shelf_id: int, step: int) -> int:
 
 def _find[T: (Cabinet, Shelf)](items: list[T], item_id: int) -> T:
     """The cabinet or shelf with this id; LookupError when there is none."""
-    item = next((item for item in items if item.id == item_id), None)
+    item = find_by_id(items, item_id)
     if item is None:
         raise LookupError(item_id)
     return item

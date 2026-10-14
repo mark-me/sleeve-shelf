@@ -33,6 +33,7 @@ from sleeve_shelf.domain import (
     Placement,
     ReleaseEnrichment,
     Shelf,
+    find_by_id,
 )
 from sleeve_shelf.ingestion.discogs_api import (
     SECONDS_BETWEEN_IMAGES,
@@ -354,7 +355,7 @@ def _place(album_id: int) -> str | None:
         ),
         None,
     )
-    shelf = placement and next((s for s in store.load(Shelf) if s.id == placement.shelf_id), None)
+    shelf = placement and find_by_id(store.load(Shelf), placement.shelf_id)
     if not shelf:
         return None
     cabinet = next((c.name for c in store.load(Cabinet) if c.id == shelf.cabinet_id), "")

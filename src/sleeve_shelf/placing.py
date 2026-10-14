@@ -10,6 +10,7 @@ from sleeve_shelf.domain import (
     PlacementSource,
     ProposedPlacement,
     Shelf,
+    find_by_id,
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.versions import keep_restore_point
@@ -95,7 +96,7 @@ def applicable_rules(
 
     The most specific rule decides: the album's own, then the artist's, its family's, its cluster's.
     """
-    artist = next((a for a in store.load(Artist) if a.id == artist_id), None)
+    artist = find_by_id(store.load(Artist), artist_id)
     cluster_id = next(
         (a.cluster_id for a in store.load(ArtistClusterAssignment) if a.artist_id == artist_id),
         None,
