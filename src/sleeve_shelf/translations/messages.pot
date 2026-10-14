@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-13 16:18+0200\n"
+"POT-Creation-Date: 2026-10-14 22:25+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -85,6 +85,100 @@ msgstr ""
 msgid "Choose an artist from the list."
 msgstr ""
 
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Dashboard"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+msgid "Collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/browse/results.html
+#: src/sleeve_shelf/web/templates/browse/shelf.html
+msgid "Browse / Search"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+msgid "Unplaced albums"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Discogs sync"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+msgid "Shelves"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Layout"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Sorting proposal"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/settings/index.html
+#: src/sleeve_shelf/web/templates/showcase/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Showcase"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/versions/index.html
+msgid "Versions"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/showcase/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Cabinets & shelves"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+msgid "Sorting"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/clusters/index.html
+msgid "Artists"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Artist families"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/clusters/index.html
+msgid "Clusters"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Location rules"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Settings"
+msgstr ""
+
 #: src/sleeve_shelf/web/pwa.py
 msgid "Your vinyl collection, in the order of your shelves."
 msgstr ""
@@ -158,12 +252,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/_cover.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Close"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/_rules_and_move.html
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Location rules"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_rules_and_move.html
@@ -735,111 +823,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Waiting for you"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Dashboard"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-msgid "Collection"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/browse/results.html
-#: src/sleeve_shelf/web/templates/browse/shelf.html
-msgid "Browse / Search"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/browse/unplaced.html
-msgid "Unplaced albums"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-msgid "Arrange"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/layout/index.html
-msgid "Layout"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Sorting proposal"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-#: src/sleeve_shelf/web/templates/showcase/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Showcase"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/layout/index.html
-#: src/sleeve_shelf/web/templates/versions/index.html
-msgid "Versions"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-msgid "Sorting rules"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/clusters/index.html
-msgid "Artists"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/families/index.html
-msgid "Artist families"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#: src/sleeve_shelf/web/templates/clusters/index.html
-msgid "Clusters"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-msgid "Setup"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/showcase/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Cabinets & shelves"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs sync"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-msgid "Import workbook"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-msgid "Settings"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-msgid "Switch light / dark"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/base.html
-#, python-format
-msgid "Version %(version)s"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
@@ -1736,6 +1719,18 @@ msgstr ""
 msgid "You said you still have these. They are no longer counted as waiting; an album that returns to your Discogs collection leaves this list by itself."
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Layout workbook"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "A workbook only changes where the albums stand; it adds albums only on a first load."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Import workbook"
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 msgid "Remove album"
 msgstr ""
@@ -2240,6 +2235,23 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "No token is set yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Appearance"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Light or dark follows this device until you switch it here."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Switch light / dark"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+#, python-format
+msgid "Version %(version)s"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/setup/preview.html

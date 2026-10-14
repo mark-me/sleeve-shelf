@@ -158,15 +158,31 @@ details.ss-card:not([open]) > summary { border-bottom: none; }
   font-weight: 600;
 }
 
-.ss-nav .ss-theme-toggle { margin-top: 12px; }
-
-.ss-version {
-  padding: 8px 4px 0;
-  color: #8B93A6;
-  font-size: 0.72rem;
-  text-align: center;
-  overflow-wrap: anywhere;
+/* The screens of a section, as tabs above the page; they scroll sideways on a phone. */
+.ss-section-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 4px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ss-border);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.ss-section-tabs a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 12px 10px 10px;
+  border-bottom: 2px solid transparent;
+  color: var(--ss-muted, #64748B);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ss-section-tabs a:hover { color: inherit; }
+.ss-section-tabs a.active { border-bottom-color: var(--ss-accent); color: inherit; font-weight: 600; }
 
 .ss-main {
   padding: 0 0 24px;
@@ -190,11 +206,9 @@ details.ss-card:not([open]) > summary { border-bottom: none; }
   }
 
   .ss-brand { font-size: 1.15rem; padding: 0 4px; }
-  /* Fourteen items and four headings have to fit a laptop screen; scroll when they don't. */
-  .ss-nav { flex: 1; gap: 2px; padding-top: 20px; min-height: 0; overflow-y: auto; }
-  .ss-nav a { height: 34px; flex-shrink: 0; font-size: 0.9rem; }
-  .ss-nav-group { margin-top: 12px; }
-  .ss-nav .ss-theme-toggle { margin-top: auto; }
+  .ss-nav { flex: 1; gap: 4px; padding-top: 24px; }
+  .ss-nav a { height: 40px; flex-shrink: 0; }
+  .ss-section-tabs { margin: -16px 0 28px; padding: 0; }
   .ss-main { flex: 1; padding: 40px 48px; }
   .ss-page { padding: 0; }
 }
@@ -518,3 +532,6 @@ a.ss-row-title { text-decoration: none; }
   background-color: rgba(255, 255, 255, 0.85);
   opacity: 1;
 }
+
+/* The app icon next to the name: its own cream tile keeps the black record visible on the dark sidebar. */
+.ss-brand-icon { display: block; flex-shrink: 0; }

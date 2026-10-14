@@ -233,7 +233,16 @@
     <div class="ss-card-body ss-muted small">{{ _('You said you still have these. They are no longer counted as waiting; an album that returns to your Discogs collection leaves this list by itself.') }}</div>
     {% endif %}
   </section>
+
   {% endif %}
+
+  <section class="ss-card mt-4" id="workbook">
+    <div class="ss-card-head"><h2>{{ _('Layout workbook') }}</h2></div>
+    <div class="ss-card-body d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span class="ss-muted">{{ _('A workbook only changes where the albums stand; it adds albums only on a first load.') }}</span>
+      <a class="ss-button ss-button-small" href="{{ url_for('setup.upload_form') }}">{{ _('Import workbook') }}</a>
+    </div>
+  </section>
 </div>
 
 <script>

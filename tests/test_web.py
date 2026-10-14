@@ -381,22 +381,36 @@ def test_covers_show_in_browse_search_and_layout_once_albums_have_them(client):
     assert "nenette.jpeg" in artist and "ss-cover-empty" in artist
 
 
-def test_menu_is_grouped_and_counts_what_is_waiting(client):
+def test_menu_has_five_sections_and_tabs_that_count_what_is_waiting(client):
     _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
 
     page = client.get("/browse").text
 
-    groups = [page.index(f'<div class="ss-nav-group">{name}</div>') for name in ("Collection", "Arrange", "Sorting rules", "Setup")]
-    assert groups == sorted(groups)
-    assert page.index("Sorting proposal") < groups[2] < page.index("Artist families") < groups[3]
-    assert "Cabinets & shelves" in page and "Discogs sync" in page and "Import workbook" in page
-    # One LP has no place: the menu says so behind Unplaced albums.
-    unplaced = page[page.index("<span>Unplaced albums</span>"):]
-    unplaced = unplaced[: unplaced.index("</a>")]
-    assert 'class="ss-nav-count" title="Waiting for you">1</span>' in unplaced
-    # Nothing waits under Discogs sync, so it shows no number.
-    discogs = page[page.index("<span>Discogs sync</span>"):]
-    assert "ss-nav-count" not in discogs[: discogs.index("</a>")]
+    menu = page[page.index('id="main-nav"'):page.index("</nav>")]
+    sections = ["Dashboard", "Collection", "Shelves", "Sorting", "Settings"]
+    assert [menu.index(f"<span>{name}</span>") for name in sections] == sorted(
+        menu.index(f"<span>{name}</span>") for name in sections
+    )
+    assert menu.count("<a ") == 5
+    # Browse belongs to Collection: that section is marked, and its screens are the tabs.
+    collection = menu[menu.rindex("<a ", 0, menu.index("<span>Collection</span>")):]
+    assert 'class="active"' in collection[: collection.index("</a>")]
+    # One LP has no place: Collection says so, and so does the tab it is on.
+    assert 'title="Waiting for you">1</span>' in collection[: collection.index("</a>")]
+    tabs = page[page.index('class="ss-section-tabs"'):]
+    tabs = tabs[: tabs.index("</nav>")]
+    assert ["Browse / Search" in tabs, "Unplaced albums" in tabs, "Discogs sync" in tabs] == [True] * 3
+    unplaced = tabs[tabs.index("Unplaced albums"):]
+    assert '<span class="ss-nav-count">1</span>' in unplaced[: unplaced.index("</a>")]
+    assert 'aria-current="page"' in tabs[: tabs.index("Unplaced albums")]
+
+    # The other sections show their own screens as tabs.
+    assert "Cabinets &amp; shelves" in client.get("/layout/").text.split('class="ss-section-tabs"')[1]
+    assert "Location rules" in client.get("/families/").text.split('class="ss-section-tabs"')[1]
+    # The workbook is imported from the Discogs screen, the theme is switched in Settings.
+    assert "/setup/upload" in client.get("/discogs/").text
+    settings = client.get("/settings/").text
+    assert "data-theme-toggle" in settings and 'class="ss-section-tabs"' not in settings
 
 
 def test_app_can_be_installed_from_its_manifest(client):

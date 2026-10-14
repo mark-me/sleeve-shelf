@@ -41,6 +41,7 @@ from sleeve_shelf.web import (
 )
 from sleeve_shelf.web import proposal as proposal_screen
 from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web import navigation
 from sleeve_shelf.web.waiting import menu_counts
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
@@ -94,7 +95,15 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     @app.context_processor
     def menu():
         # The numbers behind menu items: where something is waiting for the user.
-        return {"menu_counts": menu_counts(get_store()) if has_collection() else {}}
+        # Before there is a collection the wizard leads, without menu or tabs.
+        section, tab = navigation.current(request) if has_collection() else (None, None)
+        return {
+            "menu_counts": menu_counts(get_store()) if has_collection() else {},
+            "nav_sections": navigation.SECTIONS,
+            "nav_section": section,
+            "nav_tab": tab,
+            "section_count": navigation.section_count,
+        }
 
     @app.get("/")
     def index():

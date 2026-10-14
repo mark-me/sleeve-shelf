@@ -64,5 +64,14 @@
       </div>
     </div>
   </form>
+
+  <section class="ss-card mt-4">
+    <div class="ss-card-head"><h2>{{ _('Appearance') }}</h2></div>
+    <div class="ss-card-body d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span class="ss-muted">{{ _('Light or dark follows this device until you switch it here.') }}</span>
+      <button class="ss-button ss-button-small" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
+    </div>
+  </section>
+  <p class="ss-muted small mt-3">{{ _('Version %(version)s', version=config.VERSION) }}</p>
 </div>
 {% endblock %}
