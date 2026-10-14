@@ -1,14 +1,20 @@
 """Application services for curating an artist: start year, cluster and picture."""
 
 import hashlib
-from collections import Counter
 import io
+from collections import Counter
 from pathlib import Path
 
 from PIL import Image, ImageOps
 
 from sleeve_shelf.collection import ensure_cluster_order
-from sleeve_shelf.domain import Album, Artist, ArtistClusterAssignment, Cluster, find_by_id
+from sleeve_shelf.domain import (
+    Album,
+    Artist,
+    ArtistClusterAssignment,
+    Cluster,
+    find_by_id,
+)
 from sleeve_shelf.persistence import JsonStore
 
 

@@ -3,15 +3,15 @@
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Album, Artist, Placement, Style, find_by_id
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
+from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.taking_part import albums_taking_part, takes_part
 from sleeve_shelf.web.context import get_store, parse_number
-from sleeve_shelf.widths import set_measured_width
-from sleeve_shelf.config import load_settings
-from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.web.places import described_rules, described_spots, shelf_options
+from sleeve_shelf.widths import set_measured_width
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
 

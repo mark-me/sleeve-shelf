@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 from collections.abc import Callable
 
 from sleeve_shelf.collection import ensure_cluster_order
+from sleeve_shelf.covers import download_images, image_urls, missing_images
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -15,7 +16,6 @@ from sleeve_shelf.domain import (
     ReleaseEnrichment,
     Style,
 )
-from sleeve_shelf.covers import download_images, image_urls, missing_images
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.persistence import JsonStore
 

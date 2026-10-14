@@ -16,6 +16,14 @@ from flask import (
 from flask_babel import gettext as _
 
 from sleeve_shelf import artists as artist_service
+from sleeve_shelf.alias_groups import cluster_hints
+from sleeve_shelf.artists import (
+    PICTURE_DIR,
+    albums_per_artist,
+    picture_thumb,
+    remove_picture,
+    set_picture,
+)
 from sleeve_shelf.domain import (
     Album,
     AliasGroup,
@@ -28,20 +36,12 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
-from sleeve_shelf.taking_part import albums_taking_part
-from sleeve_shelf.alias_groups import cluster_hints
 from sleeve_shelf.shifts import cluster_shifts, keep_cluster
-from sleeve_shelf.artists import (
-    PICTURE_DIR,
-    albums_per_artist,
-    picture_thumb,
-    remove_picture,
-    set_picture,
-)
 from sleeve_shelf.sorting.connections import connections_of
 from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
+from sleeve_shelf.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.places import described_rules, shelf_options
 

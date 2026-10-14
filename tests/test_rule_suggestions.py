@@ -16,6 +16,7 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.persistence import JsonStore
 
+
 @pytest.fixture
 def app(tmp_path):
     app = create_app(tmp_path / "data")

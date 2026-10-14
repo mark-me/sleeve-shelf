@@ -15,6 +15,8 @@ from flask import (
 )
 from flask_babel import gettext as _
 
+from sleeve_shelf.config import load_settings, save_settings
+from sleeve_shelf.covers import image_paths, missing_images, stored_names
 from sleeve_shelf.discogs_import import (
     confirm_match,
     import_discogs_collection,
@@ -22,8 +24,6 @@ from sleeve_shelf.discogs_import import (
     reject_match,
     remove_departed_album,
 )
-from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.covers import image_paths, missing_images, stored_names
 from sleeve_shelf.domain import (
     Album,
     Artist,

@@ -1,5 +1,6 @@
 """What the album and artist pages share: the shelves to move to, and the rules that apply."""
 
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
     AliasGroup,
@@ -11,7 +12,6 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.config import load_settings
 from sleeve_shelf.placing import applicable_rules
 from sleeve_shelf.spots import suggested_spots
 

@@ -24,7 +24,6 @@ from sleeve_shelf.domain import (
     EraBand,
     EraBandSource,
     FamilyDismissal,
-    RuleSuggestionDismissal,
     FormatTokens,
     LocationRule,
     LocationRuleTarget,
@@ -34,12 +33,12 @@ from sleeve_shelf.domain import (
     PlacementSource,
     ProposedPlacement,
     ReleaseEnrichment,
+    RuleSuggestionDismissal,
     Shelf,
     ShelfLayer,
     ShelfType,
     Style,
 )
-
 
 SNAPSHOT_DIR = "placements"
 SWAP_ATTEMPTS = 6

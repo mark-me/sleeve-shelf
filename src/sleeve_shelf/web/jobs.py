@@ -13,7 +13,6 @@ from sleeve_shelf.ingestion.discogs_api import (
 )
 from sleeve_shelf.persistence import JsonStore
 
-
 # done and total count the lookups of this run. part is what is being fetched now, and
 # albums and pictures say how many of all of them are in: [done, total].
 _IDLE = {

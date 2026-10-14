@@ -153,7 +153,7 @@ def test_an_artist_can_get_a_cluster_of_its_own(client):
 
 def test_a_proposed_cluster_can_be_confirmed_from_the_list(client):
     _add_new_artist(client)
-    from sleeve_shelf.domain import Style, Album
+    from sleeve_shelf.domain import Album, Style
     from sleeve_shelf.persistence import JsonStore
 
     store = JsonStore(client.application.config["DATA_DIR"])

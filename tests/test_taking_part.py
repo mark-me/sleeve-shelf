@@ -1,6 +1,13 @@
 """Tests for what takes part in the sorting: the albums sorted, the shelves filled."""
 
-from sleeve_shelf.domain import Album, Cabinet, FormatTokens, Placement, Shelf, ShelfType
+from sleeve_shelf.domain import (
+    Album,
+    Cabinet,
+    FormatTokens,
+    Placement,
+    Shelf,
+    ShelfType,
+)
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
 

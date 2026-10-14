@@ -13,12 +13,12 @@ from sleeve_shelf.domain import (
     LocationRuleTarget,
     in_order,
 )
+from sleeve_shelf.placing import remove_rule, set_rule
 from sleeve_shelf.rule_suggestions import (
     accept_suggestions,
     dismiss_suggestions,
     rule_suggestions,
 )
-from sleeve_shelf.placing import remove_rule, set_rule
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("rules", __name__, url_prefix="/rules")

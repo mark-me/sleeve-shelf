@@ -3,16 +3,27 @@
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf.domain import Cabinet, Shelf, ShelfLayer, ShelfType, find_by_id, in_order
+from sleeve_shelf.domain import (
+    Cabinet,
+    Shelf,
+    ShelfLayer,
+    ShelfType,
+    find_by_id,
+    in_order,
+)
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.storage import (
     StillInUse,
-    move_cabinet as move_cabinet_in_order,
-    move_shelf as move_shelf_in_order,
     remove_cabinet,
     remove_shelf,
     save_cabinet,
     save_shelf,
+)
+from sleeve_shelf.storage import (
+    move_cabinet as move_cabinet_in_order,
+)
+from sleeve_shelf.storage import (
+    move_shelf as move_shelf_in_order,
 )
 from sleeve_shelf.web.context import get_store, has_collection, parse_number, shelf_fill
 

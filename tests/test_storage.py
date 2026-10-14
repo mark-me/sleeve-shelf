@@ -2,7 +2,16 @@
 
 import pytest
 
-from sleeve_shelf.domain import Album, Artist, Cabinet, Placement, Shelf, ShelfLayer, ShelfType, in_order
+from sleeve_shelf.domain import (
+    Album,
+    Artist,
+    Cabinet,
+    Placement,
+    Shelf,
+    ShelfLayer,
+    ShelfType,
+    in_order,
+)
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.storage import (
     StillInUse,

@@ -2,7 +2,13 @@
 
 from flask import Blueprint, abort, current_app, g, send_from_directory, url_for
 
-from sleeve_shelf.covers import ALBUM_DIR, ARTIST_DIR, COVER_DIR, cover_name, stored_names
+from sleeve_shelf.covers import (
+    ALBUM_DIR,
+    ARTIST_DIR,
+    COVER_DIR,
+    cover_name,
+    stored_names,
+)
 
 blueprint = Blueprint("covers", __name__, url_prefix="/covers")
 
