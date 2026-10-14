@@ -1,5 +1,7 @@
 """Tests for covers and artist pictures kept in the data directory."""
 
+from datetime import datetime
+
 import pytest
 
 from sleeve_shelf import create_app
@@ -25,7 +27,6 @@ from sleeve_shelf.domain import (
     Shelf,
 )
 from sleeve_shelf.persistence import JsonStore
-from datetime import datetime
 
 THUMB = "https://i.discogs.com/hope150.jpeg"
 LARGE = "https://i.discogs.com/hope600.jpeg"

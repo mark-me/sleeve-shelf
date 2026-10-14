@@ -53,7 +53,12 @@ def _load(client, layout=LAYOUT, unplaced=()):
 
 def test_without_a_collection_everything_leads_to_the_wizard(client):
     assert client.get("/").headers["Location"] == "/setup/"
-    assert client.get("/browse").headers["Location"] == "/setup/"
+    for screen in ("/browse", "/unplaced", "/albums/1", "/artists/", "/clusters/", "/dashboard/",
+                   "/layout/", "/proposal/", "/showcase/", "/versions/"):
+        assert client.get(screen).headers.get("Location") == "/setup/", screen
+    # What can be set up before there is a collection stays open.
+    for screen in ("/storage/", "/discogs/", "/families/", "/rules/", "/settings/"):
+        assert client.get(screen).status_code == 200, screen
     assert client.get("/setup/").status_code == 200
     assert client.get("/setup/upload").status_code == 200
 
@@ -399,14 +404,14 @@ def test_menu_has_five_sections_and_tabs_that_count_what_is_waiting(client):
     assert 'title="Waiting for you">1</span>' in collection[: collection.index("</a>")]
     tabs = page[page.index('class="ss-section-tabs"'):]
     tabs = tabs[: tabs.index("</nav>")]
-    assert ["Browse / Search" in tabs, "Unplaced albums" in tabs, "Discogs sync" in tabs] == [True] * 3
-    unplaced = tabs[tabs.index("Unplaced albums"):]
+    assert ["Browse / Search" in tabs, "Unplaced" in tabs, "Discogs sync" in tabs] == [True] * 3
+    unplaced = tabs[tabs.index("Unplaced"):]
     assert '<span class="ss-nav-count">1</span>' in unplaced[: unplaced.index("</a>")]
-    assert 'aria-current="page"' in tabs[: tabs.index("Unplaced albums")]
+    assert 'aria-current="page"' in tabs[: tabs.index("Unplaced")]
 
     # The other sections show their own screens as tabs.
-    assert "Cabinets &amp; shelves" in client.get("/layout/").text.split('class="ss-section-tabs"')[1]
-    assert "Location rules" in client.get("/families/").text.split('class="ss-section-tabs"')[1]
+    assert "Cabinets" in client.get("/layout/").text.split('class="ss-section-tabs"')[1]
+    assert "Rules" in client.get("/families/").text.split('class="ss-section-tabs"')[1]
     # The workbook is imported from the Discogs screen, the theme is switched in Settings.
     assert "/setup/upload" in client.get("/discogs/").text
     settings = client.get("/settings/").text
@@ -477,3 +482,17 @@ def test_from_discogs_to_an_accepted_layout_without_a_workbook(client):
     shelf = client.get("/browse").text
     assert "Bleach" in shelf and "Nevermind" in shelf and "Lithium" not in shelf
     assert "Saved versions (1)" in client.get("/versions/").text
+
+
+def test_every_menu_section_has_its_icon(client):
+    from pathlib import Path
+
+    from sleeve_shelf.web.navigation import SECTIONS
+
+    _load(client)
+    sprite = (Path(client.application.static_folder) / "vendor" / "menu-icons.svg").read_text()
+    menu = client.get("/browse").text
+    for section in SECTIONS:
+        assert f'<symbol id="{section.key}"' in sprite, section.key
+        assert f'vendor/menu-icons.svg#{section.key}"' in menu, section.key
+    assert client.get("/static/vendor/menu-icons.svg").status_code == 200

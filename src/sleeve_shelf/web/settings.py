@@ -3,22 +3,15 @@
 from flask import Blueprint, current_app, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf.collection import estimate_widths
 from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.domain import Album, Placement
-from sleeve_shelf.proposal import kept_shelf_ids, takes_part, usable_shelves
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.domain import Placement
+from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
+from sleeve_shelf.web.context import get_store, has_collection, parse_number
+from sleeve_shelf.widths import apply_width_constants
 
 blueprint = Blueprint("settings", __name__, url_prefix="/settings")
 
 WIDTH_FIELDS = ("base_width_cm", "surcharge_180_gram_cm", "surcharge_gatefold_cm")
-
-
-def _number(text: str) -> float | None:
-    try:
-        return float(text.replace(",", "."))
-    except ValueError:
-        return None
 
 
 @blueprint.route("/", methods=["GET", "POST"])
@@ -31,7 +24,7 @@ def index():
 
     if request.method == "POST":
         values = {name: request.form.get(name, "").strip() for name in WIDTH_FIELDS}
-        numbers = {name: _number(text) for name, text in values.items()}
+        numbers = {name: parse_number(text) for name, text in values.items()}
         if numbers["base_width_cm"] is None or numbers["base_width_cm"] <= 0:
             errors.append(_("The base width has to be a number above zero."))
         if any(numbers[name] is None or numbers[name] < 0 for name in WIDTH_FIELDS[1:]):
@@ -49,24 +42,18 @@ def index():
             if token:
                 settings.discogs_token = token
             save_settings(data_dir, settings)
-            if has_collection():
-                # The album widths follow the constants; shelf widths are the user's own.
-                albums = store.load(Album)
-                estimate_widths(albums, settings.width_constants)
-                store.save(Album, albums)
+            apply_width_constants(store, settings.width_constants)
             return redirect(url_for("settings.index", saved=1))
 
     needed = offered = None
     if has_collection():
-        placements = store.load(Placement)
-        placed = {p.album_id for p in placements}
         # What stands in a showcase or outside the sorting needs no room on the other shelves.
         kept = kept_shelf_ids(store)
-        staying = {p.album_id for p in placements if p.shelf_id in kept}
+        staying = {p.album_id for p in store.load(Placement) if p.shelf_id in kept}
         needed = sum(
             album.width_cm or settings.base_width_cm
-            for album in store.load(Album)
-            if takes_part(album, placed) and album.id not in staying
+            for album in albums_taking_part(store)
+            if album.id not in staying
         )
         offered = sum(shelf.width_cm for shelf in usable_shelves(store)[0])
     token = settings.discogs_token

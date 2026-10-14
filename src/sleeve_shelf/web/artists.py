@@ -1,6 +1,6 @@
 """Artists: the list, and curating one artist's start year and cluster."""
 
-from collections import Counter, defaultdict
+from collections import defaultdict
 from urllib.parse import quote
 
 from flask import (
@@ -16,6 +16,14 @@ from flask import (
 from flask_babel import gettext as _
 
 from sleeve_shelf import artists as artist_service
+from sleeve_shelf.alias_groups import cluster_hints
+from sleeve_shelf.artists import (
+    PICTURE_DIR,
+    albums_per_artist,
+    picture_thumb,
+    remove_picture,
+    set_picture,
+)
 from sleeve_shelf.domain import (
     Album,
     AliasGroup,
@@ -23,37 +31,27 @@ from sleeve_shelf.domain import (
     ArtistClusterAssignment,
     ArtistEnrichment,
     Cluster,
-    Placement,
     Style,
+    find_by_id,
 )
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
-from sleeve_shelf.proposal import takes_part
-from sleeve_shelf.alias_groups import cluster_hints
 from sleeve_shelf.shifts import cluster_shifts, keep_cluster
-from sleeve_shelf.artists import PICTURE_DIR, picture_thumb, remove_picture, set_picture
 from sleeve_shelf.sorting.connections import connections_of
 from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.taking_part import albums_taking_part
+from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.places import described_rules, shelf_options
 
 blueprint = Blueprint("artists", __name__, url_prefix="/artists")
 
 
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
-
-
 def _albums_taking_part(store) -> dict[int, list[Album]]:
-    placed = {p.album_id for p in store.load(Placement)}
     by_artist: dict[int, list[Album]] = defaultdict(list)
-    for album in store.load(Album):
-        if takes_part(album, placed):
-            by_artist[album.artist_id].append(album)
+    for album in albums_taking_part(store):
+        by_artist[album.artist_id].append(album)
     return by_artist
 
 
@@ -68,7 +66,7 @@ def index():
     only_attention = request.args.get("show") == "attention"
     cluster_filter = request.args.get("cluster", type=int)
     by_artist = _albums_taking_part(store)
-    album_counts = Counter(album.artist_id for album in store.load(Album))
+    album_counts = albums_per_artist(store)
     cluster_names = {cluster.id: cluster.name for cluster in store.load(Cluster)}
     assignments = {a.artist_id: a for a in store.load(ArtistClusterAssignment)}
     families = {group.id: group.label for group in store.load(AliasGroup)}
@@ -126,7 +124,7 @@ def index():
 @blueprint.route("/<int:artist_id>", methods=["GET", "POST"])
 def edit(artist_id: int):
     store = get_store()
-    artist = next((a for a in store.load(Artist) if a.id == artist_id), None)
+    artist = find_by_id(store.load(Artist), artist_id)
     if artist is None:
         abort(404)
     errors: list[str] = []
@@ -168,7 +166,7 @@ def edit(artist_id: int):
     hint = cluster_hints(store).get(artist_id)
     names = {a.id: a.name for a in store.load(Artist)}
     located = {row.album_id: row for row in BrowseQueries(store).artist_albums(artist_id)}
-    family = next((g for g in store.load(AliasGroup) if g.id == artist.alias_group_id), None)
+    family = find_by_id(store.load(AliasGroup), artist.alias_group_id)
     derived_year = _earliest_year(sorted_albums)
     shift = next((s for s in cluster_shifts(store) if s.artist_id == artist_id), None)
     cluster_names = {cluster.id: cluster.name for cluster in clusters}
@@ -188,8 +186,8 @@ def edit(artist_id: int):
             saved=request.args.get("saved") and not errors,
             clusters=clusters,
             assignment=assignment,
-            proposed_cluster=next((c for c in clusters if c.id == proposed_id), None),
-            connected_cluster=next((c for c in clusters if hint and c.id == hint.cluster_id), None),
+            proposed_cluster=find_by_id(clusters, proposed_id),
+            connected_cluster=find_by_id(clusters, hint.cluster_id if hint else None),
             connection_decides=bool(hint and hint.decisive),
             related={
                 "other_names": related(connections.other_names),

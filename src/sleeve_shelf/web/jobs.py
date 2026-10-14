@@ -4,7 +4,7 @@ import threading
 from collections.abc import Callable
 from pathlib import Path
 
-from sleeve_shelf.collection import enrich_collection
+from sleeve_shelf.enrichment import enrich_collection
 from sleeve_shelf.ingestion.discogs_api import (
     SECONDS_BETWEEN_IMAGES,
     SECONDS_BETWEEN_REQUESTS,
@@ -12,7 +12,6 @@ from sleeve_shelf.ingestion.discogs_api import (
     DiscogsError,
 )
 from sleeve_shelf.persistence import JsonStore
-
 
 # done and total count the lookups of this run. part is what is being fetched now, and
 # albums and pictures say how many of all of them are in: [done, total].

@@ -1,8 +1,8 @@
 """Collection entities: artists, albums, and the style/cluster taxonomy."""
 
 import re
-from datetime import date
 from dataclasses import dataclass, field
+from datetime import date
 
 _LP = re.compile(r"^(?:\d+x)?LP$")
 

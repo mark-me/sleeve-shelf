@@ -12,8 +12,9 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.proposal import kept_shelf_ids, mandatory_cabinets, sort_collection
+from sleeve_shelf.proposal import mandatory_cabinets, sort_collection
 from sleeve_shelf.sorting.spots import EMPTY, SuggestedSpot, suggest_spots
+from sleeve_shelf.taking_part import kept_shelf_ids
 from sleeve_shelf.versions import keep_restore_point
 
 

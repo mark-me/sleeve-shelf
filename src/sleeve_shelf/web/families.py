@@ -1,12 +1,16 @@
 """Alias groups: the artist families that stand together on the shelf."""
 
-from collections import Counter
-
 from flask import Blueprint, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
 from sleeve_shelf import alias_groups
-from sleeve_shelf.domain import Album, AliasGroup, Artist, ArtistClusterAssignment, Cluster
+from sleeve_shelf.artists import albums_per_artist
+from sleeve_shelf.domain import (
+    AliasGroup,
+    Artist,
+    ArtistClusterAssignment,
+    Cluster,
+)
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("families", __name__, url_prefix="/families")
@@ -17,7 +21,7 @@ def index():
     store = get_store()
     artists = store.load(Artist)
     by_id = {artist.id: artist for artist in artists}
-    album_counts = Counter(album.artist_id for album in store.load(Album))
+    album_counts = albums_per_artist(store)
     cluster_names = {cluster.id: cluster.name for cluster in store.load(Cluster)}
     cluster_of = {
         assignment.artist_id: cluster_names.get(assignment.cluster_id)

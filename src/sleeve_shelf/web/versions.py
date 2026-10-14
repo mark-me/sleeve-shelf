@@ -5,15 +5,9 @@ from flask_babel import gettext as _
 from flask_babel import ngettext
 
 from sleeve_shelf.versions import list_versions, restore_version, save_version
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("versions", __name__, url_prefix="/versions")
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 @blueprint.get("/")

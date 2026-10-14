@@ -14,16 +14,10 @@ from sleeve_shelf.clusters import (
     point_style,
     rename_cluster,
 )
-from sleeve_shelf.domain import ArtistClusterAssignment, Cluster, Style
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.domain import ArtistClusterAssignment, Cluster, Style, find_by_id
+from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("clusters", __name__, url_prefix="/clusters")
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 @blueprint.get("/")
@@ -50,7 +44,7 @@ def index():
 def edit(cluster_id: int):
     store = get_store()
     clusters = clusters_in_order(store.load(Cluster))
-    cluster = next((c for c in clusters if c.id == cluster_id), None)
+    cluster = find_by_id(clusters, cluster_id)
     if cluster is None:
         abort(404)
     error = None

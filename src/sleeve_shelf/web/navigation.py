@@ -9,6 +9,7 @@ from flask_babel import lazy_gettext as _
 @dataclass(frozen=True)
 class Tab:
     endpoint: str
+    # Short: the section is named in the menu, and the page has its own, fuller title.
     label: str
     # The blueprints and endpoints whose pages belong to this tab.
     pages: tuple[str, ...]
@@ -18,6 +19,7 @@ class Tab:
 
 @dataclass(frozen=True)
 class Section:
+    # Also the name of the section's icon in static/vendor/menu-icons.svg.
     key: str
     label: str
     tabs: tuple[Tab, ...]
@@ -32,7 +34,7 @@ SECTIONS = (
         _("Collection"),
         (
             Tab("browse.browse", _("Browse / Search"), ("browse.browse",)),
-            Tab("browse.unplaced", _("Unplaced albums"), ("browse.unplaced",), "unplaced"),
+            Tab("browse.unplaced", _("Unplaced"), ("browse.unplaced",), "unplaced"),
             Tab("discogs.index", _("Discogs sync"), ("discogs", "setup"), "discogs"),
         ),
         # An album's page is reached from Browse and from the unplaced albums.
@@ -43,10 +45,10 @@ SECTIONS = (
         _("Shelves"),
         (
             Tab("layout.index", _("Layout"), ("layout",)),
-            Tab("proposal.index", _("Sorting proposal"), ("proposal",)),
+            Tab("proposal.index", _("Proposal"), ("proposal",)),
             Tab("showcase.index", _("Showcase"), ("showcase",)),
             Tab("versions.index", _("Versions"), ("versions",)),
-            Tab("storage.index", _("Cabinets & shelves"), ("storage", "albums.widths"), "storage"),
+            Tab("storage.index", _("Cabinets"), ("storage", "albums.widths"), "storage"),
         ),
     ),
     Section(
@@ -54,9 +56,9 @@ SECTIONS = (
         _("Sorting"),
         (
             Tab("artists.index", _("Artists"), ("artists",), "artists"),
-            Tab("families.index", _("Artist families"), ("families",), "families"),
+            Tab("families.index", _("Families"), ("families",), "families"),
             Tab("clusters.index", _("Clusters"), ("clusters",)),
-            Tab("rules.index", _("Location rules"), ("rules",), "rules"),
+            Tab("rules.index", _("Rules"), ("rules",), "rules"),
         ),
     ),
     Section("settings", _("Settings"), (Tab("settings.index", _("Settings"), ("settings",)),)),

@@ -3,31 +3,26 @@
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf.domain import Album, Artist, Placement, Style
+from sleeve_shelf.config import load_settings
+from sleeve_shelf.domain import Album, Artist, Placement, Style, find_by_id
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
-from sleeve_shelf.proposal import takes_part
-from sleeve_shelf.web.context import get_store, has_collection
-from sleeve_shelf.config import load_settings
 from sleeve_shelf.spots import place_at_spot
+from sleeve_shelf.taking_part import albums_taking_part, takes_part
+from sleeve_shelf.web.context import get_store, parse_number
 from sleeve_shelf.web.places import described_rules, described_spots, shelf_options
+from sleeve_shelf.widths import set_measured_width
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 @blueprint.get("/<int:album_id>")
 def detail(album_id: int):
     store = get_store()
-    album = next((a for a in store.load(Album) if a.id == album_id), None)
+    album = find_by_id(store.load(Album), album_id)
     if album is None:
         abort(404)
-    artist = next((a for a in store.load(Artist) if a.id == album.artist_id), None)
+    artist = find_by_id(store.load(Artist), album.artist_id)
     # Where the album stands, with its cluster and era band, comes from the same query as Browse.
     row = next(
         (r for r in BrowseQueries(store).artist_albums(album.artist_id) if r.album_id == album_id),
@@ -83,13 +78,11 @@ def place(album_id: int):
 def widths():
     store = get_store()
     artists = {artist.id: artist.name for artist in store.load(Artist)}
-    placed = {p.album_id for p in store.load(Placement)}
     rows = sorted(
         (
             {"album": album, "artist": artists.get(album.artist_id, "")}
-            for album in store.load(Album)
-            if takes_part(album, placed)
-            and (not album.width_confirmed or album.manual_width_cm is not None)
+            for album in albums_taking_part(store)
+            if not album.width_confirmed or album.manual_width_cm is not None
         ),
         key=lambda row: (row["artist"].casefold(), row["album"].title.casefold()),
     )
@@ -104,26 +97,17 @@ def widths():
 @blueprint.post("/<int:album_id>/width")
 def set_width(album_id: int):
     store = get_store()
-    text = request.form.get("width_cm", "").strip().replace(",", ".")
-    try:
-        width = float(text) if text else None
-    except ValueError:
-        width = -1
+    text = request.form.get("width_cm", "").strip()
+    width = parse_number(text) if text else None
     # The form on an album's own page sends the visitor back there.
     on_album = request.form.get("next") == "album"
-    if width is not None and width <= 0:
+    if text and (width is None or width <= 0):
         message = _("A width has to be a number of centimetres above zero.")
         if on_album:
             return redirect(url_for("albums.detail", album_id=album_id, error=message))
         return redirect(url_for("albums.widths", error=message) + f"#album-{album_id}")
-    albums = store.load(Album)
-    for album in albums:
-        if album.id == album_id:
-            # An empty width goes back to the estimate; a compound format then awaits one again.
-            album.manual_width_cm = width
-            compound = bool(album.format_tokens and album.format_tokens.is_compound)
-            album.width_confirmed = width is not None or not compound
-    store.save(Album, albums)
+    # An empty width goes back to the estimate.
+    set_measured_width(store, album_id, width)
     if on_album:
         return redirect(url_for("albums.detail", album_id=album_id))
     return redirect(url_for("albums.widths") + f"#album-{album_id}")

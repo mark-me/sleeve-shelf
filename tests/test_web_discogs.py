@@ -15,12 +15,12 @@ from sleeve_shelf.domain import (
     Cabinet,
     LocationRule,
     LocationRuleTarget,
-    Placement,
-    PlacementSource,
-    Shelf,
     MasterEnrichment,
     MatchProposal,
+    Placement,
+    PlacementSource,
     ReleaseEnrichment,
+    Shelf,
 )
 from sleeve_shelf.ingestion.discogs_api import DiscogsError
 from sleeve_shelf.persistence import JsonStore

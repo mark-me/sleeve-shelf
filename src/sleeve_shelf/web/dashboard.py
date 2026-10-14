@@ -1,6 +1,6 @@
 """Dashboard: the collection at a glance, and what is waiting for a decision."""
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, render_template, request, url_for
 
 from sleeve_shelf.domain import (
     Album,
@@ -11,10 +11,11 @@ from sleeve_shelf.domain import (
     ReleaseEnrichment,
     Shelf,
 )
-from sleeve_shelf.proposal import has_proposal, takes_part
-from sleeve_shelf.versions import list_versions
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.proposal import has_proposal
+from sleeve_shelf.taking_part import albums_taking_part
+from sleeve_shelf.versions import list_versions
+from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.places import described_spots
 from sleeve_shelf.web.waiting import waiting_counts
 
@@ -22,12 +23,6 @@ blueprint = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
 # How many albums to place are shown on the Dashboard itself; the rest is one click away.
 TO_PLACE_SHOWN = 5
-
-
-@blueprint.before_request
-def require_collection():
-    if not has_collection():
-        return redirect(url_for("setup.welcome"))
 
 
 def _countable(open_count: int, albums: list[Album]) -> dict:
@@ -40,7 +35,7 @@ def index():
     albums = store.load(Album)
     shelves = store.load(Shelf)
     placed = {p.album_id for p in store.load(Placement)}
-    sorted_albums = [album for album in albums if takes_part(album, placed)]
+    sorted_albums = albums_taking_part(store)
     sorted_artists = {album.artist_id for album in sorted_albums}
     versions = list_versions(store)
     counts = waiting_counts(store)

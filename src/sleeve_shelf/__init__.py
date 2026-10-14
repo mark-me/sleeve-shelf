@@ -9,14 +9,12 @@ from flask import Flask, abort, redirect, request, url_for
 from flask_babel import Babel
 
 from sleeve_shelf.artists import set_picture
-from sleeve_shelf.collection import (
-    enrich_collection,
-    import_discogs_collection,
-    load_layout,
-)
+from sleeve_shelf.collection import load_layout
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.covers import COVER_DIR, sharpen_small_images, sort_into_folders
+from sleeve_shelf.discogs_import import import_discogs_collection
 from sleeve_shelf.domain import Artist
+from sleeve_shelf.enrichment import enrich_collection
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.initial_load import load_initial_layout
@@ -31,6 +29,7 @@ from sleeve_shelf.web import (
     discogs,
     families,
     layout,
+    navigation,
     pwa,
     rules,
     settings,
@@ -41,10 +40,16 @@ from sleeve_shelf.web import (
 )
 from sleeve_shelf.web import proposal as proposal_screen
 from sleeve_shelf.web.context import get_store, has_collection
-from sleeve_shelf.web import navigation
 from sleeve_shelf.web.waiting import menu_counts
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
+
+
+# The blueprints whose screens need a collection; the others work without one (the wizard,
+# cabinets and shelves, Discogs, families, rules, settings, and the files the pages use).
+NEEDS_COLLECTION = frozenset(
+    {"albums", "artists", "browse", "clusters", "dashboard", "layout", "proposal", "showcase", "versions"}
+)
 
 
 def create_app(data_dir: str | Path | None = None) -> Flask:
@@ -84,6 +89,12 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(pwa.blueprint)
     app.register_blueprint(covers.blueprint)
     app.add_template_filter(covers.local_cover, "local_cover")
+
+    @app.before_request
+    def require_collection():
+        # Screens that show or change the collection lead to the wizard until there is one.
+        if request.blueprint in NEEDS_COLLECTION and not has_collection():
+            return redirect(url_for("setup.welcome"))
 
     @app.before_request
     def reject_cross_site_posts():

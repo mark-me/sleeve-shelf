@@ -5,7 +5,12 @@ import urllib.error
 
 import pytest
 
-from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError, collection_items, format_text
+from sleeve_shelf.ingestion.discogs_api import (
+    DiscogsClient,
+    DiscogsError,
+    collection_items,
+    format_text,
+)
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.formats import parse_format
 

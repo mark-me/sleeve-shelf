@@ -2,12 +2,8 @@
 
 from datetime import datetime
 
-from sleeve_shelf.collection import (
-    apply_enrichment,
-    enrich_collection,
-    import_discogs_collection,
-)
 from sleeve_shelf.config import Settings, load_settings, save_settings
+from sleeve_shelf.discogs_import import import_discogs_collection
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -19,6 +15,7 @@ from sleeve_shelf.domain import (
     ReleaseEnrichment,
     Style,
 )
+from sleeve_shelf.enrichment import apply_enrichment, enrich_collection
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
 from sleeve_shelf.ingestion.formats import parse_format
 from sleeve_shelf.persistence import JsonStore

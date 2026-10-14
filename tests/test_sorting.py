@@ -14,15 +14,14 @@ from sleeve_shelf.domain import (
     FormatTokens,
     Style,
 )
-from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.connections import (
     ClusterHint,
     Connections,
     clusters_by_connection,
     connections_of,
 )
+from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import suggest_families
-from sleeve_shelf.sorting.spots import SuggestedSpot, suggest_spots
 from sleeve_shelf.sorting.order import (
     OrderedAlbum,
     build_units,
@@ -30,6 +29,7 @@ from sleeve_shelf.sorting.order import (
     order_albums,
     propose_cluster,
 )
+from sleeve_shelf.sorting.spots import SuggestedSpot, suggest_spots
 
 NOW = datetime(2026, 10, 12)
 
