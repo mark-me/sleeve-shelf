@@ -1,36 +1,91 @@
 """Application services for one album or artist: moving it by hand, and the rules that bind it."""
 
 from sleeve_shelf.domain import (
+    Album,
     Artist,
     ArtistClusterAssignment,
     LocationRule,
     LocationRuleTarget,
     Placement,
     PlacementSource,
+    ProposedPlacement,
+    Shelf,
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.versions import keep_restore_point
 
 
-def move_albums(store: JsonStore, album_ids: list[int], shelf_id: int | None) -> None:
+class ShelvesChanged(ValueError):
+    """A move names albums or shelves that are not as the page showed them: nothing was moved."""
+
+
+def move_albums(
+    store: JsonStore,
+    album_ids: list[int],
+    shelf_id: int | None,
+    entity: type[Placement] | type[ProposedPlacement] = Placement,
+) -> set[int]:
     """Stand albums at the end of a shelf, in the order given; None takes them off their shelf.
 
-    This changes the shelves as they are, so a version to go back to is kept first.
+    Works on the shelves as they are, or on the proposal (entity). A change to the shelves as
+    they are keeps a version to go back to first. Returns the shelves whose contents changed.
     """
-    keep_restore_point(store)
+    if (
+        len(album_ids) != len(set(album_ids))
+        or not set(album_ids) <= {album.id for album in store.load(Album)}
+        or (shelf_id is not None and shelf_id not in {shelf.id for shelf in store.load(Shelf)})
+    ):
+        raise ShelvesChanged
     moving = set(album_ids)
-    placements = [
-        p
-        for p in store.load(Placement)
-        if p.album_id not in moving
-    ]
+    placements = store.load(entity)
+    touched = {p.shelf_id for p in placements if p.album_id in moving} | {shelf_id} - {None}
+    kept = [p for p in placements if p.album_id not in moving]
     if shelf_id is not None:
-        following = max((p.position for p in placements if p.shelf_id == shelf_id), default=-1) + 1
-        placements += [
-            Placement(album_id, shelf_id, following + offset, PlacementSource.MANUAL)
+        following = max((p.position for p in kept if p.shelf_id == shelf_id), default=-1) + 1
+        kept += [
+            entity(album_id, shelf_id, following + offset, PlacementSource.MANUAL)
             for offset, album_id in enumerate(album_ids)
         ]
-    store.save(Placement, placements)
+    _save(store, entity, kept)
+    return touched
+
+
+def rearrange_shelves(
+    store: JsonStore,
+    contents: dict[int, list[int]],
+    off_shelf: list[int] = (),
+    entity: type[Placement] | type[ProposedPlacement] = Placement,
+) -> None:
+    """Give shelves new contents, as a drag left them: per shelf its albums in order.
+
+    Albums in off_shelf are taken off their shelf. Nothing may silently drop off a shelf:
+    every album that stood on one of these shelves has to be named again, somewhere.
+    """
+    named = [album_id for ids in contents.values() for album_id in ids] + list(off_shelf)
+    placements = store.load(entity)
+    before = {p.album_id for p in placements if p.shelf_id in contents}
+    if (
+        len(named) != len(set(named))
+        or not set(named) <= {album.id for album in store.load(Album)}
+        or not set(contents) <= {shelf.id for shelf in store.load(Shelf)}
+        or not before <= set(named)
+    ):
+        raise ShelvesChanged
+    kept = [p for p in placements if p.shelf_id not in contents and p.album_id not in named]
+    moved = [
+        entity(album_id, shelf_id, position, PlacementSource.MANUAL)
+        for shelf_id, ids in contents.items()
+        for position, album_id in enumerate(ids)
+    ]
+    _save(store, entity, kept + moved)
+
+
+def _save(store: JsonStore, entity: type, placements: list) -> None:
+    # A change by hand to the shelves as they are can always be undone; the proposal is
+    # itself the thing kept aside.
+    if entity is Placement:
+        keep_restore_point(store)
+    store.save(entity, placements)
 
 
 def applicable_rules(
