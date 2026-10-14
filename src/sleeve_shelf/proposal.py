@@ -9,7 +9,6 @@ from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
-    Cabinet,
     Cluster,
     EraBand,
     EraBandSource,
@@ -18,14 +17,13 @@ from sleeve_shelf.domain import (
     Placement,
     PlacementSource,
     ProposedPlacement,
-    Shelf,
     Style,
     WidthConstants,
-    in_order,
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.sorting.order import OrderedAlbum, Unit, build_units, order_albums
 from sleeve_shelf.sorting.placement import place
+from sleeve_shelf.taking_part import kept_shelf_ids, takes_part, usable_shelves
 from sleeve_shelf.versions import save_if_unsaved, save_version
 
 
@@ -38,45 +36,6 @@ class Sorted:
 
 def has_proposal(store: JsonStore) -> bool:
     return store.exists(ProposedPlacement)
-
-
-def takes_part(album: Album, placed_ids: set[int]) -> bool:
-    """Whether an album is sorted and placed: LPs are, and whatever already stands on a shelf."""
-    if album.id in placed_ids:
-        return True
-    return album.format_tokens is None or album.format_tokens.is_lp
-
-
-def kept_shelf_ids(store: JsonStore) -> set[int]:
-    """The shelves a proposal leaves exactly as they are.
-
-    A showcase keeps the sample the user put there, and a cabinet kept outside
-    the sorting keeps what the user assigned to it. What stands on these
-    shelves stays, and takes no part in the row that fills the other shelves.
-    """
-    outside = {cabinet.id for cabinet in store.load(Cabinet) if cabinet.outside_sorting}
-    return {
-        shelf.id
-        for shelf in store.load(Shelf)
-        if shelf.is_showcase or shelf.cabinet_id in outside
-    }
-
-
-def usable_shelves(store: JsonStore) -> tuple[list[Shelf], list[Shelf]]:
-    """The shelves a proposal fills, in walking order, and the ones it has to skip.
-
-    Skipped are the shelves that are kept as they are (see kept_shelf_ids), and
-    a shelf without a width, which can't be filled.
-    """
-    kept = kept_shelf_ids(store)
-    shelves = store.load(Shelf)
-    walked = [
-        shelf
-        for cabinet in in_order(store.load(Cabinet))
-        for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
-    ]
-    usable = [shelf for shelf in walked if shelf.width_cm and shelf.id not in kept]
-    return usable, [shelf for shelf in walked if shelf not in usable]
 
 
 def sort_collection(store: JsonStore) -> Sorted:

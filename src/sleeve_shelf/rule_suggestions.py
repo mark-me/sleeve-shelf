@@ -20,7 +20,8 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.placing import set_rule
-from sleeve_shelf.proposal import kept_shelf_ids, sort_collection, takes_part, usable_shelves
+from sleeve_shelf.proposal import sort_collection
+from sleeve_shelf.taking_part import kept_shelf_ids, takes_part, usable_shelves
 from sleeve_shelf.sorting.placement import place
 
 # A cluster or artist is only read as "kept apart" from this many albums on.

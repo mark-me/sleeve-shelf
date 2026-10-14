@@ -11,7 +11,8 @@ from sleeve_shelf.domain import (
     ReleaseEnrichment,
     Shelf,
 )
-from sleeve_shelf.proposal import has_proposal, takes_part
+from sleeve_shelf.proposal import has_proposal
+from sleeve_shelf.taking_part import albums_taking_part
 from sleeve_shelf.versions import list_versions
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.web.context import get_store
@@ -34,7 +35,7 @@ def index():
     albums = store.load(Album)
     shelves = store.load(Shelf)
     placed = {p.album_id for p in store.load(Placement)}
-    sorted_albums = [album for album in albums if takes_part(album, placed)]
+    sorted_albums = albums_taking_part(store)
     sorted_artists = {album.artist_id for album in sorted_albums}
     versions = list_versions(store)
     counts = waiting_counts(store)

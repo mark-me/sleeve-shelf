@@ -6,7 +6,6 @@ from sleeve_shelf import proposal
 from sleeve_shelf.alias_groups import family_suggestions
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
-    Album,
     Artist,
     Cabinet,
     Placement,
@@ -14,6 +13,7 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import BrowseQueries
+from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("proposal", __name__, url_prefix="/proposal")
@@ -22,14 +22,14 @@ blueprint = Blueprint("proposal", __name__, url_prefix="/proposal")
 @blueprint.get("/")
 def index():
     store = get_store()
-    usable, skipped = proposal.usable_shelves(store)
-    kept = proposal.kept_shelf_ids(store)
+    usable, skipped = usable_shelves(store)
+    kept = kept_shelf_ids(store)
     outside = {cabinet.id for cabinet in store.load(Cabinet) if cabinet.outside_sorting}
     cabinet_names = {cabinet.id: cabinet.name for cabinet in store.load(Cabinet)}
     current = {
         p.album_id: p.shelf_id for p in store.load(Placement)
     }
-    albums = [a for a in store.load(Album) if proposal.takes_part(a, set(current))]
+    albums = albums_taking_part(store)
     context = {
         # What stands on a kept shelf stays there, and is not among the albums to place.
         "taking_part": sum(1 for album in albums if current.get(album.id) not in kept),

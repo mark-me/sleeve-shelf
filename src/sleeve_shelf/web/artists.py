@@ -23,12 +23,11 @@ from sleeve_shelf.domain import (
     ArtistClusterAssignment,
     ArtistEnrichment,
     Cluster,
-    Placement,
     Style,
 )
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
-from sleeve_shelf.proposal import takes_part
+from sleeve_shelf.taking_part import albums_taking_part
 from sleeve_shelf.alias_groups import cluster_hints
 from sleeve_shelf.shifts import cluster_shifts, keep_cluster
 from sleeve_shelf.artists import PICTURE_DIR, picture_thumb, remove_picture, set_picture
@@ -43,11 +42,9 @@ blueprint = Blueprint("artists", __name__, url_prefix="/artists")
 
 
 def _albums_taking_part(store) -> dict[int, list[Album]]:
-    placed = {p.album_id for p in store.load(Placement)}
     by_artist: dict[int, list[Album]] = defaultdict(list)
-    for album in store.load(Album):
-        if takes_part(album, placed):
-            by_artist[album.artist_id].append(album)
+    for album in albums_taking_part(store):
+        by_artist[album.artist_id].append(album)
     return by_artist
 
 

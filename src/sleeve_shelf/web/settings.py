@@ -4,8 +4,8 @@ from flask import Blueprint, current_app, redirect, render_template, request, ur
 from flask_babel import gettext as _
 
 from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.domain import Album, Placement
-from sleeve_shelf.proposal import kept_shelf_ids, takes_part, usable_shelves
+from sleeve_shelf.domain import Placement
+from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
 from sleeve_shelf.web.context import get_store, has_collection
 from sleeve_shelf.widths import apply_width_constants
 
@@ -54,15 +54,13 @@ def index():
 
     needed = offered = None
     if has_collection():
-        placements = store.load(Placement)
-        placed = {p.album_id for p in placements}
         # What stands in a showcase or outside the sorting needs no room on the other shelves.
         kept = kept_shelf_ids(store)
-        staying = {p.album_id for p in placements if p.shelf_id in kept}
+        staying = {p.album_id for p in store.load(Placement) if p.shelf_id in kept}
         needed = sum(
             album.width_cm or settings.base_width_cm
-            for album in store.load(Album)
-            if takes_part(album, placed) and album.id not in staying
+            for album in albums_taking_part(store)
+            if album.id not in staying
         )
         offered = sum(shelf.width_cm for shelf in usable_shelves(store)[0])
     token = settings.discogs_token

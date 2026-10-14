@@ -6,7 +6,7 @@ from flask_babel import gettext as _
 from sleeve_shelf.domain import Album, Artist, Placement, Style
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
-from sleeve_shelf.proposal import takes_part
+from sleeve_shelf.taking_part import albums_taking_part, takes_part
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.widths import set_measured_width
 from sleeve_shelf.config import load_settings
@@ -78,13 +78,11 @@ def place(album_id: int):
 def widths():
     store = get_store()
     artists = {artist.id: artist.name for artist in store.load(Artist)}
-    placed = {p.album_id for p in store.load(Placement)}
     rows = sorted(
         (
             {"album": album, "artist": artists.get(album.artist_id, "")}
-            for album in store.load(Album)
-            if takes_part(album, placed)
-            and (not album.width_confirmed or album.manual_width_cm is not None)
+            for album in albums_taking_part(store)
+            if not album.width_confirmed or album.manual_width_cm is not None
         ),
         key=lambda row: (row["artist"].casefold(), row["album"].title.casefold()),
     )

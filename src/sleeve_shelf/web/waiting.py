@@ -15,7 +15,7 @@ from sleeve_shelf.domain import (
     Shelf,
 )
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
-from sleeve_shelf.proposal import takes_part
+from sleeve_shelf.taking_part import albums_taking_part
 from sleeve_shelf.rule_suggestions import rule_suggestions
 from sleeve_shelf.shifts import cluster_shifts
 
@@ -27,7 +27,7 @@ def waiting_counts(store: JsonStore) -> dict[str, int]:
     """Per kind of open point, how many there are; kinds without any are included as 0."""
     albums = store.load(Album)
     placed = {p.album_id for p in store.load(Placement)}
-    sorted_albums = [album for album in albums if takes_part(album, placed)]
+    sorted_albums = albums_taking_part(store)
     sorted_artists = {album.artist_id for album in sorted_albums}
     confirmed = {a.artist_id for a in store.load(ArtistClusterAssignment) if a.confirmed}
     start_years = {artist.id for artist in store.load(Artist) if artist.start_year}
