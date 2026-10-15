@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-15 22:41+0200\n"
+"POT-Creation-Date: 2026-10-15 23:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1861,6 +1861,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "How does this work?"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "On a phone, hold a block a moment until it lifts, then drag it; a quick swipe scrolls the page."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html

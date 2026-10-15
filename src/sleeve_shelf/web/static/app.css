@@ -507,6 +507,10 @@ a.ss-block-name:hover { color: var(--ss-accent) !important; }
 
 .sortable-ghost { opacity: 0.35; }
 .sortable-chosen { border-color: var(--ss-accent); }
+/* Picked up after holding it on a touch screen: lifted, so it is clear it now moves. */
+@media (pointer: coarse) {
+  .sortable-chosen { box-shadow: 0 0 0 3px var(--ss-accent); transform: scale(1.04); }
+}
 
 /* Tabs, one per room on the Layout screen. */
 .ss-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--ss-border); }
