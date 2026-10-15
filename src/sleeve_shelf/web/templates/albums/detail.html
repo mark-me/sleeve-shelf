@@ -70,7 +70,7 @@
     </div>
     <div class="ss-row">
       <span class="ss-row-artist">{{ _('Format') }}</span>
-      <span class="ss-row-place">{% if album.format_tokens %}{{ album.format_tokens.qualifiers | join(', ') }}{% else %}{{ _('unknown') }}{% endif %}</span>
+      <span class="ss-row-place">{% if album.format_tokens %}{{ album.format_tokens.qualifiers | unique | join(', ') }}{% else %}{{ _('unknown') }}{% endif %}</span>
     </div>
     <div class="ss-row">
       <span class="ss-row-artist">{{ _('Discogs styles') }}</span>

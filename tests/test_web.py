@@ -584,3 +584,28 @@ def test_the_artist_list_goes_letter_by_letter_unless_searching(client):
     # Searching looks through everyone, without the letters.
     searched = client.get("/artists/?q=i").text
     assert "Miles Davis" in searched and "Tindersticks" in searched and "ss-letters" not in searched
+
+
+def test_accept_all_asks_first_and_notices_are_shown_once(client):
+    _load(client, layout=FAMILY_LAYOUT)
+
+    page = client.get("/families/").text
+    # The button opens a question with the number in it; the form behind it does the work.
+    assert '<details class="ss-confirm">' in page and "Make 2 families" in page
+    client.post("/families/suggestions/accept-all")
+    assert "Families (2)" in client.get("/families/").text
+    # A notice comes with the address and is taken out of it once the page is shown.
+    assert "/static/notices.js" in client.get("/settings/?saved=1").text
+    assert client.get("/static/notices.js").status_code == 200
+
+
+def test_a_format_names_each_term_once(client):
+    from sleeve_shelf.domain import FormatTokens
+
+    _load(client)
+    store = JsonStore(client.application.config["DATA_DIR"])
+    albums = store.load(Album)
+    albums[0].format_tokens = FormatTokens(disc_count=2, is_compound=True, qualifiers=("LP", "Album", "RE", "LP", "Album", "RE"))
+    store.save(Album, albums)
+
+    assert "LP, Album, RE</span>" in client.get(f"/albums/{albums[0].id}").text
