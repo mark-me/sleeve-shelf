@@ -19,7 +19,11 @@
       <div>
         <label for="width_cm" class="form-label fw-semibold">{{ _('Width in cm') }}</label>
         <input id="width_cm" class="form-control" name="width_cm" inputmode="decimal" value="{{ values.width_cm | default('') }}">
-        <div class="form-text">{{ _('The inside width records can stand in. Leave empty if not measured yet.') }}</div>
+        <div class="form-check mt-2">
+          <input id="width_measured" class="form-check-input" type="checkbox" name="width_measured" {{ 'checked' if values.width_measured }}>
+          <label for="width_measured" class="form-check-label">{{ _('I measured this width') }}</label>
+        </div>
+        <div class="form-text">{{ _('The inside width records can stand in. Unticked, the width counts as an estimate: a shelf that seems too full is then not marked in red.') }}</div>
       </div>
       <div>
         <label for="type" class="form-label fw-semibold">{{ _('Type') }}</label>

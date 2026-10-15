@@ -37,7 +37,8 @@ def waiting_counts(store: JsonStore) -> dict[str, int]:
         overfull = sum(
             1
             for shelf in store.load(Shelf)
-            if shelf.width_cm and fill.get(shelf.id, (0, 0.0))[1] > shelf.width_cm
+            # Over an estimated width says the shelf needs measuring, not that it is too full.
+            if shelf.width_measured and fill.get(shelf.id, (0, 0.0))[1] > shelf.width_cm
         )
     to_check = {a for a in sorted_artists if a not in confirmed or a not in start_years}
     shifted = {shift.artist_id for shift in cluster_shifts(store)}

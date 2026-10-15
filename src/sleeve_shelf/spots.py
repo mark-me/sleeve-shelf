@@ -28,6 +28,8 @@ class Spot:
     # How much of the shelf's width is left once the album stands there; negative when
     # it then holds more than its width, None when the shelf has no width.
     room_cm: float | None
+    # Whether that width was measured, or is an estimate.
+    width_measured: bool
     # The cabinet a location rule binds the album to, when the spot was found within it.
     by_rule: bool
 
@@ -114,7 +116,12 @@ def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Sp
             else None
         )
         spots[album_id] = Spot(
-            suggestion, cabinet_names[shelf.cabinet_id], shelf.name, room, album_id in bound
+            suggestion,
+            cabinet_names[shelf.cabinet_id],
+            shelf.name,
+            room,
+            width_measured=shelf.width_measured,
+            by_rule=album_id in bound,
         )
     return spots
 

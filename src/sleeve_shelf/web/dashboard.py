@@ -22,7 +22,7 @@ from sleeve_shelf.web.waiting import waiting_counts
 blueprint = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
 # How many albums to place are shown on the Dashboard itself; the rest is one click away.
-TO_PLACE_SHOWN = 5
+TO_PLACE_SHOWN = 3
 
 
 def _countable(open_count: int, albums: list[Album]) -> dict:

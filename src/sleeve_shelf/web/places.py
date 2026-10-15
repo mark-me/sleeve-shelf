@@ -78,6 +78,7 @@ def described_spots(store: JsonStore) -> dict[int, dict]:
             "before": named(spot.suggestion.before_album_id, spot.shelf_id),
             "basis": spot.suggestion.basis,
             "room_cm": spot.room_cm,
+            "width_measured": spot.width_measured,
             "by_rule": spot.by_rule,
         }
         for album_id, spot in spots.items()
