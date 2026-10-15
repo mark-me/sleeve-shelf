@@ -22,9 +22,14 @@
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-4" id="suggestions">
     <h2>{{ _('Suggested families') }} ({{ suggestions | length }})</h2>
     {% if suggestions %}
-    <form method="post" action="{{ url_for('families.accept_all') }}">
-      <button class="ss-button ss-button-small" type="submit">{{ _('Accept all') }}</button>
-    </form>
+    {# Many families at once: the button first asks, on the page itself. #}
+    <details class="ss-confirm">
+      <summary class="ss-button ss-button-small">{{ _('Accept all') }}</summary>
+      <form class="ss-confirm-body" method="post" action="{{ url_for('families.accept_all') }}">
+        <p class="mb-2">{{ ngettext('Make %(num)d family from the suggestion as it stands?', 'Make %(num)d families from the suggestions as they stand?', suggestions | length) }} {{ _('Each can be taken apart again under Families.') }}</p>
+        <button class="ss-button ss-button-small ss-button-primary" type="submit">{{ ngettext('Make %(num)d family', 'Make %(num)d families', suggestions | length) }}</button>
+      </form>
+    </details>
     {% endif %}
   </div>
   {% if not suggestions %}

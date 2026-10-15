@@ -84,7 +84,7 @@ Run the tests with `uv run python -m pytest`.
 - **Phase 2 — Ongoing use** (mostly built): syncing with Discogs, album covers and the showcase are there; only a suggested spot for new purchases is not
 - **Phase 3 — Refinement** (not started): deeper musical-kinship logic, song-level search, more languages, other media formats
 
-Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
+The documentation — a user guide and a developer guide — is at <https://mark-me.github.io/sleeve-shelf/>. Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
 
 ## AI Transparency
 

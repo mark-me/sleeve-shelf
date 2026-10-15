@@ -377,7 +377,8 @@ def test_a_sync_and_a_fetch_bring_the_picture_of_an_artist(app, client):
     # An artist without a picture has the page as it was.
     assert "ss-cover-zoom" not in client.get("/artists/2").text
     # In the list the pictured artist shows its picture, and the other keeps the space.
-    listed = client.get("/artists/").text
+    # Searching lists both artists together (the list is otherwise one letter at a time).
+    listed = client.get("/artists/?q=o").text
     assert f'src="/covers/artists/{thumb}"' in listed and "ss-cover-empty" in listed
 
 

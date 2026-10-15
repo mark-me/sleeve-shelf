@@ -325,3 +325,17 @@ def test_small_images_stored_before_are_made_afresh_without_fetching(app):
     (directory / cover_name(THUMB)).write_bytes(b"not an image")
     assert sharpen_small_images(store) == 0
     assert (directory / cover_name(THUMB)).read_bytes() == b"not an image"
+
+
+def test_the_list_of_stored_images_follows_the_folders(tmp_path):
+    from sleeve_shelf.covers import ALBUM_DIR, COVER_DIR, stored_names
+
+    folder = tmp_path / COVER_DIR / ALBUM_DIR
+    folder.mkdir(parents=True)
+    assert stored_names(tmp_path) == set()
+
+    (folder / "a.jpg").write_bytes(b"x")
+    assert stored_names(tmp_path) == {f"{ALBUM_DIR}/a.jpg"}
+    # What a caller does with the list does not change what is kept.
+    stored_names(tmp_path).add("nothing")
+    assert stored_names(tmp_path) == {f"{ALBUM_DIR}/a.jpg"}

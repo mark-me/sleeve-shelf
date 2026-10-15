@@ -29,7 +29,7 @@
       <p class="ss-muted mb-0 mt-1">{{ _('Drag artists between and within shelves.') }}</p>
       <details class="ss-help mt-1">
         <summary>{{ _('How does this work?') }}</summary>
-        <p class="ss-muted mb-0 mt-1">{{ _('A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist.') }} {{ _('For a shelf far away, use the ⋮ on a block (or right-click it) and pick the shelf: the block goes to the end of it and the page jumps there, where you drag it to its exact spot.') }}</p>
+        <p class="ss-muted mb-0 mt-1">{{ _('On a phone, hold a block a moment until it lifts, then drag it; a quick swipe scrolls the page.') }} {{ _('A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist.') }} {{ _('For a shelf far away, use the ⋮ on a block (or right-click it) and pick the shelf: the block goes to the end of it and the page jumps there, where you drag it to its exact spot.') }}</p>
       </details>
     </div>
     {% if has_proposal %}
@@ -52,10 +52,23 @@
     {% endfor %}
   </nav>
   {% endif %}
+  {% if destinations | length > 1 %}
+  {# A long page on a phone: a cabinet further down, or in another room, is one choice away. #}
+  <div class="ss-jump mt-3">
+    <label for="jump" class="visually-hidden">{{ _('Go to cabinet') }}</label>
+    <select id="jump" class="ss-shelf-select" onchange="if (this.value) window.location.href = this.value; this.selectedIndex = 0;">
+      <option value="">{{ _('Go to cabinet…') }}</option>
+      {% for entry in destinations %}
+      <option value="{{ url_for('layout.index', layout=layout, room=entry.room or none) }}#cabinet-{{ entry.cabinet.id }}">{{ entry.cabinet.name }}{% if entry.room and rooms %} &middot; {{ entry.room }}{% endif %}</option>
+      {% endfor %}
+      <option value="#tray">{{ _('Not on a shelf') }}</option>
+    </select>
+  </div>
+  {% endif %}
   <div class="ss-alert mt-3 d-none" id="layout-error" role="alert">{{ _('That move could not be saved. Reload the page and try again.') }}</div>
 
   {% for entry in cabinets %}
-  <section class="ss-card mt-4">
+  <section class="ss-card mt-4 ss-jump-target" id="cabinet-{{ entry.cabinet.id }}">
     <div class="ss-card-head">
       <div>
         <h2>{{ entry.cabinet.name }}</h2>
@@ -79,7 +92,7 @@
   </section>
   {% endfor %}
 
-  <section class="ss-card mt-4">
+  <section id="tray" class="ss-jump-target ss-card mt-4">
     <div class="ss-card-head">
       <div>
         <h2>{{ _('Not on a shelf') }}</h2>

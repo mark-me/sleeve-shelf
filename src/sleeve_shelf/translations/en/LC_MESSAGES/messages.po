@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-15 22:41+0200\n"
+"POT-Creation-Date: 2026-10-16 00:26+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -770,6 +770,24 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/artists/index.html
 msgid "Show all"
 msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+msgid "Artists by letter"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#, python-format
+msgid "%(num)d artist under %(letter)s"
+msgid_plural "%(num)d artists under %(letter)s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#, python-format
+msgid "%(num)d in all"
+msgid_plural "%(num)d in all"
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
 msgid "“To check” lists sorted artists without a confirmed cluster or without a start year of their own, and artists a new purchase points to another cluster."
@@ -1778,6 +1796,24 @@ msgid "Accept all"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "Make %(num)d family from the suggestion as it stands?"
+msgid_plural "Make %(num)d families from the suggestions as they stand?"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Each can be taken apart again under Families."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "Make %(num)d family"
+msgid_plural "Make %(num)d families"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
 msgid "No suggestions: neither the artist names nor Discogs point to artists that belong together and are not grouped yet."
 msgstr ""
 
@@ -1865,6 +1901,10 @@ msgid "How does this work?"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
+msgid "On a phone, hold a block a moment until it lifts, then drag it; a quick swipe scrolls the page."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
 msgid "A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist."
 msgstr ""
 
@@ -1894,6 +1934,14 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "No room set"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Go to cabinet"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Go to cabinet…"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html

@@ -114,10 +114,12 @@ def _add_new_artist(client):
 def test_artists_to_check_are_those_without_cluster_or_start_year(client):
     _add_new_artist(client)
 
-    everyone = client.get("/artists/").text
     to_check = client.get("/artists/?show=attention").text
 
-    assert "Chet Baker" in everyone and "New Band" in everyone
+    # Without a search the list goes one letter at a time.
+    assert "Chet Baker" in client.get("/artists/?letter=C").text
+    assert "New Band" in client.get("/artists/?letter=n").text
+    assert "New Band" not in client.get("/artists/?letter=C").text
     assert "New Band" in to_check and "Chet Baker" not in to_check
     assert "New Band" in client.get("/artists/?q=new").text
     assert "No artist matches." in client.get("/artists/?q=zappa").text
