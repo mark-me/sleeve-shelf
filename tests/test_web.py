@@ -174,8 +174,7 @@ def test_storage_lists_cabinets_with_how_full_each_shelf_is(client):
     # A shelf holding albums cannot be removed.
     assert "/storage/shelves/1/delete" not in page
     # Nothing has a type, row, reachability or showcase yet: those columns are left out.
-    assert all(f"<th{cls}>{name}</th>" not in page for cls, name in (
-        ("", "Type"), ("", "Row"), (' class="text-end"', "Reachability"), ("", "Showcase")))
+    assert all(f">{name}</th>" not in page for name in ("Type", "Row", "Reachability", "Showcase"))
 
 
 def test_cabinets_and_shelves_can_be_added_edited_and_removed(client):
@@ -193,7 +192,7 @@ def test_cabinets_and_shelves_can_be_added_edited_and_removed(client):
     page = client.get("/storage/").text
     assert "38.5 cm" in page and "Top-loader" in page
     # Once one shelf has them, the columns are there.
-    assert "<th>Row</th>" in page and "<th>Showcase</th>" in page
+    assert ">Row</th>" in page and ">Showcase</th>" in page
     # The new, empty shelf shows up in Browse as a stop.
     assert "Koffer &rsaquo; links (0)" in client.get("/browse").text
 
@@ -536,4 +535,52 @@ def test_the_search_fields_search_while_typing(client):
         text = client.get(page).text
         assert 'role="search" data-live-search' in text, page
         assert "/static/live-search.js" in text
+        assert "/static/tabs.js" in text
     assert client.get("/static/live-search.js").status_code == 200
+
+
+def test_the_waiting_counts_are_kept_until_something_changes(client):
+    from sleeve_shelf.web.waiting import waiting_counts
+
+    _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
+    store = JsonStore(client.application.config["DATA_DIR"])
+
+    assert waiting_counts(store)["unplaced"] == 1
+    assert waiting_counts(store) == waiting_counts(store)
+    # Putting the album on a shelf changes the files, and the count follows.
+    album_id = next(a.id for a in store.load(Album) if a.title == "Chet")
+    client.post(f"/albums/{album_id}/move", data={"shelf_id": "1"})
+    assert waiting_counts(store)["unplaced"] == 0
+
+
+def test_layout_offers_a_jump_to_every_cabinet(client):
+    _load(client)
+    assert 'id="jump"' not in client.get("/layout/").text
+
+    client.post("/storage/cabinets/new", data={"name": "Koffer", "location": "Zolder"})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "type": "", "layer": ""})
+    page = client.get("/layout/").text
+
+    assert 'id="jump"' in page and 'id="cabinet-1"' in page
+    # A cabinet in another room is reached through that room's tab.
+    assert "room=Zolder#cabinet-2" in page
+
+
+
+def test_the_artist_list_goes_letter_by_letter_unless_searching(client):
+    from sleeve_shelf.web.artists import initial
+
+    assert [initial(n) for n in ("ABBA", "'Baby Face' Willette", "16 Horsepower", "Émilie Simon", "Chet Baker (2)")] == [
+        "A", "B", "#", "E", "C"]
+    _load(client)
+
+    page = client.get("/artists/").text
+    # The first letter with artists is shown, and letters without any are not links.
+    assert 'aria-current="page">M</a>' in page and "Miles Davis" in page and "Tindersticks" not in page
+    assert '<span>Q</span>' in page
+    assert "Tindersticks" in client.get("/artists/?letter=T").text
+    # A letter without artists falls back to the first one.
+    assert "Miles Davis" in client.get("/artists/?letter=Q").text
+    # Searching looks through everyone, without the letters.
+    searched = client.get("/artists/?q=i").text
+    assert "Miles Davis" in searched and "Tindersticks" in searched and "ss-letters" not in searched

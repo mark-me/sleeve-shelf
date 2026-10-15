@@ -1,5 +1,6 @@
 """Artists: the list, and curating one artist's start year and cluster."""
 
+import unicodedata
 from collections import defaultdict
 from urllib.parse import quote
 
@@ -55,6 +56,21 @@ def _albums_taking_part(store) -> dict[int, list[Album]]:
     return by_artist
 
 
+# The list without a search is shown one letter at a time; "#" holds names that start with
+# a digit or anything else.
+LETTERS = ("#", *"ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+
+def initial(name: str) -> str:
+    """The letter a name is listed under: its first letter as sorted, accents left off."""
+    for char in unicodedata.normalize("NFKD", sort_name(name)):
+        if char.isalpha():
+            return char.upper() if "A" <= char.upper() <= "Z" else "#"
+        if char.isdigit():
+            return "#"
+    return "#"
+
+
 def _earliest_year(albums: list[Album]) -> int | None:
     return min((a.original_release_year for a in albums if a.original_release_year), default=None)
 
@@ -65,6 +81,13 @@ def index():
     search = request.args.get("q", "").strip().casefold()
     only_attention = request.args.get("show") == "attention"
     cluster_filter = request.args.get("cluster", type=int)
+    artists = store.load(Artist)
+    # Searching or filtering looks through everyone; otherwise one letter at a time.
+    by_letter = not search and not only_attention and cluster_filter is None
+    available = {initial(artist.name) for artist in artists}
+    letter = request.args.get("letter", "").upper()
+    if by_letter and letter not in available:
+        letter = next((c for c in LETTERS[1:] if c in available), "#")
     by_artist = _albums_taking_part(store)
     album_counts = albums_per_artist(store)
     cluster_names = {cluster.id: cluster.name for cluster in store.load(Cluster)}
@@ -85,7 +108,9 @@ def index():
     shifts = {shift.artist_id: shift for shift in cluster_shifts(store)}
 
     rows = []
-    for artist in store.load(Artist):
+    for artist in artists:
+        if by_letter and initial(artist.name) != letter:
+            continue
         assignment = assignments.get(artist.id)
         sorted_albums = by_artist.get(artist.id, [])
         # Only artists that are sorted need a cluster and a start year.
@@ -118,6 +143,9 @@ def index():
         search_text=request.args.get("q", "").strip(),
         only_attention=only_attention,
         cluster_name=cluster_names.get(cluster_filter),
+        letters=[(c, c in available) for c in LETTERS] if by_letter else [],
+        letter=letter if by_letter else None,
+        total=len(artists),
     )
 
 
