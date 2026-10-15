@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-15 00:11+0200\n"
+"POT-Creation-Date: 2026-10-15 21:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -365,6 +365,11 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/_spot.html
 #, python-format
 msgid "The shelf then holds %(cm)s cm more than its width."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+#, python-format
+msgid "The shelf then holds %(cm)s cm more than its estimated width."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_spot.html
@@ -1101,7 +1106,7 @@ msgid "To place"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "LPs that stand on no shelf yet, each with the spot suggested for it. They stay here until they are put on a shelf; what a sync or import added is marked as new and comes first."
+msgid "LPs on no shelf yet, each with a suggested spot; new purchases first."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1169,8 +1174,8 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
-msgid "%(num)d shelf filled beyond its width"
-msgid_plural "%(num)d shelves filled beyond their width"
+msgid "%(num)d shelf filled beyond its measured width"
+msgid_plural "%(num)d shelves filled beyond their measured width"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1215,7 +1220,7 @@ msgid "Sold, or removed on Discogs? Say that you still have them, or remove them
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "The shelf width is an estimate, or the shelf really is too full."
+msgid "Take albums out in Layout, or let a proposal spread them over the shelves."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1848,7 +1853,15 @@ msgid "Move %(artist)s to another shelf"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
-msgid "Drag artists between and within shelves. A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist."
+msgid "Drag artists between and within shelves."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "How does this work?"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
@@ -1868,7 +1881,7 @@ msgid "You are adjusting the proposal. Your shelves change only when you accept 
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
-msgid "You are adjusting your shelves as they are: every move is saved at once. A version from before you started is kept, so you can go back."
+msgid "Every move is saved at once; a version from before is kept."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
@@ -1919,6 +1932,11 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/layout/index.html
 #, python-format
 msgid "%(albums)s albums · %(filled)s of %(width)s cm"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+#, python-format
+msgid "%(albums)s albums · %(filled)s of ≈ %(width)s cm"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
@@ -2515,6 +2533,10 @@ msgid "Bottom"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Estimated, not measured yet"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Yes"
 msgstr ""
 
@@ -2529,7 +2551,7 @@ msgid "Move shelf %(name)s down"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
-msgid "The arrows set the order in which cabinets and shelves are walked — in Browse and by a sorting proposal. A filled width above the shelf width is marked. Widths taken from the workbook are estimates until you measure the shelf. A shelf can be removed once it is empty, a cabinet once it has no shelves."
+msgid "The arrows set the order in which cabinets and shelves are walked — in Browse and by a sorting proposal. A width marked ≈ is an estimate, as the widths taken from the workbook are; tick “I measured this width” on the shelf once you have. A filled width above a measured width is marked in red. A shelf can be removed once it is empty, a cabinet once it has no shelves."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
@@ -2541,7 +2563,11 @@ msgid "Width in cm"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "The inside width records can stand in. Leave empty if not measured yet."
+msgid "I measured this width"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/shelf_form.html
+msgid "The inside width records can stand in. Unticked, the width counts as an estimate: a shelf that seems too full is then not marked in red."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html

@@ -6,7 +6,7 @@ import pytest
 from openpyxl import Workbook
 
 from sleeve_shelf import create_app, main
-from sleeve_shelf.domain import Album
+from sleeve_shelf.domain import Album, Shelf
 from sleeve_shelf.persistence import JsonStore
 
 
@@ -173,6 +173,9 @@ def test_storage_lists_cabinets_with_how_full_each_shelf_is(client):
     assert "/storage/shelves/1" in page and "/storage/shelves/2" in page
     # A shelf holding albums cannot be removed.
     assert "/storage/shelves/1/delete" not in page
+    # Nothing has a type, row, reachability or showcase yet: those columns are left out.
+    assert all(f"<th{cls}>{name}</th>" not in page for cls, name in (
+        ("", "Type"), ("", "Row"), (' class="text-end"', "Reachability"), ("", "Showcase")))
 
 
 def test_cabinets_and_shelves_can_be_added_edited_and_removed(client):
@@ -189,6 +192,8 @@ def test_cabinets_and_shelves_can_be_added_edited_and_removed(client):
     assert created.status_code == 302
     page = client.get("/storage/").text
     assert "38.5 cm" in page and "Top-loader" in page
+    # Once one shelf has them, the columns are there.
+    assert "<th>Row</th>" in page and "<th>Showcase</th>" in page
     # The new, empty shelf shows up in Browse as a stop.
     assert "Koffer &rsaquo; links (0)" in client.get("/browse").text
 
@@ -496,3 +501,29 @@ def test_every_menu_section_has_its_icon(client):
         assert f'<symbol id="{section.key}"' in sprite, section.key
         assert f'vendor/menu-icons.svg#{section.key}"' in menu, section.key
     assert client.get("/static/vendor/menu-icons.svg").status_code == 200
+
+
+def test_only_a_measured_shelf_is_marked_as_too_full(client):
+    _load(client)
+    store = JsonStore(client.application.config["DATA_DIR"])
+    albums = store.load(Album)
+    for album in albums:
+        album.manual_width_cm = 1.0
+    store.save(Album, albums)
+    # Shelf a holds two albums; a narrow width makes it too full, first as an estimate.
+    client.post("/storage/shelves/1", data={"name": "a", "width_cm": "0,5", "type": "", "layer": ""})
+
+    page = client.get("/storage/").text
+    assert "&asymp; 0.5 cm" in page and "ss-over-estimate" in page and 'class="text-end ss-over"' not in page
+    assert client.get("/dashboard/").text.count("filled beyond") == 0
+    assert 'data-measured="0"' in client.get("/layout/").text
+
+    client.post("/storage/shelves/1", data={"name": "a", "width_cm": "0,5", "type": "", "layer": "",
+                                            "width_measured": "on"})
+    page = client.get("/storage/").text
+    assert "&asymp;" not in page.split("<tbody>")[1].split("</tbody>")[0]
+    assert 'class="text-end ss-over"' in page
+    assert "1 shelf filled beyond its measured width" in client.get("/dashboard/").text
+    assert next(s for s in store.load(Shelf) if s.id == 1).width_measured is True
+    # A new shelf is taken to be measured unless unticked.
+    assert 'name="width_measured" checked' in client.get("/storage/cabinets/1/shelves/new").text

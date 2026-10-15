@@ -231,7 +231,7 @@ def test_layout_shows_shelves_as_blocks_per_artist(client):
     assert 'data-albums="1,2"' in page and 'data-albums="3"' in page
     # A block's name leads to its artist.
     assert 'class="ss-block-name" href="/artists/1"' in page
-    assert "every move is saved at once" in page
+    assert "Every move is saved at once" in page
 
 
 def test_dragging_saves_the_new_contents_of_the_shelves(client):
@@ -845,8 +845,8 @@ def test_the_dashboard_shows_the_first_few_to_place_and_links_to_the_rest(client
 
     page = client.get("/dashboard/").text
 
-    assert page.count("Put it there") == 5
-    assert "And 2 more to place" in page
+    assert page.count("Put it there") == 3
+    assert "And 4 more to place" in page
 
 
 def test_an_album_from_the_workbook_is_not_marked_as_new_and_a_purchase_comes_first(client):

@@ -30,7 +30,7 @@
   {% endif %}
   {% if to_place %}
   <h2 class="mt-5" id="to-place">{{ _('To place') }} <span class="ss-chip align-middle">{{ to_place_count }}</span></h2>
-  <p class="ss-muted mt-1">{{ _('LPs that stand on no shelf yet, each with the spot suggested for it. They stay here until they are put on a shelf; what a sync or import added is marked as new and comes first.') }}</p>
+  <p class="ss-muted mt-1">{{ _('LPs on no shelf yet, each with a suggested spot; new purchases first.') }}</p>
   <div class="ss-card mt-3">
     {% set covers = to_place | selectattr('cover_url') | list | length > 0 %}
     {% for album in to_place %}
@@ -73,7 +73,7 @@
           {% elif item.kind == 'widths' %}{{ ngettext('%(num)d box set or bundle with a rough width', '%(num)d box sets and bundles with a rough width', item.count) }}
           {% elif item.kind == 'unlinked' %}{{ ngettext('%(num)d album without a Discogs release', '%(num)d albums without a Discogs release', item.count) }}
           {% elif item.kind == 'gone' %}{{ ngettext('%(num)d album no longer in your Discogs collection', '%(num)d albums no longer in your Discogs collection', item.count) }}
-          {% elif item.kind == 'overfull' %}{{ ngettext('%(num)d shelf filled beyond its width', '%(num)d shelves filled beyond their width', item.count) }}
+          {% elif item.kind == 'overfull' %}{{ ngettext('%(num)d shelf filled beyond its measured width', '%(num)d shelves filled beyond their measured width', item.count) }}
           {% else %}{{ ngettext('%(num)d LP without a place', '%(num)d LPs without a place', item.count) }}{% endif %}
         </span>
         <span class="ss-row-title">
@@ -85,7 +85,7 @@
           {% elif item.kind == 'widths' %}{{ _('Measure them and enter the real width; until then they count as loose discs.') }}
           {% elif item.kind == 'unlinked' %}{{ _('Without a release there are no styles or original year from Discogs.') }}
           {% elif item.kind == 'gone' %}{{ _('Sold, or removed on Discogs? Say that you still have them, or remove them.') }}
-          {% elif item.kind == 'overfull' %}{{ _('The shelf width is an estimate, or the shelf really is too full.') }}
+          {% elif item.kind == 'overfull' %}{{ _('Take albums out in Layout, or let a proposal spread them over the shelves.') }}
           {% else %}{{ _('Put them at the spot suggested for them, place them by hand in Layout, or generate a proposal.') }}{% endif %}
         </span>
       </div>

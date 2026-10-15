@@ -61,8 +61,12 @@ class Shelf:
     is_showcase: bool = False
     # Place among the shelves of its cabinet; see in_order().
     position: int | None = None
+    # Whether the width was measured; otherwise it is an estimate, as from the workbook.
+    width_measured: bool = False
 
     def __post_init__(self) -> None:
+        # A shelf saved before this was kept has no value: its width counts as an estimate.
+        self.width_measured = bool(self.width_measured) and self.width_cm is not None
         if self.is_showcase and self.type is not ShelfType.TOP_LOADER:
             raise ValueError("Only a top-loader shelf can be a showcase")
 

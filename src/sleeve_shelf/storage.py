@@ -67,6 +67,7 @@ def save_shelf(
     layer: ShelfLayer | None = None,
     reachability_score: int | None = None,
     is_showcase: bool = False,
+    width_measured: bool = False,
 ) -> Shelf:
     """Add a shelf to a cabinet (shelf_id None), at the end of it, or change one.
 
@@ -88,6 +89,8 @@ def save_shelf(
     shelf.layer = layer
     shelf.reachability_score = reachability_score
     shelf.is_showcase = is_showcase
+    # Without a width there is nothing measured.
+    shelf.width_measured = width_measured and width_cm is not None
     store.save(Shelf, shelves)
     return shelf
 

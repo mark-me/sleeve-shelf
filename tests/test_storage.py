@@ -86,3 +86,12 @@ def test_an_unknown_cabinet_or_shelf_is_refused(store):
         save_shelf(store, 9, None, "a")
     with pytest.raises(LookupError):
         remove_cabinet(store, 9)
+
+
+def test_a_width_is_measured_only_when_there_is_one(store):
+    kast = save_cabinet(store, None, "Kast")
+    shelf = save_shelf(store, kast.id, None, "a", width_cm=42.0, width_measured=True)
+    assert store.load(Shelf)[0].width_measured is True
+
+    save_shelf(store, kast.id, shelf.id, "a", width_cm=None, width_measured=True)
+    assert store.load(Shelf)[0].width_measured is False

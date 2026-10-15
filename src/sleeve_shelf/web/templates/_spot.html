@@ -22,7 +22,8 @@
 {% macro room(spot) %}
 {% if spot.room_cm is not none %}
 {% if spot.room_cm >= 0 %}{{ _('It fits: %(cm)s cm is left on the shelf.', cm='%.1f' | format(spot.room_cm)) }}
-{% else %}<span class="ss-over">{{ _('The shelf then holds %(cm)s cm more than its width.', cm='%.1f' | format(-spot.room_cm)) }}</span>{% endif %}
+{% elif spot.width_measured %}<span class="ss-over">{{ _('The shelf then holds %(cm)s cm more than its width.', cm='%.1f' | format(-spot.room_cm)) }}</span>
+{% else %}{{ _('The shelf then holds %(cm)s cm more than its estimated width.', cm='%.1f' | format(-spot.room_cm)) }}{% endif %}
 {% endif %}
 {% endmacro %}
 

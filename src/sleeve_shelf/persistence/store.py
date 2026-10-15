@@ -106,6 +106,7 @@ _TABLES: dict[type, _Table] = {
             "reachability_score": "INTEGER",
             "is_showcase": "BOOLEAN",
             "position": "INTEGER",
+            "width_measured": "BOOLEAN",
         },
         {"type": ShelfType, "layer": ShelfLayer},
     ),

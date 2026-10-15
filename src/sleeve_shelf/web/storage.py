@@ -46,7 +46,16 @@ def index():
         }
         for cabinet in in_order(store.load(Cabinet))
     ]
-    return render_template("storage/index.html", cabinets=cabinets, error=request.args.get("error"))
+    # A column nobody filled in for any shelf only shows dashes: it is left out.
+    columns = {
+        "type": any(shelf.type for shelf in shelves),
+        "layer": any(shelf.layer for shelf in shelves),
+        "reachability": any(shelf.reachability_score is not None for shelf in shelves),
+        "showcase": any(shelf.is_showcase for shelf in shelves),
+    }
+    return render_template(
+        "storage/index.html", cabinets=cabinets, columns=columns, error=request.args.get("error")
+    )
 
 
 @blueprint.route("/cabinets/new", methods=["GET", "POST"])
@@ -137,9 +146,11 @@ def _shelf_form(cabinet: Cabinet, shelf_id: int | None):
             "layer": shelf.layer or "",
             "reachability_score": "" if shelf.reachability_score is None else str(shelf.reachability_score),
             "is_showcase": shelf.is_showcase,
+            "width_measured": shelf.width_measured,
         }
     else:
-        values = {"is_showcase": False}
+        # A shelf added by hand is usually measured on the spot.
+        values = {"is_showcase": False, "width_measured": True}
     errors: list[str] = []
     if request.method == "POST":
         form = request.form
@@ -148,6 +159,7 @@ def _shelf_form(cabinet: Cabinet, shelf_id: int | None):
             for key in ("name", "width_cm", "type", "layer", "reachability_score")
         }
         values["is_showcase"] = "is_showcase" in form
+        values["width_measured"] = "width_measured" in form
         width = _positive_number(values["width_cm"])
         reachability = _positive_number(values["reachability_score"])
         if not values["name"]:
@@ -169,6 +181,7 @@ def _shelf_form(cabinet: Cabinet, shelf_id: int | None):
                 layer=ShelfLayer(values["layer"]) if values["layer"] else None,
                 reachability_score=int(reachability) if reachability else None,
                 is_showcase=values["is_showcase"],
+                width_measured=values["width_measured"],
             )
             return redirect(url_for("storage.index"))
     status = 400 if errors else 200

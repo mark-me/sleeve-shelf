@@ -311,7 +311,8 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 }
 
 .ss-shelf-bar strong { color: var(--ss-text); }
-.ss-shelf-bar a { color: var(--ss-accent); font-weight: 600; }
+/* Links in the bar, not its buttons: the primary button keeps its own text colour. */
+.ss-shelf-bar a:not(.ss-button) { color: var(--ss-accent); font-weight: 600; }
 .ss-reach { color: var(--ss-accent); font-weight: 600; white-space: nowrap; }
 
 .ss-shelf-nav { display: flex; gap: 10px; }
@@ -438,6 +439,9 @@ a.ss-row-artist:hover { color: var(--ss-accent); }
 .ss-meter-fill { height: 100%; width: 0; background: var(--ss-accent); }
 .ss-shelf-over .ss-meter-fill { background: #D9534F; }
 .ss-shelf-over .ss-shelf-fill { color: #D9534F; font-weight: 600; }
+/* Over an estimated width: worth measuring, not an alarm. */
+.ss-shelf-over-estimate .ss-meter-fill { background: var(--ss-muted); }
+.ss-estimate, .ss-over-estimate { color: var(--ss-muted); }
 
 .ss-blocks { display: flex; flex-wrap: wrap; gap: 6px; min-height: 40px; margin: 0; padding: 0; list-style: none; }
 .ss-tray { min-height: 64px; }
@@ -539,3 +543,7 @@ a.ss-row-title { text-decoration: none; }
 
 /* The app icon next to the name: its own cream tile keeps the black record visible on the dark sidebar. */
 .ss-brand-icon { display: block; flex-shrink: 0; }
+
+/* Explanation that is there when wanted: the first sentence shows, the rest opens. */
+.ss-help > summary { color: var(--ss-accent); cursor: pointer; font-size: 0.85rem; width: fit-content; }
+.ss-help > p { max-width: 70ch; }
