@@ -29,8 +29,8 @@
           <tr>
             <th>{{ _('Artist') }}</th>
             <th>{{ _('Cluster') }}</th>
-            <th class="text-end">{{ _('Start year') }}</th>
-            <th>{{ _('Family') }}</th>
+            <th class="text-end d-none d-md-table-cell">{{ _('Start year') }}</th>
+            <th class="d-none d-lg-table-cell">{{ _('Family') }}</th>
             <th class="text-end">{{ _('Albums') }}</th>
             <th></th>
           </tr>
@@ -38,23 +38,23 @@
         <tbody>
           {% for row in rows %}
           <tr>
-            <td class="fw-semibold">
+            <td class="fw-semibold ss-wrap">
               <div class="d-flex align-items-center gap-2">
                 {{ cover(row.picture, pictures) }}
                 <a href="{{ url_for('artists.edit', artist_id=row.artist.id) }}">{{ row.artist.name }}</a>
               </div>
             </td>
-            <td>
+            <td class="ss-wrap">
               {% if row.cluster %}{{ row.cluster }}{% if not row.cluster_confirmed %} <span class="ss-chip">{{ _('proposed') }}</span>{% endif %}
               {% if row.shift_to %}<a class="ss-chip" href="{{ url_for('artists.edit', artist_id=row.artist.id) }}#shift">{{ _('new purchase points to %(cluster)s', cluster=row.shift_to) }}</a>{% endif %}
               {% else %}<span class="ss-muted">{% if row.sorted %}{{ _('none yet') }}{% else %}&mdash;{% endif %}</span>{% endif %}
             </td>
-            <td class="text-end">
+            <td class="text-end d-none d-md-table-cell">
               {% if row.artist.start_year %}{{ row.artist.start_year }}
               {% elif row.derived_year %}<span class="ss-muted">{{ row.derived_year }}</span> <span class="ss-chip">{{ _('from albums') }}</span>
               {% else %}&mdash;{% endif %}
             </td>
-            <td>{{ row.family or '—' }}</td>
+            <td class="ss-wrap d-none d-lg-table-cell">{{ row.family or '—' }}</td>
             <td class="text-end">{{ row.albums }}</td>
             <td class="text-end">
               {% if row.cluster and not row.cluster_confirmed %}

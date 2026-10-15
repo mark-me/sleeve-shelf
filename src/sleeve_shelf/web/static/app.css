@@ -412,6 +412,8 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 }
 
 .ss-table td { padding: 12px 16px; border-top: 1px solid var(--ss-border); white-space: nowrap; }
+/* Names that can be long may break, so the numbers beside them stay in view. */
+.ss-table td.ss-wrap { white-space: normal; min-width: 10rem; }
 .ss-table a, .ss-link-button { color: var(--ss-accent); font-weight: 600; text-decoration: none; }
 .ss-link-button { margin-left: 12px; padding: 0; border: none; background: none; }
 .ss-over { color: #D9534F; font-weight: 600; }
