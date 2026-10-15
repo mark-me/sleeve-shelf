@@ -73,3 +73,5 @@ and build it with `uv run python -m zensical build --strict`. Two conventions, c
 - the data-model diagram is the same as the one in `docs/requirements.md`.
 
 Diagrams are written as Mermaid in a fenced block marked `mermaid`.
+
+A push to `main` that touches `docs-site/` publishes the site to GitHub Pages, through `.github/workflows/docs.yml`: it runs `tests/test_docs.py`, builds with `--strict`, and deploys. It can also be run by hand from the Actions tab.
