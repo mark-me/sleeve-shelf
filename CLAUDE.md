@@ -31,6 +31,15 @@ uv run python -m babel.messages.frontend extract -F babel.cfg --project "Sleeve 
 uv run python -m babel.messages.frontend update -i src/sleeve_shelf/translations/messages.pot -d src/sleeve_shelf/translations --no-wrap --no-fuzzy-matching --ignore-obsolete
 ```
 
+The documentation site (Zensical, in `docs-site/`) has a user guide and a developer guide:
+
+```sh
+cd docs-site && uv run python -m zensical serve           # preview while writing
+cd docs-site && uv run python -m zensical build --strict  # build; warnings fail it
+```
+
+Every level-2 heading there starts with an emoji, unique across the site, and the data-model diagram is copied from `docs/requirements.md`; `tests/test_docs.py` checks both, and that the navigation in `zensical.toml` names every page. Mermaid's ER diagrams treat some words as keywords (`Style`): quote such an entity name, as the requirements do.
+
 Always use the `python -m` form. On Mark's managed work laptop the generated `.exe` console scripts (`uv run pytest`, `uv run sleeve-shelf`) are refused; the module form works everywhere.
 
 Environment variables: `SLEEVE_SHELF_DATA_DIR` (default `data`), `SLEEVE_SHELF_HOST`, `SLEEVE_SHELF_PORT`.

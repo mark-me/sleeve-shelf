@@ -155,8 +155,8 @@ erDiagram
     Artist ||--o{ Album : "has"
     Artist ||--o{ EraBand : "is split into"
     EraBand |o--o{ Album : "contains"
-    Album }o--o{ Style : "tagged with"
-    Cluster ||--o{ Style : "groups"
+    Album }o--o{ "Style" : "tagged with"
+    Cluster ||--o{ "Style" : "groups"
     Artist ||--o| ArtistClusterAssignment : "has cluster"
     Cluster |o--o{ ArtistClusterAssignment : "assigned to"
     Cabinet ||--o{ Shelf : "has"
@@ -213,7 +213,7 @@ erDiagram
         bool new_purchase "added to an artist with a confirmed cluster; not yet weighed against it"
         date added_on "day a sync or import added it; nullable"
     }
-    Style {
+    "Style" {
         int id PK
         string name "from Discogs"
         int cluster_id FK
