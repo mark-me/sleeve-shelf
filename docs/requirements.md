@@ -617,7 +617,7 @@ A showcase is a top-loader that shows a sample of the well-represented artists, 
 
 The detail of an artist and of an album are two pages.
 
-**The artist** is the Artists screen's page for one artist (see above): cluster with its confirmation status and the action to correct it, start year and era band, family, and the artist's albums with year, format, and where each stands. Each album links to its own page.
+**The artist** is the Artists screen's page for one artist (see above). On a wide screen (2026-10-15) its albums and related artists stand on the left and its settings — start year and cluster, location rules and moving, the picture — on the right; on a phone it is one column with the settings first. It holds: cluster with its confirmation status and the action to correct it, start year and era band, family, and the artist's albums with year, format, and where each stands. Each album links to its own page.
 
 **The album** has a page of its own, reached from its title on a shelf in Browse/Search, in the Unplaced albums list, and on its artist's page. It shows:
 

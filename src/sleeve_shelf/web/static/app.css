@@ -549,3 +549,13 @@ a.ss-row-title { text-decoration: none; }
 /* Explanation that is there when wanted: the first sentence shows, the rest opens. */
 .ss-help > summary { color: var(--ss-accent); cursor: pointer; font-size: 0.85rem; width: fit-content; }
 .ss-help > p { max-width: 70ch; }
+
+/* An artist's page: one column on a phone, settings first; side by side from a laptop up. */
+.ss-artist-grid { display: grid; gap: 40px; }
+.ss-artist-grid > div { min-width: 0; }
+@media (min-width: 1200px) {
+  .ss-artist-grid { grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: "main side"; align-items: start; }
+  .ss-artist-main { grid-area: main; }
+  .ss-artist-side { grid-area: side; }
+  .ss-artist-side > h2:first-child, .ss-artist-main > h2:first-child { margin-top: 0 !important; }
+}
