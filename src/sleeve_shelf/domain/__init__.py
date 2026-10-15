@@ -21,6 +21,7 @@ from sleeve_shelf.domain.enrichment import (
     MatchProposal,
     ReleaseEnrichment,
 )
+from sleeve_shelf.domain.lookup import find_by_id
 from sleeve_shelf.domain.placement import (
     Placement,
     PlacementSource,
@@ -50,6 +51,7 @@ __all__ = [
     "EraBand",
     "EraBandSource",
     "FamilyDismissal",
+    "find_by_id",
     "FormatTokens",
     "LocationRule",
     "LocationRuleTarget",

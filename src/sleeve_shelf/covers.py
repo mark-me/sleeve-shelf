@@ -35,14 +35,25 @@ def cover_name(url: str) -> str:
     return hashlib.sha1(url.encode()).hexdigest()[:20] + ".jpg"
 
 
+# Listing thousands of stored images on every page takes a while: a listing is kept until a
+# folder changes (a file added or removed changes the folder's own time).
+_names_cache: dict[Path, tuple[tuple, set[str]]] = {}
+
+
 def stored_names(data_dir: Path) -> set[str]:
     """Everything stored, images and "missing" marks alike, as "folder/name"."""
+    folders = [Path(data_dir) / COVER_DIR / folder for folder in (ALBUM_DIR, ARTIST_DIR)]
+    signature = tuple(d.stat().st_mtime_ns if d.is_dir() else None for d in folders)
+    cached = _names_cache.get(Path(data_dir))
+    if cached is not None and cached[0] == signature:
+        # A copy: a caller adding to it must not change what is kept.
+        return set(cached[1])
     names: set[str] = set()
-    for folder in (ALBUM_DIR, ARTIST_DIR):
-        directory = Path(data_dir) / COVER_DIR / folder
+    for folder, directory in zip((ALBUM_DIR, ARTIST_DIR), folders):
         if directory.is_dir():
             names.update(f"{folder}/{path.name}" for path in directory.iterdir())
-    return names
+    _names_cache[Path(data_dir)] = (signature, names)
+    return set(names)
 
 
 def image_paths(albums: Iterable[Album], pictures: Iterable[ArtistEnrichment]) -> dict[str, str]:

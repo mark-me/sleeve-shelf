@@ -31,6 +31,15 @@ uv run python -m babel.messages.frontend extract -F babel.cfg --project "Sleeve 
 uv run python -m babel.messages.frontend update -i src/sleeve_shelf/translations/messages.pot -d src/sleeve_shelf/translations --no-wrap --no-fuzzy-matching --ignore-obsolete
 ```
 
+The documentation site (Zensical, in `docs-site/`) has a user guide and a developer guide:
+
+```sh
+cd docs-site && uv run python -m zensical serve           # preview while writing
+cd docs-site && uv run python -m zensical build --strict  # build; warnings fail it
+```
+
+Every level-2 heading there starts with an emoji, unique across the site, and the data-model diagram is copied from `docs/requirements.md`; `tests/test_docs.py` checks both, and that the navigation in `zensical.toml` names every page. Mermaid's ER diagrams treat some words as keywords (`Style`): quote such an entity name, as the requirements do. A push to `main` touching the docs publishes them to GitHub Pages (`.github/workflows/docs.yml`).
+
 Always use the `python -m` form. On Mark's managed work laptop the generated `.exe` console scripts (`uv run pytest`, `uv run sleeve-shelf`) are refused; the module form works everywhere.
 
 Environment variables: `SLEEVE_SHELF_DATA_DIR` (default `data`), `SLEEVE_SHELF_HOST`, `SLEEVE_SHELF_PORT`.
@@ -45,20 +54,21 @@ Strict separation of concerns; keep it that way.
 | `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API (collection, release, master and artist), the format-string parser. |
 | `src/sleeve_shelf/sorting/` | The sorting engine: pure functions on domain objects (era bands, families, order, placement). |
 | `src/sleeve_shelf/persistence/` | `JsonStore` (one JSON file per entity, read and written through DuckDB) and the read queries for Browse. |
-| `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection`, `proposal`, `placing` (moving an album or artist by hand, and the rules that bind it), `showcase`, `shifts` (a purchase that points an artist to another cluster), `rule_suggestions`, `spots` (a suggested spot for a new purchase), `covers` (images kept in the data directory), `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
-| `src/sleeve_shelf/web/` | Flask blueprints, templates, static files. One blueprint per screen. |
+| `src/sleeve_shelf/*.py` | Application services that tie the layers together: `collection` (loading a layout, or starting empty), `discogs_import` (a sync or an uploaded export, matches, albums that left Discogs), `enrichment` (fetching from Discogs and applying it), `proposal`, `taking_part` (which albums are sorted and which shelves a proposal fills), `placing` (moving albums by hand — from an album or artist page, or by dragging on Layout — with the check that nothing drops off a shelf, and setting the location rules and finding the ones that bind an album or artist), `showcase`, `shifts` (a purchase that points an artist to another cluster), `rule_suggestions`, `spots` (a suggested spot for a new purchase), `storage` (cabinets and shelves: adding, changing, ordering, and removing only what is empty), `widths` (album widths, estimated or measured), `covers` (images kept in the data directory), `versions`, `alias_groups`, `artists`, `clusters`, `config`. |
+| `src/sleeve_shelf/web/` | Flask blueprints, templates, static files. One blueprint per screen. The menu's five sections and their tabs are declared in `web/navigation.py`; a new screen gets its tab there. |
 | `src/sleeve_shelf/web/pwa.py`, `web/static/icons/` | The web app manifest and the icons for installing the app on a phone. No service worker, on purpose. |
 | `docker/` | Dockerfile and Compose examples; `.github/workflows/docker.yml` builds and publishes the image. |
 
 Things that are easy to get wrong:
 
 - **Adding a field to an entity** means three places: the dataclass in `domain/`, its column list in `persistence/store.py` (`_TABLES`), and the data model in `docs/requirements.md` (the entity list and the Mermaid diagram).
-- **A service module and a blueprint can share a name** (`sleeve_shelf/versions.py` and `sleeve_shelf/web/versions.py`). In web modules import names explicitly — `from sleeve_shelf.versions import save_version` — not `from sleeve_shelf import versions`, which can resolve to the blueprint.
+- **A service module and a blueprint can share a name** (`sleeve_shelf/versions.py` and `sleeve_shelf/web/versions.py`, `storage.py` likewise). In web modules import names explicitly — `from sleeve_shelf.versions import save_version` — not `from sleeve_shelf import versions`, which can resolve to the blueprint.
 - **`JsonStore.save` rewrites the whole file.** Load the list, change it, save the list.
 - **A new id comes from `store.next_id(Entity, items)`**, never from "highest + 1": ids of removed items stay taken, because saved versions and location rules still name them.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
+- **A screen that needs a collection** is listed in `NEEDS_COLLECTION` in `src/sleeve_shelf/__init__.py`; without a collection it then leads to the wizard. Don't add a guard of its own to the blueprint.
 - **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
-- **Bootstrap and SortableJS are vendored** in `web/static/vendor/` so the app works offline. Don't switch them to a CDN. Covers and pictures are shown from `data/covers/albums/` and `data/covers/artists/` once the fetch run has stored them (template filter `local_cover`), and from Discogs until then; every page has to work without them.
+- **Bootstrap, SortableJS and the menu icons are vendored** in `web/static/vendor/` so the app works offline. The icons are five Bootstrap Icons in one sprite, `menu-icons.svg`, each named after its section's key in `web/navigation.py`. Don't switch them to a CDN. Covers and pictures are shown from `data/covers/albums/` and `data/covers/artists/` once the fetch run has stored them (template filter `local_cover`), and from Discogs until then; every page has to work without them.
 
 ## Data
 

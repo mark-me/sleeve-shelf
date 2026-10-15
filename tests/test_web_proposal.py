@@ -114,10 +114,12 @@ def _add_new_artist(client):
 def test_artists_to_check_are_those_without_cluster_or_start_year(client):
     _add_new_artist(client)
 
-    everyone = client.get("/artists/").text
     to_check = client.get("/artists/?show=attention").text
 
-    assert "Chet Baker" in everyone and "New Band" in everyone
+    # Without a search the list goes one letter at a time.
+    assert "Chet Baker" in client.get("/artists/?letter=C").text
+    assert "New Band" in client.get("/artists/?letter=n").text
+    assert "New Band" not in client.get("/artists/?letter=C").text
     assert "New Band" in to_check and "Chet Baker" not in to_check
     assert "New Band" in client.get("/artists/?q=new").text
     assert "No artist matches." in client.get("/artists/?q=zappa").text
@@ -153,7 +155,7 @@ def test_an_artist_can_get_a_cluster_of_its_own(client):
 
 def test_a_proposed_cluster_can_be_confirmed_from_the_list(client):
     _add_new_artist(client)
-    from sleeve_shelf.domain import Style, Album
+    from sleeve_shelf.domain import Album, Style
     from sleeve_shelf.persistence import JsonStore
 
     store = JsonStore(client.application.config["DATA_DIR"])
@@ -231,7 +233,7 @@ def test_layout_shows_shelves_as_blocks_per_artist(client):
     assert 'data-albums="1,2"' in page and 'data-albums="3"' in page
     # A block's name leads to its artist.
     assert 'class="ss-block-name" href="/artists/1"' in page
-    assert "every move is saved at once" in page
+    assert "Every move is saved at once" in page
 
 
 def test_dragging_saves_the_new_contents_of_the_shelves(client):
@@ -365,7 +367,9 @@ def test_dashboard_sums_up_and_lists_what_is_waiting(client):
 
     page = client.get("/dashboard/").text
 
-    assert "albums in the layout" in page
+    # One LP without a place: the albums tile says so and leads there.
+    assert "without a place" in page and 'class="ss-stat ss-stat-link ss-stat-wide" href="/unplaced"' in page
+    assert 'href="/artists/"><div class="ss-stat-number">' in page
     assert "1 artist without a confirmed cluster or a start year" in page
     assert "1 box set or bundle with a rough width" in page
     assert "1 LP without a place" in page
@@ -845,8 +849,8 @@ def test_the_dashboard_shows_the_first_few_to_place_and_links_to_the_rest(client
 
     page = client.get("/dashboard/").text
 
-    assert page.count("Put it there") == 5
-    assert "And 2 more to place" in page
+    assert page.count("Put it there") == 3
+    assert "And 4 more to place" in page
 
 
 def test_an_album_from_the_workbook_is_not_marked_as_new_and_a_purchase_comes_first(client):

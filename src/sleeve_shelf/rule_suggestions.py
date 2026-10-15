@@ -19,8 +19,10 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.proposal import mandatory_cabinets, sort_collection, kept_shelf_ids, takes_part, usable_shelves
+from sleeve_shelf.placing import set_rule
+from sleeve_shelf.proposal import sort_collection
 from sleeve_shelf.sorting.placement import place
+from sleeve_shelf.taking_part import kept_shelf_ids, takes_part, usable_shelves
 
 # A cluster or artist is only read as "kept apart" from this many albums on.
 MIN_ALBUMS = 2
@@ -178,18 +180,10 @@ def accept_suggestions(store: JsonStore, cabinet_id: int) -> int:
     chosen = [s for s in rule_suggestions(store) if s.cabinet_id == cabinet_id]
     if not chosen:
         return 0
-    rules = store.load(LocationRule)
     for suggestion in chosen:
-        rules.append(
-            LocationRule(
-                store.next_id(LocationRule, rules),
-                suggestion.target_type,
-                suggestion.target_id,
-                cabinet_id,
-                _("Suggested from the layout"),
-            )
+        set_rule(
+            store, suggestion.target_type, suggestion.target_id, cabinet_id, _("Suggested from the layout")
         )
-    store.save(LocationRule, rules)
     return len(chosen)
 
 

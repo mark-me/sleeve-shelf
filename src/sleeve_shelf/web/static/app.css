@@ -102,7 +102,11 @@ h2 { font-size: 1.15rem; margin: 0; }
 }
 
 .ss-nav a:hover { color: #fff; }
-.ss-nav a { justify-content: space-between; gap: 8px; }
+.ss-nav a { gap: 12px; }
+/* Icon, name, and the count pushed to the end. The icon takes the colour of the text. */
+.ss-nav a > span:not(.ss-nav-count) { flex: 1; }
+.ss-nav-icon { flex-shrink: 0; fill: currentColor; opacity: 0.85; }
+.ss-nav a.active .ss-nav-icon { opacity: 1; }
 
 /* The steps towards a new layout on the Dashboard. */
 .ss-steps { margin-bottom: 0; padding: 0; list-style: none; }
@@ -158,15 +162,35 @@ details.ss-card:not([open]) > summary { border-bottom: none; }
   font-weight: 600;
 }
 
-.ss-nav .ss-theme-toggle { margin-top: 12px; }
-
-.ss-version {
-  padding: 8px 4px 0;
-  color: #8B93A6;
-  font-size: 0.72rem;
-  text-align: center;
-  overflow-wrap: anywhere;
+/* The screens of a section, as tabs above the page; they scroll sideways on a phone. */
+.ss-section-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 4px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--ss-border);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.ss-section-tabs a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 12px 10px 10px;
+  border-bottom: 2px solid transparent;
+  color: var(--ss-muted, #64748B);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ss-section-tabs a:hover { color: inherit; }
+.ss-section-tabs a.active { border-bottom-color: var(--ss-accent); color: inherit; font-weight: 600; }
+/* Tabs out of sight fade at the edge they are behind. */
+.ss-section-tabs.ss-more-after, .ss-letters.ss-more-after { -webkit-mask-image: linear-gradient(to right, #000 82%, transparent); mask-image: linear-gradient(to right, #000 82%, transparent); }
+.ss-section-tabs.ss-more-before, .ss-letters.ss-more-before { -webkit-mask-image: linear-gradient(to left, #000 82%, transparent); mask-image: linear-gradient(to left, #000 82%, transparent); }
+.ss-section-tabs.ss-more-before.ss-more-after, .ss-letters.ss-more-before.ss-more-after { -webkit-mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(to right, transparent, #000 18%, #000 82%, transparent); }
 
 .ss-main {
   padding: 0 0 24px;
@@ -190,11 +214,9 @@ details.ss-card:not([open]) > summary { border-bottom: none; }
   }
 
   .ss-brand { font-size: 1.15rem; padding: 0 4px; }
-  /* Fourteen items and four headings have to fit a laptop screen; scroll when they don't. */
-  .ss-nav { flex: 1; gap: 2px; padding-top: 20px; min-height: 0; overflow-y: auto; }
-  .ss-nav a { height: 34px; flex-shrink: 0; font-size: 0.9rem; }
-  .ss-nav-group { margin-top: 12px; }
-  .ss-nav .ss-theme-toggle { margin-top: auto; }
+  .ss-nav { flex: 1; gap: 4px; padding-top: 24px; }
+  .ss-nav a { height: 40px; flex-shrink: 0; }
+  .ss-section-tabs { margin: -16px 0 28px; padding: 0; }
   .ss-main { flex: 1; padding: 40px 48px; }
   .ss-page { padding: 0; }
 }
@@ -293,7 +315,8 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 }
 
 .ss-shelf-bar strong { color: var(--ss-text); }
-.ss-shelf-bar a { color: var(--ss-accent); font-weight: 600; }
+/* Links in the bar, not its buttons: the primary button keeps its own text colour. */
+.ss-shelf-bar a:not(.ss-button) { color: var(--ss-accent); font-weight: 600; }
 .ss-reach { color: var(--ss-accent); font-weight: 600; white-space: nowrap; }
 
 .ss-shelf-nav { display: flex; gap: 10px; }
@@ -363,8 +386,14 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
   border-radius: 10px;
 }
 
-.ss-stat-number { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.5rem; font-weight: 700; }
+.ss-stat-number { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.5rem; font-weight: 700; white-space: nowrap; }
 .ss-stat-label { font-size: 0.78rem; color: var(--ss-muted); }
+/* A tile that leads to its screen; the albums tile is wider, with how far the shelves are filled. */
+a.ss-stat-link { color: inherit; text-decoration: none; }
+a.ss-stat-link:hover, a.ss-stat-link:focus-visible { border-color: var(--ss-accent); }
+.ss-stat-wide { flex: 2 1 240px; }
+.ss-stat-wide .ss-meter { max-width: none; height: 6px; }
+.ss-stat-of { font-size: 1rem; font-weight: 500; color: var(--ss-muted); }
 
 /* Storage: cabinets with their shelves. */
 .ss-card-head {
@@ -393,6 +422,16 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 }
 
 .ss-table td { padding: 12px 16px; border-top: 1px solid var(--ss-border); white-space: nowrap; }
+/* Names that can be long may break, so the numbers beside them stay in view. */
+.ss-table td.ss-wrap { white-space: normal; min-width: 10rem; }
+/* On a phone the cells sit closer, so a table fits the screen without scrolling sideways. */
+@media (max-width: 575.98px) {
+  .ss-table th, .ss-table td { padding-left: 8px; padding-right: 8px; }
+  .ss-table td.ss-wrap { min-width: 6rem; overflow-wrap: anywhere; }
+  .ss-table td.ss-wrap .ss-chip { white-space: normal; }
+  .ss-table .ss-link-button { margin-left: 8px; }
+  .ss-table td.ss-wrap-tight { white-space: normal; }
+}
 .ss-table a, .ss-link-button { color: var(--ss-accent); font-weight: 600; text-decoration: none; }
 .ss-link-button { margin-left: 12px; padding: 0; border: none; background: none; }
 .ss-over { color: #D9534F; font-weight: 600; }
@@ -410,7 +449,7 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 
 a.ss-row-artist { color: inherit; text-decoration: none; }
 a.ss-row-artist:hover { color: var(--ss-accent); }
-.ss-page a:not(.ss-button):not(.ss-row):not(.ss-row-artist) { color: var(--ss-accent); }
+.ss-page a:not(.ss-button):not(.ss-row):not(.ss-row-artist):not(.ss-stat-link):not(.ss-letter) { color: var(--ss-accent); }
 
 /* Layout: shelves with draggable blocks of albums. */
 .ss-shelf { padding: 14px 20px; border-top: 1px solid var(--ss-border); }
@@ -420,6 +459,9 @@ a.ss-row-artist:hover { color: var(--ss-accent); }
 .ss-meter-fill { height: 100%; width: 0; background: var(--ss-accent); }
 .ss-shelf-over .ss-meter-fill { background: #D9534F; }
 .ss-shelf-over .ss-shelf-fill { color: #D9534F; font-weight: 600; }
+/* Over an estimated width: worth measuring, not an alarm. */
+.ss-shelf-over-estimate .ss-meter-fill { background: var(--ss-muted); }
+.ss-estimate, .ss-over-estimate { color: var(--ss-muted); }
 
 .ss-blocks { display: flex; flex-wrap: wrap; gap: 6px; min-height: 40px; margin: 0; padding: 0; list-style: none; }
 .ss-tray { min-height: 64px; }
@@ -477,6 +519,10 @@ a.ss-block-name:hover { color: var(--ss-accent) !important; }
 
 .sortable-ghost { opacity: 0.35; }
 .sortable-chosen { border-color: var(--ss-accent); }
+/* Picked up after holding it on a touch screen: lifted, so it is clear it now moves. */
+@media (pointer: coarse) {
+  .sortable-chosen { box-shadow: 0 0 0 3px var(--ss-accent); transform: scale(1.04); }
+}
 
 /* Tabs, one per room on the Layout screen. */
 .ss-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--ss-border); }
@@ -517,4 +563,51 @@ a.ss-row-title { text-decoration: none; }
   border-radius: 999px;
   background-color: rgba(255, 255, 255, 0.85);
   opacity: 1;
+}
+
+/* The app icon next to the name: its own cream tile keeps the black record visible on the dark sidebar. */
+.ss-brand-icon { display: block; flex-shrink: 0; }
+
+/* Explanation that is there when wanted: the first sentence shows, the rest opens. */
+.ss-help > summary { color: var(--ss-accent); cursor: pointer; font-size: 0.85rem; width: fit-content; }
+.ss-help > p { max-width: 70ch; }
+
+/* An artist's page: one column on a phone, settings first; side by side from a laptop up. */
+.ss-artist-grid { display: grid; gap: 40px; }
+.ss-artist-grid > div { min-width: 0; }
+@media (min-width: 1200px) {
+  .ss-artist-grid { grid-template-columns: minmax(0, 1fr) 380px; grid-template-areas: "main side"; align-items: start; }
+  .ss-artist-main { grid-area: main; }
+  .ss-artist-side { grid-area: side; }
+  .ss-artist-side > h2:first-child, .ss-artist-main > h2:first-child { margin-top: 0 !important; }
+}
+
+/* Layout: the cabinet list stays at the top of the screen while scrolling the shelves. */
+.ss-jump { position: sticky; top: 0; z-index: 3; padding: 8px 0; background: var(--ss-bg); }
+.ss-jump .ss-shelf-select { width: 100%; }
+.ss-jump-target { scroll-margin-top: 72px; }
+@media (min-width: 992px) { .ss-jump .ss-shelf-select { width: auto; min-width: 280px; } }
+
+/* The artist list one letter at a time: a row of letters, scrolling sideways on a phone. */
+.ss-letters { display: flex; flex-wrap: wrap; gap: 4px; }
+.ss-letters a, .ss-letters span {
+  min-width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none;
+}
+.ss-page .ss-letters a { color: var(--ss-text); background: var(--ss-surface); border: 1px solid var(--ss-border); }
+.ss-page .ss-letters a.active { background: var(--ss-primary); border-color: var(--ss-primary); color: var(--ss-on-primary); }
+.ss-letters span { color: var(--ss-muted); opacity: 0.4; }
+@media (max-width: 575.98px) {
+  .ss-letters { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .ss-letters a, .ss-letters span { flex-shrink: 0; min-width: 36px; height: 36px; }
+}
+
+/* A button that asks before it acts: the question opens below it. */
+.ss-confirm { position: relative; }
+.ss-confirm > summary { list-style: none; cursor: pointer; }
+.ss-confirm > summary::-webkit-details-marker { display: none; }
+.ss-confirm[open] > summary { border-color: var(--ss-accent); }
+.ss-confirm-body {
+  position: absolute; right: 0; z-index: 4; width: min(320px, 80vw); margin-top: 6px; padding: 14px 16px;
+  background: var(--ss-surface); border: 1px solid var(--ss-accent); border-radius: 10px; font-size: 0.875rem;
 }

@@ -1,5 +1,6 @@
 """What the album and artist pages share: the shelves to move to, and the rules that apply."""
 
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
     AliasGroup,
@@ -11,7 +12,6 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.config import load_settings
 from sleeve_shelf.placing import applicable_rules
 from sleeve_shelf.spots import suggested_spots
 
@@ -78,6 +78,7 @@ def described_spots(store: JsonStore) -> dict[int, dict]:
             "before": named(spot.suggestion.before_album_id, spot.shelf_id),
             "basis": spot.suggestion.basis,
             "room_cm": spot.room_cm,
+            "width_measured": spot.width_measured,
             "by_rule": spot.by_rule,
         }
         for album_id, spot in spots.items()

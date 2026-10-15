@@ -1,0 +1,63 @@
+name: Publish documentation
+
+# The documentation site (docs-site/) is built with Zensical and published to GitHub Pages
+# from main. It can also be published by hand from the Actions tab.
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "docs-site/**"
+      - "docs/requirements.md"
+      - "tests/test_docs.py"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+# One publication at a time; a newer push replaces one that is still waiting.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      # The site's own conventions: an emoji per level-2 heading, the navigation, the
+      # data-model diagram matching the requirements.
+      - name: Check the documentation
+        run: uv run --locked python -m pytest tests/test_docs.py
+
+      - name: Build the site
+        working-directory: docs-site
+        run: uv run --locked python -m zensical build --strict
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs-site/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

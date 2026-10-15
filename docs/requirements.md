@@ -73,6 +73,7 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 - **Light and dark theme**: follows the device's system preference by default, with a manual toggle to override it. The preference is remembered per device (browser-local), not synced across devices or stored in `config.yaml`
 - **Responsive / mobile-friendly**: the whole app is usable on a phone, but this matters most for the Browse/Search screen (see UI) — browsing is something you'd realistically do standing in front of the actual shelves, phone in hand
 - **Installable (PWA)**: the app has a web app manifest and icons, so it can be put on the home screen of a phone and then opens as an app of its own, without the browser's address bar, on Browse/Search. Browsers only offer this over HTTPS (or on `localhost`); HTTPS is arranged outside the app, for instance by Tailscale or a reverse proxy. There is no service worker and no offline use: every page comes from the server
+- **App icon** (decided 2026-10-14): a black record sliding out of an orange sleeve, standing on a dark blue shelf, on a cream ground — dark would hide the record. It comes in two drawings: a plain one for 16 and 32 pixels (browser tab) and one with grooves and a sheen from 64 pixels up. The sources are `assets/icon.svg` and `assets/icon-small.svg`; the PNGs in `web/static/icons/` are made from them, the one for iOS without rounded corners (iOS rounds it itself) and the maskable one with the drawing inside the safe zone. On a dark ground — the menu next to the app's name, the README banner — the icon keeps its own cream tile, so the record stays visible
 - **Language**: English is the primary and only shipped language for the MVP. Multi-language support is not needed now but is a real option for a later phase, so the MVP is built i18n-ready from the start (see Architecture) rather than retrofitted later. Discogs data itself (styles, genres) stays in English regardless of UI locale — that's external source data, not app copy, and isn't part of this requirement
 
 ## Sorting logic
@@ -154,8 +155,8 @@ erDiagram
     Artist ||--o{ Album : "has"
     Artist ||--o{ EraBand : "is split into"
     EraBand |o--o{ Album : "contains"
-    Album }o--o{ Style : "tagged with"
-    Cluster ||--o{ Style : "groups"
+    Album }o--o{ "Style" : "tagged with"
+    Cluster ||--o{ "Style" : "groups"
     Artist ||--o| ArtistClusterAssignment : "has cluster"
     Cluster |o--o{ ArtistClusterAssignment : "assigned to"
     Cabinet ||--o{ Shelf : "has"
@@ -212,7 +213,7 @@ erDiagram
         bool new_purchase "added to an artist with a confirmed cluster; not yet weighed against it"
         date added_on "day a sync or import added it; nullable"
     }
-    Style {
+    "Style" {
         int id PK
         string name "from Discogs"
         int cluster_id FK
@@ -251,6 +252,7 @@ erDiagram
         int reachability_score "nullable"
         bool is_showcase "top-loaders only; holds a sample, kept by a proposal"
         int position "order within the cabinet"
+        bool width_measured "the width was measured, not estimated"
     }
     LocationRule {
         int id PK
@@ -336,7 +338,7 @@ erDiagram
 **Storage structure**
 
 - **Cabinet**: id, name, location (room; nullable — not known after an initial load), `position` (its place in the order the cabinets are walked), `outside_sorting` (bool; a sorting proposal leaves the cabinet as it is — see Sorting logic §3)
-- **Shelf**: id, cabinet_id, name (the label of the shelf within its cabinet, e.g. "a"), width (cm), type (top-/front-loader), layer, reachability score, is_showcase (bool). Width, type, layer, and reachability are nullable: a shelf seeded by the initial load has only a name (and a reachability score when the workbook gives one) until it is completed in the storage structure (Phase 1b). `position` is its place among the shelves of its cabinet
+- **Shelf**: id, cabinet_id, name (the label of the shelf within its cabinet, e.g. "a"), width (cm), type (top-/front-loader), layer, reachability score, is_showcase (bool), width_measured (bool: the width was measured; false for a width that is an estimate, as every width from the workbook is — and for a shelf saved before this was kept). Width, type, layer, and reachability are nullable: a shelf seeded by the initial load has only a name (and a reachability score when the workbook gives one) until it is completed in the storage structure (Phase 1b). `position` is its place among the shelves of its cabinet
 - **LocationRule**: id, target (`artist_id`, `alias_group_id`, `cluster_id`, **or `album_id`**), mandatory cabinet_id, note — always created manually. The `album_id` level is a specific-title exception: it detaches one release from its artist's normal placement (breaking the "artist stays together" rule in Sorting logic §1) without affecting the rest of that artist's catalog — needed for cases like a single boxset or compilation that lives in external storage while the rest of the artist stays in the main cabinet
 - **RuleSuggestionDismissal**: target (as for a LocationRule), cabinet_id — a suggested location rule the user turned down, so it is not suggested again (see Location rules screen). It points at its target and cabinet the way a LocationRule does
 
@@ -449,36 +451,39 @@ The first thing a new installation does (Phase 1a): seed the collection and its 
 
 ### Main navigation (after the wizard)
 
-The menu is grouped in the order the app is used — what is done daily on top, what is rarely touched at the bottom. All items are built, except where a later phase is marked.
+The menu has five sections (decided 2026-10-14): what is done daily on top, what is rarely touched at the bottom. A section opens on its first screen, and its screens are tabs above the page — on a phone they scroll sideways — so the menu itself stays five lines. On a phone the tabs scroll sideways; the current tab is brought into view and an edge fades where more tabs are out of sight (2026-10-16). Each section has an icon before its name (decided 2026-10-15): a speedometer for Dashboard, a record for Collection, a bookshelf for Shelves, an A–Z arrow for Sorting, a gear for Settings — from Bootstrap Icons, kept with the app. The name always stays; the tabs have no icons. A tab carries a short name, since the menu names the section and the page has its fuller title: Unplaced, Proposal, Cabinets, Families, Rules (decided 2026-10-15). A detail page belongs to the section it is reached from: an artist to Sorting, an album to Collection. All screens are built, except where a later phase is marked.
 
 - **Dashboard** — overview and open confirmations (see below)
-- **Collection**
+- **Collection** — the records themselves
   - **Browse / Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1)
   - **Unplaced albums** — albums without a spot on a shelf (see Initial load), so they can be resolved rather than silently dropped. Each LP shows its suggested spot — the shelf, the albums it would stand between, and whether it fits — with a button to put it there; after that the page says where it now stands, with a link. An LP without a spot says why: the artist has no cluster yet, or nothing stands where it could go (see Sorting logic §4)
-- **Arrange**
+  - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below). Loading a layout workbook (see Initial load) is reached from the bottom of this screen
+- **Shelves** — the physical cabinets and what stands in them
   - **Layout** — core screen (see below)
   - **Sorting proposal** — generate a proposal, compare it with the current layout, accept or discard it (see below)
   - **Showcase** — the samples on display in the top-loaders, and exchanging albums with the shelf (see below)
   - **Versions** — saved layouts, with the option to put one back (see below)
-- **Sorting rules** — what decides how a proposal sorts, in the order they are best gone through
+  - **Cabinets & shelves** — the Storage structure screen: manage cabinets and shelves, and the album widths
+- **Sorting** — what decides how a proposal sorts, in the order they are best gone through
   - **Artists** — the list of artists, and per artist its start year and cluster (see below)
   - **Artist families** — the alias groups: accept or turn down suggested families, and manage them by hand (see below)
   - **Clusters** — the clusters in their order: reorder, rename, merge, and re-point styles (see below)
   - **Location rules** — bind a cluster, a family, an artist, or an album to a cabinet (see below)
-- **Setup**
-  - **Cabinets & shelves** — the Storage structure screen: manage cabinets and shelves
-  - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below)
-  - **Import workbook** — load a layout workbook (see Initial load)
-  - **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); see below
+- **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); also the light/dark switch and the app's version (see below)
 
-**Counters in the menu**: an item shows a number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year, or with a new purchase pointing to another cluster (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
+**Notices** (2026-10-16): a notice after a change ("Saved.", "Moved.", an error) is shown once; reloading the page, going back to it, or opening it later does not show it again. A format is shown with each of its terms once ("LP, Album, RE", not repeated per disc).
+
+**Counters in the menu**: a section shows the total of what waits in its screens, and each tab its own number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year, or with a new purchase pointing to another cluster (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their measured width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
 
 An artist's page is reached from Layout (the name on a block) and from Browse/Search (the name on a row); an album's page from its title in Browse/Search, in the Unplaced albums list, and on its artist's page (see Detail screen).
 
 ### Layout screen (core)
 
-- All cabinets underneath one another, in the order set under Storage, each showing its shelves. A shelf has a bar for the occupied width, with the number of albums and the filled and total width; a shelf filled beyond its width is marked
+- All cabinets underneath one another, in the order set under Storage, each showing its shelves. A shelf has a bar for the occupied width, with the number of albums and the filled and total width; a shelf filled beyond its width is marked in red when the width was measured, and only greyed when it is an estimate (shown as ≈)
 - The contents of a shelf are **blocks**: neighbouring albums of one artist form one block, showing the artist and the number of albums (a single album shows its title). A block shows the cover of its first album; split into single albums, each shows its own
+- **Explanation folded away** (2026-10-15): the screen opens with one line on what to do; how blocks, numbers and the ⋮ list work is behind "How does this work?". The notice above the shelves says in one line that every move is saved at once and a version from before is kept, with a link to Versions
+- **Go to cabinet** (2026-10-16): a list at the top of the screen, which stays there while scrolling, jumps to any cabinet — in another room through that room's tab — or to the albums not on a shelf
+- **Dragging on a phone** (2026-10-15): on a touch screen a block is held a moment (0.3 s) until it lifts before it can be dragged; a swipe that starts on a block scrolls the page instead. A mouse drags at once
 - **Drag and drop** (SortableJS) moves a block between or within shelves; every move is saved at once and the bars update. Clicking the number on a block splits it into single albums, so one album can be moved on its own. While dragging, the page scrolls along as soon as the pointer comes within some 160 px of the top or bottom of the window, so a block can be carried from the tray to a shelf far up the page
 - **To a shelf far away, without dragging** (2026-10-13): every block has a ⋮ button — a right-click on the block does the same — that opens a list of all shelves, per cabinet and across all rooms, each with how full it is; the shelf the block stands on is marked. Picking a shelf puts the block at the end of it, saved at once like a drag, and the page jumps to the block there and marks it for a moment, so its exact spot can be set by dragging within the shelf. A shelf in another room opens that room's tab, at the block. The list also offers taking the block off its shelf. A block split into single albums gives each album the button. Dragging stays as it is: this is an addition, for moves the scrolling makes awkward
 - **Not on a shelf**: a tray at the bottom holds the LPs without a place. Dragging from it places an album; dropping an album on it takes the album off its shelf
@@ -489,14 +494,15 @@ An artist's page is reached from Layout (the name on a block) and from Browse/Se
 
 ### Dashboard
 
-- The home screen once a collection is loaded: counters for the albums in the layout, how many stand on a shelf, artists, clusters, cabinets, and shelves; and how many singles and EPs are kept outside the layout
-- **To place** (2026-10-12): the LPs that stand on no shelf yet are listed on the Dashboard itself, with their number — each with its cover, the spot suggested for it (see Sorting logic §4), whether it fits, and a button to put it there. The first five are shown, with a link to the Unplaced albums list for the rest. An album stays in this list until it stands on a shelf, by this button or by hand; the menu shows the same number at Unplaced albums. Putting one there says where it now stands, with a link. **New** (2026-10-12): an album a sync or import added carries a "New" pill, with the day it was added, here and in the Unplaced albums list, and comes before the albums that were loaded without a place — so the first five are the latest purchases. The pill goes with the album leaving the list: once it stands on a shelf it is no longer shown as new
-- **Waiting for you** (the open confirmations): Discogs matches to confirm, suggested artist families not yet looked at, artists sorted on a proposed cluster or a year taken from their albums, artists a new purchase points to another cluster, box sets and bundles with only a rough width, albums without a Discogs release, albums no longer in the Discogs collection, shelves filled beyond their width, and LPs without a place — each linking to the screen where it is resolved. Only what is not zero is shown
+- The home screen once a collection is loaded: four tiles (decided 2026-10-15) — the albums on a shelf out of all albums in the layout, with a bar and how many are without a place; artists; clusters; and cabinets with shelves. Each tile leads to its screen: the albums to Unplaced albums while any are without a place (else to Browse), the others to Artists, Clusters, and Cabinets. Below them, how many singles and EPs are kept outside the layout
+- **To place** (2026-10-12): the LPs that stand on no shelf yet are listed on the Dashboard itself, with their number — each with its cover, the spot suggested for it (see Sorting logic §4), whether it fits, and a button to put it there. The first three are shown (2026-10-15; five before), with a link to the Unplaced albums list for the rest. An album stays in this list until it stands on a shelf, by this button or by hand; the menu shows the same number at Unplaced albums. Putting one there says where it now stands, with a link. **New** (2026-10-12): an album a sync or import added carries a "New" pill, with the day it was added, here and in the Unplaced albums list, and comes before the albums that were loaded without a place — so the first ones are the latest purchases. The pill goes with the album leaving the list: once it stands on a shelf it is no longer shown as new
+- **Waiting for you** (the open confirmations): Discogs matches to confirm, suggested artist families not yet looked at, artists sorted on a proposed cluster or a year taken from their albums, artists a new purchase points to another cluster, box sets and bundles with only a rough width, albums without a Discogs release, albums no longer in the Discogs collection, shelves filled beyond their measured width, and LPs without a place — each linking to the screen where it is resolved. Only what is not zero is shown
 - **Towards a new layout**: the steps from collection to sorted layout as a numbered list, in the order of the menu, each linking to its screen — bring the collection up to date (Discogs sync), go through the suggested families, check the artists' clusters and start years, put the clusters in order, measure the shelves, pin what has to stand in a certain cabinet (optional), and generate, adjust and accept a proposal. A step that can be counted shows how much is left to do (matches to confirm and releases still to fetch; suggested families; artists to check; shelves without a width or filled beyond it) and is ticked off at zero; the others show what there is (number of clusters, number of rules, whether a proposal is waiting). While the collection holds no albums, the steps for families and artists are neither counted nor ticked off — they show "once there are albums" — since there is nothing to go through yet. No step is compulsory or locked
 - Whether a proposal is waiting, and the last saved version with whether the layout has changed since
 
 ### Browse/Search screen
 
+- **Searching while typing** (2026-10-15): the results follow the search field a quarter of a second after the last keystroke, here and on the Artists screen, without leaving the field; emptying it goes back to browsing. Enter still works, also without JavaScript
 - Crate-digging mode: renders the collection in physical order (cabinet → shelf → position within shelf), based on the current `Placement` data — scrolling through it mirrors flipping through the real shelves
 - One shelf at a time, with previous/next shelf and a shelf picker to jump straight to any shelf. Within a shelf the albums are grouped under a heading per cluster and era band (the artist's cluster), each row showing artist, title, and original year
 - Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked, or to the Unplaced albums list when it has no spot. The artist name on a shelf row opens that artist (see Artists screen)
@@ -523,6 +529,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Images stored here** (built 2026-10-11): last of all the run downloads the images themselves — small and large album covers, small and large artist pictures — into `covers/albums/` and `covers/artists/` in the data directory, about four per second. A third bar shows how many of the images the pages show are stored. The run can be started for the images alone, and stopped and continued like the rest; an image that is no longer at Discogs is counted apart and not tried again
 - **Artist pictures** (built 2026-10-09): the same run then fetches the picture of every artist a sync has named on Discogs — one lookup per artist, last, since nothing in the sorting waits for it. The same lookup brings the artist's members, groups and aliases, which the family suggestions use; an artist fetched before these were kept is fetched again once, and shows as still to be fetched until then. The screen says how many pictures are still to be fetched, and the run can be started for those alone. Its address is cached; the image itself is stored with the covers (see Images stored here)
 - **Matches to confirm**: each proposed match (see [Initial load](#initial-load)) shows the album and the Discogs release side by side, with their similarity. "Same album" links them; "Different" leaves the album without a release and adds the release as a new, unplaced album
+- **Layout workbook** (2026-10-14): at the bottom of the screen, a link to load a layout workbook (see Initial load) — kept here rather than in the menu, since it is rarely needed once the collection is loaded
 
 ### Sorting proposal screen
 
@@ -536,7 +543,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 ### Artists screen
 
-- **List**: every artist with its cluster, start year, family, and number of albums; searchable by name. A cluster the app proposed is marked "proposed", a start year taken from the albums is marked "from albums"
+- **List**: every artist with its cluster, start year, family, and number of albums; searchable by name. Long names wrap so every column stays in view; on a phone the list shows name, cluster and number of albums, and family and start year from wider screens up (2026-10-15). **One letter at a time** (decided 2026-10-16): without a search or filter the list shows the artists of one letter, chosen from a row A–Z ("#" for names starting with a digit or another sign; accents left off), starting at the first letter that has artists. A name is listed under the letter it sorts by, so "The Stooges" under T. Searching, "To check" and a cluster filter look through all artists. A cluster the app proposed is marked "proposed", a start year taken from the albums is marked "from albums"
 - **To check**: a filter for the artists whose albums are sorted but that have no confirmed cluster or no start year of their own, and for the artists a new purchase points to another cluster. A proposed cluster can be confirmed straight from the list
 - **A new purchase points to another cluster** (see Sorting logic §4): in the list such an artist carries a mark naming the cluster the styles now point to, linking to its page. There a notice names the purchases, the cluster the styles point to and the cluster the artist stands in, with two actions: keep the artist where it is, or move it. Nothing changes until one is chosen
 - **One artist**: the start year can be set or cleared — cleared, the earliest original year among the artist's albums is used again — with a link that looks the artist up on Wikipedia to verify it. The cluster is chosen from the existing clusters, or a new one is named (an artist's own cluster, for example); the screen also shows which cluster the Discogs styles of the albums point to. Saving a cluster confirms it; choosing none lets the app propose one again
@@ -553,6 +560,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Room**: the screen shows how many cm the albums of a proposal need, how many the shelves it fills offer, and the difference — the quickest way to see whether the estimates add up. Albums that a proposal leaves where they are (in a showcase, or in a cabinet kept outside the sorting) are not counted, and neither are their shelves
 - **Showcase**: how full a showcase may be, as a percentage of its width (see Showcase screen)
 - **Discogs**: whether a bundle such as "CD + LP" counts as vinyl (applies at the next import), and the personal access token, shown masked
+- **Appearance**: the switch between light and dark (see Non-functional requirements), and below it the app's version
 
 ### Album widths screen
 
@@ -562,7 +570,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 
 ### Alias groups screen (artist families)
 
-- **Suggested from the names and from Discogs**: every suggestion shows the anchor artist and the artists it would gather, each with its number of albums and its cluster — so a member that sits in another cluster is visible before accepting — and says whether it comes from the names or from Discogs. Each member has a checkbox, ticked by default; "Make this a family" creates the family from the anchor and the ticked members (or, for a Discogs suggestion to extend an existing family, "Add to this family" adds them), "Not a family" removes the suggestion for good — for an addition that means the artists offered, so the family can still be offered others later. "Accept all" takes every suggestion as it stands
+- **Suggested from the names and from Discogs**: every suggestion shows the anchor artist and the artists it would gather, each with its number of albums and its cluster — so a member that sits in another cluster is visible before accepting — and says whether it comes from the names or from Discogs. Each member has a checkbox, ticked by default; "Make this a family" creates the family from the anchor and the ticked members (or, for a Discogs suggestion to extend an existing family, "Add to this family" adds them), "Not a family" removes the suggestion for good — for an addition that means the artists offered, so the family can still be offered others later. "Accept all" takes every suggestion as it stands, after asking on the page itself how many families that makes (2026-10-16)
 - **Families**: each family shows its members; the name can be changed, members taken out, and artists added by name (from the artists that are not in a family yet). A family can be removed, after which its artists stand on their own again
 - **Add family**: a new, empty family by name — for families the names don't reveal (e.g. Songs: Ohia and Magnolia Electric Co.)
 - Like the Clusters screen this is taxonomy only: it changes how the next proposal is sorted, not where anything stands now
@@ -595,16 +603,16 @@ A showcase is a top-loader that shows a sample of the well-represented artists, 
 
 ### Storage structure screen
 
-- Lists every cabinet (name, room, and whether it is kept outside the sorting) with its shelves: name, type, row, width, filled width, number of albums, reachability, and showcase flag
+- Lists every cabinet (name, room, and whether it is kept outside the sorting) with its shelves: name, type, row, width, filled width, number of albums, reachability, and showcase flag. A column that no shelf has filled in (type, row, reachability, showcase) is left out (2026-10-15). On a phone (2026-10-16) the table keeps shelf, width, filled width and the arrows; the shelf's name opens it for editing
 - Cabinets and shelves can be added and edited. A shelf is edited on its own page: name, width in cm, type (top-/front-loader), row (top/bottom), reachability (a whole number, 1 being the easiest to reach), and showcase — which only a top-loader can be. Type, row, width, and reachability may be left empty when not known yet
-- **Filled width** is the summed width of the albums standing on the shelf; when it exceeds the shelf width it is marked. After an initial load the shelf widths are estimates (see Sorting logic §3), so this mark mostly says the estimate needs measuring
+- **Filled width** is the summed width of the albums standing on the shelf. **Measured or estimated** (decided 2026-10-15): per shelf the user ticks "I measured this width". An estimated width is shown as ≈ — every width from the workbook starts that way (see Sorting logic §3). A filled width above a measured width is marked in red and counts as waiting (Dashboard, menu); above an estimate it is only greyed, since it mostly says the shelf needs measuring. A suggested spot for an album says the same: over a measured width in red, over an estimate plainly. A shelf added by hand starts ticked, as it is usually measured when entered; clearing the width clears the tick
 - **Outside the sorting**: a cabinet is edited on its own page — name, room, and a switch that keeps it outside the sorting (see Sorting logic §3). Its shelves stay ordinary shelves everywhere else: they are browsed, searched, and filled by hand like any other, and Browse/Search says on such a shelf that it is outside the sorting
 - A shelf can only be removed once it holds no albums, a cabinet once it has no shelves — nothing is ever unplaced as a side effect of tidying the structure
 - **Order**: cabinets, and the shelves within a cabinet, stand in an order the user sets with up/down arrows. It is the order in which they are walked — by previous/next shelf in Browse/Search and by a sorting proposal, which fills the shelves in this order. Until moved, they keep the order they were added in; new cabinets and shelves are added at the end
 
 ### Clusters screen
 
-- A list of all clusters **in their order across the shelves**, each with its number of artists (linking to those artists) and albums, and the Discogs styles that point at it. Up/down arrows change the order (see Sorting logic §1)
+- A list of all clusters **in their order across the shelves**, each with its number of artists (linking to those artists) and albums, and the Discogs styles that point at it. On a phone (2026-10-16) the list shows name, artists and the arrows; albums, styles and merging are on wider screens. Up/down arrows change the order (see Sorting logic §1)
 - **Merging**: tick two or more clusters and merge them. Their artists, styles, and location rules move into the cluster with the most albums, which keeps its place in the order — and its name, unless another is given. This doesn't go through the confirmation flow (Sorting logic §4), since merging is itself the user's confirmed action
 - **One cluster**: rename it, and see the styles pointing at it — each can be pointed at another cluster, which changes what is proposed for new artists carrying that style. A cluster without artists, styles, and rules can be removed
 - **Moving an artist to another cluster** is done on the artist (see Artists screen), where a new cluster can also be made
@@ -614,7 +622,7 @@ A showcase is a top-loader that shows a sample of the well-represented artists, 
 
 The detail of an artist and of an album are two pages.
 
-**The artist** is the Artists screen's page for one artist (see above): cluster with its confirmation status and the action to correct it, start year and era band, family, and the artist's albums with year, format, and where each stands. Each album links to its own page.
+**The artist** is the Artists screen's page for one artist (see above). On a wide screen (2026-10-15) its albums and related artists stand on the left and its settings — start year and cluster, location rules and moving, the picture — on the right; on a phone it is one column with the settings first. It holds: cluster with its confirmation status and the action to correct it, start year and era band, family, and the artist's albums with year, format, and where each stands. Each album links to its own page.
 
 **The album** has a page of its own, reached from its title on a shelf in Browse/Search, in the Unplaced albums list, and on its artist's page. It shows:
 
@@ -632,6 +640,7 @@ The detail of an artist and of an album are two pages.
 
 ## Open questions
 
+- **Measured shelf widths**: chosen without asking — a shelf added by hand starts as measured; only shelves over a measured width count as waiting, so the 23 shelves over their workbook estimate no longer do; a showcase's warning still goes by its width whether measured or not
 - **Families from Discogs**: chosen without asking — a family is named after the person rather than a band; a band shared by two artists in the collection is suggested to neither; three bands is the most a person can have in the collection before counting as a sideman (a fixed number, not a setting); and nothing is chained through fellow members. To be checked against the real collection once the artist records are fetched again.
 - **Cluster by connection**: decided by Mark on 2026-10-12 — connection before styles, direct connections only, only artists without a confirmed cluster; and, after the check against the collection, close connections decide while loose ones indicate (see Sorting logic §1). Chosen without asking: connected artists count by their number of albums; the artists list does not show the proposal, the artist's page and a sorting proposal do. In the collection as it stands 4 artists get a cluster by a close connection and 3 an indication by a loose one. Taken together, with each curated artist left out in turn, a close connection pointed to the artist's own cluster for 46 of 59 artists and a loose one for 28 of 54. Nick Cave himself counts as a sideman, being in four bands of the collection — the fixed limit of three (see Families from Discogs) is worth another look
 - **Suggested spot**: built without asking on these points — the spot is found in the layout as it stands rather than in a fresh sorting; albums kept apart from most of their artist or cluster are not gone by; a full shelf is reported but the album is not sent elsewhere. Every LP without a place counts as one to place; those a sync or import added are marked as new. Albums added before 2026-10-12 have no such date, so the albums without a place on that day are not marked, whichever way they came in. Open: whether Externe kast and Externe koffer should be kept outside the sorting (the simulation says the suggestions get much better if so), and whether the app should offer to make room when the shelf is full

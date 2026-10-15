@@ -3,7 +3,7 @@
 import pytest
 
 from sleeve_shelf import create_app
-from sleeve_shelf.collection import import_discogs_collection
+from sleeve_shelf.discogs_import import import_discogs_collection
 from sleeve_shelf.domain import (
     Album,
     Artist,

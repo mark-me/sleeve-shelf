@@ -26,7 +26,11 @@
   <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
     <div>
       <h1>{{ _('Layout') }}</h1>
-      <p class="ss-muted mb-0 mt-1">{{ _('Drag artists between and within shelves. A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist.') }} {{ _('For a shelf far away, use the ⋮ on a block (or right-click it) and pick the shelf: the block goes to the end of it and the page jumps there, where you drag it to its exact spot.') }}</p>
+      <p class="ss-muted mb-0 mt-1">{{ _('Drag artists between and within shelves.') }}</p>
+      <details class="ss-help mt-1">
+        <summary>{{ _('How does this work?') }}</summary>
+        <p class="ss-muted mb-0 mt-1">{{ _('On a phone, hold a block a moment until it lifts, then drag it; a quick swipe scrolls the page.') }} {{ _('A number is how many albums a block holds; click it to split the block into single albums. An artist’s name opens the artist.') }} {{ _('For a shelf far away, use the ⋮ on a block (or right-click it) and pick the shelf: the block goes to the end of it and the page jumps there, where you drag it to its exact spot.') }}</p>
+      </details>
     </div>
     {% if has_proposal %}
     <div class="d-flex gap-2">
@@ -39,7 +43,7 @@
   {% if layout %}
   <div class="ss-alert mt-3">{{ _('You are adjusting the proposal. Your shelves change only when you accept it.') }} <a href="{{ url_for('proposal.index') }}">{{ _('Back to the proposal') }}</a></div>
   {% else %}
-  <div class="ss-alert mt-3">{{ _('You are adjusting your shelves as they are: every move is saved at once. A version from before you started is kept, so you can go back.') }} <a href="{{ url_for('versions.index') }}">{{ _('Versions') }}</a></div>
+  <div class="ss-alert mt-3">{{ _('Every move is saved at once; a version from before is kept.') }} <a href="{{ url_for('versions.index') }}">{{ _('Versions') }}</a></div>
   {% endif %}
   {% if rooms %}
   <nav class="ss-tabs mt-4" aria-label="{{ _('Rooms') }}">
@@ -48,10 +52,23 @@
     {% endfor %}
   </nav>
   {% endif %}
+  {% if destinations | length > 1 %}
+  {# A long page on a phone: a cabinet further down, or in another room, is one choice away. #}
+  <div class="ss-jump mt-3">
+    <label for="jump" class="visually-hidden">{{ _('Go to cabinet') }}</label>
+    <select id="jump" class="ss-shelf-select" onchange="if (this.value) window.location.href = this.value; this.selectedIndex = 0;">
+      <option value="">{{ _('Go to cabinet…') }}</option>
+      {% for entry in destinations %}
+      <option value="{{ url_for('layout.index', layout=layout, room=entry.room or none) }}#cabinet-{{ entry.cabinet.id }}">{{ entry.cabinet.name }}{% if entry.room and rooms %} &middot; {{ entry.room }}{% endif %}</option>
+      {% endfor %}
+      <option value="#tray">{{ _('Not on a shelf') }}</option>
+    </select>
+  </div>
+  {% endif %}
   <div class="ss-alert mt-3 d-none" id="layout-error" role="alert">{{ _('That move could not be saved. Reload the page and try again.') }}</div>
 
   {% for entry in cabinets %}
-  <section class="ss-card mt-4">
+  <section class="ss-card mt-4 ss-jump-target" id="cabinet-{{ entry.cabinet.id }}">
     <div class="ss-card-head">
       <div>
         <h2>{{ entry.cabinet.name }}</h2>
@@ -60,7 +77,7 @@
     </div>
     {% for row in entry.shelves %}
     {% set shelf = row.shelf %}
-    <div class="ss-shelf" data-shelf="{{ shelf.id }}" data-width="{{ shelf.width_cm if shelf.width_cm is not none else '' }}">
+    <div class="ss-shelf" data-shelf="{{ shelf.id }}" data-width="{{ shelf.width_cm if shelf.width_cm is not none else '' }}" data-measured="{{ 1 if shelf.width_measured else 0 }}">
       <div class="ss-shelf-head">
         <span class="fw-semibold">{{ shelf.name }}</span>
         <div class="ss-meter" aria-hidden="true"><div class="ss-meter-fill"></div></div>
@@ -75,7 +92,7 @@
   </section>
   {% endfor %}
 
-  <section class="ss-card mt-4">
+  <section id="tray" class="ss-jump-target ss-card mt-4">
     <div class="ss-card-head">
       <div>
         <h2>{{ _('Not on a shelf') }}</h2>
@@ -127,6 +144,7 @@
     sendWhat: {{ ngettext('%(artist)s · %(num)s album', '%(artist)s · %(num)s albums', 2, artist='__artist__', num='__num__') | tojson }},
     sendOne: {{ _('%(artist)s · %(title)s', artist='__artist__', title='__title__') | tojson }},
     fill: {{ _('%(albums)s albums · %(filled)s of %(width)s cm', albums='__albums__', filled='__filled__', width='__width__') | tojson }},
+    fillEstimated: {{ _('%(albums)s albums · %(filled)s of ≈ %(width)s cm', albums='__albums__', filled='__filled__', width='__width__') | tojson }},
     fillNoWidth: {{ _('%(albums)s albums · %(filled)s cm', albums='__albums__', filled='__filled__') | tojson }}
   };
 </script>

@@ -6,7 +6,7 @@ import pytest
 from openpyxl import Workbook
 
 from sleeve_shelf import create_app, main
-from sleeve_shelf.domain import Album
+from sleeve_shelf.domain import Album, Shelf
 from sleeve_shelf.persistence import JsonStore
 
 
@@ -53,7 +53,12 @@ def _load(client, layout=LAYOUT, unplaced=()):
 
 def test_without_a_collection_everything_leads_to_the_wizard(client):
     assert client.get("/").headers["Location"] == "/setup/"
-    assert client.get("/browse").headers["Location"] == "/setup/"
+    for screen in ("/browse", "/unplaced", "/albums/1", "/artists/", "/clusters/", "/dashboard/",
+                   "/layout/", "/proposal/", "/showcase/", "/versions/"):
+        assert client.get(screen).headers.get("Location") == "/setup/", screen
+    # What can be set up before there is a collection stays open.
+    for screen in ("/storage/", "/discogs/", "/families/", "/rules/", "/settings/"):
+        assert client.get(screen).status_code == 200, screen
     assert client.get("/setup/").status_code == 200
     assert client.get("/setup/upload").status_code == 200
 
@@ -168,6 +173,8 @@ def test_storage_lists_cabinets_with_how_full_each_shelf_is(client):
     assert "/storage/shelves/1" in page and "/storage/shelves/2" in page
     # A shelf holding albums cannot be removed.
     assert "/storage/shelves/1/delete" not in page
+    # Nothing has a type, row, reachability or showcase yet: those columns are left out.
+    assert all(f">{name}</th>" not in page for name in ("Type", "Row", "Reachability", "Showcase"))
 
 
 def test_cabinets_and_shelves_can_be_added_edited_and_removed(client):
@@ -184,6 +191,8 @@ def test_cabinets_and_shelves_can_be_added_edited_and_removed(client):
     assert created.status_code == 302
     page = client.get("/storage/").text
     assert "38.5 cm" in page and "Top-loader" in page
+    # Once one shelf has them, the columns are there.
+    assert ">Row</th>" in page and ">Showcase</th>" in page
     # The new, empty shelf shows up in Browse as a stop.
     assert "Koffer &rsaquo; links (0)" in client.get("/browse").text
 
@@ -381,22 +390,36 @@ def test_covers_show_in_browse_search_and_layout_once_albums_have_them(client):
     assert "nenette.jpeg" in artist and "ss-cover-empty" in artist
 
 
-def test_menu_is_grouped_and_counts_what_is_waiting(client):
+def test_menu_has_five_sections_and_tabs_that_count_what_is_waiting(client):
     _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
 
     page = client.get("/browse").text
 
-    groups = [page.index(f'<div class="ss-nav-group">{name}</div>') for name in ("Collection", "Arrange", "Sorting rules", "Setup")]
-    assert groups == sorted(groups)
-    assert page.index("Sorting proposal") < groups[2] < page.index("Artist families") < groups[3]
-    assert "Cabinets & shelves" in page and "Discogs sync" in page and "Import workbook" in page
-    # One LP has no place: the menu says so behind Unplaced albums.
-    unplaced = page[page.index("<span>Unplaced albums</span>"):]
-    unplaced = unplaced[: unplaced.index("</a>")]
-    assert 'class="ss-nav-count" title="Waiting for you">1</span>' in unplaced
-    # Nothing waits under Discogs sync, so it shows no number.
-    discogs = page[page.index("<span>Discogs sync</span>"):]
-    assert "ss-nav-count" not in discogs[: discogs.index("</a>")]
+    menu = page[page.index('id="main-nav"'):page.index("</nav>")]
+    sections = ["Dashboard", "Collection", "Shelves", "Sorting", "Settings"]
+    assert [menu.index(f"<span>{name}</span>") for name in sections] == sorted(
+        menu.index(f"<span>{name}</span>") for name in sections
+    )
+    assert menu.count("<a ") == 5
+    # Browse belongs to Collection: that section is marked, and its screens are the tabs.
+    collection = menu[menu.rindex("<a ", 0, menu.index("<span>Collection</span>")):]
+    assert 'class="active"' in collection[: collection.index("</a>")]
+    # One LP has no place: Collection says so, and so does the tab it is on.
+    assert 'title="Waiting for you">1</span>' in collection[: collection.index("</a>")]
+    tabs = page[page.index('class="ss-section-tabs"'):]
+    tabs = tabs[: tabs.index("</nav>")]
+    assert ["Browse / Search" in tabs, "Unplaced" in tabs, "Discogs sync" in tabs] == [True] * 3
+    unplaced = tabs[tabs.index("Unplaced"):]
+    assert '<span class="ss-nav-count">1</span>' in unplaced[: unplaced.index("</a>")]
+    assert 'aria-current="page"' in tabs[: tabs.index("Unplaced")]
+
+    # The other sections show their own screens as tabs.
+    assert "Cabinets" in client.get("/layout/").text.split('class="ss-section-tabs"')[1]
+    assert "Rules" in client.get("/families/").text.split('class="ss-section-tabs"')[1]
+    # The workbook is imported from the Discogs screen, the theme is switched in Settings.
+    assert "/setup/upload" in client.get("/discogs/").text
+    settings = client.get("/settings/").text
+    assert "data-theme-toggle" in settings and 'class="ss-section-tabs"' not in settings
 
 
 def test_app_can_be_installed_from_its_manifest(client):
@@ -463,3 +486,126 @@ def test_from_discogs_to_an_accepted_layout_without_a_workbook(client):
     shelf = client.get("/browse").text
     assert "Bleach" in shelf and "Nevermind" in shelf and "Lithium" not in shelf
     assert "Saved versions (1)" in client.get("/versions/").text
+
+
+def test_every_menu_section_has_its_icon(client):
+    from pathlib import Path
+
+    from sleeve_shelf.web.navigation import SECTIONS
+
+    _load(client)
+    sprite = (Path(client.application.static_folder) / "vendor" / "menu-icons.svg").read_text()
+    menu = client.get("/browse").text
+    for section in SECTIONS:
+        assert f'<symbol id="{section.key}"' in sprite, section.key
+        assert f'vendor/menu-icons.svg#{section.key}"' in menu, section.key
+    assert client.get("/static/vendor/menu-icons.svg").status_code == 200
+
+
+def test_only_a_measured_shelf_is_marked_as_too_full(client):
+    _load(client)
+    store = JsonStore(client.application.config["DATA_DIR"])
+    albums = store.load(Album)
+    for album in albums:
+        album.manual_width_cm = 1.0
+    store.save(Album, albums)
+    # Shelf a holds two albums; a narrow width makes it too full, first as an estimate.
+    client.post("/storage/shelves/1", data={"name": "a", "width_cm": "0,5", "type": "", "layer": ""})
+
+    page = client.get("/storage/").text
+    assert "&asymp; 0.5 cm" in page and "ss-over-estimate" in page and 'class="text-end ss-over"' not in page
+    assert client.get("/dashboard/").text.count("filled beyond") == 0
+    assert 'data-measured="0"' in client.get("/layout/").text
+
+    client.post("/storage/shelves/1", data={"name": "a", "width_cm": "0,5", "type": "", "layer": "",
+                                            "width_measured": "on"})
+    page = client.get("/storage/").text
+    assert "&asymp;" not in page.split("<tbody>")[1].split("</tbody>")[0]
+    assert 'class="text-end ss-over"' in page
+    assert "1 shelf filled beyond its measured width" in client.get("/dashboard/").text
+    assert next(s for s in store.load(Shelf) if s.id == 1).width_measured is True
+    # A new shelf is taken to be measured unless unticked.
+    assert 'name="width_measured" checked' in client.get("/storage/cabinets/1/shelves/new").text
+
+
+def test_the_search_fields_search_while_typing(client):
+    _load(client)
+
+    for page in ("/browse", "/browse?q=tinder", "/artists/"):
+        text = client.get(page).text
+        assert 'role="search" data-live-search' in text, page
+        assert "/static/live-search.js" in text
+        assert "/static/tabs.js" in text
+    assert client.get("/static/live-search.js").status_code == 200
+
+
+def test_the_waiting_counts_are_kept_until_something_changes(client):
+    from sleeve_shelf.web.waiting import waiting_counts
+
+    _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
+    store = JsonStore(client.application.config["DATA_DIR"])
+
+    assert waiting_counts(store)["unplaced"] == 1
+    assert waiting_counts(store) == waiting_counts(store)
+    # Putting the album on a shelf changes the files, and the count follows.
+    album_id = next(a.id for a in store.load(Album) if a.title == "Chet")
+    client.post(f"/albums/{album_id}/move", data={"shelf_id": "1"})
+    assert waiting_counts(store)["unplaced"] == 0
+
+
+def test_layout_offers_a_jump_to_every_cabinet(client):
+    _load(client)
+    assert 'id="jump"' not in client.get("/layout/").text
+
+    client.post("/storage/cabinets/new", data={"name": "Koffer", "location": "Zolder"})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "type": "", "layer": ""})
+    page = client.get("/layout/").text
+
+    assert 'id="jump"' in page and 'id="cabinet-1"' in page
+    # A cabinet in another room is reached through that room's tab.
+    assert "room=Zolder#cabinet-2" in page
+
+
+
+def test_the_artist_list_goes_letter_by_letter_unless_searching(client):
+    from sleeve_shelf.web.artists import initial
+
+    assert [initial(n) for n in ("ABBA", "'Baby Face' Willette", "16 Horsepower", "Émilie Simon", "Chet Baker (2)")] == [
+        "A", "B", "#", "E", "C"]
+    _load(client)
+
+    page = client.get("/artists/").text
+    # The first letter with artists is shown, and letters without any are not links.
+    assert 'aria-current="page">M</a>' in page and "Miles Davis" in page and "Tindersticks" not in page
+    assert '<span>Q</span>' in page
+    assert "Tindersticks" in client.get("/artists/?letter=T").text
+    # A letter without artists falls back to the first one.
+    assert "Miles Davis" in client.get("/artists/?letter=Q").text
+    # Searching looks through everyone, without the letters.
+    searched = client.get("/artists/?q=i").text
+    assert "Miles Davis" in searched and "Tindersticks" in searched and "ss-letters" not in searched
+
+
+def test_accept_all_asks_first_and_notices_are_shown_once(client):
+    _load(client, layout=FAMILY_LAYOUT)
+
+    page = client.get("/families/").text
+    # The button opens a question with the number in it; the form behind it does the work.
+    assert '<details class="ss-confirm">' in page and "Make 2 families" in page
+    client.post("/families/suggestions/accept-all")
+    assert "Families (2)" in client.get("/families/").text
+    # A notice comes with the address and is taken out of it once the page is shown.
+    assert "/static/notices.js" in client.get("/settings/?saved=1").text
+    assert client.get("/static/notices.js").status_code == 200
+
+
+def test_a_format_names_each_term_once(client):
+    from sleeve_shelf.domain import FormatTokens
+
+    _load(client)
+    store = JsonStore(client.application.config["DATA_DIR"])
+    albums = store.load(Album)
+    albums[0].format_tokens = FormatTokens(disc_count=2, is_compound=True, qualifiers=("LP", "Album", "RE", "LP", "Album", "RE"))
+    store.save(Album, albums)
+
+    assert "LP, Album, RE</span>" in client.get(f"/albums/{albums[0].id}").text

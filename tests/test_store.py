@@ -26,7 +26,7 @@ def test_every_entity_round_trips(tmp_path):
         Cabinet: [Cabinet(1, "Kast"), Cabinet(2, "Koffer", "Zolder")],
         Shelf: [
             Shelf(1, 1, "a"),
-            Shelf(2, 1, "b", 80.5, ShelfType.TOP_LOADER, ShelfLayer.TOP, 1, True),
+            Shelf(2, 1, "b", 80.5, ShelfType.TOP_LOADER, ShelfLayer.TOP, 1, True, width_measured=True),
         ],
         Cluster: [Cluster(1, "Jazz: Cool / West Coast")],
         Artist: [Artist(1, 'Bonnie "Prince" Billy'), Artist(2, "Tom Waits", 82294, 3)],
@@ -131,3 +131,12 @@ def test_placements_written_before_they_were_per_album_only_are_still_read(tmp_p
     store.save(Placement, expected)
     assert '"album_id":7' in (tmp_path / "placement_current.json").read_text().replace(" ", "")
     assert store.snapshot_is_current("earlier")
+
+
+def test_a_shelf_saved_before_widths_could_be_measured_counts_as_estimated(tmp_path):
+    (tmp_path / "shelves.json").write_text(json.dumps([
+        {"id": 1, "cabinet_id": 1, "name": "a", "width_cm": 30.3, "type": None, "layer": None,
+         "reachability_score": None, "is_showcase": False, "position": 0}
+    ]))
+
+    assert JsonStore(tmp_path).load(Shelf)[0].width_measured is False

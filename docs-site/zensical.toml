@@ -12,7 +12,26 @@ repo_url = "https://github.com/mark-me/sleeve-shelf"
 repo_name = "mark-me/sleeve-shelf"
 edit_uri = "edit/main/docs-site/docs/"
 
-nav = [{ "Home" = "index.md" }]
+nav = [
+  { "Home" = "index.md" },
+  { "User guide" = [
+    "user/index.md",
+    "user/getting-started.md",
+    "user/browsing.md",
+    "user/discogs.md",
+    "user/shelves.md",
+    "user/sorting.md",
+    "user/settings.md",
+  ] },
+  { "Developer guide" = [
+    "developer/index.md",
+    "developer/architecture.md",
+    "developer/data-model.md",
+    "developer/sorting-engine.md",
+    "developer/development.md",
+    "developer/deployment.md",
+  ] },
+]
 
 # extra_css = ["stylesheets/extra.css"]
 # extra_javascript = ["javascripts/extra.js"]
@@ -43,7 +62,7 @@ features = [
   "navigation.path",
   # "navigation.prune",
   "navigation.sections",
-  # "navigation.tabs",
+  "navigation.tabs",
   # "navigation.tabs.sticky",
   "navigation.top",
   "navigation.tracking",
@@ -51,9 +70,6 @@ features = [
   # "toc.follow",
   # "toc.integrate",
 ]
-
-[project.theme.icon]
-logo = "lucide/smile"
 
 [project.theme.font]
 text = "Inter"

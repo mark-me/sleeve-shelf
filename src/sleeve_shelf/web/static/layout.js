@@ -10,14 +10,17 @@
     const meter = shelf.querySelector(".ss-meter-fill");
     line.dataset.albums = albums;
     line.dataset.filled = filled;
-    const template = isNaN(width) ? text.fillNoWidth : text.fill;
+    // An estimated width is shown as one, and a shelf over it is not marked as too full.
+    const measured = shelf.dataset.measured === "1";
+    const template = isNaN(width) ? text.fillNoWidth : measured ? text.fill : text.fillEstimated;
     line.textContent = template
       .replace("__albums__", albums)
       .replace("__filled__", Number(filled).toFixed(1))
       .replace("__width__", isNaN(width) ? "" : width.toFixed(1));
     const share = isNaN(width) || width <= 0 ? 0 : filled / width;
     meter.style.width = Math.min(100, Math.round(share * 100)) + "%";
-    shelf.classList.toggle("ss-shelf-over", share > 1);
+    shelf.classList.toggle("ss-shelf-over", share > 1 && measured);
+    shelf.classList.toggle("ss-shelf-over-estimate", share > 1 && !measured);
   }
 
   root.querySelectorAll(".ss-shelf[data-shelf]").forEach(function (shelf) {
@@ -72,6 +75,15 @@
       emptyInsertThreshold: 32,
       filter: "[data-split], [data-send]",
       preventOnFilter: false,
+      // On a touch screen a block is held a moment before it moves, so a swipe that starts
+      // on a block scrolls the page instead of dragging the block. A mouse drags at once.
+      delay: 300,
+      delayOnTouchOnly: true,
+      touchStartThreshold: 8,
+      onChoose: function () {
+        // A short buzz says the block is picked up, where the phone can.
+        if (window.matchMedia("(pointer: coarse)").matches && navigator.vibrate) navigator.vibrate(12);
+      },
       onEnd: function (event) {
         if (event.from === event.to && event.oldIndex === event.newIndex) return;
         save(event.from === event.to ? [event.to] : [event.from, event.to]);
