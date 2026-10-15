@@ -8,6 +8,13 @@ Sleeve & Shelf is a self-hosted web application that organizes a vinyl record co
 
 It's built for collectors who track their collection on [Discogs](https://www.discogs.com/) and want a sorting proposal they can review and fine-tune, rather than a rigid, fully automated system.
 
+## Documentation
+
+The documentation lives at **<https://mark-me.github.io/sleeve-shelf/>**:
+
+- [User guide](https://mark-me.github.io/sleeve-shelf/user/) — getting started, browsing your shelves, Discogs, and how the sorting works
+- [Developer guide](https://mark-me.github.io/sleeve-shelf/developer/) — architecture, data model, the sorting engine, development and deployment
+
 ## Status
 
 Phase 1 (the MVP) is built, and most of Phase 2.
@@ -84,7 +91,7 @@ Run the tests with `uv run python -m pytest`.
 - **Phase 2 — Ongoing use** (mostly built): syncing with Discogs, album covers and the showcase are there; only a suggested spot for new purchases is not
 - **Phase 3 — Refinement** (not started): deeper musical-kinship logic, song-level search, more languages, other media formats
 
-The documentation — a user guide and a developer guide — is at <https://mark-me.github.io/sleeve-shelf/>. Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
+Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
 
 ## AI Transparency
 
