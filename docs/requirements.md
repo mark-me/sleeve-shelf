@@ -498,6 +498,7 @@ An artist's page is reached from Layout (the name on a block) and from Browse/Se
 
 ### Browse/Search screen
 
+- **Searching while typing** (2026-10-15): the results follow the search field a quarter of a second after the last keystroke, here and on the Artists screen, without leaving the field; emptying it goes back to browsing. Enter still works, also without JavaScript
 - Crate-digging mode: renders the collection in physical order (cabinet → shelf → position within shelf), based on the current `Placement` data — scrolling through it mirrors flipping through the real shelves
 - One shelf at a time, with previous/next shelf and a shelf picker to jump straight to any shelf. Within a shelf the albums are grouped under a heading per cluster and era band (the artist's cluster), each row showing artist, title, and original year
 - Search bar filtering by artist or album title (Phase 1); song-level search added once tracklist data is fetched (Phase 3). Every word typed must occur in the artist or title; case and accents are ignored. A result links to its shelf with the album marked, or to the Unplaced albums list when it has no spot. The artist name on a shelf row opens that artist (see Artists screen)

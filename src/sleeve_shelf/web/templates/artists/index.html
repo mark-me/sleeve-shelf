@@ -7,7 +7,7 @@
   <h1>{{ _('Artists') }}</h1>
   <p class="ss-muted mt-1">{{ _('The cluster and start year of an artist decide where its albums are sorted.') }}</p>
 
-  <form class="d-flex flex-wrap gap-2 mt-3" method="get" action="{{ url_for('artists.index') }}" role="search">
+  <form class="d-flex flex-wrap gap-2 mt-3" method="get" action="{{ url_for('artists.index') }}" role="search" data-live-search>
     <label for="artist-search" class="visually-hidden">{{ _('Search an artist') }}</label>
     <input id="artist-search" class="ss-search" style="max-width: 420px;" type="search" name="q" value="{{ search_text }}" placeholder="{{ _('Search an artist…') }}" autocomplete="off">
     {% if only_attention %}<input type="hidden" name="show" value="attention">{% endif %}

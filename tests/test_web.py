@@ -527,3 +527,13 @@ def test_only_a_measured_shelf_is_marked_as_too_full(client):
     assert next(s for s in store.load(Shelf) if s.id == 1).width_measured is True
     # A new shelf is taken to be measured unless unticked.
     assert 'name="width_measured" checked' in client.get("/storage/cabinets/1/shelves/new").text
+
+
+def test_the_search_fields_search_while_typing(client):
+    _load(client)
+
+    for page in ("/browse", "/browse?q=tinder", "/artists/"):
+        text = client.get(page).text
+        assert 'role="search" data-live-search' in text, page
+        assert "/static/live-search.js" in text
+    assert client.get("/static/live-search.js").status_code == 200
