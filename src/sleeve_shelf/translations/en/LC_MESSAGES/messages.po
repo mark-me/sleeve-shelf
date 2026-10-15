@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-15 21:26+0200\n"
+"POT-Creation-Date: 2026-10-15 22:41+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -663,30 +663,6 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Related artists"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Whom Discogs connects this artist to, among the artists in your collection."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Other names"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Member of"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Members"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "no cluster yet"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Picture"
 msgstr ""
 
@@ -735,6 +711,30 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "rough width"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Related artists"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Whom Discogs connects this artist to, among the artists in your collection."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Other names"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Member of"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Members"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "no cluster yet"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
@@ -1055,11 +1055,19 @@ msgid "Merging moves the artists, styles and location rules of the ticked cluste
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "albums in the layout"
+#, python-format
+msgid "of %(total)d"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "on a shelf"
+#, python-format
+msgid "albums on a shelf · %(num)d without a place"
+msgid_plural "albums on a shelf · %(num)d without a place"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "albums on a shelf"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1074,12 +1082,7 @@ msgid "clusters"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "cabinets"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/setup/preview.html
-msgid "shelves"
+msgid "cabinets · shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -2280,6 +2283,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/setup/preview.html
 msgid "This is what was found in the workbook. Nothing has been loaded yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/setup/preview.html
+msgid "shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/setup/preview.html

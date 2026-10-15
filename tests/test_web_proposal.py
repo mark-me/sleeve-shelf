@@ -365,7 +365,9 @@ def test_dashboard_sums_up_and_lists_what_is_waiting(client):
 
     page = client.get("/dashboard/").text
 
-    assert "albums in the layout" in page
+    # One LP without a place: the albums tile says so and leads there.
+    assert "without a place" in page and 'class="ss-stat ss-stat-link ss-stat-wide" href="/unplaced"' in page
+    assert 'href="/artists/"><div class="ss-stat-number">' in page
     assert "1 artist without a confirmed cluster or a start year" in page
     assert "1 box set or bundle with a rough width" in page
     assert "1 LP without a place" in page

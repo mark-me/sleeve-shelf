@@ -8,12 +8,17 @@
   <h1>{{ _('Dashboard') }}</h1>
 
   <div class="ss-stats mt-3">
-    <div class="ss-stat"><div class="ss-stat-number">{{ album_count }}</div><div class="ss-stat-label">{{ _('albums in the layout') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ placed_count }}</div><div class="ss-stat-label">{{ _('on a shelf') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ artist_count }}</div><div class="ss-stat-label">{{ _('artists') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ cluster_count }}</div><div class="ss-stat-label">{{ _('clusters') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ cabinet_count }}</div><div class="ss-stat-label">{{ _('cabinets') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ shelf_count }}</div><div class="ss-stat-label">{{ _('shelves') }}</div></div>
+    {# Each tile leads to the screen it counts. The albums lead to those without a place while
+       there are any. #}
+    {% set unplaced_count = album_count - placed_count %}
+    <a class="ss-stat ss-stat-link ss-stat-wide" href="{{ url_for('browse.unplaced') if unplaced_count else url_for('browse.browse') }}">
+      <div class="ss-stat-number">{{ placed_count }} <span class="ss-stat-of">{{ _('of %(total)d', total=album_count) }}</span></div>
+      <div class="ss-meter mt-2" aria-hidden="true"><div class="ss-meter-fill" style="width: {{ (100 * placed_count / album_count) | round | int if album_count else 0 }}%;"></div></div>
+      <div class="ss-stat-label mt-1">{% if unplaced_count %}{{ ngettext('albums on a shelf · %(num)d without a place', 'albums on a shelf · %(num)d without a place', unplaced_count) }}{% else %}{{ _('albums on a shelf') }}{% endif %}</div>
+    </a>
+    <a class="ss-stat ss-stat-link" href="{{ url_for('artists.index') }}"><div class="ss-stat-number">{{ artist_count }}</div><div class="ss-stat-label">{{ _('artists') }}</div></a>
+    <a class="ss-stat ss-stat-link" href="{{ url_for('clusters.index') }}"><div class="ss-stat-number">{{ cluster_count }}</div><div class="ss-stat-label">{{ _('clusters') }}</div></a>
+    <a class="ss-stat ss-stat-link" href="{{ url_for('storage.index') }}"><div class="ss-stat-number">{{ cabinet_count }} <span class="ss-stat-of">&middot; {{ shelf_count }}</span></div><div class="ss-stat-label">{{ _('cabinets · shelves') }}</div></a>
   </div>
   {% if single_count %}
   <p class="ss-muted small mt-2">{{ ngettext('%(num)d single or EP is kept outside the layout.', '%(num)d singles and EPs are kept outside the layout.', single_count) }}</p>

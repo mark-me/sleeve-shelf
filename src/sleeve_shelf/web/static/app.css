@@ -384,6 +384,12 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 
 .ss-stat-number { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-size: 1.5rem; font-weight: 700; }
 .ss-stat-label { font-size: 0.78rem; color: var(--ss-muted); }
+/* A tile that leads to its screen; the albums tile is wider, with how far the shelves are filled. */
+a.ss-stat-link { color: inherit; text-decoration: none; }
+a.ss-stat-link:hover, a.ss-stat-link:focus-visible { border-color: var(--ss-accent); }
+.ss-stat-wide { flex: 2 1 240px; }
+.ss-stat-wide .ss-meter { max-width: none; height: 6px; }
+.ss-stat-of { font-size: 1rem; font-weight: 500; color: var(--ss-muted); }
 
 /* Storage: cabinets with their shelves. */
 .ss-card-head {
@@ -431,7 +437,7 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 
 a.ss-row-artist { color: inherit; text-decoration: none; }
 a.ss-row-artist:hover { color: var(--ss-accent); }
-.ss-page a:not(.ss-button):not(.ss-row):not(.ss-row-artist) { color: var(--ss-accent); }
+.ss-page a:not(.ss-button):not(.ss-row):not(.ss-row-artist):not(.ss-stat-link) { color: var(--ss-accent); }
 
 /* Layout: shelves with draggable blocks of albums. */
 .ss-shelf { padding: 14px 20px; border-top: 1px solid var(--ss-border); }
