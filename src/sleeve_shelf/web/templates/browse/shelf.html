@@ -7,6 +7,7 @@
 {% endmacro %}
 
 {% from "_cover.html" import cover %}
+{% from "_play.html" import play_button, play_script %}
 {% block content %}
 <div class="ss-page d-none d-lg-block mb-4">
   <h1>{{ _('Browse / Search') }}</h1>
@@ -64,6 +65,7 @@
         <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=album.artist_id) }}">{{ album.artist }}</a>
         <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</a>
       </div>
+      {{ play_button(album.album_id, album.title) }}
     </div>
     {% endfor %}
   </div>
@@ -74,4 +76,5 @@
 {% if shelf %}
 <div class="ss-sticky-bottom ss-shelf-nav d-lg-none mt-3">{{ shelf_nav() }}</div>
 {% endif %}
+{{ play_script() }}
 {% endblock %}

@@ -4,6 +4,8 @@
 
 **Browse** shows one shelf at a time, in the order the albums actually stand — crate digging on a screen. Step through the shelves with *Previous shelf* and *Next shelf*, or jump to one with the list of shelves. The albums are grouped by cluster and era band, so you see where one section ends and the next begins.
 
+Every album has a **▶** button: it plays the album's 30-second previews from Deezer, one track after another, and shows the track playing under the title. Press it again to stop; pressing another album stops the first. When Deezer doesn't have the album, the row says so — its page may still have videos.
+
 **Search** finds artists and albums across all shelves. The results follow as you type; choosing one opens its shelf with the album marked. Emptying the search field takes you back to browsing.
 
 ## 💿 An album's page

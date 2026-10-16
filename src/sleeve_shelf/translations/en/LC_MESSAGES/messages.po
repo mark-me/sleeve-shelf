@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-16 10:51+0200\n"
+"POT-Creation-Date: 2026-10-16 12:33+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -250,6 +250,19 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/_cover.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Close"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_play.html
+#, python-format
+msgid "Play previews of %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_play.html
+msgid "No previews at Deezer — see the album’s page"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_play.html
+msgid "Previews need an internet connection"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_rules_and_move.html

@@ -4,6 +4,7 @@ from flask import (
     Blueprint,
     abort,
     current_app,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -71,6 +72,21 @@ def listen(album_id: int):
     if found is None:
         abort(404)
     return render_template("albums/_listen.html", album_id=album_id, listening=found)
+
+
+@blueprint.get("/<int:album_id>/previews")
+def previews(album_id: int):
+    """The album's previews from Deezer, for the play button in Browse. Discogs is not asked:
+    its videos are for the album's page, and a shelf full of buttons should not wait on it."""
+    deezer = current_app.config.get("DEEZER_CLIENT_FACTORY", DeezerClient)()
+    found = listening(get_store(), album_id, deezer, None)
+    if found is None:
+        abort(404)
+    return jsonify(
+        album=found.album.title if found.album else None,
+        tracks=[{"title": t.title, "preview": t.preview} for t in found.tracks if t.preview],
+        unreachable=found.unreachable,
+    )
 
 
 @blueprint.post("/<int:album_id>/listen/not-this")

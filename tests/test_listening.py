@@ -156,3 +156,41 @@ def test_the_album_page_loads_previews_and_videos_after_it_is_shown(tmp_path):
     client.post("/albums/1/listen/not-this")
     assert "Open in Deezer" not in client.get("/albums/1/listen").text
     assert client.get("/albums/99/listen").status_code == 404
+
+
+def test_browse_has_a_play_button_that_gets_the_previews_without_asking_discogs(tmp_path):
+    from openpyxl import Workbook
+
+    asked = []
+
+    class _NoDiscogs:
+        def __init__(self, token=""):
+            asked.append(token)
+
+    app = create_app(tmp_path / "data")
+    app.config["DEEZER_CLIENT_FACTORY"] = lambda: _Deezer(CLOSING_TIME)
+    app.config["DISCOGS_CLIENT_FACTORY"] = _NoDiscogs
+    client = app.test_client()
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Kastindeling"
+    sheet.append(["Locatie", "Vak", "Cluster", "Era-band (artiest)", "Artiest", "Titel"])
+    sheet.append(["Kast", "a", "Singer-Songwriter", "1970s", "Tom Waits", "Closing Time"])
+    path = tmp_path / "layout.xlsx"
+    workbook.save(path)
+    with path.open("rb") as file:
+        client.post("/setup/upload", data={"workbook": (file, "layout.xlsx")})
+    client.post("/setup/confirm")
+
+    for page in ("/browse", "/browse?q=closing"):
+        text = client.get(page).text
+        assert 'data-play-album="/albums/1/previews"' in text and "/static/browse-play.js" in text, page
+    # A search result still leads to the album's shelf.
+    assert 'class="ss-row-link" href="/browse?shelf=1#album-1"' in client.get("/browse?q=closing").text
+
+    previews = client.get("/albums/1/previews").get_json()
+    # Only the tracks that have a preview; Discogs is left alone.
+    assert previews["album"] == "Closing Time" and previews["tracks"] == [
+        {"title": "Martha", "preview": "https://cdnt-preview/1.mp3"}
+    ]
+    assert asked == [] and client.get("/albums/99/previews").status_code == 404

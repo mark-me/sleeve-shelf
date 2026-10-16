@@ -1,0 +1,16 @@
+{# A button that plays an album's previews from Deezer, one track after another (browse-play.js). #}
+{% macro play_button(album_id, title) %}
+<button class="ss-play" type="button" data-play-album="{{ url_for('albums.previews', album_id=album_id) }}"
+        aria-label="{{ _('Play previews of %(title)s', title=title) }}">&#9654;</button>
+{% endmacro %}
+
+{# Once per page: the words the script shows, and the script. #}
+{% macro play_script() %}
+<script>
+  window.browseText = {
+    none: {{ _('No previews at Deezer — see the album’s page') | tojson }},
+    offline: {{ _('Previews need an internet connection') | tojson }}
+  };
+</script>
+<script src="{{ url_for('static', filename='browse-play.js') }}" defer></script>
+{% endmacro %}
