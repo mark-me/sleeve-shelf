@@ -400,7 +400,8 @@ def test_menu_has_five_sections_and_tabs_that_count_what_is_waiting(client):
     assert [menu.index(f"<span>{name}</span>") for name in sections] == sorted(
         menu.index(f"<span>{name}</span>") for name in sections
     )
-    assert menu.count("<a ") == 5
+    # Five sections, and Help apart at the end.
+    assert menu.count("<a ") == 6 and menu.rindex("<span>Help</span>") > menu.index("<span>Settings</span>")
     # Browse belongs to Collection: that section is marked, and its screens are the tabs.
     collection = menu[menu.rindex("<a ", 0, menu.index("<span>Collection</span>")):]
     assert 'class="active"' in collection[: collection.index("</a>")]

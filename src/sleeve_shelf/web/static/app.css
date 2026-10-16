@@ -103,6 +103,8 @@ h2 { font-size: 1.15rem; margin: 0; }
 
 .ss-nav a:hover { color: #fff; }
 .ss-nav a { gap: 12px; }
+/* Help sits apart from the five sections, at the end of the menu. */
+.ss-nav a.ss-nav-help { margin-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.08); border-radius: 0 0 8px 8px; }
 /* Icon, name, and the count pushed to the end. The icon takes the colour of the text. */
 .ss-nav a > span:not(.ss-nav-count) { flex: 1; }
 .ss-nav-icon { flex-shrink: 0; fill: currentColor; opacity: 0.85; }
@@ -163,15 +165,33 @@ details.ss-card:not([open]) > summary { border-bottom: none; }
 }
 
 /* The screens of a section, as tabs above the page; they scroll sideways on a phone. */
+/* Above the page: the section's tabs, and at the end the way to the page's part of the guide. */
+.ss-section-bar {
+  display: flex;
+  align-items: stretch;
+  margin: 0 0 4px;
+  padding: 0 8px 0 16px;
+  border-bottom: 1px solid var(--ss-border);
+}
 .ss-section-tabs {
   display: flex;
+  flex: 1;
+  min-width: 0;
   gap: 4px;
-  margin: 0 0 4px;
-  padding: 0 16px;
-  border-bottom: 1px solid var(--ss-border);
   overflow-x: auto;
   scrollbar-width: none;
 }
+.ss-help-link {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 10px 8px;
+  color: var(--ss-muted);
+  text-decoration: none;
+}
+.ss-help-link svg { fill: currentColor; }
+.ss-help-link:hover, .ss-help-link:focus-visible { color: var(--ss-accent); }
 .ss-section-tabs a {
   display: flex;
   align-items: center;
@@ -216,7 +236,7 @@ details.ss-card:not([open]) > summary { border-bottom: none; }
   .ss-brand { font-size: 1.15rem; padding: 0 4px; }
   .ss-nav { flex: 1; gap: 4px; padding-top: 24px; }
   .ss-nav a { height: 40px; flex-shrink: 0; }
-  .ss-section-tabs { margin: -16px 0 28px; padding: 0; }
+  .ss-section-bar { margin: -16px 0 28px; padding: 0; }
   .ss-main { flex: 1; padding: 40px 48px; }
   .ss-page { padding: 0; }
 }

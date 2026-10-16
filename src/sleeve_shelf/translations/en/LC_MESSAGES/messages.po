@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-16 00:26+0200\n"
+"POT-Creation-Date: 2026-10-16 10:16+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -843,6 +843,14 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Waiting for you"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
+msgid "Help"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
+msgid "How this screen works"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html

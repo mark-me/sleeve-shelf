@@ -65,6 +65,8 @@ The five menu sections and their tabs are declared once, in `web/navigation.py`;
 
 What waits for a decision — matches, family suggestions, albums without a place, shelves over a measured width — is counted in one place, `web/waiting.py`. The counts feed both the Dashboard and the numbers in the menu. Working them out takes a while (family suggestions compare every artist with every other), so they are kept until a data file or `config.yaml` changes.
 
+Each tab also names the part of the user guide that explains its screen, as `help="user/shelves/#layout"`; pages that share a tab but have their own part are in `PAGE_HELP`. The **?** beside the tabs links there. The app serves the documentation site itself under `/help/` (`web/help.py`): the Docker image builds it with Zensical and carries it in `/app/help`; a local run uses `docs-site/site` once built, and GitHub Pages otherwise. `tests/test_help.py` checks that every page and anchor named exists — rename a heading in the guide and the test says which screen to update.
+
 Screens that need a collection are listed in `NEEDS_COLLECTION` in `src/sleeve_shelf/__init__.py`; without a collection they lead to the setup wizard.
 
 ## 🖼️ Covers and pictures

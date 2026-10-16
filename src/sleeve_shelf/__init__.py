@@ -38,8 +38,10 @@ from sleeve_shelf.web import (
     storage,
     versions,
 )
+from sleeve_shelf.web import help as help_screen
 from sleeve_shelf.web import proposal as proposal_screen
 from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.help import help_url
 from sleeve_shelf.web.waiting import menu_counts
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
@@ -59,6 +61,10 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
     # Set by the Docker image build; a local run has no version.
     app.config["VERSION"] = os.environ.get("SLEEVE_SHELF_VERSION", "dev")
+    # The built documentation site: carried by the Docker image, or built in the repository.
+    app.config["HELP_DIR"] = Path(
+        os.environ.get("SLEEVE_SHELF_HELP_DIR") or Path(__file__).resolve().parents[2] / "docs-site" / "site"
+    )
     Babel(app, default_locale="en")
     if any(path.is_file() for path in (app.config["DATA_DIR"] / COVER_DIR).glob("*")):
         # Images stored before covers and pictures each had a folder: sort them out once.
@@ -88,6 +94,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(albums.blueprint)
     app.register_blueprint(pwa.blueprint)
     app.register_blueprint(covers.blueprint)
+    app.register_blueprint(help_screen.blueprint)
     app.add_template_filter(covers.local_cover, "local_cover")
 
     @app.before_request
@@ -114,6 +121,8 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
             "nav_section": section,
             "nav_tab": tab,
             "section_count": navigation.section_count,
+            # The part of the user guide that explains this page.
+            "help_url": help_url(navigation.help_target(request, section, tab)),
         }
 
     @app.get("/")
