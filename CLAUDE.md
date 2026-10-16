@@ -22,6 +22,7 @@ uv run python -m sleeve_shelf load <workbook.xlsx> # load a layout workbook
 uv run python -m sleeve_shelf import-discogs <collection.csv>
 uv run python -m sleeve_shelf enrich               # fetch styles and original years from Discogs
 uv run python -m sleeve_shelf set-picture "<artist>" <image>  # add your own picture of an artist
+uv run python -m sleeve_shelf set-password         # the owner's password (also to recover it); --remove opens the app
 ```
 
 After changing UI copy, extract the translation template again and bring the catalogues up to date (a test fails otherwise):
@@ -38,11 +39,11 @@ cd docs-site && uv run python -m zensical serve           # preview while writin
 cd docs-site && uv run python -m zensical build --strict  # build; warnings fail it
 ```
 
-Every level-2 heading there starts with an emoji, unique across the site, and the data-model diagram is copied from `docs/requirements.md`; `tests/test_docs.py` checks both, and that the navigation in `zensical.toml` names every page. Mermaid's ER diagrams treat some words as keywords (`Style`): quote such an entity name, as the requirements do. A push to `main` touching the docs publishes them to GitHub Pages (`.github/workflows/docs.yml`).
+Every level-2 heading there starts with an emoji, unique across the site, and the data-model diagram is copied from `docs/requirements.md`; `tests/test_docs.py` checks both, and that the navigation in `zensical.toml` names every page. Mermaid's ER diagrams treat some words as keywords (`Style`): quote such an entity name, as the requirements do. A push to `main` touching the docs publishes them to GitHub Pages (`.github/workflows/docs.yml`). The app serves the same site as its help under `/help/` (`web/help.py`): the Docker image builds and carries it (`SLEEVE_SHELF_HELP_DIR`); a local run uses `docs-site/site` once built, else GitHub Pages. Each tab in `web/navigation.py` names its part of the user guide (`help="user/shelves/#layout"`); `tests/test_help.py` checks every such page and anchor exists, so renaming a heading in the guide means updating it there.
 
 Always use the `python -m` form. On Mark's managed work laptop the generated `.exe` console scripts (`uv run pytest`, `uv run sleeve-shelf`) are refused; the module form works everywhere.
 
-Environment variables: `SLEEVE_SHELF_DATA_DIR` (default `data`), `SLEEVE_SHELF_HOST`, `SLEEVE_SHELF_PORT`.
+Environment variables: `SLEEVE_SHELF_DATA_DIR` (default `data`), `SLEEVE_SHELF_HOST`, `SLEEVE_SHELF_PORT`, `SLEEVE_SHELF_HTTP_LOGIN=1` to let the owner log in over plain HTTP when trying things locally (the session cookie is HTTPS-only otherwise), and `SLEEVE_SHELF_PROXIES` — the number of proxies before the app that may say who a visitor is (1 behind Tailscale Funnel; without it a forwarded address is ignored, so all visitors behind a proxy would share one limit).
 
 ## Layout of the code
 
@@ -66,13 +67,14 @@ Things that are easy to get wrong:
 - **`JsonStore.save` rewrites the whole file.** Load the list, change it, save the list.
 - **A new id comes from `store.next_id(Entity, items)`**, never from "highest + 1": ids of removed items stay taken, because saved versions and location rules still name them.
 - **Queries read several entity files at once** and fail when one doesn't exist yet. Check `store.exists(...)` or `has_collection()` first.
+- **Visitors and the owner** (`web/login.py`): with a password set, a visitor may open only the endpoints in `VISITOR_PAGES`, and only with GET; everything else asks for the login. A new screen is therefore the owner's by default. A page a visitor may open hides its actions behind `{% if is_owner %}` — check what a visitor sees when adding a button to Browse, an album's or an artist's page. Without a password everyone is the owner, so the tests that don't set one are unaffected.
 - **A screen that needs a collection** is listed in `NEEDS_COLLECTION` in `src/sleeve_shelf/__init__.py`; without a collection it then leads to the wizard. Don't add a guard of its own to the blueprint.
 - **UI copy goes through Flask-Babel**: `_()` and `ngettext()` in templates and views. The catalogues are in `src/sleeve_shelf/translations/` (template `messages.pot`, English `en/`); English is the only language. Compiled `.mo` files are git-ignored and not needed while there is only English — a second language needs a compile step in the Docker build.
 - **Bootstrap, SortableJS and the menu icons are vendored** in `web/static/vendor/` so the app works offline. The icons are five Bootstrap Icons in one sprite, `menu-icons.svg`, each named after its section's key in `web/navigation.py`. Don't switch them to a CDN. Covers and pictures are shown from `data/covers/albums/` and `data/covers/artists/` once the fetch run has stored them (template filter `local_cover`), and from Discogs until then; every page has to work without them.
 
 ## Data
 
-The `data/` directory is git-ignored. It holds the collection as JSON files, the Discogs cache, saved layout versions in `placements/`, stored covers and pictures in `covers/albums/` and `covers/artists/`, pictures of artists Mark added himself in `artist_pictures/` (his own: never delete or overwrite them; the `.thumb.jpg` files next to them are small copies made with Pillow), and `config.yaml` — which contains the Discogs token. Never commit it, and never print the token in full; the UI shows only its last four characters.
+The `data/` directory is git-ignored. It holds the collection as JSON files, the Discogs cache, saved layout versions in `placements/`, stored covers and pictures in `covers/albums/` and `covers/artists/`, pictures of artists Mark added himself in `artist_pictures/` (his own: never delete or overwrite them; the `.thumb.jpg` files next to them are small copies made with Pillow), `session_key` (signs the owner's login; made once), and `config.yaml` — which contains the Discogs token and the owner's password, hashed. Never commit it, and never print the token in full; the UI shows only its last four characters.
 
 The Discogs cache (`discogs_releases.json`, `discogs_masters.json`, `discogs_artists.json`) took hours to fetch at Discogs' rate limit. Don't delete it, and don't start an enrichment while another is running.
 
@@ -86,7 +88,7 @@ When trying something out on real data, work on a copy of `data/` (point `SLEEVE
 - **Nothing is moved or lost silently.** A proposal sits next to the current layout until accepted; a later workbook upload changes only the layout; a shelf can only be removed when empty; changing the layout by hand keeps a version to go back to. Keep new features in that spirit.
 - **Tests accompany every feature.** They live in `tests/`, use real files in `tmp_path`, and drive the web layer through Flask's test client.
 - **Say what was and wasn't verified.** Report which screens were actually looked at and which are covered by tests only. Screenshots can be taken with headless Chrome against a server on a spare port; interactions such as dragging have not been exercised in a real browser.
-- **Mark commits himself**, on a feature branch, with short Dutch commit messages. Don't commit or push unless asked.
+- **Mark commits himself**, on a feature branch. Commit messages are always in **English** (decided 2026-10-16), even though the conversation is in Dutch: a short subject line, and a body when the change needs explaining. Don't commit or push unless asked.
 
 ## Known and accepted
 

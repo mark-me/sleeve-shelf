@@ -40,19 +40,41 @@
         {% if count %}<span class="ss-nav-count" title="{{ _('Waiting for you') }}">{{ count }}</span>{% endif %}
       </a>
       {% endfor %}
+      {# Help opens beside the app: the place in the app is kept, and an installed app has no back button. #}
+      <a href="{{ url_for('help.page', path='user/') }}" class="ss-nav-help" target="sleeve-shelf-help">
+        <svg class="ss-nav-icon" width="18" height="18" aria-hidden="true"><use href="{{ url_for('static', filename='vendor/menu-icons.svg') }}#help"></use></svg>
+        <span>{{ _('Help') }}</span>
+      </a>
+      {% if has_password %}
+      {% if is_owner %}
+      <form method="post" action="{{ url_for('login.logout') }}">
+        <button class="ss-nav-login" type="submit">{{ _('Log out') }}</button>
+      </form>
+      {% else %}
+      <a class="ss-nav-login" href="{{ url_for('login.page', next=request.full_path) }}">{{ _('Log in') }}</a>
+      {% endif %}
+      {% endif %}
       {% endblock %}
     </nav>
   </header>
   <main class="ss-main">
-    {% if nav_section and nav_section.tabs | length > 1 %}
-    <nav class="ss-section-tabs" aria-label="{{ nav_section.label | string }}">
-      {% for tab in nav_section.tabs %}
-      <a href="{{ url_for(tab.endpoint) }}" class="{{ 'active' if tab == nav_tab }}"{% if tab == nav_tab %} aria-current="page"{% endif %}>
-        {{ tab.label | string }}
-        {% if tab.count and menu_counts.get(tab.count) %}<span class="ss-nav-count">{{ menu_counts[tab.count] }}</span>{% endif %}
+    {% if nav_section %}
+    {# The tabs of the section, and beside them the way to this page's part of the user guide. #}
+    <div class="ss-section-bar">
+      {% if nav_section.tabs | length > 1 %}
+      <nav class="ss-section-tabs" aria-label="{{ nav_section.label | string }}">
+        {% for tab in nav_section.tabs %}
+        <a href="{{ url_for(tab.endpoint) }}" class="{{ 'active' if tab == nav_tab }}"{% if tab == nav_tab %} aria-current="page"{% endif %}>
+          {{ tab.label | string }}
+          {% if tab.count and menu_counts.get(tab.count) %}<span class="ss-nav-count">{{ menu_counts[tab.count] }}</span>{% endif %}
+        </a>
+        {% endfor %}
+      </nav>
+      {% endif %}
+      <a class="ss-help-link" href="{{ help_url }}" target="sleeve-shelf-help" title="{{ _('How this screen works') }}" aria-label="{{ _('How this screen works') }}">
+        <svg width="20" height="20" aria-hidden="true"><use href="{{ url_for('static', filename='vendor/menu-icons.svg') }}#help"></use></svg>
       </a>
-      {% endfor %}
-    </nav>
+    </div>
     {% endif %}
     {% block content %}{% endblock %}
   </main>

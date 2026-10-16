@@ -16,6 +16,8 @@ The menu has five sections. Each opens on its first screen; the other screens of
 
 A number next to a section or tab tells you how many things wait there for a decision — matches to confirm, suggested families, albums without a place, shelves that are too full.
 
+The **?** beside the tabs opens the part of this guide about the screen you are on; **Help** at the end of the menu opens the guide itself.
+
 ## 🔁 A typical round
 
 ```mermaid

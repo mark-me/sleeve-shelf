@@ -1,15 +1,28 @@
 """Albums: the page of one album, moving it, and the real width of box sets and bundles."""
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_babel import gettext as _
 
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Album, Artist, Placement, Style, find_by_id
+from sleeve_shelf.ingestion.deezer import DeezerClient
+from sleeve_shelf.ingestion.discogs_api import DiscogsClient
+from sleeve_shelf.listening import listening, turn_down
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
 from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.taking_part import albums_taking_part, takes_part
 from sleeve_shelf.web.context import get_store, parse_number
+from sleeve_shelf.web.login import visitor_may_listen
 from sleeve_shelf.web.places import described_rules, described_spots, shelf_options
 from sleeve_shelf.widths import set_measured_width
 
@@ -45,6 +58,47 @@ def detail(album_id: int):
         moved=request.args.get("moved"),
         error=request.args.get("error"),
     )
+
+
+@blueprint.get("/<int:album_id>/listen")
+def listen(album_id: int):
+    """The album's previews and videos, as a part the album's page loads after it is shown:
+    the page itself never waits for Deezer or Discogs."""
+    store = get_store()
+    if not visitor_may_listen():
+        return render_template("albums/_listen.html", album_id=album_id, listening=None), 429
+    deezer = current_app.config.get("DEEZER_CLIENT_FACTORY", DeezerClient)()
+    # Discogs answers a few lookups without a token too, at a lower rate.
+    token = load_settings(current_app.config["DATA_DIR"]).discogs_token or ""
+    discogs = current_app.config.get("DISCOGS_CLIENT_FACTORY", DiscogsClient)(token)
+    found = listening(store, album_id, deezer, discogs)
+    if found is None:
+        abort(404)
+    return render_template("albums/_listen.html", album_id=album_id, listening=found)
+
+
+@blueprint.get("/<int:album_id>/previews")
+def previews(album_id: int):
+    """The album's previews from Deezer, for the play button in Browse. Discogs is not asked:
+    its videos are for the album's page, and a shelf full of buttons should not wait on it."""
+    if not visitor_may_listen():
+        return jsonify(album=None, tracks=[], unreachable=False, busy=True), 429
+    deezer = current_app.config.get("DEEZER_CLIENT_FACTORY", DeezerClient)()
+    found = listening(get_store(), album_id, deezer, None)
+    if found is None:
+        abort(404)
+    return jsonify(
+        album=found.album.title if found.album else None,
+        tracks=[{"title": t.title, "preview": t.preview} for t in found.tracks if t.preview],
+        unreachable=found.unreachable,
+    )
+
+
+@blueprint.post("/<int:album_id>/listen/not-this")
+def listen_not_this(album_id: int):
+    """The album Deezer gave is another one: leave it out for this album."""
+    turn_down(get_store(), album_id)
+    return redirect(url_for("albums.detail", album_id=album_id) + "#listen")
 
 
 @blueprint.post("/<int:album_id>/move")

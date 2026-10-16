@@ -15,6 +15,7 @@ import duckdb
 
 from sleeve_shelf.domain import (
     Album,
+    AlbumListening,
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
@@ -199,6 +200,21 @@ _TABLES: dict[type, _Table] = {
     MasterEnrichment: _Table(
         "discogs_masters.json",
         {"master_id": "INTEGER", "original_release_year": "INTEGER", "fetched_at": "TIMESTAMP"},
+    ),
+    AlbumListening: _Table(
+        "listening.json",
+        {
+            "album_id": "INTEGER",
+            "checked_at": "TIMESTAMP",
+            "deezer_album_id": "BIGINT",
+            "deezer_title": "VARCHAR",
+            "deezer_artist": "VARCHAR",
+            "deezer_cover": "VARCHAR",
+            "turned_down": "BOOLEAN",
+            "video_titles": "VARCHAR[]",
+            "video_urls": "VARCHAR[]",
+        },
+        {"video_titles": tuple, "video_urls": tuple},
     ),
     ArtistEnrichment: _Table(
         "discogs_artists.json",

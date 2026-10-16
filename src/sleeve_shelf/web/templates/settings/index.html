@@ -65,6 +65,43 @@
     </div>
   </form>
 
+  <section class="ss-card mt-4" id="password">
+    <div class="ss-card-head"><h2>{{ _('Owner’s password') }}</h2></div>
+    <div class="ss-card-body d-flex flex-column gap-3">
+      {% if password_error %}<div class="ss-alert" role="alert">{{ password_error }}</div>{% endif %}
+      {% if password_done == 'set' %}<div class="ss-alert">{{ _('Password saved. This device stays logged in; others log in with the new password.') }}</div>{% endif %}
+      {% if password_done == 'removed' %}<div class="ss-alert">{{ _('Password removed: the app is open again.') }}</div>{% endif %}
+      {% if has_password %}
+      <p class="mb-0">{{ _('Visitors can look your collection up and listen; changing anything needs this password.') }}</p>
+      {% else %}
+      <p class="mb-0">{{ _('The app is open: anyone who can reach it can change everything. Set a password, and visitors can only look your collection up.') }}</p>
+      {% endif %}
+      <form class="d-flex flex-column gap-3" method="post" action="{{ url_for('settings.password') }}">
+        {% if has_password %}
+        <div>
+          <label for="current" class="form-label fw-semibold">{{ _('Current password') }}</label>
+          <input id="current" class="form-control" style="max-width: 360px;" type="password" name="current" autocomplete="current-password" required>
+        </div>
+        {% endif %}
+        <div>
+          <label for="new" class="form-label fw-semibold">{{ _('New password') }}</label>
+          <input id="new" class="form-control" style="max-width: 360px;" type="password" name="new" autocomplete="new-password" minlength="{{ min_password_length }}">
+          <div class="form-text">{{ _('At least %(num)d characters. The app is reachable from the internet, so make it a strong one.', num=min_password_length) }}</div>
+        </div>
+        <div>
+          <label for="repeat" class="form-label fw-semibold">{{ _('New password again') }}</label>
+          <input id="repeat" class="form-control" style="max-width: 360px;" type="password" name="repeat" autocomplete="new-password">
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="ss-button ss-button-primary" type="submit">{{ _('Save password') }}</button>
+          {% if has_password %}
+          <button class="ss-button" type="submit" name="action" value="remove" formnovalidate>{{ _('Remove the password') }}</button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
+
   <section class="ss-card mt-4">
     <div class="ss-card-head"><h2>{{ _('Appearance') }}</h2></div>
     <div class="ss-card-body d-flex flex-wrap align-items-center justify-content-between gap-2">

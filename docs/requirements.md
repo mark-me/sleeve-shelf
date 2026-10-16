@@ -64,7 +64,19 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 ### Non-functional requirements
 
 - Open source
-- Single-user application
+- Single-user application: one owner, who can change everything. **Visitors** may look the collection up, nothing more (see below)
+- **Visitors and the owner's login** (decided and built 2026-10-16). A visitor without a login can search and browse the collection, open an album's and an artist's page to read them, listen (Deezer previews, Discogs videos), and read the user guide. Everything else — every change, and every other screen — needs the owner's login:
+  - **Closed unless listed**: one list in the app names what a visitor may open, and only to read (GET): Browse/Search, the album and artist pages, the previews, the help, covers, and the app's own files. Any other screen, and anything added later, asks for the login; a visitor's change is refused
+  - **What a visitor sees**: the menu holds only Collection (Browse / Search) and Help; the album and artist pages leave out their actions (moving, location rules, width, own picture, *Put it there*, *Not this album*). Layout, Showcase, and the other screens are the owner's only
+  - **Listening by a visitor is allowed**, though the first listen to an album keeps what Deezer found in `listening.json` — the only thing a visitor writes, and harmless
+  - **The login**: a page asking for a password only, as there is one owner. The password is stored hashed; it is set with a command (`set-password`) and changed under Settings. Logged in, a device stays logged in until the owner logs out. After a few failed attempts each next attempt waits longer
+  - **Without a password the app stays open**, everyone being the owner, as before; Settings says so. Setting a password is what makes visitors visitors
+  - **Recovering**: a forgotten password is set again from the command line on the server (`set-password`, which can also `--remove` it); there is no reset by mail, as there is no mail
+  - **Over plain HTTP** (a test on one's own machine or network) the HTTPS-only cookie would not be kept, so logging in would not stick: `SLEEVE_SHELF_HTTP_LOGIN=1` allows it there
+  - The key that signs the session is made once per installation and kept in the data directory (`session_key`), so a login survives a restart or a new container. It is written whole or not at all, and one that is not a full key is made anew
+  - A login is tied to exactly the password it was checked against, so a password changed during the login leaves it logged out; after logging in, only a page of this app is gone to (no other site, also not one written with a backslash)
+  - The Discogs token and all settings stay behind the login. The check against forms from other sites stays, and the session cookie is limited to this site
+  - **Open to the internet** (decided 2026-10-16): visitors reach the app publicly, not only over the owner's own network. So the login has to hold against strangers: the session cookie is sent over HTTPS only (the app sits behind HTTPS, as it already must to be installed on a phone), failed logins slow down per address — the address the trusted proxy names (`SLEEVE_SHELF_PROXIES`, the number of proxies before the app, 1 behind Tailscale Funnel); without that setting a forwarded address is not believed, as a client could make up a new one with every attempt — and the password should be a strong one, which the Settings screen says when it is set. A visitor's listening asks Deezer on the app's behalf; that is limited per visitor, so the app cannot be used to flood Deezer
 - Onboarding/guidance as an ongoing design principle for non-technical users — not just for the Discogs API integration, but also for setting up the storage structure and CSV import
 - Self-hosted, deployed via Docker containers
 - Strict separation of concerns: the sorting engine, persistence, and web layer are independent of each other
@@ -178,6 +190,7 @@ erDiagram
     MasterEnrichment |o..o{ ReleaseEnrichment : "master_id"
     ArtistEnrichment |o..o{ Artist : "discogs_artist_id"
     Album ||--o| MatchProposal : "proposed for"
+    Album ||--o| AlbumListening : "listened to via"
     Artist ||--o| FamilyDismissal : "turned down as anchor"
 
     Artist {
@@ -285,6 +298,17 @@ erDiagram
         int year
         datetime fetched_at
     }
+    AlbumListening {
+        int album_id PK, FK
+        datetime checked_at "when Deezer was last searched"
+        int deezer_album_id "nullable: none found"
+        string deezer_title "nullable"
+        string deezer_artist "nullable"
+        string deezer_cover "nullable"
+        bool turned_down "the user said it is another album"
+        list video_titles "nullable until Discogs was asked"
+        list video_urls "nullable until Discogs was asked"
+    }
     MatchProposal {
         int album_id FK
         int release_id
@@ -328,6 +352,7 @@ erDiagram
 - **ReleaseEnrichment**: release_id, styles, master_id, year (the release's own year — the original year when there is no master), fetched_at
 - **MasterEnrichment**: master_id, original_release_year, fetched_at
 - **ArtistEnrichment**: discogs_artist_id, image_url (the artist's picture at Discogs, in full), thumb_url (the same at 150 px), fetched_at, `member_ids`, `group_ids`, `alias_ids` (the Discogs ids of the band's members, of the bands a person is in, and of the artist's other names — Discogs lists these in the same artist lookup; the lists also hold artists that are not in the collection; null for a record cached before these were kept, which is fetched again once) — cached result of a Discogs artist lookup. An artist Discogs has no picture of is cached too, with both addresses empty, so it is not looked up again
+- **AlbumListening**: album_id, checked_at, `deezer_album_id`, `deezer_title`, `deezer_artist`, `deezer_cover` (the album found at Deezer by artist and title, or none), `turned_down` (the user said the album found is another one; Deezer is not asked again for it), `video_titles` and `video_urls` (the videos Discogs lists for the album's release; null until asked) — kept in `listening.json`, so an album's page asks Deezer and Discogs only once. The previews themselves are never kept: their addresses expire
 - **MatchProposal**: album_id, release_id, artist, title and format of that release, score, `cover_url` and `cover_image_url` (the covers of that release when the proposal comes from a sync, so that confirming the match gives the album its cover at once — 2026-10-13; empty for a proposal from an export) — an uncertain link between a loaded album and a Discogs release, waiting for confirmation (see [Initial load](#initial-load)); not a cache record, but it lives alongside them
 
 **Sorting/clustering**
@@ -363,7 +388,7 @@ erDiagram
 
 **Master data** (overwritable, no history needed):
 
-- `artists.json`, `alias_groups.json`, `family_dismissals.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_releases.json`, `discogs_masters.json` and `discogs_artists.json` (the enrichment cache — see Data model), `match_proposals.json`
+- `artists.json`, `alias_groups.json`, `family_dismissals.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_releases.json`, `discogs_masters.json` and `listening.json` (where an album can be listened to: its album at Deezer and its release's videos — see Data model), `discogs_artists.json` (the enrichment cache — see Data model), `match_proposals.json`
 - `id_marks.json` — the highest id ever handed out per kind of entity (see below)
 - `rule_suggestion_dismissals.json` — the location-rule suggestions the user turned down
 - `artist_pictures/` — the pictures of artists the user added (see Artists screen), per artist the picture as uploaded, named after the artist's id and a hash of the contents, and next to it its small copy (`….thumb.jpg`). These are the user's own: no sync or fetch run touches them
@@ -471,6 +496,8 @@ The menu has five sections (decided 2026-10-14): what is done daily on top, what
   - **Location rules** — bind a cluster, a family, an artist, or an album to a cabinet (see below)
 - **Settings** — edit `config.yaml`: the width-estimation constants, whether a bonus-disc bundle counts as vinyl, and the Discogs API token (masked, with a replace action); also the light/dark switch and the app's version (see below)
 
+**Help** (decided 2026-10-16): the documentation site (`docs-site/`, user guide and developer guide) is part of the app, under `/help/`. The Docker image builds it with Zensical and carries it, so the help belongs to the version that runs and works offline; without a built site — a local run — the help comes from GitHub Pages. *Help* at the end of the menu opens the user guide, and every screen has a **?** beside its tabs that opens the part of the user guide about that screen (Layout → *Layout*, Families → *Artist families*, an artist's page → *An artist's page*, …). Help opens in a window of its own, so the place in the app is kept. Mermaid diagrams in it need an internet connection.
+
 **Notices** (2026-10-16): a notice after a change ("Saved.", "Moved.", an error) is shown once; reloading the page, going back to it, or opening it later does not show it again. A format is shown with each of its terms once ("LP, Album, RE", not repeated per disc).
 
 **Counters in the menu**: a section shows the total of what waits in its screens, and each tab its own number when something there is waiting for the user — the same counts as the Dashboard's "Waiting for you": LPs without a place (Unplaced albums), artists without a confirmed cluster or start year, or with a new purchase pointing to another cluster (Artists), suggested families not yet looked at (Artist families), shelves filled beyond their measured width (Cabinets & shelves), and matches to confirm plus albums no longer in the Discogs collection (Discogs sync). An item with nothing waiting shows no number.
@@ -502,6 +529,7 @@ An artist's page is reached from Layout (the name on a block) and from Browse/Se
 
 ### Browse/Search screen
 
+- **Playing an album** (built 2026-10-16): every album, on a shelf and among search results, has a play button that plays its previews from Deezer one track after another, 30 seconds each; the track playing is shown under the album's title, and pressing again stops. One album plays at a time: pressing another stops the first, also while the first is still being looked up. An album Deezer does not have says so, pointing to its page, where Discogs' videos may be. Browse asks only Deezer, not Discogs, so a shelf stays quick. Finding the album and keeping it found works as on the album's page (see Detail screen, *Listen*)
 - **Searching while typing** (2026-10-15): the results follow the search field a quarter of a second after the last keystroke, here and on the Artists screen, without leaving the field; emptying it goes back to browsing. Enter still works, also without JavaScript
 - Crate-digging mode: renders the collection in physical order (cabinet → shelf → position within shelf), based on the current `Placement` data — scrolling through it mirrors flipping through the real shelves
 - One shelf at a time, with previous/next shelf and a shelf picker to jump straight to any shelf. Within a shelf the albums are grouped under a heading per cluster and era band (the artist's cluster), each row showing artist, title, and original year
@@ -630,6 +658,7 @@ The detail of an artist and of an album are two pages.
 - the artist (linking back), and the original year with whether it was confirmed by hand
 - where it stands (linking to that shelf) or that it stands on no shelf, and the cluster and era band it is sorted under
 - format, Discogs styles, and a link to the release on Discogs; a notice when the album is no longer in the Discogs collection, or when it is a single or EP kept outside the layout
+- **Listen** (decided and built 2026-10-16): loaded after the page is shown, so the page never waits for it. From **Deezer** (free, no key) the album found by artist and title, with its cover, title and a link to it, and per track a button that plays its 30-second preview, one at a time. The album found counts only when title and artist are both close to ours, and a live record, remix, soundtrack, tribute, karaoke, instrumental or cover version of the same name is never taken for it unless ours is one; on several the plain edition wins. With several artists credited, the first is searched for too. *Not this album* turns a wrong find down for good. Below that the **videos Discogs lists** for the album's release — mostly YouTube, often whole tracks — played only when asked for, through youtube-nocookie, so the page loads nothing from YouTube before that. As anyone can add a video to a release, only web addresses (http and https) are taken — a `javascript:` link would run a stranger's script within the app; one thing plays at a time, a video being taken away again when a preview or another video starts. An album Deezer does not have is looked for again after 30 days. Without a connection the block says listening needs one. Measured on 50 random LPs of the collection (2026-10-16): Deezer had 37 (74%), every one the right album or an edition of it; the rest are mostly old compilations and less known pressings
 - **Width**: the estimate, and the measured width to set or clear — the same action as on the Album widths screen
 
 **On both pages:**
@@ -640,6 +669,7 @@ The detail of an artist and of an album are two pages.
 
 ## Open questions
 
+- **Listening**: chosen without asking — how close a title (80%) and an artist (70%) must be for Deezer's album to count; which words make it another album (live, remix, soundtrack, tribute, karaoke, instrumental, cover); looking for a missing album again after 30 days
 - **Measured shelf widths**: chosen without asking — a shelf added by hand starts as measured; only shelves over a measured width count as waiting, so the 23 shelves over their workbook estimate no longer do; a showcase's warning still goes by its width whether measured or not
 - **Families from Discogs**: chosen without asking — a family is named after the person rather than a band; a band shared by two artists in the collection is suggested to neither; three bands is the most a person can have in the collection before counting as a sideman (a fixed number, not a setting); and nothing is chained through fellow members. To be checked against the real collection once the artist records are fetched again.
 - **Cluster by connection**: decided by Mark on 2026-10-12 — connection before styles, direct connections only, only artists without a confirmed cluster; and, after the check against the collection, close connections decide while loose ones indicate (see Sorting logic §1). Chosen without asking: connected artists count by their number of albums; the artists list does not show the proposal, the artist's page and a sorting proposal do. In the collection as it stands 4 artists get a cluster by a close connection and 3 an indication by a loose one. Taken together, with each curated artist left out in turn, a close connection pointed to the artist's own cluster for 46 of 59 artists and a loose one for 28 of 54. Nick Cave himself counts as a sideman, being in four bands of the collection — the fixed limit of three (see Families from Discogs) is worth another look

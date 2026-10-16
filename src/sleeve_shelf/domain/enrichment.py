@@ -58,3 +58,25 @@ class MatchProposal:
     # The cover of that release, as a sync gave it, for the album to take with the release.
     cover_url: str | None = None
     cover_image_url: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class AlbumListening:
+    """Where an album can be listened to: its album at Deezer, and its release's videos.
+
+    Kept so an album's page does not search Deezer or ask Discogs again each time; the
+    previews themselves are fetched afresh, as their addresses expire.
+    """
+
+    album_id: int
+    checked_at: datetime
+    # The album at Deezer, as found by artist and title; None when none was found.
+    deezer_album_id: int | None = None
+    deezer_title: str | None = None
+    deezer_artist: str | None = None
+    deezer_cover: str | None = None
+    # The user said the album found is another one: it is not offered again.
+    turned_down: bool = False
+    # The videos Discogs lists for the album's release; None until they were asked for.
+    video_titles: tuple[str, ...] | None = None
+    video_urls: tuple[str, ...] | None = None
