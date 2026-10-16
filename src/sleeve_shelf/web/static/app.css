@@ -642,6 +642,9 @@ a.ss-row-title { text-decoration: none; }
 .ss-play:hover:not(:disabled), .ss-play:focus-visible { border-color: var(--ss-accent); }
 .ss-play:disabled { opacity: 0.3; }
 .ss-video-frame { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+/* A video plays below its title, at the full width of the row. */
+.ss-video { flex-wrap: wrap; }
+.ss-video .ss-video-frame { flex: 1 0 100%; order: 2; }
 
 /* A row that leads somewhere, with a play button beside the link. */
 .ss-row-link { display: flex; flex: 1; min-width: 0; align-items: center; gap: 10px; color: inherit; text-decoration: none; }

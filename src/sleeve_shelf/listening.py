@@ -17,7 +17,11 @@ from sleeve_shelf.ingestion.deezer import (
     DeezerError,
     DeezerTrack,
 )
-from sleeve_shelf.ingestion.discogs_api import DiscogsClient, DiscogsError
+from sleeve_shelf.ingestion.discogs_api import (
+    DiscogsClient,
+    DiscogsError,
+    is_web_address,
+)
 from sleeve_shelf.persistence import JsonStore
 
 # An album Deezer did not have is looked for again after this long: catalogues grow.
@@ -111,7 +115,12 @@ def listening(
         except DeezerError:
             unreachable = True
 
-    videos = [Video(title, url) for title, url in zip(record.video_titles or (), record.video_urls or ())]
+    # Kept before addresses were checked, a video could still hold another kind of link.
+    videos = [
+        Video(title, url)
+        for title, url in zip(record.video_titles or (), record.video_urls or ())
+        if is_web_address(url)
+    ]
     return Listening(deezer_album, tracks, videos, record.turned_down, unreachable)
 
 

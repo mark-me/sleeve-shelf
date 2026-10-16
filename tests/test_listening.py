@@ -194,3 +194,27 @@ def test_browse_has_a_play_button_that_gets_the_previews_without_asking_discogs(
         {"title": "Martha", "preview": "https://cdnt-preview/1.mp3"}
     ]
     assert asked == [] and client.get("/albums/99/previews").status_code == 404
+
+
+def test_only_web_addresses_are_taken_as_videos(store):
+    import json
+
+    from sleeve_shelf.ingestion.discogs_api import DiscogsClient, is_web_address
+
+    assert is_web_address("https://www.youtube.com/watch?v=y9Mse62NFl4")
+    assert not any(is_web_address(a) for a in ("javascript:alert(1)", " JavaScript:alert(1)", "data:text/html,x", "//x", "", None))
+
+    release = {"videos": [
+        {"title": "Martha", "uri": "https://www.youtube.com/watch?v=y9Mse62NFl4"},
+        {"title": "Click me", "uri": "javascript:alert(document.cookie)"},
+    ]}
+    client = DiscogsClient("", fetch=lambda request: json.dumps(release).encode(), sleep=lambda s: None)
+    assert client.videos(1) == (("Martha", "https://www.youtube.com/watch?v=y9Mse62NFl4"),)
+
+    # A link kept before addresses were checked is left out when the page is shown.
+    store.save(AlbumListening, [AlbumListening(
+        1, datetime.now(), video_titles=("Martha", "Click me"),
+        video_urls=("https://www.youtube.com/watch?v=y9Mse62NFl4", "javascript:alert(1)"),
+    )])
+    shown = listening(store, 1, _Deezer(None), None)
+    assert [video.title for video in shown.videos] == ["Martha"]

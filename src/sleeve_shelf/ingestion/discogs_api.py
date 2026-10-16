@@ -3,6 +3,7 @@
 import json
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from datetime import datetime
@@ -78,10 +79,16 @@ class DiscogsClient:
         )
 
     def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
-        """The videos Discogs users linked to a release, as (title, address); mostly YouTube."""
+        """The videos Discogs users linked to a release, as (title, address); mostly YouTube.
+
+        Anyone can add a video to a release, so only web addresses are taken: a link such as
+        `javascript:` would run a stranger's script within this app when clicked.
+        """
         data = self._get(f"/releases/{release_id}") or {}
         return tuple(
-            (video.get("title") or "", video["uri"]) for video in data.get("videos") or () if video.get("uri")
+            (video.get("title") or "", video["uri"])
+            for video in data.get("videos") or ()
+            if is_web_address(video.get("uri"))
         )
 
     def master(self, master_id: int) -> MasterEnrichment:
@@ -190,6 +197,14 @@ class DiscogsClient:
             if wait > 0:
                 self._sleep(wait)
         self._last_request = self._clock()
+
+
+def is_web_address(address: str | None) -> bool:
+    """Whether an address from outside is a plain web page: http or https, with a host."""
+    if not address:
+        return False
+    parts = urllib.parse.urlsplit(address.strip())
+    return parts.scheme.lower() in ("http", "https") and bool(parts.netloc)
 
 
 def _fetch(request: urllib.request.Request) -> bytes:

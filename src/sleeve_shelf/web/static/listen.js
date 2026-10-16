@@ -1,26 +1,33 @@
-// An album's page: load what can be played of it, then play one preview or video at a time.
+// An album's page: load what can be played of it, then play one thing at a time — a preview,
+// or a video. Starting one stops what plays: a preview is paused, a video taken away again.
 (function () {
   const section = document.getElementById("listen");
   if (!section) return;
   const audio = new Audio();
-  let playing = null;
+  let preview = null; // the button of the preview playing
+  let video = null; // {frame, button} of the video showing
 
   function stop() {
     audio.pause();
-    if (playing) playing.textContent = "\u25B6";
-    playing = null;
+    if (preview) preview.textContent = "\u25B6";
+    preview = null;
+    if (video) {
+      // Taking the frame away is the only way to stop a YouTube video from here.
+      video.frame.replaceWith(video.button);
+      video = null;
+    }
   }
   audio.addEventListener("ended", stop);
 
   function wire() {
     section.querySelectorAll("[data-preview]").forEach(function (button) {
       button.addEventListener("click", function () {
-        if (playing === button) return stop();
+        if (preview === button) return stop();
         stop();
         audio.src = button.dataset.preview;
         audio.play().catch(stop);
         button.textContent = "\u275A\u275A";
-        playing = button;
+        preview = button;
       });
     });
     // A video is only loaded from YouTube when asked for, without YouTube's cookies.
@@ -33,10 +40,19 @@
         frame.allow = "autoplay; encrypted-media; picture-in-picture";
         frame.allowFullscreen = true;
         frame.title = button.getAttribute("aria-label");
-        button.closest(".ss-video").after(frame);
-        button.remove();
+        button.replaceWith(frame);
+        video = { frame: frame, button: button };
       });
     });
+  }
+
+  // What is shown when nothing could be loaded: plain text, never markup.
+  function notice(text) {
+    const body = document.createElement("div");
+    body.className = "ss-card-body ss-muted";
+    body.textContent = text;
+    const card = section.querySelector("[data-listen-body]");
+    card.replaceChildren(body);
   }
 
   fetch(section.dataset.url)
@@ -49,7 +65,6 @@
       wire();
     })
     .catch(function () {
-      section.querySelector("[data-listen-body]").innerHTML =
-        '<div class="ss-card-body ss-muted">' + section.dataset.offline + "</div>";
+      notice(section.dataset.offline);
     });
 })();
