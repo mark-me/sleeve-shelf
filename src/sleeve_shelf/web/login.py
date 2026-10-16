@@ -23,7 +23,7 @@ from flask import (
 )
 from flask_babel import gettext as _
 
-from sleeve_shelf.access import check_password, has_password
+from sleeve_shelf.access import has_password, verified_hash
 from sleeve_shelf.config import load_settings
 
 blueprint = Blueprint("login", __name__)
@@ -76,11 +76,12 @@ def is_owner() -> bool:
     return g.is_owner
 
 
-def remember_owner() -> None:
-    """Log this device in as the owner, until logging out or the password changes."""
+def remember_owner(password_hash: str) -> None:
+    """Log this device in as the owner, tied to the hash that was verified: until logging
+    out, or until the password changes."""
     session.clear()
     session.permanent = True
-    session["owner"] = _fingerprint(_password_hash())
+    session["owner"] = _fingerprint(password_hash)
     g.pop("is_owner", None)
 
 
@@ -113,10 +114,10 @@ def visitor_may_listen() -> bool:
 
 
 def _address() -> str:
-    """Who is asking. Behind a proxy (as on the internet) the proxy adds the address it
-    saw last in X-Forwarded-For; earlier entries come from the client and are not trusted."""
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    return forwarded.rsplit(",", 1)[-1].strip() or request.remote_addr or ""
+    """Who is asking, for the limits. Only the proxies the app is told to trust
+    (SLEEVE_SHELF_PROXIES, see create_app) may name the address behind them; otherwise a
+    client could name a new one with every request and never be held up."""
+    return request.remote_addr or ""
 
 
 def _wait(address: str) -> int:
@@ -129,8 +130,16 @@ def _wait(address: str) -> int:
 
 
 def _safe_next(target: str | None) -> str:
-    """Where to go after logging in: a page of this app, never another site."""
-    if target and target.startswith("/") and not target.startswith("//") and not urlsplit(target).netloc:
+    """Where to go after logging in: a page of this app, never another site. A backslash is
+    refused too, as browsers read "/\\elsewhere.example" as another site."""
+    if (
+        target
+        and target.startswith("/")
+        and not target.startswith("//")
+        and "\\" not in target
+        and not any(ord(char) < 32 or ord(char) == 127 for char in target)
+        and not urlsplit(target).netloc
+    ):
         return target
     return url_for("index")
 
@@ -148,9 +157,9 @@ def page():
         if wait:
             error = _("Too many attempts. Try again in %(seconds)d seconds.", seconds=wait)
             status = 429
-        elif check_password(current_app.config["DATA_DIR"], request.form.get("password", "")):
+        elif verified := verified_hash(current_app.config["DATA_DIR"], request.form.get("password", "")):
             _failures.pop(address, None)
-            remember_owner()
+            remember_owner(verified)
             return redirect(target)
         else:
             count, _last = _failures.get(address, (0, 0.0))

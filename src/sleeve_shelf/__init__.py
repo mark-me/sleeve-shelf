@@ -9,6 +9,7 @@ from pathlib import Path
 
 from flask import Flask, abort, redirect, request, url_for
 from flask_babel import Babel
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from sleeve_shelf.access import has_password, remove_password, session_key, set_password
 from sleeve_shelf.artists import set_picture
@@ -69,6 +70,12 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.config["SESSION_COOKIE_SECURE"] = os.environ.get("SLEEVE_SHELF_HTTP_LOGIN") != "1"
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
+    # How many proxies stand before the app and may say who the client is (Tailscale Funnel or
+    # a reverse proxy: 1). Without, a forwarded address is not believed, as a client could
+    # make one up to escape the limits on logging in and listening.
+    proxies = int(os.environ.get("SLEEVE_SHELF_PROXIES") or 0)
+    if proxies:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=proxies, x_proto=proxies)
     # Set by the Docker image build; a local run has no version.
     app.config["VERSION"] = os.environ.get("SLEEVE_SHELF_VERSION", "dev")
     # The built documentation site: carried by the Docker image, or built in the repository.

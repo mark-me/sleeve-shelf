@@ -43,7 +43,7 @@ Every level-2 heading there starts with an emoji, unique across the site, and th
 
 Always use the `python -m` form. On Mark's managed work laptop the generated `.exe` console scripts (`uv run pytest`, `uv run sleeve-shelf`) are refused; the module form works everywhere.
 
-Environment variables: `SLEEVE_SHELF_DATA_DIR` (default `data`), `SLEEVE_SHELF_HOST`, `SLEEVE_SHELF_PORT`, and `SLEEVE_SHELF_HTTP_LOGIN=1` to let the owner log in over plain HTTP when trying things locally (the session cookie is HTTPS-only otherwise).
+Environment variables: `SLEEVE_SHELF_DATA_DIR` (default `data`), `SLEEVE_SHELF_HOST`, `SLEEVE_SHELF_PORT`, `SLEEVE_SHELF_HTTP_LOGIN=1` to let the owner log in over plain HTTP when trying things locally (the session cookie is HTTPS-only otherwise), and `SLEEVE_SHELF_PROXIES` — the number of proxies before the app that may say who a visitor is (1 behind Tailscale Funnel; without it a forwarded address is ignored, so all visitors behind a proxy would share one limit).
 
 ## Layout of the code
 

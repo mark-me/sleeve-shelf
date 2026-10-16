@@ -13,6 +13,7 @@ from sleeve_shelf.access import (
     set_password,
 )
 from sleeve_shelf.web import login
+from sleeve_shelf.web.help import ONLINE
 
 PASSWORD = "a long and strong one"
 
@@ -57,8 +58,11 @@ def test_a_visitor_may_look_the_collection_up_and_nothing_more(app):
 
     # Looking up: the collection, an album, an artist, listening, the help.
     assert visitor.get("/").headers["Location"] == "/browse"
-    for page in ("/browse", "/browse?q=closing", "/albums/1", "/artists/1", "/help/"):
-        assert visitor.get(page).status_code in (200, 302), page
+    for page in ("/browse", "/browse?q=closing", "/albums/1", "/artists/1"):
+        assert visitor.get(page).status_code == 200, page
+    # The help is the built site, or GitHub Pages where none is built — never the login.
+    help_page = visitor.get("/help/")
+    assert help_page.status_code == 200 or help_page.headers["Location"].startswith(ONLINE)
     # Every other screen asks for the login, and every change is refused.
     for page in ("/dashboard/", "/layout/", "/settings/", "/discogs/", "/unplaced", "/families/"):
         response = visitor.get(page)
@@ -105,9 +109,9 @@ def test_failed_logins_slow_down(app):
     # From then on each attempt waits, even with the right password.
     stuck = stranger.post("/login", data={"password": PASSWORD})
     assert stuck.status_code == 429 and "Try again in" in stuck.text
-    # Another address is not held up.
-    other = stranger.post("/login", data={"password": PASSWORD}, headers={"X-Forwarded-For": "203.0.113.9"})
-    assert other.status_code == 302
+    # Naming another address does not help: without trusted proxies it is not believed.
+    spoofed = stranger.post("/login", data={"password": PASSWORD}, headers={"X-Forwarded-For": "203.0.113.9"})
+    assert spoofed.status_code == 429
 
 
 def test_changing_the_password_logs_out_other_devices(app):
@@ -163,3 +167,58 @@ def test_the_password_is_set_from_the_command_line(tmp_path, monkeypatch, capsys
     assert len(PASSWORD) >= MIN_PASSWORD_LENGTH
     main(["set-password", "--remove"])
     assert not has_password(tmp_path / "data")
+
+
+def test_behind_a_trusted_proxy_each_visitor_has_their_own_limit(tmp_path, monkeypatch):
+    monkeypatch.setenv("SLEEVE_SHELF_HTTP_LOGIN", "1")
+    monkeypatch.setenv("SLEEVE_SHELF_PROXIES", "1")
+    login._failures.clear()
+    app = create_app(tmp_path / "data")
+    set_password(app.config["DATA_DIR"], PASSWORD)
+    client = app.test_client()
+
+    # The proxy adds the address it saw last; what the client wrote before that is not used.
+    stranger = {"X-Forwarded-For": "198.51.100.7, 203.0.113.66"}
+    for _ in range(login.FREE_ATTEMPTS):
+        client.post("/login", data={"password": "guess"}, headers=stranger)
+    assert client.post("/login", data={"password": PASSWORD}, headers=stranger).status_code == 429
+    owner = client.post("/login", data={"password": PASSWORD}, headers={"X-Forwarded-For": "203.0.113.9"})
+    assert owner.status_code == 302
+
+
+def test_after_logging_in_only_a_page_of_this_app_is_gone_to(app):
+    set_password(app.config["DATA_DIR"], PASSWORD)
+    for target in ("https://elsewhere.example/", "//elsewhere.example", "/\\elsewhere.example", "/\telsewhere"):
+        response = app.test_client().post("/login", data={"password": PASSWORD, "next": target})
+        assert response.headers["Location"] == "/", target
+    kept = app.test_client().post("/login", data={"password": PASSWORD, "next": "/layout/?room=Zolder"})
+    assert kept.headers["Location"] == "/layout/?room=Zolder"
+
+
+def test_a_login_is_tied_to_the_password_it_was_checked_against(app):
+    from flask import session
+
+    from sleeve_shelf.access import verified_hash
+
+    data_dir = app.config["DATA_DIR"]
+    set_password(data_dir, PASSWORD)
+    # The old password is checked, then changed by another request before the login ends.
+    old = verified_hash(data_dir, PASSWORD)
+    set_password(data_dir, "a newer strong one")
+    with app.test_request_context("/"):
+        login.remember_owner(old)
+        assert session["owner"]
+        login.g.pop("is_owner", None)
+        assert not login.is_owner()
+
+
+def test_a_session_key_cut_short_is_made_anew(tmp_path):
+    from sleeve_shelf.access import SESSION_KEY_FILE, session_key
+
+    path = tmp_path / SESSION_KEY_FILE
+    path.write_text("ab12")
+    key = session_key(tmp_path)
+
+    assert len(key) == 64 and path.read_text() == key.decode()
+    assert path.stat().st_mode & 0o777 == 0o600
+    assert session_key(tmp_path) == key

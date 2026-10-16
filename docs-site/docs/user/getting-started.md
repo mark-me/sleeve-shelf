@@ -8,13 +8,14 @@ Sleeve & Shelf runs on your own machine or server and keeps everything in one da
 uv run python -m sleeve_shelf
 ```
 
-Then open <http://127.0.0.1:5000>. Three environment variables change how it runs:
+Then open <http://127.0.0.1:5000>. These environment variables change how it runs:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `SLEEVE_SHELF_DATA_DIR` | `data` | Where the collection is kept |
 | `SLEEVE_SHELF_HOST` | `127.0.0.1` | Set to `0.0.0.0` to reach the app from your phone |
 | `SLEEVE_SHELF_PORT` | `5000` | The port to listen on |
+| `SLEEVE_SHELF_PROXIES` | — | Behind Tailscale Funnel or a reverse proxy: `1` |
 
 !!! note "Restart after an update"
     The app reads its page templates once, when it starts. After updating, restart it to see the changes.
