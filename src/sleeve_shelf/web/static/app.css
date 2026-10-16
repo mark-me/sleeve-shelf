@@ -631,3 +631,14 @@ a.ss-row-title { text-decoration: none; }
   position: absolute; right: 0; z-index: 4; width: min(320px, 80vw); margin-top: 6px; padding: 14px 16px;
   background: var(--ss-surface); border: 1px solid var(--ss-accent); border-radius: 10px; font-size: 0.875rem;
 }
+
+/* Listening on an album's page: a play button per track, a video once asked for. */
+.ss-listen-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.ss-track, .ss-video { justify-content: flex-start; gap: 12px; }
+.ss-play {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--ss-border); background: var(--ss-surface); color: var(--ss-accent); font-size: 0.8rem;
+}
+.ss-play:hover:not(:disabled), .ss-play:focus-visible { border-color: var(--ss-accent); }
+.ss-play:disabled { opacity: 0.3; }
+.ss-video-frame { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }

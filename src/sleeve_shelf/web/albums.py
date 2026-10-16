@@ -1,10 +1,21 @@
 """Albums: the page of one album, moving it, and the real width of box sets and bundles."""
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from flask_babel import gettext as _
 
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Album, Artist, Placement, Style, find_by_id
+from sleeve_shelf.ingestion.deezer import DeezerClient
+from sleeve_shelf.ingestion.discogs_api import DiscogsClient
+from sleeve_shelf.listening import listening, turn_down
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.placing import move_albums
 from sleeve_shelf.spots import place_at_spot
@@ -45,6 +56,28 @@ def detail(album_id: int):
         moved=request.args.get("moved"),
         error=request.args.get("error"),
     )
+
+
+@blueprint.get("/<int:album_id>/listen")
+def listen(album_id: int):
+    """The album's previews and videos, as a part the album's page loads after it is shown:
+    the page itself never waits for Deezer or Discogs."""
+    store = get_store()
+    deezer = current_app.config.get("DEEZER_CLIENT_FACTORY", DeezerClient)()
+    # Discogs answers a few lookups without a token too, at a lower rate.
+    token = load_settings(current_app.config["DATA_DIR"]).discogs_token or ""
+    discogs = current_app.config.get("DISCOGS_CLIENT_FACTORY", DiscogsClient)(token)
+    found = listening(store, album_id, deezer, discogs)
+    if found is None:
+        abort(404)
+    return render_template("albums/_listen.html", album_id=album_id, listening=found)
+
+
+@blueprint.post("/<int:album_id>/listen/not-this")
+def listen_not_this(album_id: int):
+    """The album Deezer gave is another one: leave it out for this album."""
+    turn_down(get_store(), album_id)
+    return redirect(url_for("albums.detail", album_id=album_id) + "#listen")
 
 
 @blueprint.post("/<int:album_id>/move")

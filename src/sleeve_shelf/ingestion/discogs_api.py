@@ -77,6 +77,13 @@ class DiscogsClient:
             year=data.get("year") or None,
         )
 
+    def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
+        """The videos Discogs users linked to a release, as (title, address); mostly YouTube."""
+        data = self._get(f"/releases/{release_id}") or {}
+        return tuple(
+            (video.get("title") or "", video["uri"]) for video in data.get("videos") or () if video.get("uri")
+        )
+
     def master(self, master_id: int) -> MasterEnrichment:
         """The original release year of a master."""
         data = self._get(f"/masters/{master_id}") or {}
@@ -151,13 +158,11 @@ class DiscogsClient:
         raise DiscogsError("Discogs kept limiting the requests.")
 
     def _get(self, path: str) -> dict | None:
-        request = urllib.request.Request(
-            API_ROOT + path,
-            headers={
-                "Authorization": f"Discogs token={self._token}",
-                "User-Agent": USER_AGENT,
-            },
-        )
+        headers = {"User-Agent": USER_AGENT}
+        # Without a token a few lookups still work, at a lower rate limit.
+        if self._token:
+            headers["Authorization"] = f"Discogs token={self._token}"
+        request = urllib.request.Request(API_ROOT + path, headers=headers)
         for attempt in range(1, MAX_ATTEMPTS + 1):
             self._pace()
             try:

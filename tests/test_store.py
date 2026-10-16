@@ -1,9 +1,11 @@
 """Tests for the JSON file store."""
 
 import json
+from datetime import datetime
 
 from sleeve_shelf.domain import (
     Album,
+    AlbumListening,
     Artist,
     ArtistClusterAssignment,
     Cabinet,
@@ -53,6 +55,11 @@ def test_every_entity_round_trips(tmp_path):
             ),
         ],
         Placement: [Placement(2, 1, 0, PlacementSource.INITIAL_LOAD)],
+        AlbumListening: [
+            AlbumListening(1, datetime(2026, 10, 16, 20, 0), 301, "Closing Time", "Tom Waits", "https://cdn/301.jpg",
+                           video_titles=("Martha",), video_urls=("https://www.youtube.com/watch?v=y9Mse62NFl4",)),
+            AlbumListening(2, datetime(2026, 10, 16, 20, 0), turned_down=True),
+        ],
     }
 
     for entity, values in items.items():

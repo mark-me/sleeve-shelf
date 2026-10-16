@@ -86,6 +86,15 @@
     </div>
   </div>
 
+  {# Filled after the page is shown, from Deezer and Discogs; without a connection it says so. #}
+  <section id="listen" class="mt-5" data-url="{{ url_for('albums.listen', album_id=album.id) }}" data-offline="{{ _('Listening needs an internet connection.') }}">
+    <h2>{{ _('Listen') }}</h2>
+    <div class="ss-card mt-3" data-listen-body>
+      <div class="ss-card-body ss-muted">{{ _('Looking for previews…') }}</div>
+    </div>
+  </section>
+  <script src="{{ url_for('static', filename='listen.js') }}" defer></script>
+
   <h2 class="mt-5">{{ _('Width') }}</h2>
   <form class="ss-card mt-3" method="post" action="{{ url_for('albums.set_width', album_id=album.id) }}">
     <div class="ss-card-body">

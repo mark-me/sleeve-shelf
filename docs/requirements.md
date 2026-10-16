@@ -178,6 +178,7 @@ erDiagram
     MasterEnrichment |o..o{ ReleaseEnrichment : "master_id"
     ArtistEnrichment |o..o{ Artist : "discogs_artist_id"
     Album ||--o| MatchProposal : "proposed for"
+    Album ||--o| AlbumListening : "listened to via"
     Artist ||--o| FamilyDismissal : "turned down as anchor"
 
     Artist {
@@ -285,6 +286,17 @@ erDiagram
         int year
         datetime fetched_at
     }
+    AlbumListening {
+        int album_id PK, FK
+        datetime checked_at "when Deezer was last searched"
+        int deezer_album_id "nullable: none found"
+        string deezer_title "nullable"
+        string deezer_artist "nullable"
+        string deezer_cover "nullable"
+        bool turned_down "the user said it is another album"
+        list video_titles "nullable until Discogs was asked"
+        list video_urls "nullable until Discogs was asked"
+    }
     MatchProposal {
         int album_id FK
         int release_id
@@ -328,6 +340,7 @@ erDiagram
 - **ReleaseEnrichment**: release_id, styles, master_id, year (the release's own year — the original year when there is no master), fetched_at
 - **MasterEnrichment**: master_id, original_release_year, fetched_at
 - **ArtistEnrichment**: discogs_artist_id, image_url (the artist's picture at Discogs, in full), thumb_url (the same at 150 px), fetched_at, `member_ids`, `group_ids`, `alias_ids` (the Discogs ids of the band's members, of the bands a person is in, and of the artist's other names — Discogs lists these in the same artist lookup; the lists also hold artists that are not in the collection; null for a record cached before these were kept, which is fetched again once) — cached result of a Discogs artist lookup. An artist Discogs has no picture of is cached too, with both addresses empty, so it is not looked up again
+- **AlbumListening**: album_id, checked_at, `deezer_album_id`, `deezer_title`, `deezer_artist`, `deezer_cover` (the album found at Deezer by artist and title, or none), `turned_down` (the user said the album found is another one; Deezer is not asked again for it), `video_titles` and `video_urls` (the videos Discogs lists for the album's release; null until asked) — kept in `listening.json`, so an album's page asks Deezer and Discogs only once. The previews themselves are never kept: their addresses expire
 - **MatchProposal**: album_id, release_id, artist, title and format of that release, score, `cover_url` and `cover_image_url` (the covers of that release when the proposal comes from a sync, so that confirming the match gives the album its cover at once — 2026-10-13; empty for a proposal from an export) — an uncertain link between a loaded album and a Discogs release, waiting for confirmation (see [Initial load](#initial-load)); not a cache record, but it lives alongside them
 
 **Sorting/clustering**
@@ -363,7 +376,7 @@ erDiagram
 
 **Master data** (overwritable, no history needed):
 
-- `artists.json`, `alias_groups.json`, `family_dismissals.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_releases.json`, `discogs_masters.json` and `discogs_artists.json` (the enrichment cache — see Data model), `match_proposals.json`
+- `artists.json`, `alias_groups.json`, `family_dismissals.json`, `albums.json`, `styles.json`, `clusters.json`, `cabinets.json`, `shelves.json`, `location_rules.json`, `cluster_assignments.json` (the ArtistClusterAssignments), `era_bands.json`, `discogs_releases.json`, `discogs_masters.json` and `listening.json` (where an album can be listened to: its album at Deezer and its release's videos — see Data model), `discogs_artists.json` (the enrichment cache — see Data model), `match_proposals.json`
 - `id_marks.json` — the highest id ever handed out per kind of entity (see below)
 - `rule_suggestion_dismissals.json` — the location-rule suggestions the user turned down
 - `artist_pictures/` — the pictures of artists the user added (see Artists screen), per artist the picture as uploaded, named after the artist's id and a hash of the contents, and next to it its small copy (`….thumb.jpg`). These are the user's own: no sync or fetch run touches them
@@ -632,6 +645,7 @@ The detail of an artist and of an album are two pages.
 - the artist (linking back), and the original year with whether it was confirmed by hand
 - where it stands (linking to that shelf) or that it stands on no shelf, and the cluster and era band it is sorted under
 - format, Discogs styles, and a link to the release on Discogs; a notice when the album is no longer in the Discogs collection, or when it is a single or EP kept outside the layout
+- **Listen** (decided and built 2026-10-16): loaded after the page is shown, so the page never waits for it. From **Deezer** (free, no key) the album found by artist and title, with its cover, title and a link to it, and per track a button that plays its 30-second preview, one at a time. The album found counts only when title and artist are both close to ours, and a live record, remix, soundtrack, tribute, karaoke, instrumental or cover version of the same name is never taken for it unless ours is one; on several the plain edition wins. With several artists credited, the first is searched for too. *Not this album* turns a wrong find down for good. Below that the **videos Discogs lists** for the album's release — mostly YouTube, often whole tracks — played only when asked for, through youtube-nocookie, so the page loads nothing from YouTube before that. An album Deezer does not have is looked for again after 30 days. Without a connection the block says listening needs one. Measured on 50 random LPs of the collection (2026-10-16): Deezer had 37 (74%), every one the right album or an edition of it; the rest are mostly old compilations and less known pressings
 - **Width**: the estimate, and the measured width to set or clear — the same action as on the Album widths screen
 
 **On both pages:**
@@ -642,6 +656,7 @@ The detail of an artist and of an album are two pages.
 
 ## Open questions
 
+- **Listening**: chosen without asking — how close a title (80%) and an artist (70%) must be for Deezer's album to count; which words make it another album (live, remix, soundtrack, tribute, karaoke, instrumental, cover); looking for a missing album again after 30 days. A play button in Browse is next (decided 2026-10-16)
 - **Measured shelf widths**: chosen without asking — a shelf added by hand starts as measured; only shelves over a measured width count as waiting, so the 23 shelves over their workbook estimate no longer do; a showcase's warning still goes by its width whether measured or not
 - **Families from Discogs**: chosen without asking — a family is named after the person rather than a band; a band shared by two artists in the collection is suggested to neither; three bands is the most a person can have in the collection before counting as a sideman (a fixed number, not a setting); and nothing is chained through fellow members. To be checked against the real collection once the artist records are fetched again.
 - **Cluster by connection**: decided by Mark on 2026-10-12 — connection before styles, direct connections only, only artists without a confirmed cluster; and, after the check against the collection, close connections decide while loose ones indicate (see Sorting logic §1). Chosen without asking: connected artists count by their number of albums; the artists list does not show the proposal, the artist's page and a sorting proposal do. In the collection as it stands 4 artists get a cluster by a close connection and 3 an indication by a loose one. Taken together, with each curated artist left out in turn, a close connection pointed to the artist's own cluster for 46 of 59 artists and a loose one for 28 of 54. Nick Cave himself counts as a sideman, being in four bands of the collection — the fixed limit of three (see Families from Discogs) is worth another look

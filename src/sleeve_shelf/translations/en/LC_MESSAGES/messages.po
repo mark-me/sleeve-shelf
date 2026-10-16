@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-16 10:16+0200\n"
+"POT-Creation-Date: 2026-10-16 10:51+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -377,6 +377,44 @@ msgstr ""
 msgid "Put it there"
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Open in Deezer"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Not this album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+#, python-format
+msgid "Play a preview of %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "30-second previews from Deezer, found by the artist and title; another edition may be the one found."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "You said the album Deezer found is another one; Deezer is not asked again for this album."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Deezer has no album by this artist and title."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Videos on Discogs"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+#, python-format
+msgid "Play %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Deezer or Discogs could not be reached, so there may be more to listen to later."
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Show the cover larger"
 msgstr ""
@@ -456,6 +494,18 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "not linked"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Listening needs an internet connection."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Listen"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Looking for previews…"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
