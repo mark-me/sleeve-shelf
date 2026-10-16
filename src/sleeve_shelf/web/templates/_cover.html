@@ -33,7 +33,7 @@
     </div>
   </div>
 </div>
-<script>
+<script nonce="{{ csp_nonce() }}">
   document.getElementById("cover-large").addEventListener("show.bs.modal", function () {
     const image = this.querySelector("img");
     if (!image.src) image.src = image.dataset.src;

@@ -107,7 +107,7 @@
   <p class="ss-muted small mt-3">{{ _('The most specific rule wins: an album’s own rule, then its artist’s, its family’s, its cluster’s. Rules take effect the next time a proposal is generated.') }}</p>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
   // Offer the names that go with the chosen kind of target.
   (function () {
     const kind = document.getElementById("target_type");

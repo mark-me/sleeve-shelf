@@ -6,8 +6,10 @@ asks for the login. Without a password the app is open and everyone is the owner
 """
 
 import hashlib
+import threading
 import time
-from collections import defaultdict, deque
+from collections import deque
+from collections.abc import Callable
 from urllib.parse import urlsplit
 
 from flask import (
@@ -22,6 +24,7 @@ from flask import (
     url_for,
 )
 from flask_babel import gettext as _
+from werkzeug.wrappers import Response
 
 from sleeve_shelf.access import has_password, verified_hash
 from sleeve_shelf.config import load_settings
@@ -54,9 +57,50 @@ LONGEST_WAIT_SECONDS = 300
 # this many seconds, so the app cannot be used to flood Deezer.
 VISITOR_LISTENS = 60
 VISITOR_LISTEN_SECONDS = 600
+# A visitor's pages run queries on the collection: at most this many per address in this many
+# seconds, far more than anyone browsing by hand opens, so nobody can keep the app busy.
+VISITOR_PAGES_PER_WINDOW = 300
+VISITOR_PAGE_SECONDS = 60
+# Not counted: files, as a shelf alone shows a hundred covers and sending a file costs little;
+# and the login, which has a limit of its own, so the owner can always log in.
+_NOT_COUNTED = frozenset({"static", "covers.file", "artists.picture", "help.page", "pwa.manifest", "login.page"})
+
+
+class _Window:
+    """What each address did within the last so many seconds, to hold one up that does too
+    much. Addresses gone quiet are forgotten, so a stream of new ones cannot fill memory."""
+
+    def __init__(self, settings: Callable[[], tuple[int, int]]):
+        # How many in how many seconds, asked on each use so a test can lower them.
+        self._settings = settings
+        self._times: dict[str, deque] = {}
+        self._lock = threading.Lock()
+
+    def allow(self, address: str) -> bool:
+        """Count this one, unless the address is at its limit already."""
+        limit, seconds = self._settings()
+        now = time.monotonic()
+        with self._lock:
+            if len(self._times) > 10_000:
+                self._times = {a: t for a, t in self._times.items() if t and now - t[-1] <= seconds}
+            recent = self._times.setdefault(address, deque())
+            while recent and now - recent[0] > seconds:
+                recent.popleft()
+            if len(recent) >= limit:
+                return False
+            recent.append(now)
+            return True
+
+    def clear(self) -> None:
+        with self._lock:
+            self._times.clear()
+
 
 _failures: dict[str, tuple[int, float]] = {}
-_listens: dict[str, deque] = defaultdict(deque)
+_listens = _Window(lambda: (VISITOR_LISTENS, VISITOR_LISTEN_SECONDS))
+_pages = _Window(lambda: (VISITOR_PAGES_PER_WINDOW, VISITOR_PAGE_SECONDS))
+# When each address was last reported as held up, so the log names it once per window.
+_reported: dict[str, float] = {}
 
 
 def _password_hash() -> str | None:
@@ -86,9 +130,12 @@ def remember_owner(password_hash: str) -> None:
 
 
 def guard():
-    """Run before every request: a visitor gets only what VISITOR_PAGES lists, to read."""
+    """Run before every request: a visitor gets only what VISITOR_PAGES lists, to read, and
+    only so many pages a minute."""
     if request.endpoint is None or is_owner():
         return None
+    if request.endpoint not in _NOT_COUNTED and not _pages.allow(_address()):
+        return _too_busy()
     if request.method in ("GET", "HEAD"):
         if request.endpoint in VISITOR_PAGES:
             return None
@@ -99,18 +146,22 @@ def guard():
     abort(403)
 
 
+def _too_busy() -> Response:
+    address = _address()
+    now = time.monotonic()
+    if now - _reported.get(address, -VISITOR_PAGE_SECONDS) >= VISITOR_PAGE_SECONDS:
+        _reported[address] = now
+        if len(_reported) > 10_000:
+            _reported.clear()
+        current_app.logger.warning("Visitor held up for too many requests from %s", address)
+    response = Response(_("Too many requests. Try again in a minute."), 429, mimetype="text/plain")
+    response.headers["Retry-After"] = str(VISITOR_PAGE_SECONDS)
+    return response
+
+
 def visitor_may_listen() -> bool:
     """Whether a visitor's next listen stays within the limit; the owner always may."""
-    if is_owner():
-        return True
-    now = time.monotonic()
-    recent = _listens[_address()]
-    while recent and now - recent[0] > VISITOR_LISTEN_SECONDS:
-        recent.popleft()
-    if len(recent) >= VISITOR_LISTENS:
-        return False
-    recent.append(now)
-    return True
+    return is_owner() or _listens.allow(_address())
 
 
 def _address() -> str:
@@ -157,13 +208,17 @@ def page():
         if wait:
             error = _("Too many attempts. Try again in %(seconds)d seconds.", seconds=wait)
             status = 429
+            current_app.logger.warning("Login refused, too many attempts, from %s", address)
         elif verified := verified_hash(current_app.config["DATA_DIR"], request.form.get("password", "")):
             _failures.pop(address, None)
             remember_owner(verified)
+            current_app.logger.info("Owner logged in from %s", address)
             return redirect(target)
         else:
             count, _last = _failures.get(address, (0, 0.0))
             _failures[address] = (count + 1, time.monotonic())
+            # A tool such as fail2ban can watch for this line and block the address.
+            current_app.logger.warning("Failed login from %s", address)
             error = _("That is not the password.")
             status = 401
     return render_template("login/page.html", target=target, error=error), status

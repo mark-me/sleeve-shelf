@@ -1,5 +1,6 @@
 """Application settings, kept in config.yaml inside the data directory."""
 
+import os
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
@@ -42,6 +43,20 @@ def load_settings(data_dir: str | Path) -> Settings:
 
 
 def save_settings(data_dir: str | Path, settings: Settings) -> None:
+    """Write config.yaml whole, readable by the app's own user only: it holds the Discogs
+    token and the hash of the owner's password."""
     path = Path(data_dir) / CONFIG_FILE
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(yaml.safe_dump(asdict(settings), sort_keys=False), encoding="utf-8")
+    temporary = path.with_suffix(".tmp")
+    temporary.unlink(missing_ok=True)
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8") as file:
+        file.write(yaml.safe_dump(asdict(settings), sort_keys=False))
+    os.replace(temporary, path)
+
+
+def protect_settings(data_dir: str | Path) -> None:
+    """Make a config.yaml written before this readable by the app's own user only."""
+    path = Path(data_dir) / CONFIG_FILE
+    if path.exists() and path.stat().st_mode & 0o077:
+        os.chmod(path, 0o600)

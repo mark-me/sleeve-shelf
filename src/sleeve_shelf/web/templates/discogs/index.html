@@ -245,7 +245,7 @@
   </section>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
   // While the fetching runs, keep the progress up to date and reload once it ends.
   (function () {
     const job = document.getElementById("job");
