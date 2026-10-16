@@ -428,6 +428,7 @@ erDiagram
   - push to `main` → `:main` and `:latest`, amd64 + arm64
   - a release tag `vX.Y.Z` on `main` → `:X.Y.Z`, amd64 + arm64
   - every image is also tagged with its short commit SHA
+- **Vulnerability scan** (2026-10-17): the Python packages the image runs on — `uv.lock` without the development tools — are checked with Trivy, in a folder holding only that list, so no ignore or configuration file from a pull request can hide a finding, on every pull request, on pushes, and weekly. A HIGH or CRITICAL vulnerability that has a fix fails the check and stops the image from being built; all findings, of every severity, are listed. Only fixable ones fail it — chosen without asking, as one without a fix cannot be resolved by updating
 - The build stamps the image with a version, shown in the app's navigation: `X.Y.Z` for a release, `X.Y.Z+main.<commits since release>.<sha>` on `main`, `X.Y.Z+test.<sha>` on `test`
 
 ## Onboarding wizard

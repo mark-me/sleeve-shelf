@@ -21,8 +21,14 @@ jobs:
       - name: Run tests
         run: uv run --locked python -m pytest
 
+  # The packages are checked for known vulnerabilities; a dangerous one stops the image.
+  security:
+    uses: ./.github/workflows/security.yml
+    permissions:
+      contents: read
+
   build-and-push:
-    needs: test
+    needs: [test, security]
     runs-on: ubuntu-latest
     permissions:
       contents: read
