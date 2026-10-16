@@ -75,6 +75,12 @@ With a password set (`access.py`, kept hashed in `config.yaml`), `web/login.py` 
 
 The pages a visitor may open hide their actions behind `{% if is_owner %}`, and the menu shows a visitor only Browse and Help (`navigation.visible_sections`). The session cookie is HTTPS-only (`SLEEVE_SHELF_HTTP_LOGIN=1` allows plain HTTP for a local try-out), signed with a key made once per installation (`data/session_key`), and tied to the password: changing it logs out the other devices. Failed logins wait longer per address, and a visitor's listening, which asks Deezer on the app's behalf, is limited per address. The address is `request.remote_addr`: only with `SLEEVE_SHELF_PROXIES` set — the number of proxies before the app, 1 behind Tailscale Funnel — does Werkzeug's `ProxyFix` take it from `X-Forwarded-For`, from the entry the trusted proxy added. Without it a forwarded address is ignored, as a client could write a new one with every request. A login is tied to exactly the hash that was verified (`access.verified_hash`), and the session key is written whole or not at all.
 
+## 🪜 Headers and other sites' forms
+
+`web/security.py` adds to every response a Content-Security-Policy: a page runs only the app's own scripts and inline scripts carrying this request's nonce (`{{ csp_nonce() }}` in a template), and loads images, sound and video only from Discogs, Deezer and youtube-nocookie. Inline handlers such as `onchange="…"` do not run; `static/page.js` handles `data-submit-on-change` and `data-go-on-change` instead. Nothing may show the app in a frame. The help, being the documentation site, has a looser policy of its own.
+
+A change — any request other than GET or HEAD — must come from a page of the app: `Sec-Fetch-Site` must be `same-origin`, or, from a browser too old to send it, `Origin` must be this host. A request with neither is not a browser's, so nobody can be tricked into sending it.
+
 ## 🖼️ Covers and pictures
 
 Covers and artist pictures are hotlinked from Discogs until the fetch run has stored them in `data/covers/albums/` and `data/covers/artists/`. The template filter `local_cover` picks the stored copy when there is one. Every page has to work without them. Pictures a user adds are kept apart in `data/artist_pictures/`, with a small copy made by Pillow, and are never touched by a sync.

@@ -41,9 +41,13 @@ cd /tmp/scan && trivy fs --scanners vuln --severity HIGH,CRITICAL --ignore-unfix
 
 A finding is resolved by moving the package to its fixed version: `uv lock --upgrade-package <name>`.
 
+## 🆙 Keeping dependencies current
+
+Dependabot (`.github/dependabot.yml`) opens pull requests every Monday for the Python packages in `uv.lock`, the GitHub Actions, and the base images in `docker/Dockerfile`. Minor and patch updates of the packages and of the actions come grouped in one pull request each; a new major version comes on its own. Every action in the workflows is pinned to a commit, with its version noted beside it; Dependabot moves both together. Trivy's version in `security.yml` is set by hand.
+
 ## 🔐 Configuration and secrets
 
-`config.yaml` in the data directory holds the settings and the Discogs personal access token. It is git-ignored and never baked into the image; the UI only shows the token's last four characters. On a running container, load a workbook from the command line with:
+`config.yaml` in the data directory holds the settings, the Discogs personal access token and the hash of the owner's password. It is git-ignored and never baked into the image; the UI only shows the token's last four characters. It is written readable by the app's own user only (600), and a copy written earlier with wider permissions is put right when the app starts. On a running container, load a workbook from the command line with:
 
 ```sh
 docker cp layout.xlsx sleeve-shelf:/tmp/layout.xlsx
