@@ -63,8 +63,9 @@
         // No answer at all: the app itself is out of reach.
       }
       target.textContent = "\u25B6";
-      if (data && !data.unreachable) known.set(url, data.tracks);
+      if (data && !data.unreachable && !data.busy) known.set(url, data.tracks);
       if (wanted !== target) return; // another album was pressed meanwhile
+      if (data && data.busy) return say(target, window.browseText.busy);
       if (!data || (data.unreachable && !data.tracks.length)) return say(target, window.browseText.offline);
       tracks = data.tracks;
     }

@@ -1,13 +1,16 @@
 """Sleeve & Shelf: application factory."""
 
 import argparse
+import getpass
 import os
 import threading
+from datetime import timedelta
 from pathlib import Path
 
 from flask import Flask, abort, redirect, request, url_for
 from flask_babel import Babel
 
+from sleeve_shelf.access import has_password, remove_password, session_key, set_password
 from sleeve_shelf.artists import set_picture
 from sleeve_shelf.collection import load_layout
 from sleeve_shelf.config import load_settings
@@ -29,6 +32,7 @@ from sleeve_shelf.web import (
     discogs,
     families,
     layout,
+    login,
     navigation,
     pwa,
     rules,
@@ -59,6 +63,12 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app = Flask(__name__, template_folder="web/templates", static_folder="web/static")
     app.config["DATA_DIR"] = _data_dir(data_dir)
     app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
+    # The owner's login: signed with a key of this installation, sent over HTTPS only (the
+    # app is reachable from the internet), kept until logging out.
+    app.secret_key = session_key(app.config["DATA_DIR"])
+    app.config["SESSION_COOKIE_SECURE"] = os.environ.get("SLEEVE_SHELF_HTTP_LOGIN") != "1"
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
     # Set by the Docker image build; a local run has no version.
     app.config["VERSION"] = os.environ.get("SLEEVE_SHELF_VERSION", "dev")
     # The built documentation site: carried by the Docker image, or built in the repository.
@@ -95,7 +105,11 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(pwa.blueprint)
     app.register_blueprint(covers.blueprint)
     app.register_blueprint(help_screen.blueprint)
+    app.register_blueprint(login.blueprint)
     app.add_template_filter(covers.local_cover, "local_cover")
+
+    # A visitor may only look the collection up; this runs before anything else.
+    app.before_request(login.guard)
 
     @app.before_request
     def require_collection():
@@ -115,9 +129,16 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
         # The numbers behind menu items: where something is waiting for the user.
         # Before there is a collection the wizard leads, without menu or tabs.
         section, tab = navigation.current(request) if has_collection() else (None, None)
+        owner = login.is_owner()
+        visible = navigation.visible_sections(owner)
+        # The tabs above the page, too, are those the one looking may use.
+        section = next((s for s in visible if section and s.key == section.key), None)
         return {
-            "menu_counts": menu_counts(get_store()) if has_collection() else {},
-            "nav_sections": navigation.SECTIONS,
+            # A visitor is never shown what waits for the owner, nor the owner's screens.
+            "menu_counts": menu_counts(get_store()) if has_collection() and owner else {},
+            "nav_sections": visible,
+            "is_owner": owner,
+            "has_password": has_password(app.config["DATA_DIR"]),
             "nav_section": section,
             "nav_tab": tab,
             "section_count": navigation.section_count,
@@ -127,7 +148,9 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
 
     @app.get("/")
     def index():
-        return redirect(url_for("dashboard.index" if has_collection() else "setup.welcome"))
+        if not has_collection():
+            return redirect(url_for("setup.welcome"))
+        return redirect(url_for("dashboard.index" if login.is_owner() else "browse.browse"))
 
     return app
 
@@ -154,6 +177,10 @@ def main(arguments: list[str] | None = None) -> None:
     )
     set_picture_command.add_argument("artist")
     set_picture_command.add_argument("image", type=Path)
+    password_command = commands.add_parser(
+        "set-password", help="set the owner's password (also when it was forgotten); visitors may then only look"
+    )
+    password_command.add_argument("--remove", action="store_true", help="open the app again: no password")
     options = parser.parse_args(arguments)
 
     data_dir = _data_dir()
@@ -189,6 +216,21 @@ def main(arguments: list[str] | None = None) -> None:
         if not set_picture(store, artist.id, options.image.read_bytes()):
             parser.exit(1, "That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB\n")
         print(f"Picture of {artist.name} set")
+        return
+
+    if options.command == "set-password":
+        if options.remove:
+            remove_password(data_dir)
+            print("Password removed: the app is open, everyone can change everything.")
+            return
+        password = getpass.getpass("New password: ")
+        if password != getpass.getpass("Again: "):
+            parser.exit(1, "The two passwords differ\n")
+        try:
+            set_password(data_dir, password)
+        except ValueError as error:
+            parser.exit(1, f"{error}\n")
+        print("Password set: visitors may look the collection up; changing it needs the login.")
         return
 
     if options.command == "enrich":

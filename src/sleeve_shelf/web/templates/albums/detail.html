@@ -34,7 +34,7 @@
       <div class="fw-semibold">{{ _('Suggested spot') }}</div>
       <p class="mt-1 mb-1">{{ spots.where(spot) }}</p>
       <p class="ss-muted small mb-3">{{ spots.why(spot) }} {{ spots.room(spot) }}</p>
-      {{ spots.place_button(album.id, 'album') }}
+      {% if is_owner %}{{ spots.place_button(album.id, 'album') }}{% endif %}
     </div>
   </div>
   {% elif takes_part and not is_placed %}
@@ -95,6 +95,7 @@
   </section>
   <script src="{{ url_for('static', filename='listen.js') }}" defer></script>
 
+  {% if is_owner %}
   <h2 class="mt-5">{{ _('Width') }}</h2>
   <form class="ss-card mt-3" method="post" action="{{ url_for('albums.set_width', album_id=album.id) }}">
     <div class="ss-card-body">
@@ -117,6 +118,7 @@
   {% set move_label = _('Stand this album on') %}
   {% set current_shelf_id = row.shelf_id if row else none %}
   {% include "_rules_and_move.html" %}
+  {% endif %}
 </div>
 {{ zoom_dialog(album.cover_url, album.cover_image_url, _('Cover of %(title)s', title=album.title)) }}
 {% endblock %}

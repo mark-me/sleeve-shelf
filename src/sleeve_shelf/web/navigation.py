@@ -1,6 +1,6 @@
 """The menu: five sections, and the screens of a section as tabs above the page."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from flask import Request
 from flask_babel import lazy_gettext as _
@@ -103,3 +103,11 @@ def help_target(request: Request, section: Section | None, tab: Tab | None) -> s
     if request.endpoint in PAGE_HELP:
         return PAGE_HELP[request.endpoint]
     return (tab and tab.help) or (section and section.help) or "user/"
+
+
+def visible_sections(owner: bool) -> tuple[Section, ...]:
+    """The menu as the one looking may use it: a visitor only browses and searches."""
+    if owner:
+        return SECTIONS
+    collection = next(section for section in SECTIONS if section.key == "collection")
+    return (replace(collection, tabs=tuple(tab for tab in collection.tabs if tab.endpoint == "browse.browse")),)

@@ -69,6 +69,12 @@ Each tab also names the part of the user guide that explains its screen, as `hel
 
 Screens that need a collection are listed in `NEEDS_COLLECTION` in `src/sleeve_shelf/__init__.py`; without a collection they lead to the setup wizard.
 
+## 🛡️ Visitors and the owner
+
+With a password set (`access.py`, kept hashed in `config.yaml`), `web/login.py` runs before every request. The owner — logged in, or anyone while there is no password — may do everything. A visitor may open only the endpoints in `VISITOR_PAGES`, and only with GET; the one thing a visitor may send is the password itself. Any other page redirects to the login, any other POST gets a 403. A screen added later is therefore the owner's by default.
+
+The pages a visitor may open hide their actions behind `{% if is_owner %}`, and the menu shows a visitor only Browse and Help (`navigation.visible_sections`). The session cookie is HTTPS-only (`SLEEVE_SHELF_HTTP_LOGIN=1` allows plain HTTP for a local try-out), signed with a key made once per installation (`data/session_key`), and tied to the password: changing it logs out the other devices. Failed logins wait longer per address — the address a proxy adds last to `X-Forwarded-For`, as earlier entries come from the client — and a visitor's listening, which asks Deezer on the app's behalf, is limited per address.
+
 ## 🖼️ Covers and pictures
 
 Covers and artist pictures are hotlinked from Discogs until the fetch run has stored them in `data/covers/albums/` and `data/covers/artists/`. The template filter `local_cover` picks the stored copy when there is one. Every page has to work without them. Pictures a user adds are kept apart in `data/artist_pictures/`, with a small copy made by Pillow, and are never touched by a sync.

@@ -9,7 +9,8 @@
 <script>
   window.browseText = {
     none: {{ _('No previews at Deezer — see the album’s page') | tojson }},
-    offline: {{ _('Previews need an internet connection') | tojson }}
+    offline: {{ _('Previews need an internet connection') | tojson }},
+    busy: {{ _('Many previews were played from here just now; try again in a few minutes') | tojson }}
   };
 </script>
 <script src="{{ url_for('static', filename='browse-play.js') }}" defer></script>

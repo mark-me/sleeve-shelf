@@ -22,6 +22,7 @@ from sleeve_shelf.placing import move_albums
 from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.taking_part import albums_taking_part, takes_part
 from sleeve_shelf.web.context import get_store, parse_number
+from sleeve_shelf.web.login import visitor_may_listen
 from sleeve_shelf.web.places import described_rules, described_spots, shelf_options
 from sleeve_shelf.widths import set_measured_width
 
@@ -64,6 +65,8 @@ def listen(album_id: int):
     """The album's previews and videos, as a part the album's page loads after it is shown:
     the page itself never waits for Deezer or Discogs."""
     store = get_store()
+    if not visitor_may_listen():
+        return render_template("albums/_listen.html", album_id=album_id, listening=None), 429
     deezer = current_app.config.get("DEEZER_CLIENT_FACTORY", DeezerClient)()
     # Discogs answers a few lookups without a token too, at a lower rate.
     token = load_settings(current_app.config["DATA_DIR"]).discogs_token or ""
@@ -78,6 +81,8 @@ def listen(album_id: int):
 def previews(album_id: int):
     """The album's previews from Deezer, for the play button in Browse. Discogs is not asked:
     its videos are for the album's page, and a shelf full of buttons should not wait on it."""
+    if not visitor_may_listen():
+        return jsonify(album=None, tracks=[], unreachable=False, busy=True), 429
     deezer = current_app.config.get("DEEZER_CLIENT_FACTORY", DeezerClient)()
     found = listening(get_store(), album_id, deezer, None)
     if found is None:

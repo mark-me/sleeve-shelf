@@ -40,7 +40,8 @@
   }
 
   fetch(section.dataset.url)
-    .then(function (response) { return response.ok ? response.text() : Promise.reject(); })
+    // 429: a visitor played many previews just now; the part says so.
+    .then(function (response) { return response.ok || response.status === 429 ? response.text() : Promise.reject(); })
     .then(function (html) {
       const part = new DOMParser().parseFromString(html, "text/html").querySelector("[data-listen-body]");
       if (!part) return;

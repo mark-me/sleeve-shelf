@@ -64,7 +64,18 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 ### Non-functional requirements
 
 - Open source
-- Single-user application
+- Single-user application: one owner, who can change everything. **Visitors** may look the collection up, nothing more (see below)
+- **Visitors and the owner's login** (decided and built 2026-10-16). A visitor without a login can search and browse the collection, open an album's and an artist's page to read them, listen (Deezer previews, Discogs videos), and read the user guide. Everything else — every change, and every other screen — needs the owner's login:
+  - **Closed unless listed**: one list in the app names what a visitor may open, and only to read (GET): Browse/Search, the album and artist pages, the previews, the help, covers, and the app's own files. Any other screen, and anything added later, asks for the login; a visitor's change is refused
+  - **What a visitor sees**: the menu holds only Collection (Browse / Search) and Help; the album and artist pages leave out their actions (moving, location rules, width, own picture, *Put it there*, *Not this album*). Layout, Showcase, and the other screens are the owner's only
+  - **Listening by a visitor is allowed**, though the first listen to an album keeps what Deezer found in `listening.json` — the only thing a visitor writes, and harmless
+  - **The login**: a page asking for a password only, as there is one owner. The password is stored hashed; it is set with a command (`set-password`) and changed under Settings. Logged in, a device stays logged in until the owner logs out. After a few failed attempts each next attempt waits longer
+  - **Without a password the app stays open**, everyone being the owner, as before; Settings says so. Setting a password is what makes visitors visitors
+  - **Recovering**: a forgotten password is set again from the command line on the server (`set-password`, which can also `--remove` it); there is no reset by mail, as there is no mail
+  - **Over plain HTTP** (a test on one's own machine or network) the HTTPS-only cookie would not be kept, so logging in would not stick: `SLEEVE_SHELF_HTTP_LOGIN=1` allows it there
+  - The key that signs the session is made once per installation and kept in the data directory (`session_key`), so a login survives a restart or a new container
+  - The Discogs token and all settings stay behind the login. The check against forms from other sites stays, and the session cookie is limited to this site
+  - **Open to the internet** (decided 2026-10-16): visitors reach the app publicly, not only over the owner's own network. So the login has to hold against strangers: the session cookie is sent over HTTPS only (the app sits behind HTTPS, as it already must to be installed on a phone), failed logins slow down per address, and the password should be a strong one, which the Settings screen says when it is set. A visitor's listening asks Deezer on the app's behalf; that is limited per visitor, so the app cannot be used to flood Deezer
 - Onboarding/guidance as an ongoing design principle for non-technical users — not just for the Discogs API integration, but also for setting up the storage structure and CSV import
 - Self-hosted, deployed via Docker containers
 - Strict separation of concerns: the sorting engine, persistence, and web layer are independent of each other

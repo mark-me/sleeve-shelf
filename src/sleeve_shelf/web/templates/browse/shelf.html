@@ -49,7 +49,7 @@
 
 <div class="ss-page">
   {% if not shelf %}
-  <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('There are no shelves yet.') }} <a href="{{ url_for('storage.index') }}">{{ _('Add your cabinets and shelves') }}</a></div></div>
+  <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('There are no shelves yet.') }}{% if is_owner %} <a href="{{ url_for('storage.index') }}">{{ _('Add your cabinets and shelves') }}</a>{% endif %}</div></div>
   {% elif not albums %}
   <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('This shelf is empty.') }}</div></div>
   {% else %}

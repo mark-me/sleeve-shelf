@@ -649,3 +649,10 @@ a.ss-row-title { text-decoration: none; }
 /* What plays now, under the album's title in Browse. */
 .ss-now-playing { display: block; color: var(--ss-accent); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ss-play.ss-playing { border-color: var(--ss-accent); }
+
+/* Logging in or out, at the very end of the menu. */
+.ss-nav .ss-nav-login {
+  display: block; width: 100%; height: auto; padding: 6px 20px; border: 0; background: none;
+  color: #8B93A6; font-size: 0.82rem; text-align: left; text-decoration: none;
+}
+.ss-nav .ss-nav-login:hover { color: #fff; }

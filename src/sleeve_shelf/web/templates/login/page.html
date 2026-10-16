@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Log in') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 420px;">
+  <h1>{{ _('Log in') }}</h1>
+  <p class="ss-muted mt-1">{{ _('Looking a record up needs no login. To change anything, log in as the owner.') }}</p>
+  {% if error %}
+  <div class="ss-alert mt-3" role="alert">{{ error }}</div>
+  {% endif %}
+  <form class="ss-card mt-3" method="post" action="{{ url_for('login.page') }}">
+    <div class="ss-card-body d-flex flex-column gap-3">
+      <input type="hidden" name="next" value="{{ target }}">
+      <div>
+        <label for="password" class="form-label fw-semibold">{{ _('Password') }}</label>
+        <input id="password" class="form-control" type="password" name="password" autocomplete="current-password" required autofocus>
+      </div>
+      <div>
+        <button class="ss-button ss-button-primary" type="submit">{{ _('Log in') }}</button>
+      </div>
+    </div>
+  </form>
+  <p class="ss-muted small mt-3">{{ _('This device stays logged in until you log out.') }}</p>
+</div>
+{% endblock %}

@@ -1,12 +1,28 @@
 """Settings: the values in config.yaml."""
 
-from flask import Blueprint, current_app, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_babel import gettext as _
 
+from sleeve_shelf.access import (
+    MIN_PASSWORD_LENGTH,
+    check_password,
+    has_password,
+    remove_password,
+    set_password,
+)
 from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import Placement
 from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
 from sleeve_shelf.web.context import get_store, has_collection, parse_number
+from sleeve_shelf.web.login import remember_owner
 from sleeve_shelf.widths import apply_width_constants
 
 blueprint = Blueprint("settings", __name__, url_prefix="/settings")
@@ -70,6 +86,35 @@ def index():
             saved=request.args.get("saved") and not errors,
             needed=needed,
             offered=offered,
+            password_done=request.args.get("password"),
+            password_error=request.args.get("password_error"),
+            min_password_length=MIN_PASSWORD_LENGTH,
         ),
         400 if errors else 200,
     )
+
+
+@blueprint.post("/password")
+def password():
+    """Set, change, or remove the owner's password. Changing it needs the current one."""
+    data_dir = current_app.config["DATA_DIR"]
+    form = request.form
+
+    def back(**notice):
+        return redirect(url_for("settings.index", **notice) + "#password")
+
+    if has_password(data_dir) and not check_password(data_dir, form.get("current", "")):
+        return back(password_error=_("The current password is not right."))
+    if form.get("action") == "remove":
+        remove_password(data_dir)
+        session.clear()
+        return back(password="removed")
+    if form.get("new", "") != form.get("repeat", ""):
+        return back(password_error=_("The two new passwords differ."))
+    try:
+        set_password(data_dir, form.get("new", ""))
+    except ValueError:
+        return back(password_error=_("A password has at least %(num)d characters.", num=MIN_PASSWORD_LENGTH))
+    # This device stays logged in; others log in again with the new password.
+    remember_owner()
+    return back(password="set")
