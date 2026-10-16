@@ -26,6 +26,8 @@ jobs:
     uses: ./.github/workflows/security.yml
     permissions:
       contents: read
+      # For the weekly scan of the published image, which this call does not run.
+      packages: read
 
   build-and-push:
     needs: [test, security]
@@ -110,12 +112,45 @@ jobs:
             echo "platforms=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
           fi
 
+      # The image is built once for amd64 and scanned before anything is published: the
+      # Debian packages of the base image, and Python's own, which the package scan does not
+      # see. The build is kept in the cache, so the push below reuses it.
+      - name: Build the image to scan
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: sleeve-shelf:scan
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Install Trivy
+        uses: ./.github/actions/install-trivy
+        with:
+          version: "0.76.0" # As in security.yml.
+
+      # In an empty folder, so no .trivyignore or trivy.yaml from the checkout is read. A
+      # vulnerability without a fix is listed but cannot be resolved by building again.
+      - name: Scan the image
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir scan-image && cd scan-image
+          trivy image --scanners vuln --format table --exit-code 0 sleeve-shelf:scan
+          trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --format table \
+            --exit-code 1 sleeve-shelf:scan
+
       - name: Build and push Docker image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: docker/Dockerfile
           platforms: ${{ steps.platforms.outputs.platforms }}
+          cache-from: type=gha
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

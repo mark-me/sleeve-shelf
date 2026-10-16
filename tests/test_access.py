@@ -36,6 +36,8 @@ def app(tmp_path, monkeypatch):
     monkeypatch.setenv("SLEEVE_SHELF_HTTP_LOGIN", "1")
     login._failures.clear()
     login._listens.clear()
+    login._pages.clear()
+    login._reported.clear()
     app = create_app(tmp_path / "data")
     client = app.test_client()
     client.post("/setup/upload", data={"workbook": (_workbook(), "layout.xlsx")})
@@ -145,6 +147,42 @@ def test_a_visitor_s_listening_is_limited(app, monkeypatch):
     visitor = app.test_client()
     assert [visitor.get("/albums/1/previews").status_code for _ in range(3)] == [200, 200, 429]
     assert visitor.get("/albums/1/previews").get_json()["busy"] is True
+
+
+def test_a_visitor_opening_page_after_page_is_held_up_and_reported_once(app, monkeypatch, caplog):
+    set_password(app.config["DATA_DIR"], PASSWORD)
+    monkeypatch.setattr(login, "VISITOR_PAGES_PER_WINDOW", 3)
+    visitor = app.test_client()
+
+    assert [visitor.get("/browse").status_code for _ in range(3)] == [200, 200, 200]
+    # Files are not counted: a shelf shows a hundred covers.
+    assert visitor.get("/static/page.js").status_code == 200
+    held_up = [visitor.get("/browse") for _ in range(2)]
+    assert [r.status_code for r in held_up] == [429, 429]
+    assert held_up[0].headers["Retry-After"] == str(login.VISITOR_PAGE_SECONDS)
+    assert [r.message for r in caplog.records].count("Visitor held up for too many requests from 127.0.0.1") == 1
+
+    # The owner, also from the same address, can log in and is never held up.
+    owner = app.test_client()
+    owner.post("/login", data={"password": PASSWORD})
+    assert [owner.get("/browse").status_code for _ in range(5)] == [200] * 5
+
+
+def test_logins_are_logged_so_guessing_shows(app, caplog):
+    set_password(app.config["DATA_DIR"], PASSWORD)
+    client = app.test_client()
+
+    for _ in range(login.FREE_ATTEMPTS + 1):
+        client.post("/login", data={"password": "guess"})
+    client.post("/login", data={"password": "guess"})
+    messages = [r.message for r in caplog.records]
+    assert messages.count("Failed login from 127.0.0.1") == login.FREE_ATTEMPTS
+    assert "Login refused, too many attempts, from 127.0.0.1" in messages
+    assert PASSWORD not in caplog.text and "guess" not in caplog.text
+
+    login._failures.clear()
+    app.test_client().post("/login", data={"password": PASSWORD})
+    assert "Owner logged in from 127.0.0.1" in [r.message for r in caplog.records]
 
 
 def test_the_session_cookie_is_https_only_by_default(tmp_path, monkeypatch):

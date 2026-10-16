@@ -47,7 +47,10 @@ ENV SLEEVE_SHELF_VERSION=${APP_VERSION} \
     PATH=/app/.venv/bin:$PATH \
     PYTHONUNBUFFERED=1
 
-RUN useradd --system --uid 1000 --create-home sleeve \
+# pip is not needed to run the app (uv installed everything in the build stage), and the
+# packages it carries along would only be found by the image scan.
+RUN python -m pip uninstall --yes pip \
+    && useradd --system --uid 1000 --create-home sleeve \
     && mkdir /data \
     && chown sleeve /data
 

@@ -11,6 +11,18 @@ services:
     image: ghcr.io/mark-me/sleeve-shelf:0.1.0
     container_name: sleeve-shelf
     restart: unless-stopped
+    # Shielded: nothing but /data (and /tmp, in memory) can be written, the app gains no
+    # privileges and has none of root's, and it gets a bounded share of the machine. Should
+    # anyone ever break in, there is little they can do. It uses about 75 MB.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    pids_limit: 200
     ports:
       - "5000:5000"
     environment:

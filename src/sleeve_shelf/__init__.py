@@ -2,6 +2,7 @@
 
 import argparse
 import getpass
+import logging
 import os
 import threading
 from datetime import timedelta
@@ -85,6 +86,8 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
         os.environ.get("SLEEVE_SHELF_HELP_DIR") or Path(__file__).resolve().parents[2] / "docs-site" / "site"
     )
     Babel(app, default_locale="en")
+    # Logins, failed ones and visitors held up go to the log (the container's output).
+    app.logger.setLevel(logging.INFO)
     if any(path.is_file() for path in (app.config["DATA_DIR"] / COVER_DIR).glob("*")):
         # Images stored before covers and pictures each had a folder: sort them out once.
         sort_into_folders(JsonStore(app.config["DATA_DIR"]))

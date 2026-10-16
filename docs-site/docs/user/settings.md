@@ -36,7 +36,7 @@ Without a password the app is open: anyone who can reach it can change everythin
 
     or, in Docker, `docker exec -it sleeve-shelf python -m sleeve_shelf set-password`. With `--remove` the app is open again.
 
-After a few wrong passwords each next try has to wait a little longer, so nobody can keep guessing. A visitor who plays a great many previews in a short time is asked to wait a few minutes.
+After a few wrong passwords each next try has to wait a little longer, so nobody can keep guessing. A visitor who plays a great many previews in a short time is asked to wait a few minutes, and one who opens hundreds of pages a minute is asked to wait a minute — far more than anyone browsing by hand. You, logged in, have no limit.
 
 ## 🌗 Light or dark
 
