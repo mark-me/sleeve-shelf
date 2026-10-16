@@ -3,6 +3,7 @@
 import json
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from datetime import datetime
@@ -75,6 +76,19 @@ class DiscogsClient:
             master_id=data.get("master_id") or None,
             fetched_at=datetime.now().replace(microsecond=0),
             year=data.get("year") or None,
+        )
+
+    def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
+        """The videos Discogs users linked to a release, as (title, address); mostly YouTube.
+
+        Anyone can add a video to a release, so only web addresses are taken: a link such as
+        `javascript:` would run a stranger's script within this app when clicked.
+        """
+        data = self._get(f"/releases/{release_id}") or {}
+        return tuple(
+            (video.get("title") or "", video["uri"])
+            for video in data.get("videos") or ()
+            if is_web_address(video.get("uri"))
         )
 
     def master(self, master_id: int) -> MasterEnrichment:
@@ -151,13 +165,11 @@ class DiscogsClient:
         raise DiscogsError("Discogs kept limiting the requests.")
 
     def _get(self, path: str) -> dict | None:
-        request = urllib.request.Request(
-            API_ROOT + path,
-            headers={
-                "Authorization": f"Discogs token={self._token}",
-                "User-Agent": USER_AGENT,
-            },
-        )
+        headers = {"User-Agent": USER_AGENT}
+        # Without a token a few lookups still work, at a lower rate limit.
+        if self._token:
+            headers["Authorization"] = f"Discogs token={self._token}"
+        request = urllib.request.Request(API_ROOT + path, headers=headers)
         for attempt in range(1, MAX_ATTEMPTS + 1):
             self._pace()
             try:
@@ -185,6 +197,14 @@ class DiscogsClient:
             if wait > 0:
                 self._sleep(wait)
         self._last_request = self._clock()
+
+
+def is_web_address(address: str | None) -> bool:
+    """Whether an address from outside is a plain web page: http or https, with a host."""
+    if not address:
+        return False
+    parts = urllib.parse.urlsplit(address.strip())
+    return parts.scheme.lower() in ("http", "https") and bool(parts.netloc)
 
 
 def _fetch(request: urllib.request.Request) -> bytes:

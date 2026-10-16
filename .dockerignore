@@ -1,4 +1,5 @@
-# Keep the build context to what the image needs: pyproject.toml, uv.lock, README.md and src/.
+# Keep the build context to what the image needs: pyproject.toml, uv.lock, README.md, src/,
+# and the sources of the documentation site, which the image carries as its help.
 .git
 .github
 .venv
@@ -11,5 +12,6 @@ config.yaml
 assets
 docker
 docs
-docs-site
+docs-site/site
+docs-site/.cache
 tests

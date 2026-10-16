@@ -8,6 +8,13 @@ Sleeve & Shelf is a self-hosted web application that organizes a vinyl record co
 
 It's built for collectors who track their collection on [Discogs](https://www.discogs.com/) and want a sorting proposal they can review and fine-tune, rather than a rigid, fully automated system.
 
+## Documentation
+
+The documentation lives at **<https://mark-me.github.io/sleeve-shelf/>**:
+
+- [User guide](https://mark-me.github.io/sleeve-shelf/user/) — getting started, browsing your shelves, Discogs, and how the sorting works
+- [Developer guide](https://mark-me.github.io/sleeve-shelf/developer/) — architecture, data model, the sorting engine, development and deployment
+
 ## Status
 
 Phase 1 (the MVP) is built, and most of Phase 2.
@@ -18,6 +25,7 @@ Phase 1 (the MVP) is built, and most of Phase 2.
 - **New purchases**: when a purchase makes an artist's Discogs styles point to another cluster, the app says so and waits for you to move the artist or keep it where it is.
 - **Showcase**: top-loaders that hold a sample of an artist's albums, exchanged one for one with the shelf.
 - **On your phone**: the app can be installed to the home screen (over HTTPS) and opens on Browse / Search.
+- **Visitors**: with an owner's password set, anyone else can search, browse and listen, but only the owner, logged in, can change anything (`uv run python -m sleeve_shelf set-password`).
 
 Not built yet: a suggested spot for new purchases (the rest of Phase 2), and all of Phase 3. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
 
@@ -36,6 +44,8 @@ Then open <http://127.0.0.1:5000> and upload your workbook (see `docs/import_exa
 | `SLEEVE_SHELF_DATA_DIR` | `data` | Where the collection is stored as JSON files |
 | `SLEEVE_SHELF_HOST` | `127.0.0.1` | Set to `0.0.0.0` to reach the app from a phone on the same network |
 | `SLEEVE_SHELF_PORT` | `5000` | Port to listen on |
+| `SLEEVE_SHELF_HTTP_LOGIN` | — | Set to `1` to let the owner log in over plain HTTP (the login cookie is HTTPS-only otherwise) |
+| `SLEEVE_SHELF_PROXIES` | — | Behind Tailscale Funnel or a reverse proxy: `1`, so each visitor is told apart by their own address |
 
 If your browser can't upload the file (some managed machines block uploads), load it from the command line instead — the running app picks it up straight away:
 
@@ -84,7 +94,7 @@ Run the tests with `uv run python -m pytest`.
 - **Phase 2 — Ongoing use** (mostly built): syncing with Discogs, album covers and the showcase are there; only a suggested spot for new purchases is not
 - **Phase 3 — Refinement** (not started): deeper musical-kinship logic, song-level search, more languages, other media formats
 
-The documentation — a user guide and a developer guide — is at <https://mark-me.github.io/sleeve-shelf/>. Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
+Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
 
 ## AI Transparency
 

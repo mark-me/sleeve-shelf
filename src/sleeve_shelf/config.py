@@ -21,6 +21,8 @@ class Settings:
     count_bonus_discs_as_vinyl: bool = True
     # The part of a showcase shelf's width albums may take, leaving room to flip through them.
     showcase_fill_percent: int = 60
+    # The owner's password, hashed; without one the app is open and everyone is the owner.
+    owner_password_hash: str | None = None
 
     @property
     def width_constants(self) -> WidthConstants:

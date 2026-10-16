@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-16 00:26+0200\n"
+"POT-Creation-Date: 2026-10-16 12:59+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -83,6 +83,15 @@ msgstr ""
 
 #: src/sleeve_shelf/web/families.py
 msgid "Choose an artist from the list."
+msgstr ""
+
+#: src/sleeve_shelf/web/login.py
+#, python-format
+msgid "Too many attempts. Try again in %(seconds)d seconds."
+msgstr ""
+
+#: src/sleeve_shelf/web/login.py
+msgid "That is not the password."
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -204,6 +213,19 @@ msgstr ""
 msgid "The showcase fill has to be a whole percentage from 1 to 100."
 msgstr ""
 
+#: src/sleeve_shelf/web/settings.py
+msgid "The current password is not right."
+msgstr ""
+
+#: src/sleeve_shelf/web/settings.py
+msgid "The two new passwords differ."
+msgstr ""
+
+#: src/sleeve_shelf/web/settings.py
+#, python-format
+msgid "A password has at least %(num)d characters."
+msgstr ""
+
 #: src/sleeve_shelf/web/setup.py
 msgid "This file could not be read as an Excel workbook (.xlsx)."
 msgstr ""
@@ -249,6 +271,23 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/_cover.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Close"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_play.html
+#, python-format
+msgid "Play previews of %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_play.html
+msgid "No previews at Deezer — see the album’s page"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_play.html
+msgid "Previews need an internet connection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_play.html
+msgid "Many previews were played from here just now; try again in a few minutes"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_rules_and_move.html
@@ -376,6 +415,48 @@ msgstr ""
 msgid "Put it there"
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Many previews were played from here just now. Try again in a few minutes."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Open in Deezer"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Not this album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+#, python-format
+msgid "Play a preview of %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "30-second previews from Deezer, found by the artist and title; another edition may be the one found."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "You said the album Deezer found is another one; Deezer is not asked again for this album."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Deezer has no album by this artist and title."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Videos on Discogs"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+#, python-format
+msgid "Play %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_listen.html
+msgid "Deezer or Discogs could not be reached, so there may be more to listen to later."
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Show the cover larger"
 msgstr ""
@@ -455,6 +536,18 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "not linked"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Listening needs an internet connection."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Listen"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Looking for previews…"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -842,6 +935,23 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Waiting for you"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
+msgid "Help"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
+msgid "Log out"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
+#: src/sleeve_shelf/web/templates/login/page.html
+msgid "Log in"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
+msgid "How this screen works"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
@@ -1995,6 +2105,18 @@ msgstr ""
 msgid "%(albums)s albums · %(filled)s cm"
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/login/page.html
+msgid "Looking a record up needs no login. To change anything, log in as the owner."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/login/page.html
+msgid "Password"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/login/page.html
+msgid "This device stays logged in until you log out."
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you accept."
 msgstr ""
@@ -2305,6 +2427,51 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "No token is set yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Owner’s password"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Password saved. This device stays logged in; others log in with the new password."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Password removed: the app is open again."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Visitors can look your collection up and listen; changing anything needs this password."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "The app is open: anyone who can reach it can change everything. Set a password, and visitors can only look your collection up."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Current password"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "New password"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+#, python-format
+msgid "At least %(num)d characters. The app is reachable from the internet, so make it a strong one."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "New password again"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Save password"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Remove the password"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html

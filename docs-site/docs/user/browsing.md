@@ -4,6 +4,8 @@
 
 **Browse** shows one shelf at a time, in the order the albums actually stand — crate digging on a screen. Step through the shelves with *Previous shelf* and *Next shelf*, or jump to one with the list of shelves. The albums are grouped by cluster and era band, so you see where one section ends and the next begins.
 
+Every album has a **▶** button: it plays the album's 30-second previews from Deezer, one track after another, and shows the track playing under the title. Press it again to stop; pressing another album stops the first. When Deezer doesn't have the album, the row says so — its page may still have videos.
+
 **Search** finds artists and albums across all shelves. The results follow as you type; choosing one opens its shelf with the album marked. Emptying the search field takes you back to browsing.
 
 ## 💿 An album's page
@@ -15,6 +17,14 @@ Open an album from a search result, a shelf, or its artist's page. It shows:
 - its format, Discogs styles and Discogs release
 - its width, estimated or measured
 - the location rules that apply to it, and a way to put it on another shelf
+
+### Listen
+
+Under **Listen** you hear what an album sounds like before you pull it from the shelf. The app looks the album up at [Deezer](https://www.deezer.com/) by its artist and title, and plays a **30-second preview** of each track. The cover and title of what was found are shown, so you can see whether it is your album; if it is another one, **Not this album** leaves it out for good.
+
+Below that are the **videos** Discogs users linked to your release — often whole tracks on YouTube. A video is only loaded when you press play.
+
+Listening needs an internet connection; about three in four albums are found at Deezer, less often old compilations and rare pressings.
 
 ## 🎤 An artist's page
 

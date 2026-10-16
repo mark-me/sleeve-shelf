@@ -65,7 +65,15 @@ The five menu sections and their tabs are declared once, in `web/navigation.py`;
 
 What waits for a decision — matches, family suggestions, albums without a place, shelves over a measured width — is counted in one place, `web/waiting.py`. The counts feed both the Dashboard and the numbers in the menu. Working them out takes a while (family suggestions compare every artist with every other), so they are kept until a data file or `config.yaml` changes.
 
+Each tab also names the part of the user guide that explains its screen, as `help="user/shelves/#layout"`; pages that share a tab but have their own part are in `PAGE_HELP`. The **?** beside the tabs links there. The app serves the documentation site itself under `/help/` (`web/help.py`): the Docker image builds it with Zensical and carries it in `/app/help`; a local run uses `docs-site/site` once built, and GitHub Pages otherwise. `tests/test_help.py` checks that every page and anchor named exists — rename a heading in the guide and the test says which screen to update.
+
 Screens that need a collection are listed in `NEEDS_COLLECTION` in `src/sleeve_shelf/__init__.py`; without a collection they lead to the setup wizard.
+
+## 🛡️ Visitors and the owner
+
+With a password set (`access.py`, kept hashed in `config.yaml`), `web/login.py` runs before every request. The owner — logged in, or anyone while there is no password — may do everything. A visitor may open only the endpoints in `VISITOR_PAGES`, and only with GET; the one thing a visitor may send is the password itself. Any other page redirects to the login, any other POST gets a 403. A screen added later is therefore the owner's by default.
+
+The pages a visitor may open hide their actions behind `{% if is_owner %}`, and the menu shows a visitor only Browse and Help (`navigation.visible_sections`). The session cookie is HTTPS-only (`SLEEVE_SHELF_HTTP_LOGIN=1` allows plain HTTP for a local try-out), signed with a key made once per installation (`data/session_key`), and tied to the password: changing it logs out the other devices. Failed logins wait longer per address, and a visitor's listening, which asks Deezer on the app's behalf, is limited per address. The address is `request.remote_addr`: only with `SLEEVE_SHELF_PROXIES` set — the number of proxies before the app, 1 behind Tailscale Funnel — does Werkzeug's `ProxyFix` take it from `X-Forwarded-For`, from the entry the trusted proxy added. Without it a forwarded address is ignored, as a client could write a new one with every request. A login is tied to exactly the hash that was verified (`access.verified_hash`), and the session key is written whole or not at all.
 
 ## 🖼️ Covers and pictures
 

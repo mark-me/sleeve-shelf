@@ -2,6 +2,7 @@
 {% block title %}{{ _('Search results') }}{% endblock %}
 
 {% from "_cover.html" import cover %}
+{% from "_play.html" import play_button, play_script %}
 {% block content %}
 <div class="ss-page d-none d-lg-block mb-4">
   <h1>{{ _('Browse / Search') }}</h1>
@@ -21,18 +22,18 @@
   {% set covers = albums | selectattr('cover_url') | list | length > 0 %}
   <div class="ss-card">
     {% for album in albums %}
-    {% if album.shelf_id is not none %}
-    <a class="ss-row" href="{{ url_for('browse.browse', shelf=album.shelf_id) }}#album-{{ album.album_id }}">
-    {% else %}
-    <a class="ss-row" href="{{ url_for('browse.unplaced') }}#album-{{ album.album_id }}">
-    {% endif %}
-      {{ cover(album.cover_url, covers) }}
-      <div class="ss-row-text">
-        <span class="ss-row-artist">{{ album.artist }}</span>
-        <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
-      </div>
-      <span class="ss-row-place">{% if album.shelf_id is not none %}{{ album.cabinet }} &middot; {{ album.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
-    </a>
+    {# The row leads to the album's shelf; the play button beside it plays its previews. #}
+    <div class="ss-row">
+      <a class="ss-row-link" href="{% if album.shelf_id is not none %}{{ url_for('browse.browse', shelf=album.shelf_id) }}{% else %}{{ url_for('browse.unplaced') }}{% endif %}#album-{{ album.album_id }}">
+        {{ cover(album.cover_url, covers) }}
+        <div class="ss-row-text">
+          <span class="ss-row-artist">{{ album.artist }}</span>
+          <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+        </div>
+        <span class="ss-row-place">{% if album.shelf_id is not none %}{{ album.cabinet }} &middot; {{ album.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
+      </a>
+      {{ play_button(album.album_id, album.title) }}
+    </div>
     {% endfor %}
   </div>
   <p class="ss-muted small mt-3 mb-0">{{ _('Choosing a result opens its shelf, with the album marked.') }}</p>
@@ -40,4 +41,5 @@
   <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('No artist or album matches this search.') }}</div></div>
   {% endif %}
 </div>
+{{ play_script() }}
 {% endblock %}

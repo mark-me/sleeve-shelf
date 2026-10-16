@@ -33,6 +33,7 @@ erDiagram
     MasterEnrichment |o..o{ ReleaseEnrichment : "master_id"
     ArtistEnrichment |o..o{ Artist : "discogs_artist_id"
     Album ||--o| MatchProposal : "proposed for"
+    Album ||--o| AlbumListening : "listened to via"
     Artist ||--o| FamilyDismissal : "turned down as anchor"
 
     Artist {
@@ -140,6 +141,17 @@ erDiagram
         int year
         datetime fetched_at
     }
+    AlbumListening {
+        int album_id PK, FK
+        datetime checked_at "when Deezer was last searched"
+        int deezer_album_id "nullable: none found"
+        string deezer_title "nullable"
+        string deezer_artist "nullable"
+        string deezer_cover "nullable"
+        bool turned_down "the user said it is another album"
+        list video_titles "nullable until Discogs was asked"
+        list video_urls "nullable until Discogs was asked"
+    }
     MatchProposal {
         int album_id FK
         int release_id
@@ -186,6 +198,7 @@ Everything lives in the data directory (`SLEEVE_SHELF_DATA_DIR`, default `data`)
 | `placement_current.json` | Where every album stands now |
 | `placement_proposal.json` | A proposal waiting for a decision; removed when accepted or discarded |
 | `placements/` | Saved versions of the layout, one full snapshot per file |
+| `listening.json` | Where an album can be listened to: its album at Deezer, its release's videos on Discogs |
 | `discogs_releases.json`, `discogs_masters.json`, `discogs_artists.json` | The Discogs cache — hours of fetching at Discogs' rate limit; never delete it |
 | `covers/albums/`, `covers/artists/` | Images stored by the fetch run |
 | `artist_pictures/` | Pictures the user added; never touched by a sync |

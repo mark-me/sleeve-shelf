@@ -19,13 +19,31 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --no-editable
 
 
-# Runtime stage: only Python and the virtual environment.
+# Docs stage: the documentation site, built with Zensical, which the app serves as its help.
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS docs
+
+ENV UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never
+
+WORKDIR /app
+
+# Only the tools the documentation needs (the dev group), not the app itself.
+COPY pyproject.toml uv.lock README.md ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --only-group dev --no-install-project
+
+COPY docs-site ./docs-site
+RUN cd docs-site && uv run --no-sync python -m zensical build --strict
+
+
+# Runtime stage: only Python, the virtual environment, and the built help.
 FROM python:3.13-slim-bookworm
 
 ARG APP_VERSION=dev
 
 ENV SLEEVE_SHELF_VERSION=${APP_VERSION} \
     SLEEVE_SHELF_DATA_DIR=/data \
+    SLEEVE_SHELF_HELP_DIR=/app/help \
     PATH=/app/.venv/bin:$PATH \
     PYTHONUNBUFFERED=1
 
@@ -34,6 +52,7 @@ RUN useradd --system --uid 1000 --create-home sleeve \
     && chown sleeve /data
 
 COPY --from=build /app/.venv /app/.venv
+COPY --from=docs /app/docs-site/site /app/help
 
 USER sleeve
 
