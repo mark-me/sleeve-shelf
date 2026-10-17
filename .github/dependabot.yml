@@ -25,9 +25,14 @@ updates:
       actions:
         update-types: ["minor", "patch"]
 
-  # The base images in docker/Dockerfile.
+  # The base images in docker/Dockerfile. A new Python version (3.13 to 3.14) is not
+  # proposed: it goes together with .python-version, on which the tests run, so it is done
+  # by hand.
   - package-ecosystem: "docker"
     directory: "/docker"
     schedule:
       interval: "weekly"
       day: "monday"
+    ignore:
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
