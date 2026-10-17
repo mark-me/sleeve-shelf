@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-16 12:59+0200\n"
+"POT-Creation-Date: 2026-10-17 23:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -83,6 +83,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/families.py
 msgid "Choose an artist from the list."
+msgstr ""
+
+#: src/sleeve_shelf/web/login.py
+msgid "Too many requests. Try again in a minute."
 msgstr ""
 
 #: src/sleeve_shelf/web/login.py
@@ -1036,6 +1040,7 @@ msgid "Jump to shelf"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
+#: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Go"
 msgstr ""
 

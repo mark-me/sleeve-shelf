@@ -6,7 +6,7 @@
 
 {# Once per page: the words the script shows, and the script. #}
 {% macro play_script() %}
-<script>
+<script nonce="{{ csp_nonce() }}">
   window.browseText = {
     none: {{ _('No previews at Deezer — see the album’s page') | tojson }},
     offline: {{ _('Previews need an internet connection') | tojson }},

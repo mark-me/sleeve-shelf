@@ -2,19 +2,20 @@
 
 import argparse
 import getpass
+import logging
 import os
 import threading
 from datetime import timedelta
 from pathlib import Path
 
-from flask import Flask, abort, redirect, request, url_for
+from flask import Flask, redirect, request, url_for
 from flask_babel import Babel
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from sleeve_shelf.access import has_password, remove_password, session_key, set_password
 from sleeve_shelf.artists import set_picture
 from sleeve_shelf.collection import load_layout
-from sleeve_shelf.config import load_settings
+from sleeve_shelf.config import load_settings, protect_settings
 from sleeve_shelf.covers import COVER_DIR, sharpen_small_images, sort_into_folders
 from sleeve_shelf.discogs_import import import_discogs_collection
 from sleeve_shelf.domain import Artist
@@ -37,6 +38,7 @@ from sleeve_shelf.web import (
     navigation,
     pwa,
     rules,
+    security,
     settings,
     setup,
     showcase,
@@ -67,6 +69,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     # The owner's login: signed with a key of this installation, sent over HTTPS only (the
     # app is reachable from the internet), kept until logging out.
     app.secret_key = session_key(app.config["DATA_DIR"])
+    protect_settings(app.config["DATA_DIR"])
     app.config["SESSION_COOKIE_SECURE"] = os.environ.get("SLEEVE_SHELF_HTTP_LOGIN") != "1"
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
@@ -75,7 +78,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     # make one up to escape the limits on logging in and listening.
     proxies = int(os.environ.get("SLEEVE_SHELF_PROXIES") or 0)
     if proxies:
-        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=proxies, x_proto=proxies)
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=proxies, x_proto=proxies, x_host=proxies)
     # Set by the Docker image build; a local run has no version.
     app.config["VERSION"] = os.environ.get("SLEEVE_SHELF_VERSION", "dev")
     # The built documentation site: carried by the Docker image, or built in the repository.
@@ -83,6 +86,8 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
         os.environ.get("SLEEVE_SHELF_HELP_DIR") or Path(__file__).resolve().parents[2] / "docs-site" / "site"
     )
     Babel(app, default_locale="en")
+    # Logins, failed ones and visitors held up go to the log (the container's output).
+    app.logger.setLevel(logging.INFO)
     if any(path.is_file() for path in (app.config["DATA_DIR"] / COVER_DIR).glob("*")):
         # Images stored before covers and pictures each had a folder: sort them out once.
         sort_into_folders(JsonStore(app.config["DATA_DIR"]))
@@ -116,20 +121,18 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.add_template_filter(covers.local_cover, "local_cover")
 
     # A visitor may only look the collection up; this runs before anything else.
+    # A change sent from another site is refused before anything else looks at it.
+    app.before_request(security.reject_other_sites)
     app.before_request(login.guard)
+    app.after_request(security.add_headers)
+    # Every template, also a macro imported from another, can mark its inline script.
+    app.jinja_env.globals["csp_nonce"] = security.csp_nonce
 
     @app.before_request
     def require_collection():
         # Screens that show or change the collection lead to the wizard until there is one.
         if request.blueprint in NEEDS_COLLECTION and not has_collection():
             return redirect(url_for("setup.welcome"))
-
-    @app.before_request
-    def reject_cross_site_posts():
-        # Browsers label where a request comes from; another site must not be
-        # able to replace the collection by posting a form to this app.
-        if request.method == "POST" and request.headers.get("Sec-Fetch-Site") == "cross-site":
-            abort(403)
 
     @app.context_processor
     def menu():

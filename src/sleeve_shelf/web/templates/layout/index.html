@@ -54,16 +54,19 @@
   {% endif %}
   {% if destinations | length > 1 %}
   {# A long page on a phone: a cabinet further down, or in another room, is one choice away. #}
-  <div class="ss-jump mt-3">
+  <form class="ss-jump mt-3" method="get" action="{{ url_for('layout.go') }}">
+    {% if layout %}<input type="hidden" name="layout" value="{{ layout }}">{% endif %}
+    <input type="hidden" name="room" value="{{ room }}">
     <label for="jump" class="visually-hidden">{{ _('Go to cabinet') }}</label>
-    <select id="jump" class="ss-shelf-select" onchange="if (this.value) window.location.href = this.value; this.selectedIndex = 0;">
+    <select id="jump" name="to" class="ss-shelf-select" data-submit-on-change>
       <option value="">{{ _('Go to cabinet…') }}</option>
       {% for entry in destinations %}
-      <option value="{{ url_for('layout.index', layout=layout, room=entry.room or none) }}#cabinet-{{ entry.cabinet.id }}">{{ entry.cabinet.name }}{% if entry.room and rooms %} &middot; {{ entry.room }}{% endif %}</option>
+      <option value="{{ entry.cabinet.id }}">{{ entry.cabinet.name }}{% if entry.room and rooms %} &middot; {{ entry.room }}{% endif %}</option>
       {% endfor %}
-      <option value="#tray">{{ _('Not on a shelf') }}</option>
+      <option value="tray">{{ _('Not on a shelf') }}</option>
     </select>
-  </div>
+    <noscript><button class="ss-button mt-2" type="submit">{{ _('Go') }}</button></noscript>
+  </form>
   {% endif %}
   <div class="ss-alert mt-3 d-none" id="layout-error" role="alert">{{ _('That move could not be saved. Reload the page and try again.') }}</div>
 
@@ -138,7 +141,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
   window.layoutText = {
     current: {{ _('it stands here') | tojson }},
     sendWhat: {{ ngettext('%(artist)s · %(num)s album', '%(artist)s · %(num)s albums', 2, artist='__artist__', num='__num__') | tojson }},
