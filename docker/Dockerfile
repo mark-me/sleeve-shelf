@@ -37,7 +37,7 @@ RUN cd docs-site && uv run --no-sync python -m zensical build --strict
 
 
 # Runtime stage: only Python, the virtual environment, and the built help.
-FROM python:3.13-slim-bookworm
+FROM python:3.14-slim-bookworm
 
 ARG APP_VERSION=dev
 
