@@ -2,7 +2,7 @@
 
 from itertools import groupby
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 
 from sleeve_shelf.domain import Cabinet, Placement, ProposedPlacement, Shelf, in_order
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries
@@ -92,6 +92,21 @@ def index():
         rooms=rooms if len(rooms) > 1 else [],
         room=room,
     )
+
+
+@blueprint.get("/go")
+def go():
+    """Go to cabinet…: to a cabinet, on the tab of its room, or to the albums on no shelf.
+    The page itself goes nowhere the list names; the address is made here."""
+    store = get_store()
+    _, layout = _entity(store)
+    to = request.args.get("to", "")
+    if to == "tray":
+        return redirect(url_for("layout.index", layout=layout, room=request.args.get("room") or None) + "#tray")
+    cabinet = next((c for c in store.load(Cabinet) if to.isdigit() and c.id == int(to)), None)
+    if cabinet is None:
+        return redirect(url_for("layout.index", layout=layout, room=request.args.get("room") or None))
+    return redirect(url_for("layout.index", layout=layout, room=cabinet.location or None) + f"#cabinet-{cabinet.id}")
 
 
 @blueprint.post("/send")

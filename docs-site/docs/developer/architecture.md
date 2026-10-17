@@ -77,7 +77,7 @@ The pages a visitor may open hide their actions behind `{% if is_owner %}`, and 
 
 ## 🪜 Headers and other sites' forms
 
-`web/security.py` adds to every response a Content-Security-Policy: a page runs only the app's own scripts and inline scripts carrying this request's nonce (`{{ csp_nonce() }}` in a template), and loads images, sound and video only from Discogs, Deezer and youtube-nocookie. Inline handlers such as `onchange="…"` do not run; `static/page.js` handles `data-submit-on-change` and `data-go-on-change` instead. Nothing may show the app in a frame. The help, being the documentation site, has a looser policy of its own.
+`web/security.py` adds to every response a Content-Security-Policy: a page runs only the app's own scripts and inline scripts carrying this request's nonce (`{{ csp_nonce() }}` in a template), and loads images, sound and video only from Discogs, Deezer and youtube-nocookie. Inline handlers such as `onchange="…"` do not run; `static/page.js` handles `data-submit-on-change` instead. Go to cabinet… on Layout is a form too: `layout.go` makes the address and redirects, so no script goes to an address it read from the page. Nothing may show the app in a frame. The help, being the documentation site, has a looser policy of its own.
 
 A change — any request other than GET or HEAD — must come from a page of the app: `Sec-Fetch-Site` must be `same-origin`, or, from a browser too old to send it, `Origin` must be this host. A request with neither is not a browser's, so nobody can be tricked into sending it.
 

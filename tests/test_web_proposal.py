@@ -914,6 +914,26 @@ def test_sending_a_block_to_a_shelf_in_another_room_names_the_room_to_jump_to(cl
     assert 'data-albums="3"' in client.get("/layout/?room=Attic").text
 
 
+def test_go_to_cabinet_leads_to_the_cabinet_on_the_tab_of_its_room(client):
+    client.post("/storage/cabinets/1", data={"name": "Kast", "location": "Living room"})
+    client.post("/storage/cabinets/new", data={"name": "Case", "location": "Attic"})
+    client.post("/storage/cabinets/2/shelves/new", data={"name": "x", "width_cm": "5", "type": "",
+                                                         "layer": ""})
+    page = client.get("/layout/").text
+    # The list names cabinets, not addresses: the server makes the address.
+    assert 'action="/layout/go"' in page and '<option value="2">Case &middot; Attic</option>' in page
+
+    assert client.get("/layout/go?to=2").headers["Location"] == "/layout/?room=Attic#cabinet-2"
+    assert client.get("/layout/go?to=tray&room=Attic").headers["Location"] == "/layout/?room=Attic#tray"
+    client.post("/proposal/generate")
+    assert client.get("/layout/go?to=1&layout=proposal").headers["Location"] == (
+        "/layout/?layout=proposal&room=Living+room#cabinet-1"
+    )
+    # Anything else stays on the page it came from.
+    for to in ("99", "javascript:alert(1)", "https://elsewhere.example/"):
+        assert client.get("/layout/go", query_string={"to": to, "room": "Attic"}).headers["Location"] == "/layout/?room=Attic"
+
+
 def test_sending_a_block_in_the_proposal_leaves_the_shelves_alone(client):
     client.post("/proposal/generate")
     before = _shelf_page(client, 1)

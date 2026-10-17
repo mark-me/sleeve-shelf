@@ -564,7 +564,8 @@ def test_layout_offers_a_jump_to_every_cabinet(client):
 
     assert 'id="jump"' in page and 'id="cabinet-1"' in page
     # A cabinet in another room is reached through that room's tab.
-    assert "room=Zolder#cabinet-2" in page
+    assert '<option value="2">' in page
+    assert client.get("/layout/go?to=2").headers["Location"] == "/layout/?room=Zolder#cabinet-2"
 
 
 
