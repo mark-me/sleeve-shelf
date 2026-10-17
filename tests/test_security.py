@@ -12,13 +12,22 @@ def client(tmp_path):
     return create_app(tmp_path / "data").test_client()
 
 
+def _directives(response) -> dict[str, list[str]]:
+    """The policy, directive by directive, each with the sources it allows."""
+    policy = response.headers["Content-Security-Policy"]
+    parts = (part.split() for part in policy.split(";") if part.strip())
+    return {name: sources for name, *sources in parts}
+
+
 def test_every_page_says_what_it_may_load_and_that_it_may_not_be_framed(client):
     response = client.get("/setup/")
-    policy = response.headers["Content-Security-Policy"]
+    policy = _directives(response)
 
-    assert "script-src 'self' 'nonce-" in policy and "unsafe-inline" not in policy.split("script-src")[1].split(";")[0]
-    assert "frame-ancestors 'none'" in policy and "object-src 'none'" in policy
-    assert "media-src https://*.dzcdn.net" in policy and "frame-src https://www.youtube-nocookie.com" in policy
+    script = policy["script-src"]
+    assert script[0] == "'self'" and script[1].startswith("'nonce-") and len(script) == 2
+    assert policy["frame-ancestors"] == ["'none'"] and policy["object-src"] == ["'none'"]
+    assert policy["media-src"] == ["https://*.dzcdn.net"]
+    assert policy["frame-src"] == ["https://www.youtube-nocookie.com"]
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["X-Frame-Options"] == "DENY"
     assert response.headers["Referrer-Policy"] == "same-origin"
@@ -36,8 +45,10 @@ def test_an_inline_script_carries_this_request_s_nonce_and_no_handler_is_inline(
 
 
 def test_the_help_may_run_the_documentation_site_s_own_scripts(client):
-    policy = client.get("/help/").headers["Content-Security-Policy"]
-    assert "https://unpkg.com" in policy and "frame-ancestors 'none'" in policy
+    policy = _directives(client.get("/help/"))
+    # Mermaid comes from unpkg; nothing else from outside may run.
+    assert policy["script-src"] == ["'self'", "'unsafe-inline'", "https://unpkg.com"]
+    assert policy["frame-ancestors"] == ["'none'"]
 
 
 def test_a_change_from_another_site_is_refused(client):
