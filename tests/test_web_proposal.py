@@ -599,6 +599,20 @@ def test_a_proposal_leaves_the_showcase_as_it_is(client):
     assert "Sings" in _shelf_page(client, 2)
 
 
+def test_the_bands_before_counting_as_a_sideman_are_a_setting(client):
+    from sleeve_shelf.config import load_settings
+
+    form = {"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15", "surcharge_gatefold_cm": "0.2"}
+    assert 'name="sideman_bands" inputmode="numeric" value="4"' in client.get("/settings/").text
+
+    bad = client.post("/settings/", data={**form, "sideman_bands": "0"})
+    assert bad.status_code == 400 and "whole number from 1 to 20" in bad.text
+
+    client.post("/settings/", data={**form, "sideman_bands": "6"})
+    assert load_settings(client.application.config["DATA_DIR"]).sideman_bands == 6
+    assert 'value="6"' in client.get("/settings/").text
+
+
 def test_showcase_fill_is_a_setting_and_a_full_top_loader_is_flagged(client):
     _make_showcase(client)
     bad = client.post("/settings/", data={"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15",

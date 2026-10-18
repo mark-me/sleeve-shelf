@@ -10,6 +10,7 @@ The **Settings** screen edits `config.yaml` in your data folder:
 | Extra per 180-gram disc | 0.15 cm | Added per disc for heavy vinyl |
 | Extra for a gatefold sleeve | 0.2 cm | Added once per album, not per disc |
 | Showcase fill | 60 % | How much of a top-loader's width albums may take, leaving room to flip through |
+| Bands before counting as a sideman | 4 | Someone in more bands of your collection than this plays along rather than leads: those bands are not suggested as their family, and only hint at a cluster |
 | Count a bundle such as "CD + LP" as vinyl | on | Applies the next time a Discogs export is imported |
 | Discogs personal access token | — | Shown masked; paste a new one to replace it |
 

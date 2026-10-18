@@ -28,7 +28,7 @@ When a new purchase makes an artist's styles point to another cluster than the o
 A **family** keeps an artist's other names, bands and side projects together as one unit. The app suggests families:
 
 - **from the names** — *Chet Baker* gathers *Chet Baker Quartet* and *Chet Baker & Crew*;
-- **from Discogs** — an artist under several names, or a person with the bands they are in: *Nick Cave* gathers *Grinderman* and *The Birthday Party*.
+- **from Discogs** — an artist under several names, or a person with the bands they are in: *Nick Cave* gathers *Grinderman* and *The Birthday Party*. Someone in more than four bands of your collection is taken to be a sideman, whose bands are not suggested as their family; you can change that number under Settings.
 
 On the **Families** screen you accept a suggestion (leaving out members you don't want), turn it down for good, or make families by hand. *Accept all* asks first how many families it is about to make.
 

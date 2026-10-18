@@ -6,8 +6,8 @@ from dataclasses import dataclass
 from sleeve_shelf.domain import Artist, ArtistEnrichment
 
 # A person in more bands of the collection than this is a sideman: those bands do not
-# belong together because of that one person.
-MAX_BANDS = 3
+# belong together because of that one person. A setting (sideman_bands); this is its default.
+MAX_BANDS = 4
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +34,7 @@ def suggest_families(
     dismissed_ids: frozenset[int] | set[int] = frozenset(),
     enrichments: list[ArtistEnrichment] | None = None,
     album_counts: dict[int, int] | None = None,
+    max_bands: int = MAX_BANDS,
 ) -> list[FamilySuggestion]:
     """Suggest families from the artist names and from who Discogs says belongs together.
 
@@ -41,11 +42,12 @@ def suggest_families(
     artist naming several others ("Duke Ellington & John Coltrane") goes to the one named
     first. From Discogs: the other names of one artist, and a person with the bands that
     person is in. Whatever the user turned down is left out: a new family by the artist it
-    would be named after, an addition to an existing family by the artist to add.
+    would be named after, an addition to an existing family by the artist to add. A person
+    in more than max_bands bands of the collection is a sideman, who draws no band in.
     """
     by_name = _families_from_names(artists, dismissed_ids)
     return by_name + _families_from_discogs(
-        artists, dismissed_ids, enrichments or [], by_name, album_counts or {}
+        artists, dismissed_ids, enrichments or [], by_name, album_counts or {}, max_bands
     )
 
 
@@ -91,6 +93,7 @@ def _families_from_discogs(
     enrichments: list[ArtistEnrichment],
     by_name: list[FamilySuggestion],
     album_counts: dict[int, int],
+    max_bands: int,
 ) -> list[FamilySuggestion]:
     """Families that names cannot reveal: who Discogs lists as member, group or other name.
 
@@ -131,7 +134,7 @@ def _families_from_discogs(
     claimed_by: dict[int, set[int]] = {}
     for artist_id, band_ids in bands_of.items():
         band_ids.discard(artist_id)
-        if len(band_ids) <= MAX_BANDS:
+        if len(band_ids) <= max_bands:
             for band_id in band_ids:
                 claimed_by.setdefault(band_id, set()).add(root(artist_id))
 

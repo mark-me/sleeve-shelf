@@ -47,6 +47,13 @@
       <div class="form-text">{{ _('A top-loader is flipped through to see the fronts, so it needs room left over. The Showcase screen warns when a top-loader holds more than this.') }}</div>
     </div>
 
+    <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Artist families') }}</h2></div>
+    <div class="ss-card-body">
+      <label for="sideman_bands" class="form-label fw-semibold">{{ _('Most bands a musician can be in before counting as a sideman') }}</label>
+      <input id="sideman_bands" class="form-control" style="max-width: 160px;" name="sideman_bands" inputmode="numeric" value="{{ sideman_bands }}">
+      <div class="form-text">{{ _('Someone Discogs lists in more bands of your collection than this plays along rather than leads: those bands are not suggested as their family, and only hint at a cluster.') }}</div>
+    </div>
+
     <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Discogs') }}</h2></div>
     <div class="ss-card-body d-flex flex-column gap-3">
       <div class="form-check">

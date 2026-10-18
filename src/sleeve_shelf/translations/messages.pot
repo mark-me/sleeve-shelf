@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-17 23:16+0200\n"
+"POT-Creation-Date: 2026-10-18 16:29+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -215,6 +215,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/settings.py
 msgid "The showcase fill has to be a whole percentage from 1 to 100."
+msgstr ""
+
+#: src/sleeve_shelf/web/settings.py
+msgid "The number of bands has to be a whole number from 1 to 20."
 msgstr ""
 
 #: src/sleeve_shelf/web/settings.py
@@ -1894,6 +1898,7 @@ msgid "The layout as it is now is saved as a version first. If you still own the
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Artist families"
 msgstr ""
 
@@ -2416,6 +2421,14 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "A top-loader is flipped through to see the fronts, so it needs room left over. The Showcase screen warns when a top-loader holds more than this."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Most bands a musician can be in before counting as a sideman"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Someone Discogs lists in more bands of your collection than this plays along rather than leads: those bands are not suggested as their family, and only hint at a cluster."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
