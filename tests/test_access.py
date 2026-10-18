@@ -69,7 +69,7 @@ def test_a_visitor_may_look_the_collection_up_and_nothing_more(app):
     for page in ("/dashboard/", "/layout/", "/settings/", "/discogs/", "/unplaced", "/families/"):
         response = visitor.get(page)
         assert response.status_code == 302 and response.headers["Location"].startswith("/login"), page
-    assert visitor.post("/albums/1/move", data={"shelf_id": ""}).status_code == 403
+    assert visitor.post("/move/", data={"kind": "album", "id": "1", "how": "end", "shelf": "0"}).status_code == 403
     assert visitor.post("/settings/password", data={"action": "remove"}).status_code == 403
     assert has_password(app.config["DATA_DIR"])
 
@@ -79,7 +79,7 @@ def test_a_visitor_may_look_the_collection_up_and_nothing_more(app):
     assert "<span>Collection</span>" in menu and "<span>Shelves</span>" not in menu and "Log in" in menu
     assert "/unplaced" not in browse and "ss-nav-count" not in browse
     album = visitor.get("/albums/1").text
-    assert 'id="listen"' in album and "/albums/1/move" not in album and "Measured width" not in album
+    assert 'id="listen"' in album and "/move/" not in album and "Measured width" not in album
     artist = visitor.get("/artists/1").text
     assert "Tom Waits" in artist and 'name="start_year"' not in artist and "upload" not in artist
     assert 'href="/artists/"' not in artist

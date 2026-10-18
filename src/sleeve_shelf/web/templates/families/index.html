@@ -6,7 +6,6 @@
 <span class="ss-row-title">{{ ngettext('%(num)d album', '%(num)d albums', member.albums) }}{% if member.cluster %} &middot; {{ member.cluster }}{% endif %}</span>
 {% endmacro %}
 
-{% from "_place_run.html" import placed_alert, place_form %}
 {% block content %}
 <div class="ss-page" style="max-width: 860px;">
   <h1>{{ _('Artist families') }}</h1>
@@ -84,15 +83,8 @@
     {% else %}
     <div class="ss-card-body ss-muted">{{ _('No artists in this family yet.') }}</div>
     {% endfor %}
-    {% if placed and placed_family == family.group.id %}
-    <div class="ss-card-body">{{ placed_alert(placed, ngettext('%(num)d album of this family now stands from %(shelf)s on.', '%(num)d albums of this family now stand from %(shelf)s on.', placed.count, shelf=placed.shelf)) }}</div>
-    {% endif %}
-    {% if family.on_shelves and targets %}
-    <details class="ss-card-body" {{ 'open' if placed and placed_family == family.group.id }}>
-      <summary class="ss-muted">{{ _('Move to a shelf') }}</summary>
-      <p class="ss-muted small mt-2">{{ ngettext('The %(num)d album of this family that stands on a shelf (%(cm)s cm) goes to the start of the shelf you choose, in sorting order; it runs on over the shelves after it in that cabinet, and what stood there moves up behind it.', 'The %(num)d albums of this family that stand on a shelf (%(cm)s cm) go to the start of the shelf you choose, in sorting order; they run on over the shelves after it in that cabinet, and what stood there moves up behind them.', family.on_shelves, cm=family.on_shelves_cm | decimal) }}</p>
-      {% call place_form(url_for('families.place', group_id=family.group.id), targets, 'place-' ~ family.group.id) %}{{ _('Move the family here') }}{% endcall %}
-    </details>
+    {% if family.members %}
+    <div class="ss-card-body"><a class="ss-button ss-button-small" href="{{ url_for('moving.index', kind='family', id=family.group.id) }}">{{ _('Move…') }}</a></div>
     {% endif %}
     <form class="ss-card-body d-flex flex-wrap gap-2" method="post" action="{{ url_for('families.add_member', group_id=family.group.id) }}">
       <label for="add-{{ family.group.id }}" class="visually-hidden">{{ _('Artist to add') }}</label>

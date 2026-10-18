@@ -129,9 +129,7 @@
     </div>
   </form>
 
-  {% set move_url = url_for('albums.move', album_id=album.id) %}
-  {% set move_label = _('Stand this album on') %}
-  {% set current_shelf_id = row.shelf_id if row else none %}
+  {% set move_link = url_for('moving.index', kind='album', id=album.id) %}
   {% include "_rules_and_move.html" %}
   {% endif %}
 </div>

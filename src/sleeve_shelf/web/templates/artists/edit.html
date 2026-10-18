@@ -94,9 +94,7 @@
           </div>
         </div>
       </form>
-      {% set move_url = url_for('artists.move', artist_id=artist.id) %}
-      {% set move_label = ngettext('Stand the %(num)d album of this artist on', 'Stand all %(num)d albums of this artist on', movable_count) %}
-      {% set current_shelf_id = none %}
+      {% set move_link = url_for('moving.index', kind='artist', id=artist.id) %}
       {% include "_rules_and_move.html" %}
 
       <h2 class="mt-5" id="picture">{{ _('Picture') }}</h2>

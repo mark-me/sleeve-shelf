@@ -25,12 +25,11 @@ from sleeve_shelf.ingestion.deezer import DeezerClient
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.listening import listening, turn_down
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.placing import move_albums
 from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.taking_part import albums_taking_part, takes_part
 from sleeve_shelf.web.context import get_store, parse_number
 from sleeve_shelf.web.login import visitor_may_listen
-from sleeve_shelf.web.places import described_rules, described_spots, shelf_options
+from sleeve_shelf.web.places import described_rules, described_spots
 from sleeve_shelf.widths import set_measured_width
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
@@ -66,7 +65,6 @@ def detail(album_id: int):
         spot=None if album_id in placed else described_spots(store).get(album_id),
         placed=request.args.get("placed"),
         rules=described_rules(store, album.artist_id, album_id),
-        shelves=shelf_options(store),
         moved=request.args.get("moved"),
         error=request.args.get("error"),
     )
@@ -111,18 +109,6 @@ def listen_not_this(album_id: int):
     """The album Deezer gave is another one: leave it out for this album."""
     turn_down(get_store(), album_id)
     return redirect(url_for("albums.detail", album_id=album_id) + "#listen")
-
-
-@blueprint.post("/<int:album_id>/move")
-def move(album_id: int):
-    store = get_store()
-    if all(album.id != album_id for album in store.load(Album)):
-        abort(404)
-    shelf_id = request.form.get("shelf_id", type=int)
-    if shelf_id is not None and all(option["id"] != shelf_id for option in shelf_options(store)):
-        abort(404)
-    move_albums(store, [album_id], shelf_id)
-    return redirect(url_for("albums.detail", album_id=album_id, moved=1))
 
 
 @blueprint.post("/<int:album_id>/place")

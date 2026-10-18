@@ -511,6 +511,7 @@ The menu has five sections (decided 2026-10-14): what is done daily on top, what
   - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below). Loading a layout workbook (see Initial load) is reached from the bottom of this screen
 - **Shelves** — the physical cabinets and what stands in them
   - **Layout** — core screen (see below)
+  - **Move** — an album, artist, family or whole cluster to another shelf, or to where it belongs, with what changes shown first (see Move screen, below)
   - **Sorting proposal** — generate a proposal, compare it with the current layout, accept or discard it (see below)
   - **Showcase** — the samples on display in the top-loaders, and exchanging albums with the shelf (see below)
   - **Versions** — saved layouts, with the option to put one back (see below)
@@ -629,8 +630,7 @@ One screen for the three Discogs steps of the sorting setup (see [Onboarding wiz
 - **Suggested from the names and from Discogs**: every suggestion shows the anchor artist and the artists it would gather, each with its number of albums and its cluster — so a member that sits in another cluster is visible before accepting — and says whether it comes from the names or from Discogs. Each member has a checkbox, ticked by default; "Make this a family" creates the family from the anchor and the ticked members (or, for a Discogs suggestion to extend an existing family, "Add to this family" adds them), "Not a family" removes the suggestion for good — for an addition that means the artists offered, so the family can still be offered others later. "Accept all" takes every suggestion as it stands, after asking on the page itself how many families that makes (2026-10-16)
 - **Families**: each family shows its members; the name can be changed, members taken out, and artists added by name (from the artists that are not in a family yet). A family can be removed, after which its artists stand on their own again
 - **Add family**: a new, empty family by name — for families the names don't reveal (e.g. Songs: Ohia and Magnolia Electric Co.)
-- Like the Clusters screen this is taxonomy only — apart from moving a family at once, below: it changes how the next proposal is sorted, not where anything stands now
-- **Moving a family to a shelf** (2026-10-18): under each family, *Move to a shelf* stands its albums together from the start of a chosen shelf, the same way as a whole cluster (see Clusters screen)
+- Like the Clusters screen this is taxonomy only: it changes how the next proposal is sorted, not where anything stands now. Each family has a **Move…** button to the Move screen, with the family chosen
 
 ### Location rules screen
 
@@ -673,8 +673,18 @@ A showcase is a top-loader that shows a sample of the well-represented artists, 
 - **Merging**: tick two or more clusters and merge them. Their artists, styles, and location rules move into the cluster with the most albums, which keeps its place in the order — and its name, unless another is given. This doesn't go through the confirmation flow (Sorting logic §4), since merging is itself the user's confirmed action
 - **One cluster**: rename it, and see the styles pointing at it — each can be pointed at another cluster, which changes what is proposed for new artists carrying that style. A cluster without artists, styles, and rules can be removed
 - **Moving an artist to another cluster** is done on the artist (see Artists screen), where a new cluster can also be made
-- Renaming, ordering, merging and pointing styles are taxonomy only — they do not move any physical Placement; generating a sorting proposal is what applies the new grouping and order to the layout. Moving a whole cluster, below, is the one action here that changes where albums stand
-- **Moving a whole cluster to a shelf** (decided by Mark 2026-10-18, option "from a shelf on"; a family moves the same way, from the Families screen): on a cluster's page, choose a shelf and its albums stand together from the start of that shelf, in sorting order (era band, artist with its family, year), running on over the shelves after it in the same cabinet; what stood there moves up behind them, by width. The shelves before the chosen one and the other cabinets keep their albums, except the cluster's, which leave their places. The cluster is the one a sorting proposal sorts an album under. Only albums that stand on a shelf go; what stands in a showcase or in a cabinet kept outside the sorting stays, and such shelves, and shelves without a width, cannot be chosen. Nothing drops off: what no longer fits stays at the end of the last shelf of the cabinet, and the page says how much too full it is. The layout as it was is saved as a version first
+- Purely a taxonomy action — it does not itself move any physical Placement. Generating a sorting proposal is what applies the new grouping and order to the layout. A cluster's page has a **Move…** button to the Move screen, with the cluster chosen
+
+### Move screen
+
+Decided by Mark on 2026-10-18: moving albums was spread over the pages of an album, an artist, a cluster and a family, each in its own way. It is one screen now, under Shelves, and those pages have only a **Move…** button that opens it with their album, artist, family or cluster chosen. Dragging in Layout stays, for the exact spot on a shelf.
+
+- **1 · What**: one search over clusters, families, artists and albums. An album moves whatever it stands on. Of an artist, family or cluster the albums that stand on a shelf a proposal fills move, in sorting order (era band, artist with its family, year); what stands in a showcase or a cabinet kept outside the sorting stays there
+- **2 · Where to**, one of three:
+  - **Where it belongs** (Mark's idea, 2026-10-18): each album goes next to what it belongs with on the shelves as they stand — the artist's (or family's) other albums, else the artists of its era band in its cluster, else its cluster, else the order of the clusters — the same way a new purchase gets its suggested spot (Sorting logic §4), location rules included. It puts back what was moved by hand without a whole proposal. An album whose artist has no cluster stays where it is, and the screen says so
+  - **At the front of a shelf**: from the start of the shelf, running on over the next shelves of that cabinet that a proposal fills; what stood there moves up behind, by width — a shelf counting as at least as wide as what stands on it now, since a width from the workbook is an estimate that comes out too narrow and would otherwise pile albums onto the last shelf (chosen without asking). The shelves before it and the other cabinets keep their albums, apart from those that move. What no longer fits stays at the end of the cabinet's last shelf
+  - **At the end of a shelf**: after what stands there; nothing else moves. *Not on a shelf* takes the albums off the shelves
+- **3 · What changes**: before anything moves, every shelf whose contents change, with its number of albums now and after and how full it gets against its width — over its width marked, measured or estimated as elsewhere — and the albums that stay because they have no place. Only **Move** changes the shelves; the layout as it was is saved as a version first, and the screen then says how many albums moved, with a link to that cabinet in Layout. Nothing drops off a shelf
 
 ### Detail screen (artist/album)
 
@@ -695,7 +705,7 @@ The detail of an artist and of an album are two pages.
 **On both pages:**
 
 - **Location rules**: the rules that bear on the artist or album are listed, the deciding one first and marked — an album's own rule, then the artist's, the family's, the cluster's — the others marked as overruled. Without any, the page says so. Rules are changed on the Location rules screen
-- **Move to another shelf**: choose a shelf, or "not on a shelf". On the album's page this moves that album; on the artist's page all of the artist's albums that take part in the layout, in order of year and title. What is moved goes to the end of the chosen shelf, on the shelves as they are — never in a proposal — and a version from before the move is kept (see Versions screen). The exact spot within a shelf is set by dragging in Layout
+- **Move…** (2026-10-18; before, a form of its own that put the album, or all of the artist's albums, at the end of a shelf): opens the Move screen with the album or artist chosen
 - **Suggested spot** (2026-10-12): the page of an LP that stands on no shelf shows its suggested spot — the shelf (linking to it in Browse/Search), the two albums it would stand between, what the spot goes by (the artist's own albums, its era band, its cluster, the order of the clusters, or a location rule), and how much room the shelf has left — with a button to put it there. Moving it to any shelf by hand remains possible below
 
 ## Open questions
@@ -721,7 +731,7 @@ Phase 2 is closed (see Phase 2). What is left is work that waits for measurement
 - **Stored images**: files of albums that were removed, or whose image got a new address, stay in `covers/` — decided 2026-10-11: nothing cleans them up for now
 - **Which artists are "well represented"** in a showcase is left to the user; the app sets no threshold
 - **Dutch** (2026-10-18), chosen without asking as Mark did not answer the questions when he asked for it: the browser's language decides, with a choice per device under Settings; only the app is translated, not the help; the terms come from his workbook (see Language).
-- **Moving a cluster or family** (2026-10-18), chosen without asking — a family the same way as a cluster, as Mark asked for families after choosing it for clusters: the cluster is the one a sorting proposal sorts an album under (so a family stays with it, and an artist on a proposed cluster counts); albums without a place stay without one; what does not fit is kept at the end of the cabinet rather than refused; the move works on the shelves as they are, not on a proposal
+- **The Move screen** (2026-10-18), chosen without asking: of an artist, family or cluster only the albums on a sorted shelf move, so an artist's albums without a place no longer come along (they did with the artist's own form before); "Where it belongs" finds each album's place exactly as a suggested spot for a new purchase does, so a whole artist that is a cluster of its own goes by the order of the clusters, and albums that go to one place stand there together in sorting order; at the front of a showcase or a shelf without a width the albums are simply put in front, as nothing can run on by width there; the plan shown is worked out again when Move is pressed, so it always starts from the shelves as they are then; moving works on the shelves as they are, not on a proposal; the ⋮ on a block in Layout stays as it is
 - **Song search** (2026-10-18): every word of the search has to be in the artist, title and one song together — words spread over two songs do not count; a result names at most three songs and how many more; an album found by its artist and title names no song, even when one would match too; the tracklist on an album's page is shown to visitors as well
 
 ### Parked from Phase 1a

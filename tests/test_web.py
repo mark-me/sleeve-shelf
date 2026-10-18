@@ -550,7 +550,7 @@ def test_the_waiting_counts_are_kept_until_something_changes(client):
     assert waiting_counts(store) == waiting_counts(store)
     # Putting the album on a shelf changes the files, and the count follows.
     album_id = next(a.id for a in store.load(Album) if a.title == "Chet")
-    client.post(f"/albums/{album_id}/move", data={"shelf_id": "1"})
+    client.post("/move/", data={"kind": "album", "id": str(album_id), "how": "end", "shelf": "1"})
     assert waiting_counts(store)["unplaced"] == 0
 
 

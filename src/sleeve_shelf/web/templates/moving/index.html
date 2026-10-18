@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Move') }}{% endblock %}
+
+{% macro kind_name(kind) %}{% if kind == 'album' %}{{ _('Album') }}{% elif kind == 'artist' %}{{ _('Artist') }}{% elif kind == 'family' %}{{ _('Family') }}{% else %}{{ _('Cluster') }}{% endif %}{% endmacro %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 860px;">
+  <h1>{{ _('Move') }}</h1>
+  <p class="ss-muted mt-1">{{ _('Move an album, an artist, a family or a whole cluster: to another shelf, or to where it belongs. You see what changes before anything moves; to put albums in their exact spot, drag them in Layout.') }}</p>
+
+  {% if done is not none %}
+  <div class="ss-alert mt-3" role="status">
+    {{ ngettext('%(num)d album moved.', '%(num)d albums moved.', done) }} {{ _('A version from before is kept under Versions.') }}
+    {% if done_cabinet %}<a href="{{ url_for('layout.go', to=done_cabinet) }}">{{ _('Layout') }}</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {# 1 · What #}
+  <section class="ss-card mt-4">
+    <div class="ss-card-head"><h2>1 · {{ _('What') }}</h2></div>
+    {% if chosen %}
+    <div class="ss-row">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ chosen.name }}</span>
+        <span class="ss-row-title">{{ kind_name(chosen.kind) }}{% if chosen.kind != 'album' %} &middot; {{ ngettext('%(num)d album on a shelf', '%(num)d albums on a shelf', chosen.album_ids | length) }}{% endif %}</span>
+      </div>
+      <a class="ss-row-place" href="{{ url_for('moving.index') }}">{{ _('Choose something else') }}</a>
+    </div>
+    {% else %}
+    <div class="ss-card-body">
+      <form method="get" action="{{ url_for('moving.index') }}" role="search" data-live-search>
+        <label for="search" class="visually-hidden">{{ _('Search a cluster, family, artist or album') }}</label>
+        <input id="search" class="ss-search" type="search" name="q" value="{{ search_text }}" placeholder="{{ _('Search a cluster, family, artist or album…') }}" autocomplete="off">
+      </form>
+    </div>
+    {% for item in found %}
+    <a class="ss-row ss-row-link" href="{{ url_for('moving.index', kind=item.kind.value, id=item.id) }}">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ item.name }}</span>
+        <span class="ss-row-title">{{ kind_name(item.kind) }}{% if item.kind != 'album' %} &middot; {{ ngettext('%(num)d album on a shelf', '%(num)d albums on a shelf', item.albums) }}{% endif %}</span>
+      </div>
+    </a>
+    {% else %}
+    {% if search_text %}<div class="ss-card-body ss-muted">{{ _('Nothing matches this search.') }}</div>{% endif %}
+    {% endfor %}
+    {% endif %}
+  </section>
+
+  {# 2 · Where and how #}
+  {% if chosen %}
+  {% if chosen.album_ids %}
+  <form class="ss-card mt-4" method="get" action="{{ url_for('moving.index') }}">
+    <input type="hidden" name="kind" value="{{ chosen.kind.value }}">
+    <input type="hidden" name="id" value="{{ chosen.id }}">
+    <div class="ss-card-head"><h2>2 · {{ _('Where to') }}</h2></div>
+    <div class="ss-card-body d-flex flex-column gap-3">
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="how" id="how-belongs" value="belongs" {{ 'checked' if how == 'belongs' or not how }}>
+        <label class="form-check-label" for="how-belongs"><span class="fw-semibold">{{ _('Where it belongs') }}</span><br><span class="ss-muted small">{{ _('Next to what each album goes with, on the shelves as they stand: the artist’s other albums, its era in its cluster, or its cluster. A location rule is kept to.') }}</span></label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="how" id="how-front" value="front" {{ 'checked' if how == 'front' }}>
+        <label class="form-check-label" for="how-front"><span class="fw-semibold">{{ _('At the front of a shelf') }}</span><br><span class="ss-muted small">{{ _('In sorting order, running on over the next shelves of that cabinet; what stood there moves up behind it.') }}</span></label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="how" id="how-end" value="end" {{ 'checked' if how == 'end' }}>
+        <label class="form-check-label" for="how-end"><span class="fw-semibold">{{ _('At the end of a shelf') }}</span><br><span class="ss-muted small">{{ _('After what stands there; nothing else moves.') }}</span></label>
+      </div>
+      <div>
+        <label for="move-shelf" class="form-label fw-semibold">{{ _('Shelf') }} <span class="ss-muted fw-normal small">{{ _('(not needed for “Where it belongs”)') }}</span></label>
+        <select id="move-shelf" class="form-select" name="shelf" style="max-width: 360px;">
+          {% for option in shelves %}<option value="{{ option.id }}" {{ 'selected' if option.id == shelf_id }}>{{ option.cabinet }} &rsaquo; {{ option.shelf }}</option>{% endfor %}
+          <option value="{{ off_shelf }}" {{ 'selected' if shelf_id == off_shelf }}>{{ _('Not on a shelf') }}</option>
+        </select>
+      </div>
+      <div><button class="ss-button" type="submit">{{ _('Show what changes') }}</button></div>
+    </div>
+  </form>
+  {% else %}
+  <div class="ss-card mt-4"><div class="ss-card-body ss-muted">{{ _('None of its albums stands on a shelf that is sorted, so there is nothing to move. Albums without a place get a suggested spot under Unplaced.') }}</div></div>
+  {% endif %}
+  {% endif %}
+
+  {# 3 · What changes #}
+  {% if plan %}
+  <section class="ss-card mt-4" id="plan">
+    <div class="ss-card-head"><h2>3 · {{ _('What changes') }}</h2></div>
+    {% if plan.changes %}
+    <div class="ss-card-body">
+      <p class="mb-0">{{ ngettext('%(num)d album moves; these shelves change:', '%(num)d albums move; these shelves change:', plan.moved | length) }}</p>
+    </div>
+    <div class="table-responsive">
+      <table class="table mb-0 align-middle">
+        <thead><tr><th>{{ _('Shelf') }}</th><th class="text-end">{{ _('Albums now') }}</th><th class="text-end">{{ _('Albums after') }}</th><th class="text-end">{{ _('Filled') }}</th></tr></thead>
+        <tbody>
+          {% for change in plan.changes %}
+          <tr>
+            <td>{{ change.name }}</td>
+            <td class="text-end">{{ change.before }}</td>
+            <td class="text-end">{{ change.after }}</td>
+            <td class="text-end {{ ('ss-over' if change.width_measured else 'ss-over-estimate') if change.over }}">{{ change.filled_cm | decimal }}{% if change.width_cm %} / {% if not change.width_measured %}&asymp; {% endif %}{{ change.width_cm | decimal }}{% endif %} cm</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if plan.changes | selectattr('over') | list %}
+    <div class="ss-card-body pb-0"><p class="ss-muted small mb-0">{{ _('A shelf marked holds more than its width afterwards. Nothing is left out: take albums out in Layout afterwards, or measure the shelf if its width is an estimate.') }}</p></div>
+    {% endif %}
+    {% if plan.without_spot %}
+    <div class="ss-card-body pb-0">
+      <p class="ss-muted small mb-1">{{ ngettext('This album has no place it belongs to — its artist has no cluster — and stays where it is:', 'These albums have no place they belong to — their artist has no cluster — and stay where they are:', plan.without_spot | length) }}</p>
+      <p class="small mb-0">{% for album_id in plan.without_spot %}{{ titles[album_id] }}{{ ', ' if not loop.last }}{% endfor %}</p>
+    </div>
+    {% endif %}
+    <form class="ss-card-body" method="post" action="{{ url_for('moving.move') }}">
+      <input type="hidden" name="kind" value="{{ plan.selection.kind.value }}">
+      <input type="hidden" name="id" value="{{ plan.selection.id }}">
+      <input type="hidden" name="how" value="{{ plan.how.value }}">
+      {% if plan.shelf_id is not none %}<input type="hidden" name="shelf" value="{{ plan.shelf_id }}">{% endif %}
+      <button class="ss-button ss-button-primary" type="submit">{{ _('Move') }}</button>
+      <span class="ss-muted small ms-2">{{ _('The layout as it is now is kept as a version first.') }}</span>
+    </form>
+    {% else %}
+    <div class="ss-card-body ss-muted">{{ _('Nothing would change: it stands there already.') }}</div>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

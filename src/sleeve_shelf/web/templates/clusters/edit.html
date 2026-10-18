@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ cluster.name }}{% endblock %}
 
-{% from "_place_run.html" import placed_alert, place_form %}
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   <p class="mb-1"><a href="{{ url_for('clusters.index') }}">&larr; {{ _('Clusters') }}</a></p>
@@ -25,18 +24,8 @@
     </div>
   </form>
 
-  <h2 class="mt-5" id="place">{{ _('Move to a shelf') }}</h2>
-  {% if placed %}
-  {{ placed_alert(placed, ngettext('%(num)d album of this cluster now stands from %(shelf)s on.', '%(num)d albums of this cluster now stand from %(shelf)s on.', placed.count, shelf=placed.shelf)) }}
-  {% endif %}
-  {% if on_shelves and targets %}
-  <p class="ss-muted mt-1">{{ ngettext('The %(num)d album of this cluster that stands on a shelf (%(cm)s cm) goes to the start of the shelf you choose, in sorting order; it runs on over the shelves after it in that cabinet, and what stood there moves up behind it. The other cabinets keep their albums.', 'The %(num)d albums of this cluster that stand on a shelf (%(cm)s cm) go to the start of the shelf you choose, in sorting order; they run on over the shelves after it in that cabinet, and what stood there moves up behind them. The other cabinets keep their albums.', on_shelves, cm=on_shelves_cm | decimal) }}</p>
-  <div class="ss-card"><div class="ss-card-body">
-    {% call place_form(url_for('clusters.place', cluster_id=cluster.id), targets, 'place-shelf') %}{{ _('Move the cluster here') }}{% endcall %}
-  </div></div>
-  {% else %}
-  <div class="ss-card"><div class="ss-card-body ss-muted">{% if not on_shelves %}{{ _('No album of this cluster stands on a shelf yet.') }}{% else %}{{ _('No shelf has a width yet; give one a width under Cabinets & shelves.') }}{% endif %}</div></div>
-  {% endif %}
+  <p class="mt-4"><a class="ss-button" href="{{ url_for('moving.index', kind='cluster', id=cluster.id) }}">{{ _('Move…') }}</a>
+    <span class="ss-muted small ms-2">{{ _('The whole cluster at once, to a shelf or to where it belongs.') }}</span></p>
 
   <h2 class="mt-5">{{ _('Discogs styles pointing here') }} ({{ styles | length }})</h2>
   <p class="ss-muted mt-1">{{ _('A new artist whose albums carry one of these styles is proposed this cluster. Point a style elsewhere if it fits another cluster better.') }}</p>

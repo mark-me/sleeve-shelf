@@ -507,8 +507,13 @@ def test_the_rules_that_apply_are_shown_with_the_one_that_decides(client):
     assert "Rule for the cluster" in blakey and "Rule for the artist" not in blakey
 
 
-def test_an_album_can_be_moved_from_its_page(client):
-    client.post("/albums/1/move", data={"shelf_id": "2"})
+def _move(client, kind, item_id, shelf, how="end"):
+    return client.post("/move/", data={"kind": kind, "id": str(item_id), "how": how, "shelf": str(shelf)})
+
+
+def test_an_album_can_be_moved_from_the_move_screen(client):
+    assert 'href="/move/?kind=album&amp;id=1"' in client.get("/albums/1").text
+    _move(client, "album", 1, 2)
 
     assert "Chet &middot; 1959" not in _shelf_page(client, 1)
     shelf_b = _shelf_page(client, 2)
@@ -518,20 +523,19 @@ def test_an_album_can_be_moved_from_its_page(client):
     # A version from before the move can be put back.
     assert "/restore" in client.get("/versions/").text
 
-    client.post("/albums/1/move", data={"shelf_id": ""})
+    _move(client, "album", 1, 0)
     assert "Not on a shelf" in client.get("/albums/1").text
     assert "Chet" in client.get("/unplaced").text
-    assert client.post("/albums/1/move", data={"shelf_id": "99"}).status_code == 404
+    assert _move(client, "album", 1, 99).status_code == 400
 
 
 def test_all_albums_of_an_artist_can_be_moved_at_once(client):
-    client.post("/artists/1/move", data={"shelf_id": "3"})
+    _move(client, "artist", 1, 3)
 
     shelf_c = client.get("/browse?shelf=3").text
     # Both albums, in year order: Sings (1954) before Chet (1959).
     assert shelf_c.index("Sings") < shelf_c.index("Chet &middot; 1959")
     assert "Moanin" in _shelf_page(client, 1)
-    assert "Moved." in client.get("/artists/1?moved=1").text
 
 
 def test_width_can_be_set_on_the_album_page(client):
@@ -876,7 +880,7 @@ def test_the_dashboard_shows_the_first_few_to_place_and_links_to_the_rest(client
 
 def test_an_album_from_the_workbook_is_not_marked_as_new_and_a_purchase_comes_first(client):
     # The box set leaves its shelf: an album that was there from the start, now without a place.
-    client.post("/albums/5/move", data={"shelf_id": ""})
+    _move(client, "album", 5, 0)
     assert ">New</span>" not in client.get("/dashboard/").text
 
     _buy(client, "The Stooges", "Raw Power")
