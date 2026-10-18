@@ -28,22 +28,44 @@ def index():
         for assignment in store.load(ArtistClusterAssignment)
     }
 
-    def describe(artist_id: int) -> dict:
+    labels = {group.id: group.label for group in store.load(AliasGroup)}
+    family_albums: dict[int, int] = {}
+    for artist in artists:
+        if artist.alias_group_id is not None:
+            family_albums[artist.alias_group_id] = family_albums.get(artist.alias_group_id, 0) + album_counts[artist.id]
+
+    def describe(artist_id: int, others: tuple[int, ...] = ()) -> dict:
+        family = by_id[artist_id].alias_group_id
         return {
             "id": artist_id,
             "name": by_id[artist_id].name,
             "albums": album_counts[artist_id],
             "cluster": cluster_of.get(artist_id),
+            # A member already in a family is suggested to move out of it.
+            "family": labels.get(family),
+            # The other artists a joint billing names, to put it with instead: by their
+            # family when they have one, with its albums.
+            "others": [
+                {
+                    "id": other_id,
+                    "name": labels.get(by_id[other_id].alias_group_id) or by_id[other_id].name,
+                    "albums": family_albums.get(by_id[other_id].alias_group_id, album_counts[other_id]),
+                }
+                for other_id in others
+            ],
         }
 
-    labels = {group.id: group.label for group in store.load(AliasGroup)}
     suggestions = [
         {
             "anchor": describe(suggestion.anchor_id),
-            "members": [describe(member_id) for member_id in suggestion.member_ids],
+            "members": [
+                describe(member_id, dict(suggestion.others).get(member_id, ()))
+                for member_id in suggestion.member_ids
+            ],
             # The family the members would be added to, when the suggestion is not a new one.
             "family": labels.get(suggestion.group_id),
             "source": suggestion.source,
+            "family_albums": family_albums.get(suggestion.group_id) if suggestion.group_id else None,
         }
         for suggestion in alias_groups.family_suggestions(store)
     ]
@@ -72,7 +94,7 @@ def index():
 @blueprint.post("/suggestions/<int:anchor_id>/accept")
 def accept(anchor_id: int):
     member_ids = request.form.getlist("member", type=int)
-    alias_groups.accept_suggestion(get_store(), anchor_id, member_ids)
+    alias_groups.accept_suggestion(get_store(), anchor_id, member_ids, request.form.get("source"))
     return _back("suggestions")
 
 
@@ -80,13 +102,22 @@ def accept(anchor_id: int):
 def accept_all():
     store = get_store()
     for suggestion in alias_groups.family_suggestions(store):
-        alias_groups.accept_suggestion(store, suggestion.anchor_id, list(suggestion.member_ids))
+        alias_groups.accept_suggestion(
+            store, suggestion.anchor_id, list(suggestion.member_ids), suggestion.source
+        )
     return _back("families")
 
 
 @blueprint.post("/suggestions/<int:anchor_id>/dismiss")
 def dismiss(anchor_id: int):
-    alias_groups.dismiss_suggestion(get_store(), anchor_id)
+    alias_groups.dismiss_suggestion(get_store(), anchor_id, request.form.get("source"))
+    return _back("suggestions")
+
+
+@blueprint.post("/members/<int:artist_id>/with/<int:with_id>")
+def put_with(artist_id: int, with_id: int):
+    """A joint billing put with another artist it names, rather than where it was suggested."""
+    alias_groups.join(get_store(), artist_id, with_id)
     return _back("suggestions")
 
 

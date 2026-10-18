@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-19 00:12+0200\n"
+"POT-Creation-Date: 2026-10-19 01:04+0200\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -1969,6 +1969,21 @@ msgstr "Discogs noemt ze als leden, groepen of andere namen van elkaar"
 #: src/sleeve_shelf/web/templates/families/index.html
 msgid "from the names"
 msgstr "uit de namen"
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "Moves out of the family “%(family)s”."
+msgstr "Gaat uit de familie “%(family)s”."
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "Also names %(name)s (%(albums)s)."
+msgstr "Noemt ook %(name)s (%(albums)s)."
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "Rather with %(name)s"
+msgstr "Liever bij %(name)s"
 
 #: src/sleeve_shelf/web/templates/families/index.html
 msgid "Add to this family"

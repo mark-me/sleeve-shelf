@@ -31,7 +31,7 @@ A style is mapped to the cluster most of the artists carrying it were curated in
 
 ## 🤝 Families
 
-**`sorting/families.py`** suggests families in two ways. From the names, an artist whose name appears inside others' names gathers them. From Discogs membership, an artist is joined with its other names and with the bands it is in — but nothing is chained through fellow members, a band shared by two artists in the collection belongs to neither, and a person in more of the collection's bands than the setting `sideman_bands` (default 4) counts as a sideman. Both modules take the limit as `max_bands`; `alias_groups.py` reads it from the settings. An existing family is only ever extended.
+**`sorting/families.py`** suggests families in two ways. From the names, an artist whose name appears inside others' names gathers them; a name naming several goes to the place — a family, or an artist with every name that leads to it — with the most albums, on a tie the one named first, and keeps the others in `FamilySuggestion.others`. A name already in a family is suggested to move (an addition to the other family) when a family it names has more albums. `alias_groups.join` puts a joint billing with another artist it names. From Discogs membership, an artist is joined with its other names and with the bands it is in — but nothing is chained through fellow members, a band shared by two artists in the collection belongs to neither, and a person in more of the collection's bands than the setting `sideman_bands` (default 4) counts as a sideman. Both modules take the limit as `max_bands`; `alias_groups.py` reads it from the settings. An existing family is only ever extended.
 
 ## 🎯 A spot for a new purchase
 

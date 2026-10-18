@@ -503,3 +503,42 @@ def test_the_owner_s_order_within_a_band_and_an_artist_is_kept_and_only_the_new_
     assert ordered == [30, 11, 10, 12, 20, 40]
     # Without anything standing it is the rule throughout.
     assert [e.album_id for e in order_albums(units, albums, clusters)] == [20, 30, 10, 11, 12, 40]
+
+
+def test_a_joint_billing_goes_to_the_artist_with_the_most_albums_and_names_the_others():
+    artists = [
+        Artist(4, "Duke Ellington"),
+        Artist(5, "John Coltrane"),
+        Artist(6, "Duke Ellington & John Coltrane"),
+        Artist(7, "John Coltrane Quartet"),
+    ]
+    # Coltrane counts with every name that leads to him: 2 + 3 against Ellington's 4.
+    counts = {4: 4, 5: 2, 6: 1, 7: 3}
+
+    suggestions = suggest_families(artists, album_counts=counts)
+
+    duet = next(s for s in suggestions if 6 in s.member_ids)
+    assert duet.anchor_id == 5 and dict(duet.others) == {6: (4,)}
+    # The quartet names only Coltrane: nothing else to choose.
+    assert dict(next(s for s in suggestions if 7 in s.member_ids).others).get(7) is None
+
+
+def test_a_joint_billing_in_a_family_is_suggested_to_move_to_a_family_with_more_albums():
+    artists = [
+        Artist(1, "Chick Webb And His Orchestra", alias_group_id=1),
+        Artist(2, "Chick Webb And His Orchestra Featuring Ella Fitzgerald", alias_group_id=1),
+        Artist(3, "Ella Fitzgerald", alias_group_id=2),
+        Artist(4, "Ella Fitzgerald & Louis Armstrong", alias_group_id=2),
+        Artist(5, "Louis Armstrong"),
+    ]
+    counts = {1: 1, 2: 1, 3: 7, 4: 2, 5: 4}
+
+    suggestions = suggest_families(artists, album_counts=counts)
+
+    move = next(s for s in suggestions if 2 in s.member_ids)
+    # To Ella's family (9 albums) from Chick Webb's (1, not counting the album that moves).
+    assert (move.anchor_id, move.group_id, move.source) == (3, 2, "names")
+    # Louis Armstrong has fewer albums than Ella's family: the duet stays where it is.
+    assert all(4 not in s.member_ids for s in suggestions)
+    # Turning the move down settles it.
+    assert all(2 not in s.member_ids for s in suggest_families(artists, {2}, album_counts=counts))

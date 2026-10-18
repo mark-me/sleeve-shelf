@@ -58,9 +58,25 @@ def create_family(store: JsonStore, label: str, artist_ids: list[int] | None = N
     return group
 
 
-def accept_suggestion(store: JsonStore, anchor_id: int, member_ids: list[int]) -> None:
-    """Turn a suggestion into a family named after its anchor, or add to the family it names."""
-    suggestion = next((s for s in family_suggestions(store) if s.anchor_id == anchor_id), None)
+def _suggestion(store: JsonStore, anchor_id: int, source: str | None) -> FamilySuggestion | None:
+    """The suggestion with this anchor and, when given, from this source: from the names and
+    from Discogs a family can be offered additions at once, under the same artist."""
+    return next(
+        (
+            s
+            for s in family_suggestions(store)
+            if s.anchor_id == anchor_id and (source is None or s.source == source)
+        ),
+        None,
+    )
+
+
+def accept_suggestion(
+    store: JsonStore, anchor_id: int, member_ids: list[int], source: str | None = None
+) -> None:
+    """Turn a suggestion into a family named after its anchor, or add to the family it names
+    — which takes a member out of the family it was in, when it is suggested to move."""
+    suggestion = _suggestion(store, anchor_id, source)
     if suggestion is None:
         return
     chosen = [member_id for member_id in suggestion.member_ids if member_id in member_ids]
@@ -77,9 +93,9 @@ def accept_suggestion(store: JsonStore, anchor_id: int, member_ids: list[int]) -
     create_family(store, anchor.name, [anchor_id, *chosen])
 
 
-def dismiss_suggestion(store: JsonStore, anchor_id: int) -> None:
+def dismiss_suggestion(store: JsonStore, anchor_id: int, source: str | None = None) -> None:
     """Turn a suggestion down: a new family by its anchor, an addition by the artists to add."""
-    suggestion = next((s for s in family_suggestions(store) if s.anchor_id == anchor_id), None)
+    suggestion = _suggestion(store, anchor_id, source)
     turned_down = [anchor_id]
     if suggestion is not None and suggestion.group_id is not None:
         turned_down = list(suggestion.member_ids)
@@ -88,6 +104,21 @@ def dismiss_suggestion(store: JsonStore, anchor_id: int) -> None:
     new = [FamilyDismissal(artist_id) for artist_id in turned_down if artist_id not in known]
     if new:
         store.save(FamilyDismissal, [*dismissals, *new])
+
+
+def join(store: JsonStore, artist_id: int, with_id: int) -> None:
+    """Put an artist with another one, in that one's family — or a new family named after
+    it when it has none: a joint billing put with another artist it names."""
+    artists = store.load(Artist)
+    artist = next((a for a in artists if a.id == artist_id), None)
+    other = next((a for a in artists if a.id == with_id), None)
+    if artist is None or other is None or artist_id == with_id:
+        return
+    if other.alias_group_id is None:
+        create_family(store, other.name, [with_id, artist_id])
+        return
+    artist.alias_group_id = other.alias_group_id
+    store.save(Artist, artists)
 
 
 def rename_family(store: JsonStore, group_id: int, label: str) -> None:

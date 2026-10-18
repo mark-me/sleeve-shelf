@@ -611,3 +611,39 @@ def test_a_format_names_each_term_once(client):
     store.save(Album, albums)
 
     assert "LP, Album, RE</span>" in client.get(f"/albums/{albums[0].id}").text
+
+
+def test_a_joint_billing_can_be_moved_or_put_with_another_artist_it_names(tmp_path):
+    from sleeve_shelf.domain import Album, AliasGroup, Artist
+
+    client = create_app(tmp_path / "data").test_client()
+    client.post("/setup/start")
+    store = JsonStore(tmp_path / "data")
+    store.save(AliasGroup, [AliasGroup(1, "Chick Webb And His Orchestra"), AliasGroup(2, "Ella Fitzgerald")])
+    store.save(
+        Artist,
+        [Artist(1, "Chick Webb And His Orchestra", alias_group_id=1),
+         Artist(2, "Chick Webb And His Orchestra Featuring Ella Fitzgerald", alias_group_id=1),
+         Artist(3, "Ella Fitzgerald", alias_group_id=2),
+         Artist(4, "Lou Reed"), Artist(5, "The Velvet Underground"),
+         Artist(6, "The Velvet Underground With Lou Reed")],
+    )
+    store.save(
+        Album,
+        [Album(1, 1, "Stompin' At The Savoy"), Album(2, 2, "A-Tisket, A-Tasket"),
+         Album(3, 3, "Ella Sings Gershwin"), Album(4, 3, "Lullabies Of Birdland"),
+         Album(5, 4, "Transformer"), Album(6, 4, "Berlin"), Album(7, 6, "Live 1969")],
+    )
+
+    page = client.get("/families/").text
+    assert "Moves out of the family “Chick Webb And His Orchestra”." in page
+    assert "Also names The Velvet Underground" in page
+
+    # Accepting the move puts the album with Ella.
+    client.post("/families/suggestions/3/accept", data={"member": "2", "source": "names"})
+    assert next(a for a in JsonStore(tmp_path / "data").load(Artist) if a.id == 2).alias_group_id == 2
+    # The joint billing goes with the band rather than with the artist the rule chose.
+    client.post("/families/members/6/with/5")
+    artists = {a.id: a for a in JsonStore(tmp_path / "data").load(Artist)}
+    assert artists[6].alias_group_id == artists[5].alias_group_id is not None
+    assert artists[4].alias_group_id is None

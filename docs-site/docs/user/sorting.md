@@ -29,7 +29,7 @@ To move a **whole cluster** or **family** at once, use **Move…** on its page, 
 
 A **family** keeps an artist's other names, bands and side projects together as one unit. The app suggests families:
 
-- **from the names** — *Chet Baker* gathers *Chet Baker Quartet* and *Chet Baker & Crew*;
+- **from the names** — *Chet Baker* gathers *Chet Baker Quartet* and *Chet Baker & Crew*. A name that names several artists, such as *Chick Webb And His Orchestra Featuring Ella Fitzgerald*, goes to the one with the most albums in your collection (here Ella Fitzgerald), counted with her family. The suggestion names the others too: **Rather with …** puts it there instead. And if such a name already sits in a family while another family it names has more albums, the app suggests moving it — it never moves it by itself;
 - **from Discogs** — an artist under several names, or a person with the bands they are in: *Nick Cave* gathers *Grinderman* and *The Birthday Party*. Someone in more than four bands of your collection is taken to be a sideman, whose bands are not suggested as their family; you can change that number under Settings.
 
 On the **Families** screen you accept a suggestion (leaving out members you don't want), turn it down for good, or make families by hand. *Accept all* asks first how many families it is about to make.

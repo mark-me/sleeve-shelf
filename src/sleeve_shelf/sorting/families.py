@@ -22,6 +22,9 @@ class FamilySuggestion:
     # Where the suggestion comes from: "names" (one name inside the other) or "discogs"
     # (Discogs lists the artists as member, group or other name of each other).
     source: str = "names"
+    # Joint billings that name other artists too, as (member, the artists it could go with
+    # instead): the user may put it there rather than here.
+    others: tuple[tuple[int, tuple[int, ...]], ...] = ()
 
 
 def sort_name(name: str) -> str:
@@ -39,52 +42,118 @@ def suggest_families(
     """Suggest families from the artist names and from who Discogs says belongs together.
 
     From the names: "Chet Baker" gathers "Chet Baker Quartet" and "Chet Baker & Crew"; an
-    artist naming several others ("Duke Ellington & John Coltrane") goes to the one named
-    first. From Discogs: the other names of one artist, and a person with the bands that
+    artist naming several others ("Duke Ellington & John Coltrane") goes to the one with the
+    most albums, counted with its family, and on a tie to the one named first; the others
+    are kept with the suggestion, for the user to choose. One already in a family is
+    suggested to move when another family it names has more albums. From Discogs: the other names of one artist, and a person with the bands that
     person is in. Whatever the user turned down is left out: a new family by the artist it
     would be named after, an addition to an existing family by the artist to add. A person
     in more than max_bands bands of the collection is a sideman, who draws no band in.
     """
-    by_name = _families_from_names(artists, dismissed_ids)
+    by_name = _families_from_names(artists, dismissed_ids, album_counts or {})
     return by_name + _families_from_discogs(
         artists, dismissed_ids, enrichments or [], by_name, album_counts or {}, max_bands
     )
 
 
 def _families_from_names(
-    artists: list[Artist], dismissed_ids: frozenset[int] | set[int]
+    artists: list[Artist], dismissed_ids: frozenset[int] | set[int], album_counts: dict[int, int]
 ) -> list[FamilySuggestion]:
-    """Families that the artist names reveal: one name inside the other."""
-    free = [artist for artist in artists if artist.alias_group_id is None]
-    names = {artist.id: sort_name(artist.name) for artist in free}
+    """Families that the artist names reveal: one name inside the other.
+
+    Each name inside another is a place the other could go: the family it is in, or else
+    the artist itself with every name that leads to it ("The Miles Davis Quintet" leads to
+    "Miles Davis"). A name naming several goes to the place with the most albums, not
+    counting its own; on a tie to the one named first.
+    """
+    names = {artist.id: sort_name(artist.name) for artist in artists}
+    family_of = {a.id: a.alias_group_id for a in artists if a.alias_group_id is not None}
     patterns = {
         artist_id: re.compile(r"(?<!\w)" + re.escape(name) + r"(?!\w)")
         for artist_id, name in names.items()
         if name
     }
-
-    anchor_of: dict[int, int] = {}
+    named: dict[int, list[int]] = {}
     for artist_id, name in names.items():
-        found = [
+        found = sorted(
             (match.start(), -len(names[other_id]), other_id)
             for other_id, pattern in patterns.items()
             if names[other_id] != name and (match := pattern.search(name))
-        ]
+        )
         if found:
-            anchor_of[artist_id] = min(found)[2]
+            named[artist_id] = [other_id for _, _, other_id in found]
 
-    members: dict[int, list[int]] = {}
-    for artist_id, anchor_id in anchor_of.items():
-        # Follow "The Miles Davis Quintet Together With ..." up to "Miles Davis".
-        while anchor_id in anchor_of:
-            anchor_id = anchor_of[anchor_id]
-        members.setdefault(anchor_id, []).append(artist_id)
+    def root(artist_id: int) -> int:
+        # Follow the name named first: "The Miles Davis Quintet Together With ..." up to
+        # "Miles Davis".
+        seen = {artist_id}
+        while artist_id in named and named[artist_id][0] not in seen:
+            artist_id = named[artist_id][0]
+            seen.add(artist_id)
+        return artist_id
 
-    return [
-        FamilySuggestion(anchor_id, tuple(sorted(member_ids, key=lambda i: names[i])))
-        for anchor_id, member_ids in sorted(members.items(), key=lambda item: names[item[0]])
-        if anchor_id not in dismissed_ids
-    ]
+    def place(artist_id: int) -> tuple[str, int]:
+        if artist_id in family_of:
+            return ("family", family_of[artist_id])
+        top = root(artist_id)
+        return ("family", family_of[top]) if top in family_of else ("artist", top)
+
+    weight: dict[tuple[str, int], int] = {}
+    for artist in artists:
+        key = place(artist.id)
+        weight[key] = weight.get(key, 0) + album_counts.get(artist.id, 0)
+    lowest_in = {}
+    for artist_id, family in sorted(family_of.items()):
+        lowest_in.setdefault(family, artist_id)
+
+    def shown(key: tuple[str, int]) -> int:
+        # A place as an artist: the family's artist with the lowest id, as for Discogs.
+        return lowest_in[key[1]] if key[0] == "family" else key[1]
+
+    new: dict[int, list[int]] = {}
+    additions: dict[int, list[int]] = {}
+    others: dict[int, tuple[int, ...]] = {}
+    for artist_id, inside in named.items():
+        # Where it is now: its family; an artist on its own is nowhere yet.
+        own = ("family", family_of[artist_id]) if artist_id in family_of else None
+        places = list(dict.fromkeys(place(other) for other in inside))
+        # Its own albums don't count for the place it would leave or join.
+        counted_in, mine = place(artist_id), album_counts.get(artist_id, 0)
+
+        def albums(key):
+            return weight.get(key, 0) - (mine if key == counted_in else 0)
+
+        best = min(places, key=lambda key: (-albums(key), places.index(key)))
+        if artist_id in family_of:
+            # Already in a family: only a family it names, with more albums, is suggested.
+            if own not in places or best == own or best[0] != "family" or albums(best) <= albums(own):
+                continue
+        if artist_id in dismissed_ids and (best[0] == "family" or artist_id in family_of):
+            continue
+        alternatives = tuple(shown(key) for key in places if key not in (best, own))
+        if alternatives:
+            others[artist_id] = alternatives
+        if best[0] == "family":
+            additions.setdefault(best[1], []).append(artist_id)
+        else:
+            new.setdefault(best[1], []).append(artist_id)
+
+    def entry(anchor_id: int, member_ids: list[int], group_id: int | None) -> FamilySuggestion:
+        members = tuple(sorted(member_ids, key=lambda i: names[i]))
+        return FamilySuggestion(
+            anchor_id,
+            members,
+            group_id,
+            "names",
+            tuple((member, others[member]) for member in members if member in others),
+        )
+
+    suggestions = [
+        entry(anchor_id, member_ids, None)
+        for anchor_id, member_ids in new.items()
+        if anchor_id not in dismissed_ids and anchor_id not in family_of
+    ] + [entry(lowest_in[group_id], member_ids, group_id) for group_id, member_ids in additions.items()]
+    return sorted(suggestions, key=lambda s: names[s.anchor_id])
 
 
 def _families_from_discogs(
