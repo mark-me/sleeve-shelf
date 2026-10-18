@@ -1,7 +1,7 @@
 [project]
 site_url = "https://mark-me.github.io/sleeve-shelf/"
 site_name = "Sleeve & Shelf"
-site_description = "Documentation for Sleeve & Shelf, a self-hosted vinyl collection sorter"
+site_description = "Digital housekeeping for an analog obsession: documentation for Sleeve & Shelf, a self-hosted vinyl collection sorter"
 docs_dir = "docs"
 site_dir = "site"
 # site_author = "Your name"

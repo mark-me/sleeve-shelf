@@ -4,6 +4,8 @@
 
 # Sleeve & Shelf
 
+*Digital housekeeping for an analog obsession.*
+
 Sleeve & Shelf is a self-hosted web application that organizes a vinyl record collection across physical storage (cabinets and shelves), based on musical kinship, artist era, and available shelf space.
 
 It's built for collectors who track their collection on [Discogs](https://www.discogs.com/) and want a sorting proposal they can review and fine-tune, rather than a rigid, fully automated system.

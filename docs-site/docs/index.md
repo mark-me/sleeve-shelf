@@ -1,5 +1,7 @@
 # Sleeve & Shelf
 
+*Digital housekeeping for an analog obsession.*
+
 **Sleeve & Shelf** is a self-hosted web app that keeps a vinyl collection in order across real cabinets and shelves. It knows where every record stands, lets you browse your shelves from your phone while you stand in front of them, links the collection to Discogs, and proposes a sorted layout — by musical kinship, by the era an artist started, and by how much room each shelf has — that you can adjust by hand.
 
 ## 🎧 What it does
