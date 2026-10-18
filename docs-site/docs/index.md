@@ -4,7 +4,7 @@
 
 ## 🎧 What it does
 
-- **Browse and search in shelf order.** Flip through a shelf on screen the way you would in front of the cabinet, or search for an artist or album and see where it stands.
+- **Browse and search in shelf order.** Flip through a shelf on screen the way you would in front of the cabinet, or search for an artist, album or song and see where it stands.
 - **Link the collection to Discogs.** Sync your Discogs collection, fetch styles, original release years, covers and artist pictures.
 - **Propose a sorted layout.** Clusters of related artists, era bands, artist families, and the width of every shelf decide where each album goes. Nothing moves until you accept.
 - **Adjust by hand.** Drag albums between shelves, bind artists to a cabinet with a location rule, keep a sample on display in a top-loader — and go back to an earlier version whenever you like.

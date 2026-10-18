@@ -30,9 +30,9 @@
       <div class="ss-stat"><div class="ss-stat-number">{{ showcase.samples | length }}</div><div class="ss-stat-label">{{ _('artists') }}</div></div>
       <div class="ss-stat"><div class="ss-stat-number">{{ (showcase.share * 100) | round | int }}%</div><div class="ss-stat-label">{{ _('of their albums') }}</div></div>
       <div class="ss-stat">
-        <div class="ss-stat-number {{ 'ss-over' if showcase.too_full }}">{{ '%.1f' | format(showcase.filled_cm) }} cm</div>
+        <div class="ss-stat-number {{ 'ss-over' if showcase.too_full }}">{{ (showcase.filled_cm) | decimal }} cm</div>
         <div class="ss-stat-label">
-          {% if showcase.room_cm is not none %}{{ _('of %(room).1f cm to keep flipping (%(percent)d%% of %(width).1f cm)', room=showcase.room_cm, percent=fill_percent, width=showcase.shelf.width_cm) }}
+          {% if showcase.room_cm is not none %}{{ _('of %(room)s cm to keep flipping (%(percent)d%% of %(width)s cm)', room=showcase.room_cm | decimal, percent=fill_percent, width=showcase.shelf.width_cm | decimal) }}
           {% else %}{{ _('taken; the shelf has no width yet') }}{% endif %}
         </div>
       </div>

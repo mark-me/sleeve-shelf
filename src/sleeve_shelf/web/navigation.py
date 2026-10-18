@@ -57,7 +57,8 @@ SECTIONS = (
     ),
     Section(
         "sorting",
-        _("Sorting"),
+        # Named Sorting until it held more than what a proposal sorts by (2026-10-18).
+        _("Organise"),
         (
             Tab("artists.index", _("Artists"), ("artists",), "artists", "user/sorting/#clusters"),
             Tab("families.index", _("Families"), ("families",), "families", "user/sorting/#artist-families"),

@@ -26,6 +26,7 @@ from sleeve_shelf.storage import (
     move_shelf as move_shelf_in_order,
 )
 from sleeve_shelf.web.context import get_store, has_collection, parse_number, shelf_fill
+from sleeve_shelf.web.language import editable
 
 blueprint = Blueprint("storage", __name__, url_prefix="/storage")
 
@@ -141,7 +142,7 @@ def _shelf_form(cabinet: Cabinet, shelf_id: int | None):
     if shelf:
         values = {
             "name": shelf.name,
-            "width_cm": "" if shelf.width_cm is None else f"{shelf.width_cm:g}",
+            "width_cm": "" if shelf.width_cm is None else editable(shelf.width_cm),
             "type": shelf.type or "",
             "layer": shelf.layer or "",
             "reachability_score": "" if shelf.reachability_score is None else str(shelf.reachability_score),

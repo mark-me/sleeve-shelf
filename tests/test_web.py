@@ -100,7 +100,7 @@ def test_search_ignores_case_and_accents_and_links_to_the_shelf(client):
     assert "2 results for" in miles
     assert "/unplaced#album-4" in miles
 
-    assert "No artist or album matches" in client.get("/browse?q=zappa").text
+    assert "No artist, album or song matches" in client.get("/browse?q=zappa").text
 
 
 def test_unplaced_albums_are_listed(client):
@@ -396,7 +396,7 @@ def test_menu_has_five_sections_and_tabs_that_count_what_is_waiting(client):
     page = client.get("/browse").text
 
     menu = page[page.index('id="main-nav"'):page.index("</nav>")]
-    sections = ["Dashboard", "Collection", "Shelves", "Sorting", "Settings"]
+    sections = ["Dashboard", "Collection", "Shelves", "Organise", "Settings"]
     assert [menu.index(f"<span>{name}</span>") for name in sections] == sorted(
         menu.index(f"<span>{name}</span>") for name in sections
     )

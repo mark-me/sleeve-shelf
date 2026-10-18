@@ -25,7 +25,7 @@ Albums from your workbook are linked to Discogs releases by artist and title. Wh
 
 ## ⬇️ Fetching styles, years and pictures
 
-The fetch run asks Discogs, per release, for its styles and its original release year — the year of the first pressing, not of your copy — and per artist for its picture and who it is connected to. Discogs allows about one request a second, so the first run takes a while; a progress bar keeps up, and you can stop and start again without losing anything. Last of all, covers and pictures are stored in your data folder, so they also show without a connection.
+The fetch run asks Discogs, per release, for its styles, its tracklist and its original release year — the year of the first pressing, not of your copy — and per artist for its picture and who it is connected to. A release fetched before tracklists were kept is asked for once more, for its tracklist only: its styles and year stay as they were, so nothing on your shelves moves because of it. Discogs allows about one request a second, so the first run takes a while; a progress bar keeps up, and you can stop and start again without losing anything. Last of all, covers and pictures are stored in your data folder, so they also show without a connection.
 
 A year you looked up and confirmed yourself is never overwritten.
 

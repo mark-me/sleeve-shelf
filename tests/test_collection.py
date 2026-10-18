@@ -14,6 +14,7 @@ from sleeve_shelf.domain import (
     MatchProposal,
     ReleaseEnrichment,
     Style,
+    Track,
 )
 from sleeve_shelf.enrichment import apply_enrichment, enrich_collection
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
@@ -208,6 +209,52 @@ def test_enrichment_fetches_each_artists_picture_once(tmp_path):
     assert store.load(ArtistEnrichment)[0].image_url == "https://i/30.jpeg"
     enrich_collection(store, client)
     assert len(client.calls) == 2
+
+
+def test_a_release_fetched_before_tracklists_were_kept_is_asked_again_for_its_tracklist(tmp_path):
+    class Songs(_Client):
+        def release(self, release_id):
+            fetched = super().release(release_id)
+            # Discogs has changed its styles meanwhile.
+            return ReleaseEnrichment(
+                release_id, ("Hard Bop",), fetched.master_id, NOW, 2018,
+                tracklist=(Track("A1", "Let's Get Lost", "3:42"),),
+            )
+
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Chet Baker")])
+    store.save(Album, [Album(1, 1, "Chet", release_id=10), Album(2, 1, "New", release_id=12)])
+    # Release 10 was fetched before tracklists were kept; its master is in the cache.
+    store.save(ReleaseEnrichment, [ReleaseEnrichment(10, ("Cool Jazz",), 100, NOW, 1959)])
+    store.save(MasterEnrichment, [MasterEnrichment(100, 1959, NOW)])
+    client = Songs()
+    seen = []
+
+    enrich_collection(store, client, lambda done, total: seen.append((done, total)))
+
+    # One lookup each: the old release for its tracklist, the new one whole (no master).
+    assert client.calls == [("release", 10), ("release", 12)] and seen[-1] == (2, 2)
+    old, new = sorted(store.load(ReleaseEnrichment), key=lambda r: r.release_id)
+    # Only the tracklist is taken over: what the sorting goes by stays as it was.
+    assert old.styles == ("Cool Jazz",) and old.year == 1959
+    assert old.tracklist == (Track("A1", "Let's Get Lost", "3:42"),)
+    assert new.styles == ("Hard Bop",) and new.tracklist == old.tracklist
+
+    enrich_collection(store, client)
+    assert len(client.calls) == 2
+
+
+def test_a_release_without_songs_is_not_asked_for_again(tmp_path):
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Chet Baker")])
+    store.save(Album, [Album(1, 1, "Chet", release_id=12)])
+    client = _Client()
+
+    enrich_collection(store, client)
+    enrich_collection(store, client)
+
+    assert client.calls == [("release", 12)]
+    assert store.load(ReleaseEnrichment)[0].tracklist == ()
 
 
 def test_enrichment_fetches_membership_for_records_from_before_it_was_kept(tmp_path):

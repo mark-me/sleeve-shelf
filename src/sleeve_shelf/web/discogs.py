@@ -35,6 +35,7 @@ from sleeve_shelf.domain import (
     Shelf,
     find_by_id,
 )
+from sleeve_shelf.enrichment import releases_to_fetch
 from sleeve_shelf.ingestion.discogs_api import (
     SECONDS_BETWEEN_IMAGES,
     SECONDS_BETWEEN_REQUESTS,
@@ -93,8 +94,12 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
     albums = store.load(Album)
     artist_list = store.load(Artist)
     artists = {artist.id: artist.name for artist in artist_list}
-    fetched = {release.release_id for release in store.load(ReleaseEnrichment)}
     linked = {album.release_id for album in albums if album.release_id is not None}
+    # A release fetched before tracklists were kept is asked for again, for its tracklist.
+    new_ids, tracklist_ids = releases_to_fetch(
+        albums, {release.release_id: release for release in store.load(ReleaseEnrichment)}
+    )
+    to_fetch = new_ids | tracklist_ids
     by_id = {album.id: album for album in albums}
     proposals = [
         {
@@ -154,22 +159,22 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             "discogs/index.html",
             album_count=len(albums),
             linked_count=sum(album.release_id is not None for album in albums),
-            fetched_count=len(linked & fetched),
-            to_fetch_count=len(linked - fetched),
+            fetched_count=len(linked - to_fetch),
+            to_fetch_count=len(to_fetch),
             preview=preview,
             # Whether anything is left to fetch, also while an earlier step waits.
-            fetch_open=bool(linked - fetched or to_fetch_pictures or images_missing),
+            fetch_open=bool(to_fetch or to_fetch_pictures or images_missing),
             # The step that waits for the user, from top to bottom; none when all is done.
             current="sync"
             if preview
             else "matches"
             if proposals
             else "enrich"
-            if token and (linked - fetched or to_fetch_pictures or images_missing)
+            if token and (to_fetch or to_fetch_pictures or images_missing)
             else None,
             pictures_to_fetch_count=to_fetch_pictures,
             # How far each part is, as [done, total]; a running job knows it more precisely.
-            albums_progress=job["albums"] or [len(linked & fetched), len(linked)],
+            albums_progress=job["albums"] or [len(linked - to_fetch), len(linked)],
             pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
             covers_to_fetch_count=images_missing,
             covers_progress=job["covers"] or [images_stored, len(images)],
@@ -177,7 +182,8 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
             unnamed_count=sum(artist.discogs_artist_id is None for artist in artist_list),
             minutes=ceil(
                 (
-                    (2 * len(linked - fetched) + len(named - pictured)) * SECONDS_BETWEEN_REQUESTS
+                    (2 * len(new_ids) + len(tracklist_ids) + len(named - pictured))
+                    * SECONDS_BETWEEN_REQUESTS
                     # Covers and pictures that are still to be named come on top of these.
                     + images_missing * SECONDS_BETWEEN_IMAGES
                 )

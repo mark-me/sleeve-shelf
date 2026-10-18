@@ -17,17 +17,17 @@ The documentation lives at **<https://mark-me.github.io/sleeve-shelf/>**:
 
 ## Status
 
-Phase 1 (the MVP) is built, and most of Phase 2.
+Phase 1 (the MVP) and Phase 2 (ongoing use) are built.
 
-- **Load and browse**: load a worked-out cabinet layout from an Excel workbook — or start without one — and browse or search the collection in physical shelf order, with album covers. Covers and artist pictures are stored with your data, so they also show offline.
+- **Load and browse**: load a worked-out cabinet layout from an Excel workbook — or start without one — and browse or search the collection in physical shelf order, with album covers. Search also finds songs, once the tracklists are fetched from Discogs. Covers and artist pictures are stored with your data, so they also show offline.
 - **Discogs**: sync the collection straight from Discogs (or upload an export), and fetch styles, original release years and artist pictures. Albums that left your Discogs collection are reported; you keep or remove them yourself.
 - **Sorting**: manage cabinets, shelves, clusters, artist families and location rules (the app suggests families from the artist names and from Discogs' members and aliases, and rules from the layout you already have), generate a sorting proposal, adjust it by dragging, and keep versions of the layout to go back to.
-- **New purchases**: when a purchase makes an artist's Discogs styles point to another cluster, the app says so and waits for you to move the artist or keep it where it is.
+- **New purchases**: an LP that stands on no shelf yet is suggested a spot in the layout as it is, and put there when you say so. When a purchase makes an artist's Discogs styles point to another cluster, the app says so and waits for you to move the artist or keep it where it is.
 - **Showcase**: top-loaders that hold a sample of an artist's albums, exchanged one for one with the shelf.
 - **On your phone**: the app can be installed to the home screen (over HTTPS) and opens on Browse / Search.
 - **Visitors**: with an owner's password set, anyone else can search, browse and listen, but only the owner, logged in, can change anything (`uv run python -m sleeve_shelf set-password`).
 
-Not built yet: a suggested spot for new purchases (the rest of Phase 2), and all of Phase 3. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
+Phase 3 has started: song search is built; the rest of it is not. See [`docs/requirements.md`](docs/requirements.md) for the full requirements and phased roadmap.
 
 ## Running it
 
@@ -91,8 +91,8 @@ Run the tests with `uv run python -m pytest`.
 ## Roadmap (summary)
 
 - **Phase 1 — MVP** (built): load an existing layout, browse and search it, link the collection to Discogs, configure cabinets and shelves, generate a sorting proposal (curated clusters, era bands by the decade an artist started, artist families), and adjust it by hand
-- **Phase 2 — Ongoing use** (mostly built): syncing with Discogs, album covers and the showcase are there; only a suggested spot for new purchases is not
-- **Phase 3 — Refinement** (not started): deeper musical-kinship logic, song-level search, more languages, other media formats
+- **Phase 2 — Ongoing use** (built): syncing with Discogs, album covers and artist pictures, a suggested spot for new purchases, a notice when a purchase would shift an artist's cluster, suggested families and location rules, and the showcase
+- **Phase 3 — Refinement** (started): song-level search and a Dutch translation are built; deeper musical-kinship logic and other media formats are not
 
 Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
 

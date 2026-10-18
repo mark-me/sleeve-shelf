@@ -1,6 +1,7 @@
 """Application services for artist families (alias groups)."""
 
 from sleeve_shelf.artists import albums_per_artist
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
@@ -18,7 +19,11 @@ def family_suggestions(store: JsonStore) -> list[FamilySuggestion]:
     dismissed = {dismissal.anchor_artist_id for dismissal in store.load(FamilyDismissal)}
     album_counts = albums_per_artist(store)
     return suggest_families(
-        store.load(Artist), dismissed, store.load(ArtistEnrichment), album_counts
+        store.load(Artist),
+        dismissed,
+        store.load(ArtistEnrichment),
+        album_counts,
+        load_settings(store.data_dir).sideman_bands,
     )
 
 
@@ -34,6 +39,7 @@ def cluster_hints(store: JsonStore) -> dict[int, ClusterHint]:
         store.load(ArtistClusterAssignment),
         store.load(ArtistEnrichment),
         album_counts,
+        load_settings(store.data_dir).sideman_bands,
     )
 
 

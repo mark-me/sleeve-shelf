@@ -7,12 +7,12 @@
   <div class="ss-row-text">
     <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=row.album.artist_id) }}">{{ row.artist }}</a>
     <span class="ss-row-title">{{ row.album.title }}{% if row.album.format_tokens %} &middot; {{ row.album.format_tokens.qualifiers | unique | join(', ') }}{% endif %}</span>
-    <span class="ss-row-title">{{ _('Estimate: %(width).1f cm', width=row.album.computed_width_cm or 0) }}</span>
+    <span class="ss-row-title">{{ _('Estimate: %(width)s cm', width=(row.album.computed_width_cm or 0) | decimal) }}</span>
   </div>
   <div class="d-flex align-items-center gap-2 flex-shrink-0">
     <label for="width-{{ row.album.id }}" class="visually-hidden">{{ _('Width of %(title)s in cm', title=row.album.title) }}</label>
     <input id="width-{{ row.album.id }}" class="form-control" style="width: 90px;" name="width_cm" inputmode="decimal"
-           value="{{ '%g' | format(row.album.manual_width_cm) if row.album.manual_width_cm is not none else '' }}" placeholder="cm">
+           value="{{ row.album.manual_width_cm | editable if row.album.manual_width_cm is not none else '' }}" placeholder="cm">
     <button class="ss-button ss-button-small" type="submit">{{ button }}</button>
   </div>
 </form>

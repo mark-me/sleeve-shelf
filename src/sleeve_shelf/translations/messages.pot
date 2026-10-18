@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-17 23:16+0200\n"
+"POT-Creation-Date: 2026-10-18 23:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -131,6 +131,7 @@ msgid "Shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/_place_run.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Layout"
@@ -158,7 +159,7 @@ msgid "Cabinets"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
-msgid "Sorting"
+msgid "Organise"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -215,6 +216,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/settings.py
 msgid "The showcase fill has to be a whole percentage from 1 to 100."
+msgstr ""
+
+#: src/sleeve_shelf/web/settings.py
+msgid "The number of bands has to be a whole number from 1 to 20."
 msgstr ""
 
 #: src/sleeve_shelf/web/settings.py
@@ -275,6 +280,25 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/_cover.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Close"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_place_run.html
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "A version from before is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_place_run.html
+#, python-format
+msgid "Not everything fitted: the last shelf of the cabinet holds %(cm)s cm more than its width."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_place_run.html
+msgid "Shelf to start on"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_place_run.html
+msgid "A showcase, and a cabinet kept outside the sorting, keep what stands there. The layout as it is now is kept as a version first."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_play.html
@@ -543,6 +567,14 @@ msgid "not linked"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Tracklist"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "The tracklist comes with the next fetch from Discogs."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Listening needs an internet connection."
 msgstr ""
 
@@ -575,7 +607,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #, python-format
-msgid "Estimated from the format: %(width).1f cm."
+msgid "Estimated from the format: %(width)s cm."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -602,7 +634,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
 #, python-format
-msgid "Estimate: %(width).1f cm"
+msgid "Estimate: %(width)s cm"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
@@ -959,11 +991,11 @@ msgid "How this screen works"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
-msgid "Search by artist or album"
+msgid "Search by artist, album or song"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
-msgid "Search by artist or album…"
+msgid "Search by artist, album or song…"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
@@ -986,11 +1018,22 @@ msgid "Back to browsing"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
+msgid "Song"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/results.html
+#, python-format
+msgid "and %(num)d more song"
+msgid_plural "and %(num)d more songs"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/browse/results.html
 msgid "Choosing a result opens its shelf, with the album marked."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
-msgid "No artist or album matches this search."
+msgid "No artist, album or song matches this search."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
@@ -1056,10 +1099,6 @@ msgstr ""
 msgid "This shelf is empty."
 msgstr ""
 
-#: src/sleeve_shelf/web/templates/browse/shelf.html
-msgid "Song-level search comes in a later phase — that needs tracklist data that isn’t fetched yet."
-msgstr ""
-
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
 msgid "Unplaced albums"
 msgstr ""
@@ -1072,11 +1111,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
 msgid "%(title)s now stands on"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/browse/unplaced.html
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "A version from before is kept under Versions."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
@@ -1127,6 +1161,37 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/families/index.html
 msgid "Rename"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Move to a shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#, python-format
+msgid "%(num)d album of this cluster now stands from %(shelf)s on."
+msgid_plural "%(num)d albums of this cluster now stand from %(shelf)s on."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#, python-format
+msgid "The %(num)d album of this cluster that stands on a shelf (%(cm)s cm) goes to the start of the shelf you choose, in sorting order; it runs on over the shelves after it in that cabinet, and what stood there moves up behind it. The other cabinets keep their albums."
+msgid_plural "The %(num)d albums of this cluster that stand on a shelf (%(cm)s cm) go to the start of the shelf you choose, in sorting order; they run on over the shelves after it in that cabinet, and what stood there moves up behind them. The other cabinets keep their albums."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+msgid "Move the cluster here"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+msgid "No album of this cluster stands on a shelf yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+msgid "No shelf has a width yet; give one a width under Cabinets & shelves."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/clusters/edit.html
@@ -1694,7 +1759,7 @@ msgid "No matches are waiting for confirmation."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Fetch styles, original years and pictures"
+msgid "Fetch styles, original years, tracklists and pictures"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1710,7 +1775,7 @@ msgid "Discogs allows about one lookup per second; each release takes up to two,
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Styles and original years"
+msgid "Styles, original years and tracklists"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1755,7 +1820,7 @@ msgid "Now storing the covers and pictures here."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Now fetching styles and original years."
+msgid "Now fetching styles, original years and tracklists."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1894,6 +1959,7 @@ msgid "The layout as it is now is saved as a version first. If you still own the
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Artist families"
 msgstr ""
 
@@ -1982,6 +2048,24 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
 msgid "No artists in this family yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "%(num)d album of this family now stands from %(shelf)s on."
+msgid_plural "%(num)d albums of this family now stand from %(shelf)s on."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "The %(num)d album of this family that stands on a shelf (%(cm)s cm) goes to the start of the shelf you choose, in sorting order; it runs on over the shelves after it in that cabinet, and what stood there moves up behind it."
+msgid_plural "The %(num)d albums of this family that stand on a shelf (%(cm)s cm) go to the start of the shelf you choose, in sorting order; they run on over the shelves after it in that cabinet, and what stood there moves up behind them."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Move the family here"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
@@ -2419,6 +2503,14 @@ msgid "A top-loader is flipped through to see the fronts, so it needs room left 
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Most bands a musician can be in before counting as a sideman"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Someone Discogs lists in more bands of your collection than this plays along rather than leads: those bands are not suggested as their family, and only hint at a cluster."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Discogs"
 msgstr ""
 
@@ -2489,6 +2581,14 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Switch light / dark"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "The language follows your browser until you choose one for this device."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "As the browser"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
@@ -2620,7 +2720,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/showcase/index.html
 #, python-format
-msgid "of %(room).1f cm to keep flipping (%(percent)d%% of %(width).1f cm)"
+msgid "of %(room)s cm to keep flipping (%(percent)d%% of %(width)s cm)"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/showcase/index.html

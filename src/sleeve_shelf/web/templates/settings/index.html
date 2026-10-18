@@ -14,9 +14,9 @@
 
   {% if needed is not none %}
   <div class="ss-stats mt-3">
-    <div class="ss-stat"><div class="ss-stat-number">{{ '%.0f' | format(needed) }} cm</div><div class="ss-stat-label">{{ _('your albums need') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ '%.0f' | format(offered) }} cm</div><div class="ss-stat-label">{{ _('your shelves offer') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number {{ 'ss-over' if needed > offered }}">{{ '%.0f' | format(offered - needed) }} cm</div><div class="ss-stat-label">{{ _('room left') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ (needed) | decimal(0) }} cm</div><div class="ss-stat-label">{{ _('your albums need') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ (offered) | decimal(0) }} cm</div><div class="ss-stat-label">{{ _('your shelves offer') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number {{ 'ss-over' if needed > offered }}">{{ (offered - needed) | decimal(0) }} cm</div><div class="ss-stat-label">{{ _('room left') }}</div></div>
   </div>
   <p class="ss-muted small mt-2">{{ _('Counted over the albums and shelves a sorting proposal uses. Shelf widths are set per shelf under Cabinets & shelves; the values below only change how wide the albums are taken to be.') }}</p>
   {% endif %}
@@ -45,6 +45,13 @@
       <label for="showcase_fill_percent" class="form-label fw-semibold">{{ _('How full a showcase may be, as a percentage of its width') }}</label>
       <input id="showcase_fill_percent" class="form-control" style="max-width: 160px;" name="showcase_fill_percent" inputmode="numeric" value="{{ showcase_fill }}">
       <div class="form-text">{{ _('A top-loader is flipped through to see the fronts, so it needs room left over. The Showcase screen warns when a top-loader holds more than this.') }}</div>
+    </div>
+
+    <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Artist families') }}</h2></div>
+    <div class="ss-card-body">
+      <label for="sideman_bands" class="form-label fw-semibold">{{ _('Most bands a musician can be in before counting as a sideman') }}</label>
+      <input id="sideman_bands" class="form-control" style="max-width: 160px;" name="sideman_bands" inputmode="numeric" value="{{ sideman_bands }}">
+      <div class="form-text">{{ _('Someone Discogs lists in more bands of your collection than this plays along rather than leads: those bands are not suggested as their family, and only hint at a cluster.') }}</div>
     </div>
 
     <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Discogs') }}</h2></div>
@@ -108,6 +115,16 @@
       <span class="ss-muted">{{ _('Light or dark follows this device until you switch it here.') }}</span>
       <button class="ss-button ss-button-small" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
     </div>
+    <form class="ss-card-body d-flex flex-wrap align-items-center justify-content-between gap-2" style="border-top: 1px solid var(--ss-border);" method="post" action="{{ url_for('language.choose') }}">
+      <label for="language-choice" class="ss-muted">{{ _('The language follows your browser until you choose one for this device.') }}</label>
+      <select id="language-choice" name="language" class="form-select" style="max-width: 220px;" data-submit-on-change>
+        <option value="browser" {{ 'selected' if not chosen_language }}>{{ _('As the browser') }}</option>
+        {% for code, name in languages.items() %}
+        <option value="{{ code }}" lang="{{ code }}" {{ 'selected' if chosen_language == code }}>{{ name }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="ss-button ss-button-small" type="submit">{{ _('Save') }}</button></noscript>
+    </form>
   </section>
   <p class="ss-muted small mt-3">{{ _('Version %(version)s', version=config.VERSION) }}</p>
 </div>

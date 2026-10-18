@@ -140,6 +140,7 @@ erDiagram
         int master_id
         int year
         datetime fetched_at
+        list tracklist "position, title, duration; null: fetched before tracklists were kept"
     }
     AlbumListening {
         int album_id PK, FK
@@ -186,7 +187,7 @@ The core of it:
 - An **Artist** has **Albums**, belongs to one **Cluster** through an **ArtistClusterAssignment** (confirmed, or proposed by the app), and optionally to an **AliasGroup** — a family.
 - A **Cabinet** has **Shelves**. A **Placement** stands an album on a shelf at a position; a **ProposedPlacement** does the same for a proposal waiting for a decision.
 - A **LocationRule** binds a cluster, family, artist or album to a cabinet.
-- **ReleaseEnrichment**, **MasterEnrichment** and **ArtistEnrichment** cache what the Discogs API returned, so it is never fetched twice.
+- **ReleaseEnrichment**, **MasterEnrichment** and **ArtistEnrichment** cache what the Discogs API returned, so it is never fetched twice. A release's **tracklist** is kept in its ReleaseEnrichment and searched from there (`BrowseQueries.search` unnests it); null marks a record from before tracklists were kept, which the fetch run asks for again for its tracklist alone.
 
 ## 💾 Files on disk
 

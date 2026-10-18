@@ -21,6 +21,7 @@ from sleeve_shelf.domain import (
     PlacementSource,
     ReleaseEnrichment,
     Shelf,
+    Track,
 )
 from sleeve_shelf.ingestion.discogs_api import DiscogsError
 from sleeve_shelf.persistence import JsonStore
@@ -179,6 +180,44 @@ def test_enrichment_runs_in_the_background_and_fills_the_albums(app, client):
     assert (album.master_id, album.original_release_year) == (77, 1973)
     page = client.get("/discogs/").text
     assert "Everything has been fetched." in page and "2 of 2 linked albums" in page
+
+
+def test_a_sync_and_a_fetch_bring_the_songs_to_search_and_to_the_album_page(app, client):
+    class Songs(_Client):
+        def release(self, release_id):
+            fetched = super().release(release_id)
+            songs = {1874289: (Track("A1", "Ol' '55", "3:58"), Track("A2", "I Hope That I Don't Fall In Love With You"))}
+            return ReleaseEnrichment(
+                release_id, fetched.styles, fetched.master_id, fetched.fetched_at, fetched.year,
+                tracklist=songs.get(release_id, ()),
+            )
+
+    app.config["DISCOGS_CLIENT_FACTORY"] = Songs
+    client.post("/discogs/token", data={"token": "secret"})
+    client.post("/discogs/sync")
+    client.post("/discogs/import/confirm")
+    # Closing Time was fetched before tracklists were kept: it is asked for again, once.
+    _store(app).save(
+        ReleaseEnrichment, [ReleaseEnrichment(1874289, ("Blues Rock",), 77, datetime(2026, 10, 1), 1990)]
+    )
+    _store(app).save(MasterEnrichment, [MasterEnrichment(77, 1973, datetime(2026, 10, 1))])
+    page = client.get("/discogs/").text
+    assert "2 linked albums still have to be fetched." in page and "tracklists" in page
+    assert "The tracklist comes with the next fetch from Discogs." in client.get("/albums/1").text
+
+    client.post("/discogs/enrich/start")
+    app.extensions["enrichment_job"].wait(10)
+
+    # The old release got its tracklist and kept its styles; the new one came whole.
+    releases = {r.release_id: r for r in _store(app).load(ReleaseEnrichment)}
+    assert releases[1874289].styles == ("Blues Rock",) and len(releases[1874289].tracklist) == 2
+    assert releases[1965832].tracklist == ()
+    assert "Everything has been fetched." in client.get("/discogs/").text
+    results = client.get("/browse?q=fall+in+love").text
+    assert "Closing Time" in results and "A2 &middot; I Hope That I Don&#39;t Fall In Love With You" in results
+    album = client.get("/albums/1").text
+    assert "Tracklist" in album and "Ol&#39; &#39;55" in album and "3:58" in album
+    assert "comes with the next fetch" not in album
 
 
 def test_a_failing_lookup_is_reported(app, client):

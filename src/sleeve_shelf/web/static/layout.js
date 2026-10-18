@@ -4,6 +4,14 @@
   const text = window.layoutText;
 
   // Show how full a shelf is: the meter and the line next to it.
+  // A width as the page's language writes it: "39.8" in English, "39,8" in Dutch.
+  function decimal(value) {
+    return Number(value).toLocaleString(document.documentElement.lang || undefined, {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    });
+  }
+
   function showFill(shelf, albums, filled) {
     const width = parseFloat(shelf.dataset.width);
     const line = shelf.querySelector(".ss-shelf-fill");
@@ -15,8 +23,8 @@
     const template = isNaN(width) ? text.fillNoWidth : measured ? text.fill : text.fillEstimated;
     line.textContent = template
       .replace("__albums__", albums)
-      .replace("__filled__", Number(filled).toFixed(1))
-      .replace("__width__", isNaN(width) ? "" : width.toFixed(1));
+      .replace("__filled__", decimal(filled))
+      .replace("__width__", isNaN(width) ? "" : decimal(width));
     const share = isNaN(width) || width <= 0 ? 0 : filled / width;
     meter.style.width = Math.min(100, Math.round(share * 100)) + "%";
     shelf.classList.toggle("ss-shelf-over", share > 1 && measured);
@@ -100,8 +108,8 @@
     const known = !isNaN(parseFloat(width));
     return (known ? text.fill : text.fillNoWidth)
       .replace("__albums__", albums)
-      .replace("__filled__", Number(filled).toFixed(1))
-      .replace("__width__", known ? parseFloat(width).toFixed(1) : "");
+      .replace("__filled__", decimal(filled))
+      .replace("__width__", known ? decimal(width) : "");
   }
 
   function showOption(option, albums, filled) {

@@ -7,6 +7,16 @@ from sleeve_shelf.domain.catalog import FormatTokens
 
 
 @dataclass(frozen=True, slots=True)
+class Track:
+    """A song on a release, as Discogs lists it."""
+
+    # Where it is on the record: "A1", "B2", or just a number.
+    position: str
+    title: str
+    duration: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ReleaseEnrichment:
     """Cached result of a Discogs release lookup.
 
@@ -18,6 +28,9 @@ class ReleaseEnrichment:
     master_id: int | None
     fetched_at: datetime
     year: int | None = None
+    # The songs on the release. None means a record from before tracklists were kept, which
+    # is fetched again once for its tracklist alone.
+    tracklist: tuple[Track, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)

@@ -85,7 +85,9 @@ def test_families_are_suggested_from_discogs_membership_groups_and_aliases():
         ArtistEnrichment(108, None, None, NOW),
     ]
 
-    suggestions = suggest_families(artists, enrichments=enrichments, album_counts={5: 3, 4: 1})
+    suggestions = suggest_families(
+        artists, enrichments=enrichments, album_counts={5: 3, 4: 1}, max_bands=3
+    )
 
     assert [(s.anchor_id, s.member_ids, s.group_id, s.source) for s in suggestions] == [
         # The person anchors the family of his bands, which is named after him.
@@ -93,7 +95,10 @@ def test_families_are_suggested_from_discogs_membership_groups_and_aliases():
         (5, (4,), None, "discogs"),
     ]
     # Turning down the artist a family would be named after settles it.
-    assert suggest_families(artists, {1, 5}, enrichments) == []
+    assert suggest_families(artists, {1, 5}, enrichments, max_bands=3) == []
+    # With room for four bands, the person in four is no sideman and gathers his bands.
+    wider = suggest_families(artists, enrichments=enrichments, album_counts={5: 3, 4: 1})
+    assert {s.anchor_id: set(s.member_ids) for s in wider}[6] == {7, 8, 9, 10}
 
 
 def test_discogs_adds_to_an_existing_family_and_leaves_what_names_suggest():
@@ -327,7 +332,7 @@ def test_a_sidemans_bands_are_a_loose_connection_and_a_close_one_goes_before_the
     records = [_record(10, groups=(20, 30, 40, 50)), _record(60, groups=(20,)), _record(70, groups=(20,))]
     assignments = [ArtistClusterAssignment(1, 7, True), ArtistClusterAssignment(6, 8, True)]
 
-    hints = clusters_by_connection(artists, assignments, records, {1: 9, 6: 1})
+    hints = clusters_by_connection(artists, assignments, records, {1: 9, 6: 1}, max_bands=3)
 
     # Band 3 knows only the sideman: an indication.
     assert hints[3] == ClusterHint(7, (1,), decisive=False)
@@ -335,6 +340,8 @@ def test_a_sidemans_bands_are_a_loose_connection_and_a_close_one_goes_before_the
     assert hints[2] == ClusterHint(7, (1,), decisive=False)
     # Artist 7 is only connected to a band without a cluster, which gives nothing to go by.
     assert set(hints) == {2, 3, 4, 5}
+    # With room for four bands artist 1 is no sideman: a band of his own is close again.
+    assert clusters_by_connection(artists, assignments, records, {1: 9, 6: 1})[3].decisive
 
 
 def test_a_connection_goes_before_the_styles_and_a_curated_cluster_before_both():

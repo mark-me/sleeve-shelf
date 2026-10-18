@@ -1,4 +1,5 @@
-"""What the album and artist pages share: the shelves to move to, and the rules that apply."""
+"""What the album, artist, cluster and family pages share: the shelves to move to, and the
+rules that apply."""
 
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
@@ -9,11 +10,13 @@ from sleeve_shelf.domain import (
     Cluster,
     LocationRuleTarget,
     Shelf,
+    find_by_id,
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.placing import applicable_rules
+from sleeve_shelf.placing import PlacedRun, applicable_rules
 from sleeve_shelf.spots import suggested_spots
+from sleeve_shelf.taking_part import usable_shelves
 
 
 def shelf_options(store: JsonStore) -> list[dict]:
@@ -82,4 +85,41 @@ def described_spots(store: JsonStore) -> dict[int, dict]:
             "by_rule": spot.by_rule,
         }
         for album_id, spot in spots.items()
+    }
+
+
+def _shelf_names(store: JsonStore) -> dict[int, str]:
+    cabinets = {cabinet.id: cabinet.name for cabinet in store.load(Cabinet)}
+    return {shelf.id: f"{cabinets.get(shelf.cabinet_id, '')} › {shelf.name}" for shelf in store.load(Shelf)}
+
+
+def run_targets(store: JsonStore) -> list[dict]:
+    """The shelves a cluster or family can be moved to, to start on: those a proposal fills."""
+    names = _shelf_names(store)
+    return [{"id": shelf.id, "name": names[shelf.id]} for shelf in usable_shelves(store)[0]]
+
+
+def run_width(store: JsonStore, album_ids: list[int]) -> float:
+    """How wide these albums are together, in cm."""
+    albums = {album.id: album for album in store.load(Album)}
+    base = load_settings(store.data_dir).base_width_cm
+    return sum(albums[album_id].width_cm or base for album_id in album_ids)
+
+
+def placed_args(result: PlacedRun, shelf_id: int) -> dict:
+    """What a move did, as query arguments for the page that says so (see placed_notice)."""
+    return {"placed": result.moved, "shelf": shelf_id, "over": round(result.over_cm, 1) or None}
+
+
+def placed_notice(store: JsonStore, args) -> dict | None:
+    """What the last move of a cluster or family did, from the page's query arguments."""
+    placed = args.get("placed", type=int)
+    shelf = find_by_id(store.load(Shelf), args.get("shelf", type=int) or 0)
+    if placed is None or shelf is None:
+        return None
+    return {
+        "count": placed,
+        "shelf": _shelf_names(store)[shelf.id],
+        "cabinet_id": shelf.cabinet_id,
+        "over_cm": args.get("over", type=float),
     }

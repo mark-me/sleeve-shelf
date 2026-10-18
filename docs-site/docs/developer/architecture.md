@@ -61,7 +61,7 @@ sequenceDiagram
 
 ## 🍔 The menu and its counts
 
-The five menu sections and their tabs are declared once, in `web/navigation.py`; a new screen gets its tab there. Each section also has an icon, named after the section's key, in the sprite `web/static/vendor/menu-icons.svg`.
+The five menu sections and their tabs are declared once, in `web/navigation.py`; a new screen gets its tab there. Each section also has an icon, named after the section's key, in the sprite `web/static/vendor/menu-icons.svg`, which also holds those of Help, logging in and out, and the language at the end of the menu.
 
 What waits for a decision — matches, family suggestions, albums without a place, shelves over a measured width — is counted in one place, `web/waiting.py`. The counts feed both the Dashboard and the numbers in the menu. Working them out takes a while (family suggestions compare every artist with every other), so they are kept until a data file or `config.yaml` changes.
 
