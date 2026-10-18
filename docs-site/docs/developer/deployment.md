@@ -61,6 +61,8 @@ trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-cod
 
 Dependabot (`.github/dependabot.yml`) opens pull requests every Monday for the Python packages in `uv.lock`, the GitHub Actions, and the base images in `docker/Dockerfile`. Minor and patch updates of the packages and of the actions come grouped in one pull request each; a new major version comes on its own. Every action in the workflows is pinned to a commit, with its version noted beside it; Dependabot moves both together. Trivy's version in `security.yml` is set by hand.
 
+Every stage of the Dockerfile runs on the same Python image, and uv comes from its own image at a fixed version: the virtual environment made in the build stage only works with the Python it was made for. Dependabot does not propose a new Python version (3.13 to 3.14); that goes together with `.python-version`, on which the tests run, and is done by hand in both places. Should the stages still differ, the build stops at `import sleeve_shelf, waitress` instead of the container failing at its start.
+
 ## 🔐 Configuration and secrets
 
 `config.yaml` in the data directory holds the settings, the Discogs personal access token and the hash of the owner's password. It is git-ignored and never baked into the image; the UI only shows the token's last four characters. It is written readable by the app's own user only (600), and a copy written earlier with wider permissions is put right when the app starts. On a running container, load a workbook from the command line with:
