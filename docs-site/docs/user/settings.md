@@ -42,3 +42,7 @@ After a few wrong passwords each next try has to wait a little longer, so nobody
 ## 🌗 Light or dark
 
 The app follows your device's light or dark setting. Settings has a switch to choose for this device only; it is remembered in the browser, not in your data. The version of the app is shown below it.
+
+## 🗣️ Language
+
+The app speaks English and Dutch, and follows your browser's language. Under **Settings → Appearance** you can choose one for this device, or set it back to **As the browser**. Visitors follow their own browser. This guide is in English only, and what comes from Discogs — styles, titles — stays as Discogs has it.

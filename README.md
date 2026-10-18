@@ -92,7 +92,7 @@ Run the tests with `uv run python -m pytest`.
 
 - **Phase 1 — MVP** (built): load an existing layout, browse and search it, link the collection to Discogs, configure cabinets and shelves, generate a sorting proposal (curated clusters, era bands by the decade an artist started, artist families), and adjust it by hand
 - **Phase 2 — Ongoing use** (built): syncing with Discogs, album covers and artist pictures, a suggested spot for new purchases, a notice when a purchase would shift an artist's cluster, suggested families and location rules, and the showcase
-- **Phase 3 — Refinement** (started): song-level search is built; deeper musical-kinship logic, more languages and other media formats are not
+- **Phase 3 — Refinement** (started): song-level search and a Dutch translation are built; deeper musical-kinship logic and other media formats are not
 
 Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
 

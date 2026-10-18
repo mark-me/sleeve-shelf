@@ -9,7 +9,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from flask import Flask, redirect, request, url_for
-from flask_babel import Babel
+from flask_babel import Babel, get_locale
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from sleeve_shelf.access import has_password, remove_password, session_key, set_password
@@ -33,6 +33,7 @@ from sleeve_shelf.web import (
     dashboard,
     discogs,
     families,
+    language,
     layout,
     login,
     navigation,
@@ -85,7 +86,9 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.config["HELP_DIR"] = Path(
         os.environ.get("SLEEVE_SHELF_HELP_DIR") or Path(__file__).resolve().parents[2] / "docs-site" / "site"
     )
-    Babel(app, default_locale="en")
+    # The browser's language, or the one chosen for this device under Settings.
+    language.compile_catalogues()
+    Babel(app, default_locale=language.DEFAULT, locale_selector=language.select)
     # Logins, failed ones and visitors held up go to the log (the container's output).
     app.logger.setLevel(logging.INFO)
     if any(path.is_file() for path in (app.config["DATA_DIR"] / COVER_DIR).glob("*")):
@@ -118,6 +121,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(covers.blueprint)
     app.register_blueprint(help_screen.blueprint)
     app.register_blueprint(login.blueprint)
+    app.register_blueprint(language.blueprint)
     app.add_template_filter(covers.local_cover, "local_cover")
 
     # A visitor may only look the collection up; this runs before anything else.
@@ -151,6 +155,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
             "has_password": has_password(app.config["DATA_DIR"]),
             "nav_section": section,
             "nav_tab": tab,
+            "language": str(get_locale()),
             "section_count": navigation.section_count,
             # The part of the user guide that explains this page.
             "help_url": help_url(navigation.help_target(request, section, tab)),

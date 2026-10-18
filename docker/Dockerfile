@@ -17,6 +17,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY src ./src
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --no-editable
+# The translations are read compiled (.mo); the running container cannot write them.
+RUN .venv/bin/python -c "from sleeve_shelf.web.language import compile_catalogues; compile_catalogues()"
 
 
 # Docs stage: the documentation site, built with Zensical, which the app serves as its help.

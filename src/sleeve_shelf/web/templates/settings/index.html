@@ -115,6 +115,16 @@
       <span class="ss-muted">{{ _('Light or dark follows this device until you switch it here.') }}</span>
       <button class="ss-button ss-button-small" type="button" data-theme-toggle>{{ _('Switch light / dark') }}</button>
     </div>
+    <form class="ss-card-body d-flex flex-wrap align-items-center justify-content-between gap-2" style="border-top: 1px solid var(--ss-border);" method="post" action="{{ url_for('language.choose') }}">
+      <label for="language-choice" class="ss-muted">{{ _('The language follows your browser until you choose one for this device.') }}</label>
+      <select id="language-choice" name="language" class="form-select" style="max-width: 220px;" data-submit-on-change>
+        <option value="browser" {{ 'selected' if not chosen_language }}>{{ _('As the browser') }}</option>
+        {% for code, name in languages.items() %}
+        <option value="{{ code }}" lang="{{ code }}" {{ 'selected' if chosen_language == code }}>{{ name }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="ss-button ss-button-small" type="submit">{{ _('Save') }}</button></noscript>
+    </form>
   </section>
   <p class="ss-muted small mt-3">{{ _('Version %(version)s', version=config.VERSION) }}</p>
 </div>
