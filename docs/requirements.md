@@ -40,7 +40,7 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 - **Live/ongoing** Discogs API integration: the one-time enrichment already happens in Phase 1 — Phase 2 extends this to keep the collection in sync (new purchases, changed collection data) rather than only at first import
   - **Built: sync on demand.** The collection is fetched straight from the Discogs API (the collection of the token's owner, 100 releases per request) and taken over exactly like a CSV export: same vinyl detection, same linking, same preview before anything changes (see Discogs screen). New vinyl becomes new, unplaced albums; albums whose release is no longer in the Discogs collection are marked and reported, and kept until the user removes them, which always takes a confirmation
   - **A sync brings the format of linked albums up to date** (decided 2026-10-09): disc count, 180 gram, gatefold and the other tokens are taken from the release, and the estimated width follows. A width measured by hand is not touched. An uploaded export does not do this — it knows the format less well than the API (see Discogs screen)
-  - **A sync runs on demand only** (decided 2026-10-09): by the button on the Discogs screen, for now; not at start-up or on a schedule
+  - **A sync runs on demand only** (decided 2026-10-09): by the button on the Discogs screen; not at start-up or on a schedule — confirmed 2026-10-18 when closing Phase 2, as a sync shows its preview before anything changes
   - **A sync also notes who the artists are made of** (built 2026-10-11): for each artist it stores the Discogs artist id, and the fetch run then caches the members, groups and aliases Discogs lists for that artist (see Data model). This is what family suggestions from Discogs are worked out from (see Sorting logic §1). An uploaded export cannot say which Discogs artist an artist is, so it brings none of this
 - Add album covers to the Layout screen (Album gets a cover_url field)
   - **Stored locally** (2026-10-11): the images themselves are downloaded into the data directory, so covers and artist pictures show without an internet connection and no longer depend on Discogs keeping the addresses alive (see Storage and Discogs screen). A page shows the stored copy when there is one and the Discogs address otherwise
@@ -53,6 +53,21 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
   - **Built** (2026-10-09), as Mark described it: a showcase shows a sample of the artists that are well represented in the collection — a few albums of each, in proportion to how many the artist has, never all of them — while the rest stand on the artist's own shelf. Albums are exchanged between the two, one for one, and the selection is the user's own (see Showcase screen)
 - Notification + confirmation when a new purchase would shift an existing artist's cluster
   - **Built** (2026-10-10). An album that a sync or import adds to an artist whose cluster is confirmed is marked as a new purchase (`new_purchase`). Once it has its styles, the cluster the artist's styles point to with the purchase is compared with the one they pointed to without it; when the purchase makes them point to another cluster than the artist's own, that is a shift. It is shown — never applied — until the user moves the artist or keeps it where it is (see Sorting logic §4 and Artists screen)
+
+**Phase 2 is closed** (2026-10-18). Mark settled what was left open and confirmed the choices made without asking:
+
+- **Externe kast and Externe koffer** are better kept outside the sorting, as the suggested spots get much better that way. That is a setting for the owner under Cabinets & shelves; nothing is built for it
+- **A full shelf** is reported when a spot is suggested; the app does not offer to make room. Making room means moving albums, which is what a sorting proposal is for, and that never moves anything silently
+- **The showcase** suggests no sample size per artist: what stands on display is the owner's own choice
+- **A sync** runs on the button only
+- **Confirmed**:
+  - a suggested spot is found in the layout as it stands, and albums kept apart are not gone by
+  - a cluster shift is weighed per artist, not per family
+  - the thresholds of rule suggestions: 2 albums for a cluster, family or artist; 4 albums and 75% for an album apart
+  - both sizes of every image are stored, and an artist picture is fetched once and never refreshed
+  - a family from Discogs is named after the person, not a band, and nothing is chained through fellow members
+  - a showcase may be filled to 60% of its width, a setting
+  - for listening, Deezer's title must be 80% and the artist 70% alike, and a missing album is looked for again after 30 days
 
 ### Phase 3 — Refinement
 
@@ -677,23 +692,26 @@ The detail of an artist and of an album are two pages.
 
 ## Open questions
 
-- **Listening**: chosen without asking — how close a title (80%) and an artist (70%) must be for Deezer's album to count; which words make it another album (live, remix, soundtrack, tribute, karaoke, instrumental, cover); looking for a missing album again after 30 days
-- **Measured shelf widths**: chosen without asking — a shelf added by hand starts as measured; only shelves over a measured width count as waiting, so the 23 shelves over their workbook estimate no longer do; a showcase's warning still goes by its width whether measured or not
-- **Families from Discogs**: chosen without asking — a family is named after the person rather than a band; a band shared by two artists in the collection is suggested to neither; and nothing is chained through fellow members. To be checked against the real collection once the artist records are fetched again.
-- **Cluster by connection**: decided by Mark on 2026-10-12 — connection before styles, direct connections only, only artists without a confirmed cluster; and, after the check against the collection, close connections decide while loose ones indicate (see Sorting logic §1). Chosen without asking: connected artists count by their number of albums; the artists list does not show the proposal, the artist's page and a sorting proposal do. In the collection as it stands 4 artists get a cluster by a close connection and 3 an indication by a loose one. Taken together, with each curated artist left out in turn, a close connection pointed to the artist's own cluster for 46 of 59 artists and a loose one for 28 of 54. Nick Cave was counted as a sideman, being in four bands of the collection; settled 2026-10-18: the limit is four bands and a setting (see Sorting logic §1), after which his hint became decisive, for the same cluster, while the family suggestions stayed as they were
-- **Suggested spot**: built without asking on these points — the spot is found in the layout as it stands rather than in a fresh sorting; albums kept apart from most of their artist or cluster are not gone by; a full shelf is reported but the album is not sent elsewhere. Every LP without a place counts as one to place; those a sync or import added are marked as new. Albums added before 2026-10-12 have no such date, so the albums without a place on that day are not marked, whichever way they came in. Open: whether Externe kast and Externe koffer should be kept outside the sorting (the simulation says the suggestions get much better if so), and whether the app should offer to make room when the shelf is full
-- **Cluster shifts are weighed per artist**, not per family, and a purchase by an artist whose earlier albums have no styles counts as a shift when its styles point elsewhere — both chosen without asking. A purchase that causes no shift keeps its mark until a decision on the artist's cluster is taken; that is harmless, but it means a later purchase is compared with the albums from before both
-- **Stored images**: both sizes of every cover and picture are stored, which was chosen without asking; the large ones take most of the room. Files of albums that were removed, or whose image got a new address, stay in `covers/` — decided 2026-10-11: they may stay for now, nothing cleans them up
-- **Rule suggestions** look only at where things stand compared with a proposal without rules. They do not weigh why something stands there, so a cabinet that simply overflowed into its neighbour two steps on would be suggested as a rule; the thresholds (2 albums for a cluster, family or artist; 4 albums and 75% for an album apart) were chosen without asking
-- **Artist pictures**: fetched as part of "Fetch styles, original years and pictures" rather than when an artist's page is opened, — chosen without asking. A picture is fetched once and never refreshed. An artist whose releases are all shared with other artists ("A & B") is never named on Discogs and gets no picture from Discogs; the user can add one by hand (see Artists screen)
-- **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, now configurable in `config.yaml` — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
+Phase 2 is closed (see Phase 2). What is left is work that waits for measurements and checks on the real shelves, and a few smaller choices made without asking that have not been looked at yet.
 
-### Showcase
+### Waiting for measurements and checks
 
-- **How full a showcase may be**: the default of 60% of the width was chosen without asking; it is a setting, to be tuned to how the top-loaders actually leaf
-- **Proportion is shown, not guarded**: the screen shows each artist's share and marks an artist that is entirely on display, but nothing stops a sample from growing out of proportion. Whether the app should suggest a sample size per artist is open
-- **Which artists are "well represented"** is left to the user; the app sets no threshold
-- **Widths of the top-loaders**: each showcase top-loader is 35 cm wide according to Mark; that has to be entered per shelf under Cabinets & shelves, together with marking shelves `a` and `b` of `Topladers` as showcase
+- **Width-estimation constants**: the 0.5 cm base / +0.15 cm (180g) / +0.2 cm (gatefold) figures (see Sorting logic §3) are an untested starting assumption, configurable under Settings — to be tuned against real shelf measurements. The same goes for the shelf widths estimated from the workbook's LP-units: the workbook counts a double album as 1.4 units, the app as two discs, so a shelf can look fuller than it is until its width is measured
+- **Widths of the top-loaders**: each showcase top-loader is 35 cm wide according to Mark; that has to be entered per shelf under Cabinets & shelves, together with marking shelves `a` and `b` of `Topladers` as showcase. The 60% fill is to be tuned to how the top-loaders actually leaf
+- **Families from Discogs**: to be checked against the real collection once the artist records are fetched again
+
+### Chosen without asking, not yet looked at
+
+- **Listening**: which words make Deezer's album another one (live, remix, soundtrack, tribute, karaoke, instrumental, cover)
+- **Measured shelf widths**: a shelf added by hand starts as measured; only shelves over a measured width count as waiting, so the 23 shelves over their workbook estimate do not; a showcase's warning goes by its width whether measured or not
+- **Families from Discogs**: a band shared by two artists in the collection is suggested to neither
+- **Cluster by connection** (the rules themselves decided by Mark on 2026-10-12, see Sorting logic §1): connected artists count by their number of albums; the artists list does not show the proposal, the artist's page and a sorting proposal do. In the collection as it stands, with each curated artist left out in turn, a close connection pointed to the artist's own cluster for 46 of 59 artists and a loose one for 28 of 54
+- **Suggested spot**: every LP without a place counts as one to place; those a sync or import added are marked as new, which albums added before 2026-10-12 are not
+- **Cluster shifts**: a purchase by an artist whose earlier albums have no styles counts as a shift when its styles point elsewhere. A purchase that causes no shift keeps its mark until a decision on the artist's cluster is taken; harmless, but a later purchase is then compared with the albums from before both
+- **Rule suggestions** do not weigh why something stands where it does, so a cabinet that simply overflowed into its neighbour two steps on would be suggested as a rule
+- **Artist pictures** are fetched by the fetch run rather than when an artist's page is opened. An artist whose releases are all shared with others ("A & B") is never named on Discogs and gets no picture from it; the user can add one by hand (see Artists screen)
+- **Stored images**: files of albums that were removed, or whose image got a new address, stay in `covers/` — decided 2026-10-11: nothing cleans them up for now
+- **Which artists are "well represented"** in a showcase is left to the user; the app sets no threshold
 
 ### Parked from Phase 1a
 
