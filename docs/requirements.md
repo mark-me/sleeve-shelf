@@ -673,6 +673,7 @@ A showcase is a top-loader that shows a sample of the well-represented artists, 
 - **One cluster**: rename it, and see the styles pointing at it — each can be pointed at another cluster, which changes what is proposed for new artists carrying that style. A cluster without artists, styles, and rules can be removed
 - **Moving an artist to another cluster** is done on the artist (see Artists screen), where a new cluster can also be made
 - Purely a taxonomy action — it does not itself move any physical Placement. Generating a sorting proposal is what applies the new grouping and order to the layout
+- **Moving a whole cluster to a shelf** (decided by Mark 2026-10-18, option "from a shelf on"): on a cluster's page, choose a shelf and its albums stand together from the start of that shelf, in sorting order (era band, artist with its family, year), running on over the shelves after it in the same cabinet; what stood there moves up behind them, by width. The shelves before the chosen one and the other cabinets keep their albums, except the cluster's, which leave their places. The cluster is the one a sorting proposal sorts an album under. Only albums that stand on a shelf go; what stands in a showcase or in a cabinet kept outside the sorting stays, and such shelves, and shelves without a width, cannot be chosen. Nothing drops off: what no longer fits stays at the end of the last shelf of the cabinet, and the page says how much too full it is. The layout as it was is saved as a version first
 
 ### Detail screen (artist/album)
 
@@ -719,6 +720,7 @@ Phase 2 is closed (see Phase 2). What is left is work that waits for measurement
 - **Stored images**: files of albums that were removed, or whose image got a new address, stay in `covers/` — decided 2026-10-11: nothing cleans them up for now
 - **Which artists are "well represented"** in a showcase is left to the user; the app sets no threshold
 - **Dutch** (2026-10-18), chosen without asking as Mark did not answer the questions when he asked for it: the browser's language decides, with a choice per device under Settings; only the app is translated, not the help; the terms come from his workbook (see Language).
+- **Moving a cluster** (2026-10-18), chosen without asking: the cluster is the one a sorting proposal sorts an album under (so a family stays with it, and an artist on a proposed cluster counts); albums without a place stay without one; what does not fit is kept at the end of the cabinet rather than refused; the move works on the shelves as they are, not on a proposal
 - **Song search** (2026-10-18): every word of the search has to be in the artist, title and one song together — words spread over two songs do not count; a result names at most three songs and how many more; an album found by its artist and title names no song, even when one would match too; the tracklist on an album's page is shown to visitors as well
 
 ### Parked from Phase 1a

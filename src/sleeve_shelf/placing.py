@@ -1,4 +1,7 @@
-"""Application services for one album or artist: moving it by hand, and the rules that bind it."""
+"""Application services for one album or artist: moving it by hand, and the rules that bind it.
+Also a whole cluster, moved to a shelf at once."""
+
+from dataclasses import dataclass
 
 from sleeve_shelf.domain import (
     Album,
@@ -10,10 +13,14 @@ from sleeve_shelf.domain import (
     PlacementSource,
     ProposedPlacement,
     Shelf,
+    WidthConstants,
     find_by_id,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.versions import keep_restore_point
+from sleeve_shelf.proposal import sort_collection
+from sleeve_shelf.sorting.placement import Spot, fill_shelves
+from sleeve_shelf.taking_part import kept_shelf_ids, usable_shelves
+from sleeve_shelf.versions import keep_restore_point, save_if_unsaved
 
 
 class ShelvesChanged(ValueError):
@@ -79,6 +86,91 @@ def rearrange_shelves(
         for position, album_id in enumerate(ids)
     ]
     _save(store, entity, kept + moved)
+
+
+@dataclass(frozen=True, slots=True)
+class ClusterPlaced:
+    """What moving a cluster did."""
+
+    # Albums of the cluster that now stand from the chosen shelf on.
+    moved: int
+    # The shelves filled anew: the chosen one and those after it in its cabinet.
+    shelf_ids: tuple[int, ...]
+    # How much more the last of them holds than its width, when not everything fitted.
+    over_cm: float = 0.0
+
+
+def cluster_albums_on_shelves(store: JsonStore, cluster_id: int) -> list[int]:
+    """The albums of a cluster that stand on a shelf a proposal fills, in the order a
+    proposal sorts them: by era band, artist (a family together) and year.
+
+    The cluster is the one a proposal sorts the album under. What stands in a showcase,
+    or in a cabinet kept outside the sorting, is left where it is, as by a proposal.
+    """
+    kept = kept_shelf_ids(store)
+    shelf_of = {p.album_id: p.shelf_id for p in store.load(Placement)}
+    return [
+        entry.album_id
+        for entry in sort_collection(store).ordered
+        if entry.cluster_id == cluster_id
+        and entry.album_id in shelf_of
+        and shelf_of[entry.album_id] not in kept
+    ]
+
+
+def place_cluster(
+    store: JsonStore, cluster_id: int, shelf_id: int, constants: WidthConstants
+) -> ClusterPlaced:
+    """Stand the albums of a cluster together from the start of a shelf on, running on over
+    the shelves after it in the same cabinet; what stood there moves up behind them.
+
+    The shelves before the chosen one, and the other cabinets, keep their albums except the
+    cluster's, which leave their places. Nothing drops off: what no longer fits stays at the
+    end of the last shelf of the cabinet, which is then reported as holding too much. The
+    layout as it was is kept as a version first.
+    """
+    usable, _skipped = usable_shelves(store)
+    start = next((shelf for shelf in usable if shelf.id == shelf_id), None)
+    if start is None:
+        raise ShelvesChanged
+    in_cabinet = [shelf for shelf in usable if shelf.cabinet_id == start.cabinet_id]
+    chain = in_cabinet[in_cabinet.index(start):]
+    moving = cluster_albums_on_shelves(store, cluster_id)
+    if not moving:
+        return ClusterPlaced(0, ())
+    placements = store.load(Placement)
+    order = {shelf.id: index for index, shelf in enumerate(chain)}
+    leaving = set(moving)
+    staying = [
+        p.album_id
+        for p in sorted(
+            (p for p in placements if p.shelf_id in order and p.album_id not in leaving),
+            key=lambda p: (order[p.shelf_id], p.position),
+        )
+    ]
+    albums = {album.id: album for album in store.load(Album)}
+    widths = {
+        album_id: albums[album_id].width_cm or constants.base_per_disc
+        for album_id in moving + staying
+    }
+    spots, left_out = fill_shelves(
+        [(album_id, widths[album_id]) for album_id in moving + staying],
+        [(shelf.id, shelf.width_cm) for shelf in chain],
+    )
+    last = chain[-1]
+    after = max((spot.position for spot in spots if spot.shelf_id == last.id), default=-1) + 1
+    spots += [Spot(album_id, last.id, after + offset) for offset, album_id in enumerate(left_out)]
+    on_last = sum(widths[spot.album_id] for spot in spots if spot.shelf_id == last.id)
+
+    save_if_unsaved(store, "before moving a cluster")
+    store.save(
+        Placement,
+        [p for p in placements if p.shelf_id not in order and p.album_id not in leaving]
+        + [Placement(spot.album_id, spot.shelf_id, spot.position, PlacementSource.MANUAL) for spot in spots],
+    )
+    return ClusterPlaced(
+        len(moving), tuple(shelf.id for shelf in chain), max(0.0, on_last - last.width_cm) if left_out else 0.0
+    )
 
 
 def _save(store: JsonStore, entity: type, placements: list) -> None:
