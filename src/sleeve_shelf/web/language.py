@@ -5,6 +5,9 @@ from pathlib import Path
 from babel.messages.mofile import write_mo
 from babel.messages.pofile import read_po
 from flask import Blueprint, redirect, request, url_for
+from flask_babel import format_decimal
+
+from sleeve_shelf.web.login import safe_next
 
 blueprint = Blueprint("language", __name__)
 
@@ -44,11 +47,24 @@ def compile_catalogues(directory: Path = TRANSLATIONS) -> None:
             continue
 
 
+def decimal(value: float, digits: int = 1) -> str:
+    """A number as the language writes it: "39.8" in English, "39,8" in Dutch."""
+    return format_decimal(value, format="#,##0." + "0" * digits if digits else "#,##0")
+
+
+def editable(value: float) -> str:
+    """A number to put in a form field: as few decimals as it needs, and no thousands
+    separator, so it is read back as it was (a decimal comma is accepted)."""
+    return format_decimal(value, format="0.###")
+
+
 @blueprint.post("/language")
 def choose():
-    """Choose the language for this device, or leave it to the browser again."""
+    """Choose the language for this device, or leave it to the browser again; back to the
+    page it was chosen on (the menu), or to Settings."""
     chosen = request.form.get("language", "")
-    response = redirect(url_for("settings.index"))
+    target = request.form.get("next")
+    response = redirect(safe_next(target) if target else url_for("settings.index"))
     if chosen in LANGUAGES:
         response.set_cookie(
             COOKIE, chosen, max_age=COOKIE_DAYS * 24 * 3600, samesite="Lax", httponly=True

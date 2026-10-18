@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-18 19:27+0200\n"
+"POT-Creation-Date: 2026-10-18 23:02+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -588,7 +588,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #, python-format
-msgid "Estimated from the format: %(width).1f cm."
+msgid "Estimated from the format: %(width)s cm."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -615,7 +615,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
 #, python-format
-msgid "Estimate: %(width).1f cm"
+msgid "Estimate: %(width)s cm"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
@@ -2657,7 +2657,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/showcase/index.html
 #, python-format
-msgid "of %(room).1f cm to keep flipping (%(percent)d%% of %(width).1f cm)"
+msgid "of %(room)s cm to keep flipping (%(percent)d%% of %(width)s cm)"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/showcase/index.html

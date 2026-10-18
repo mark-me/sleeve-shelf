@@ -46,7 +46,7 @@ uv run python -m babel.messages.frontend update -i src/sleeve_shelf/translations
   -d src/sleeve_shelf/translations --no-wrap --no-fuzzy-matching --ignore-obsolete
 ```
 
-There are two languages: English, the copy in the code, and Dutch. `web/language.py` picks the browser's language, unless one was chosen for the device under Settings (a cookie). Flask-Babel reads compiled catalogues (`.mo`, git-ignored); the app compiles any that are out of date when it starts, and the Docker build compiles them, as the container is read-only. A label defined in Python outside a request (such as the menu in `web/navigation.py`) uses `lazy_gettext`, imported as `_` so the extractor finds it.
+There are two languages: English, the copy in the code, and Dutch. `web/language.py` picks the browser's language, unless one was chosen for the device under Settings (a cookie). Flask-Babel reads compiled catalogues (`.mo`, git-ignored); the app compiles any that are out of date when it starts, and the Docker build compiles them, as the container is read-only. Numbers are written as the language writes them: the template filter `decimal` for showing one ("39,8" in Dutch), `editable` for a form field (read back with a decimal comma or point). A message takes the formatted number as `%(width)s`, never `%(width).1f`. A label defined in Python outside a request (such as the menu in `web/navigation.py`) uses `lazy_gettext`, imported as `_` so the extractor finds it.
 
 ## 🧹 Code style
 

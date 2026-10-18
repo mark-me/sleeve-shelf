@@ -23,7 +23,7 @@ from sleeve_shelf.domain import Placement
 from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
 from sleeve_shelf.web.context import get_store, has_collection, parse_number
 from sleeve_shelf.web.language import COOKIE as LANGUAGE_COOKIE
-from sleeve_shelf.web.language import LANGUAGES
+from sleeve_shelf.web.language import LANGUAGES, editable
 from sleeve_shelf.web.login import remember_owner
 from sleeve_shelf.widths import apply_width_constants
 
@@ -37,7 +37,7 @@ def index():
     data_dir = current_app.config["DATA_DIR"]
     settings = load_settings(data_dir)
     store = get_store()
-    values = {name: f"{getattr(settings, name):g}" for name in WIDTH_FIELDS}
+    values = {name: editable(getattr(settings, name)) for name in WIDTH_FIELDS}
     errors: list[str] = []
 
     if request.method == "POST":

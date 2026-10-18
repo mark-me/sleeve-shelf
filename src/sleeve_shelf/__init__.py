@@ -123,6 +123,8 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(login.blueprint)
     app.register_blueprint(language.blueprint)
     app.add_template_filter(covers.local_cover, "local_cover")
+    app.add_template_filter(language.decimal, "decimal")
+    app.add_template_filter(language.editable, "editable")
 
     # A visitor may only look the collection up; this runs before anything else.
     # A change sent from another site is refused before anything else looks at it.
@@ -156,6 +158,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
             "nav_section": section,
             "nav_tab": tab,
             "language": str(get_locale()),
+            "languages": language.LANGUAGES,
             "section_count": navigation.section_count,
             # The part of the user guide that explains this page.
             "help_url": help_url(navigation.help_target(request, section, tab)),

@@ -67,9 +67,9 @@
           {% for row in cabinet.shelves %}
           <tr>
             <td class="fw-semibold">{{ row.shelf.name }}</td>
-            <td class="text-end">{% if row.shelf.width_cm is not none %}{{ '%.1f' | format(row.shelf.width_cm) }} cm{% else %}&mdash;{% endif %}</td>
-            <td class="text-end">{{ '%.1f' | format(row.now[1]) }} cm</td>
-            <td class="text-end">{% if row.skipped and not row.kept %}&mdash;{% else %}{{ '%.1f' | format(row.new[1]) }} cm{% endif %}</td>
+            <td class="text-end">{% if row.shelf.width_cm is not none %}{{ (row.shelf.width_cm) | decimal }} cm{% else %}&mdash;{% endif %}</td>
+            <td class="text-end">{{ (row.now[1]) | decimal }} cm</td>
+            <td class="text-end">{% if row.skipped and not row.kept %}&mdash;{% else %}{{ (row.new[1]) | decimal }} cm{% endif %}</td>
             <td class="text-end">{{ row.now[0] }}</td>
             <td class="text-end">{% if row.skipped and not row.kept %}&mdash;{% else %}{{ row.new[0] }}{% endif %}</td>
             <td class="text-end">

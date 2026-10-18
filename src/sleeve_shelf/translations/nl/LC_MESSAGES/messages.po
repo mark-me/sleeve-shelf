@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-18 19:27+0200\n"
+"POT-Creation-Date: 2026-10-18 23:02+0200\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -588,8 +588,8 @@ msgstr "Opslaan"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #, python-format
-msgid "Estimated from the format: %(width).1f cm."
-msgstr "Geschat uit het formaat: %(width).1f cm."
+msgid "Estimated from the format: %(width)s cm."
+msgstr "Geschat uit het formaat: %(width)s cm."
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "A box set or bundle: the estimate is rough until you measure it."
@@ -615,8 +615,8 @@ msgstr "Albumbreedtes"
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
 #, python-format
-msgid "Estimate: %(width).1f cm"
-msgstr "Schatting: %(width).1f cm"
+msgid "Estimate: %(width)s cm"
+msgstr "Schatting: %(width)s cm"
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
 #, python-format
@@ -2657,8 +2657,8 @@ msgstr "van hun albums"
 
 #: src/sleeve_shelf/web/templates/showcase/index.html
 #, python-format
-msgid "of %(room).1f cm to keep flipping (%(percent)d%% of %(width).1f cm)"
-msgstr "van %(room).1f cm om te kunnen bladeren (%(percent)d%% van %(width).1f cm)"
+msgid "of %(room)s cm to keep flipping (%(percent)d%% of %(width)s cm)"
+msgstr "van %(room)s cm om te kunnen bladeren (%(percent)d%% van %(width)s cm)"
 
 #: src/sleeve_shelf/web/templates/showcase/index.html
 msgid "taken; the shelf has no width yet"

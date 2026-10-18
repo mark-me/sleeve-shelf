@@ -66,3 +66,41 @@ def test_the_browser_s_language_is_followed_unless_one_is_chosen_for_this_device
     # And left to the browser again.
     client.post("/language", data={"language": "browser"})
     assert "Welkom bij" in client.get("/setup/", headers=dutch).text
+
+
+def test_numbers_are_written_as_the_language_writes_them(tmp_path):
+    from sleeve_shelf import create_app
+
+    client = create_app(tmp_path / "data").test_client()
+    client.post("/storage/cabinets/new", data={"name": "Kast"})
+    client.post("/storage/cabinets/1/shelves/new", data={"name": "a", "width_cm": "35,5", "type": "", "layer": ""})
+    dutch = {"Accept-Language": "nl"}
+
+    assert "35.5 cm" in client.get("/storage/").text
+    assert "35,5 cm" in client.get("/storage/", headers=dutch).text
+    # In a form field too, and what is shown is read back as it was.
+    assert 'value="0,5"' in client.get("/settings/", headers=dutch).text
+    assert 'value="35,5"' in client.get("/storage/shelves/1", headers=dutch).text
+
+
+def test_a_visitor_may_choose_the_language_and_the_menu_marks_its_links(tmp_path, monkeypatch):
+    from sleeve_shelf import create_app
+    from sleeve_shelf.access import set_password
+
+    monkeypatch.setenv("SLEEVE_SHELF_HTTP_LOGIN", "1")
+    app = create_app(tmp_path / "data")
+    set_password(app.config["DATA_DIR"], "a long and strong one")
+    visitor = app.test_client()
+
+    page = visitor.get("/login").text
+    assert "#login" in page and "#language" in page and 'value="nl" lang="nl"' in page
+
+    chosen = visitor.post("/language", data={"language": "nl", "next": "/login?next=/browse"})
+    assert chosen.status_code == 302 and chosen.headers["Location"] == "/login?next=/browse"
+    page = visitor.get("/login").text
+    assert "Inloggen" in page and 'value="en" lang="en"' in page
+    # Back to a page of this app only, never another site.
+    elsewhere = visitor.post("/language", data={"language": "en", "next": "//elsewhere.example"})
+    assert elsewhere.headers["Location"] == "/"
+    # Choosing the language is all a visitor may send, besides the password.
+    assert visitor.post("/storage/cabinets/new", data={"name": "Kast"}).status_code == 403

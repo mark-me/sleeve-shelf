@@ -140,8 +140,8 @@ def guard():
         if request.endpoint in VISITOR_PAGES:
             return None
         return redirect(url_for("login.page", next=request.full_path))
-    # The one thing a visitor may send: the password.
-    if request.endpoint == "login.page":
+    # What a visitor may send: the password, and the language for the device.
+    if request.endpoint in ("login.page", "language.choose"):
         return None
     abort(403)
 
@@ -180,7 +180,7 @@ def _wait(address: str) -> int:
     return max(0, int(last + wait - time.monotonic() + 0.999))
 
 
-def _safe_next(target: str | None) -> str:
+def safe_next(target: str | None) -> str:
     """Where to go after logging in: a page of this app, never another site. A backslash is
     refused too, as browsers read "/\\elsewhere.example" as another site."""
     if (
@@ -199,7 +199,7 @@ def _safe_next(target: str | None) -> str:
 def page():
     if not has_password(current_app.config["DATA_DIR"]):
         return redirect(url_for("index"))
-    target = _safe_next(request.values.get("next"))
+    target = safe_next(request.values.get("next"))
     error = None
     status = 200
     if request.method == "POST":

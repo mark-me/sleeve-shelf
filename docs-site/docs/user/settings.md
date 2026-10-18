@@ -45,4 +45,4 @@ The app follows your device's light or dark setting. Settings has a switch to ch
 
 ## 🗣️ Language
 
-The app speaks English and Dutch, and follows your browser's language. Under **Settings → Appearance** you can choose one for this device, or set it back to **As the browser**. Visitors follow their own browser. This guide is in English only, and what comes from Discogs — styles, titles — stays as Discogs has it.
+The app speaks English and Dutch, and follows your browser's language. At the bottom of the menu you — and visitors too — switch to the other language for this device; under **Settings → Appearance** you can also set it back to **As the browser**. Numbers follow the language: *39,8 cm* in Dutch. This guide is in English only, and what comes from Discogs — styles, titles — stays as Discogs has it.
