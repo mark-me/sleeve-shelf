@@ -1,17 +1,21 @@
 """Alias groups: the artist families that stand together on the shelf."""
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
 from sleeve_shelf import alias_groups
 from sleeve_shelf.artists import albums_per_artist
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
     Cluster,
+    find_by_id,
 )
-from sleeve_shelf.web.context import get_store
+from sleeve_shelf.placing import ShelvesChanged, family_albums_on_shelves, place_family
+from sleeve_shelf.web.context import get_store, has_collection
+from sleeve_shelf.web.places import placed_args, placed_notice, run_targets, run_width
 
 blueprint = Blueprint("families", __name__, url_prefix="/families")
 
@@ -47,6 +51,8 @@ def index():
         }
         for suggestion in alias_groups.family_suggestions(store)
     ]
+    # What each family would take on the shelves, to move it at once (see placing.place_family).
+    on_shelves = family_albums_on_shelves(store) if has_collection() else {}
     families = [
         {
             "group": group,
@@ -54,6 +60,8 @@ def index():
                 (describe(a.id) for a in artists if a.alias_group_id == group.id),
                 key=lambda member: member["name"].casefold(),
             ),
+            "on_shelves": len(on_shelves.get(group.id, [])),
+            "on_shelves_cm": run_width(store, on_shelves.get(group.id, [])),
         }
         for group in sorted(store.load(AliasGroup), key=lambda group: group.label.casefold())
     ]
@@ -65,6 +73,25 @@ def index():
             (a.name for a in artists if a.alias_group_id is None), key=str.casefold
         ),
         error=request.args.get("error"),
+        targets=run_targets(store),
+        placed=placed_notice(store, request.args),
+        placed_family=request.args.get("family", type=int),
+    )
+
+
+@blueprint.post("/<int:group_id>/place")
+def place(group_id: int):
+    """Stand the whole family from a chosen shelf on (see placing.place_family)."""
+    store = get_store()
+    if find_by_id(store.load(AliasGroup), group_id) is None:
+        abort(404)
+    shelf_id = request.form.get("shelf_id", type=int)
+    try:
+        result = place_family(store, group_id, shelf_id, load_settings(store.data_dir).width_constants)
+    except ShelvesChanged:
+        abort(400)
+    return redirect(
+        url_for("families.index", family=group_id, **placed_args(result, shelf_id)) + f"#family-{group_id}"
     )
 
 

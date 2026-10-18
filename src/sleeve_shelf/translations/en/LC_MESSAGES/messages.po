@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-18 23:11+0200\n"
+"POT-Creation-Date: 2026-10-18 23:20+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -132,7 +132,7 @@ msgid "Shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/_place_run.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Layout"
@@ -160,7 +160,7 @@ msgid "Cabinets"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
-msgid "Sorting"
+msgid "Organise"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -281,6 +281,25 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/_cover.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Close"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_place_run.html
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "A version from before is kept under Versions."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_place_run.html
+#, python-format
+msgid "Not everything fitted: the last shelf of the cabinet holds %(cm)s cm more than its width."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_place_run.html
+msgid "Shelf to start on"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_place_run.html
+msgid "A showcase, and a cabinet kept outside the sorting, keep what stands there. The layout as it is now is kept as a version first."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_play.html
@@ -1090,12 +1109,6 @@ msgid "Albums that have no spot on a shelf yet. For an LP a spot is suggested on
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "A version from before is kept under Versions."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/browse/unplaced.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
 msgid "%(title)s now stands on"
@@ -1152,6 +1165,7 @@ msgid "Rename"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/families/index.html
 msgid "Move to a shelf"
 msgstr ""
 
@@ -1164,26 +1178,13 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #, python-format
-msgid "Not everything fitted: the last shelf of the cabinet holds %(cm)s cm more than its width."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#, python-format
 msgid "The %(num)d album of this cluster that stands on a shelf (%(cm)s cm) goes to the start of the shelf you choose, in sorting order; it runs on over the shelves after it in that cabinet, and what stood there moves up behind it. The other cabinets keep their albums."
 msgid_plural "The %(num)d albums of this cluster that stand on a shelf (%(cm)s cm) go to the start of the shelf you choose, in sorting order; they run on over the shelves after it in that cabinet, and what stood there moves up behind them. The other cabinets keep their albums."
 msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/clusters/edit.html
-msgid "Shelf to start on"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/clusters/edit.html
 msgid "Move the cluster here"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-msgid "A showcase, and a cabinet kept outside the sorting, keep what stands there. The layout as it is now is kept as a version first."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/clusters/edit.html
@@ -2048,6 +2049,24 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html
 msgid "No artists in this family yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "%(num)d album of this family now stands from %(shelf)s on."
+msgid_plural "%(num)d albums of this family now stand from %(shelf)s on."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#, python-format
+msgid "The %(num)d album of this family that stands on a shelf (%(cm)s cm) goes to the start of the shelf you choose, in sorting order; it runs on over the shelves after it in that cabinet, and what stood there moves up behind it."
+msgid_plural "The %(num)d albums of this family that stand on a shelf (%(cm)s cm) go to the start of the shelf you choose, in sorting order; they run on over the shelves after it in that cabinet, and what stood there moves up behind them."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Move the family here"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/families/index.html

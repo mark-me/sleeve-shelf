@@ -5,6 +5,7 @@ import pytest
 from sleeve_shelf.config import Settings
 from sleeve_shelf.domain import (
     Album,
+    AliasGroup,
     Artist,
     ArtistClusterAssignment,
     Cabinet,
@@ -22,6 +23,7 @@ from sleeve_shelf.placing import (
     ShelvesChanged,
     move_albums,
     place_cluster,
+    place_family,
     rearrange_shelves,
     remove_rule,
     set_rule,
@@ -193,3 +195,30 @@ def test_the_cluster_page_moves_the_cluster_and_says_where_it_went(tmp_path):
     assert "3 albums of this cluster now stand from Kast › b on." in page
     assert "holds 0.5 cm more than its width" in page and 'href="/layout/go?to=1"' in page
     assert client.post("/clusters/1/place", data={"shelf_id": "5"}).status_code == 400
+
+
+def test_a_family_moves_together_too_and_its_page_says_where_it_went(tmp_path):
+    from sleeve_shelf import create_app
+
+    store = _two_clusters(tmp_path)
+    store.save(AliasGroup, [AliasGroup(1, "Chet Baker")])
+    store.save(
+        Artist,
+        [Artist(1, "Chet Baker", alias_group_id=1, start_year=1952),
+         Artist(2, "Miles Davis", start_year=1955), Artist(3, "Tindersticks", start_year=1993)],
+    )
+
+    result = place_family(store, 1, 1, Settings().width_constants)
+
+    # Chet Baker's album from shelf c to the start of shelf a; the rest moves up. His album
+    # in the showcase stays there.
+    assert _shelves(store) == {1: [11, 31, 32, 33], 2: [34, 35, 36, 22], 4: [21], 5: [12]}
+    assert result.moved == 1
+
+    client = create_app(tmp_path).test_client()
+    page = client.get("/families/").text
+    assert "The 1 album of this family that stands on a shelf (0.5 cm)" in page
+    moved = client.post("/families/1/place", data={"shelf_id": "2"})
+    assert moved.headers["Location"].startswith("/families/?family=1&placed=1&shelf=2")
+    assert "1 album of this family now stands from Kast › b on." in client.get(moved.headers["Location"]).text
+    assert client.post("/families/9/place", data={"shelf_id": "2"}).status_code == 404

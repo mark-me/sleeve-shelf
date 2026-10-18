@@ -396,7 +396,7 @@ def test_menu_has_five_sections_and_tabs_that_count_what_is_waiting(client):
     page = client.get("/browse").text
 
     menu = page[page.index('id="main-nav"'):page.index("</nav>")]
-    sections = ["Dashboard", "Collection", "Shelves", "Sorting", "Settings"]
+    sections = ["Dashboard", "Collection", "Shelves", "Organise", "Settings"]
     assert [menu.index(f"<span>{name}</span>") for name in sections] == sorted(
         menu.index(f"<span>{name}</span>") for name in sections
     )

@@ -16,11 +16,8 @@ from sleeve_shelf.clusters import (
 )
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
-    Album,
     ArtistClusterAssignment,
-    Cabinet,
     Cluster,
-    Shelf,
     Style,
     find_by_id,
 )
@@ -29,8 +26,8 @@ from sleeve_shelf.placing import (
     cluster_albums_on_shelves,
     place_cluster,
 )
-from sleeve_shelf.taking_part import usable_shelves
 from sleeve_shelf.web.context import get_store
+from sleeve_shelf.web.places import placed_args, placed_notice, run_targets, run_width
 
 blueprint = Blueprint("clusters", __name__, url_prefix="/clusters")
 
@@ -93,20 +90,11 @@ def _placing(store, cluster_id: int) -> dict:
     """What moving the cluster to a shelf would take, and where it can go; and what the last
     move did, to say so."""
     on_shelves = cluster_albums_on_shelves(store, cluster_id)
-    albums = {album.id: album for album in store.load(Album)}
-    base = load_settings(store.data_dir).base_width_cm
-    cabinets = {cabinet.id: cabinet.name for cabinet in store.load(Cabinet)}
-    names = {shelf.id: f"{cabinets.get(shelf.cabinet_id, '')} › {shelf.name}" for shelf in store.load(Shelf)}
-    placed = request.args.get("placed", type=int)
-    placed_shelf = find_by_id(store.load(Shelf), request.args.get("shelf", type=int) or 0)
     return {
-        "placed_cabinet": placed_shelf.cabinet_id if placed_shelf else None,
         "on_shelves": len(on_shelves),
-        "on_shelves_cm": sum(albums[i].width_cm or base for i in on_shelves),
-        "targets": [{"id": shelf.id, "name": names[shelf.id]} for shelf in usable_shelves(store)[0]],
-        "placed": placed,
-        "placed_on": names.get(request.args.get("shelf", type=int), ""),
-        "over_cm": request.args.get("over", type=float),
+        "on_shelves_cm": run_width(store, on_shelves),
+        "targets": run_targets(store),
+        "placed": placed_notice(store, request.args),
     }
 
 
@@ -121,16 +109,7 @@ def place(cluster_id: int):
         result = place_cluster(store, cluster_id, shelf_id, load_settings(store.data_dir).width_constants)
     except ShelvesChanged:
         abort(400)
-    return redirect(
-        url_for(
-            "clusters.edit",
-            cluster_id=cluster_id,
-            placed=result.moved,
-            shelf=shelf_id,
-            over=round(result.over_cm, 1) or None,
-        )
-        + "#place"
-    )
+    return redirect(url_for("clusters.edit", cluster_id=cluster_id, **placed_args(result, shelf_id)) + "#place")
 
 
 @blueprint.post("/<int:cluster_id>/move")

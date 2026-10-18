@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ cluster.name }}{% endblock %}
 
+{% from "_place_run.html" import placed_alert, place_form %}
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   <p class="mb-1"><a href="{{ url_for('clusters.index') }}">&larr; {{ _('Clusters') }}</a></p>
@@ -25,25 +26,14 @@
   </form>
 
   <h2 class="mt-5" id="place">{{ _('Move to a shelf') }}</h2>
-  {% if placed is not none %}
-  <div class="ss-alert mt-3" role="status">
-    {{ ngettext('%(num)d album of this cluster now stands from %(shelf)s on.', '%(num)d albums of this cluster now stand from %(shelf)s on.', placed, shelf=placed_on) }}
-    {{ _('A version from before is kept under Versions.') }} <a href="{{ url_for('layout.go', to=placed_cabinet) }}">{{ _('Layout') }}</a>
-    {% if over_cm %}<br><span class="ss-over">{{ _('Not everything fitted: the last shelf of the cabinet holds %(cm)s cm more than its width.', cm=over_cm | decimal) }}</span>{% endif %}
-  </div>
+  {% if placed %}
+  {{ placed_alert(placed, ngettext('%(num)d album of this cluster now stands from %(shelf)s on.', '%(num)d albums of this cluster now stand from %(shelf)s on.', placed.count, shelf=placed.shelf)) }}
   {% endif %}
   {% if on_shelves and targets %}
   <p class="ss-muted mt-1">{{ ngettext('The %(num)d album of this cluster that stands on a shelf (%(cm)s cm) goes to the start of the shelf you choose, in sorting order; it runs on over the shelves after it in that cabinet, and what stood there moves up behind it. The other cabinets keep their albums.', 'The %(num)d albums of this cluster that stand on a shelf (%(cm)s cm) go to the start of the shelf you choose, in sorting order; they run on over the shelves after it in that cabinet, and what stood there moves up behind them. The other cabinets keep their albums.', on_shelves, cm=on_shelves_cm | decimal) }}</p>
-  <form class="ss-card" method="post" action="{{ url_for('clusters.place', cluster_id=cluster.id) }}">
-    <div class="ss-card-body d-flex flex-wrap gap-2 align-items-center">
-      <label for="place-shelf" class="visually-hidden">{{ _('Shelf to start on') }}</label>
-      <select id="place-shelf" class="form-select" name="shelf_id" style="max-width: 320px;">
-        {% for target in targets %}<option value="{{ target.id }}">{{ target.name }}</option>{% endfor %}
-      </select>
-      <button class="ss-button ss-button-primary" type="submit">{{ _('Move the cluster here') }}</button>
-    </div>
-  </form>
-  <p class="ss-muted small mt-2">{{ _('A showcase, and a cabinet kept outside the sorting, keep what stands there. The layout as it is now is kept as a version first.') }}</p>
+  <div class="ss-card"><div class="ss-card-body">
+    {% call place_form(url_for('clusters.place', cluster_id=cluster.id), targets, 'place-shelf') %}{{ _('Move the cluster here') }}{% endcall %}
+  </div></div>
   {% else %}
   <div class="ss-card"><div class="ss-card-body ss-muted">{% if not on_shelves %}{{ _('No album of this cluster stands on a shelf yet.') }}{% else %}{{ _('No shelf has a width yet; give one a width under Cabinets & shelves.') }}{% endif %}</div></div>
   {% endif %}

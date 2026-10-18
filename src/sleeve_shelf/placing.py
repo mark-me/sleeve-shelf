@@ -1,5 +1,5 @@
 """Application services for one album or artist: moving it by hand, and the rules that bind it.
-Also a whole cluster, moved to a shelf at once."""
+Also a whole cluster or family, moved to a shelf at once."""
 
 from dataclasses import dataclass
 
@@ -89,10 +89,10 @@ def rearrange_shelves(
 
 
 @dataclass(frozen=True, slots=True)
-class ClusterPlaced:
-    """What moving a cluster did."""
+class PlacedRun:
+    """What moving a cluster or family did."""
 
-    # Albums of the cluster that now stand from the chosen shelf on.
+    # Its albums that now stand from the chosen shelf on.
     moved: int
     # The shelves filled anew: the chosen one and those after it in its cabinet.
     shelf_ids: tuple[int, ...]
@@ -100,34 +100,62 @@ class ClusterPlaced:
     over_cm: float = 0.0
 
 
-def cluster_albums_on_shelves(store: JsonStore, cluster_id: int) -> list[int]:
-    """The albums of a cluster that stand on a shelf a proposal fills, in the order a
-    proposal sorts them: by era band, artist (a family together) and year.
+def _sorted_on_shelves(store: JsonStore) -> list[tuple[int, int | None, int | None]]:
+    """The albums that stand on a shelf a proposal fills, as (album, cluster, family), in the
+    order a proposal sorts them: by cluster, era band, artist (a family together) and year.
 
-    The cluster is the one a proposal sorts the album under. What stands in a showcase,
-    or in a cabinet kept outside the sorting, is left where it is, as by a proposal.
+    The cluster is the one a proposal sorts the album under. What stands in a showcase, or
+    in a cabinet kept outside the sorting, is left where it is, as by a proposal.
     """
     kept = kept_shelf_ids(store)
     shelf_of = {p.album_id: p.shelf_id for p in store.load(Placement)}
+    family_of = {artist.id: artist.alias_group_id for artist in store.load(Artist)}
+    result = sort_collection(store)
     return [
-        entry.album_id
-        for entry in sort_collection(store).ordered
-        if entry.cluster_id == cluster_id
-        and entry.album_id in shelf_of
-        and shelf_of[entry.album_id] not in kept
+        (entry.album_id, entry.cluster_id, family_of.get(result.albums[entry.album_id].artist_id))
+        for entry in result.ordered
+        if entry.album_id in shelf_of and shelf_of[entry.album_id] not in kept
     ]
+
+
+def cluster_albums_on_shelves(store: JsonStore, cluster_id: int) -> list[int]:
+    """The albums of a cluster that stand on a shelf a proposal fills, in sorting order."""
+    return [album for album, cluster, _family in _sorted_on_shelves(store) if cluster == cluster_id]
+
+
+def family_albums_on_shelves(store: JsonStore) -> dict[int, list[int]]:
+    """Per family, its albums that stand on a shelf a proposal fills, in sorting order."""
+    families: dict[int, list[int]] = {}
+    for album, _cluster, family in _sorted_on_shelves(store):
+        if family is not None:
+            families.setdefault(family, []).append(album)
+    return families
 
 
 def place_cluster(
     store: JsonStore, cluster_id: int, shelf_id: int, constants: WidthConstants
-) -> ClusterPlaced:
-    """Stand the albums of a cluster together from the start of a shelf on, running on over
-    the shelves after it in the same cabinet; what stood there moves up behind them.
+) -> PlacedRun:
+    """Stand the albums of a cluster together from the start of a shelf on (see _place_run)."""
+    return _place_run(store, cluster_albums_on_shelves(store, cluster_id), shelf_id, constants)
 
-    The shelves before the chosen one, and the other cabinets, keep their albums except the
-    cluster's, which leave their places. Nothing drops off: what no longer fits stays at the
-    end of the last shelf of the cabinet, which is then reported as holding too much. The
-    layout as it was is kept as a version first.
+
+def place_family(
+    store: JsonStore, group_id: int, shelf_id: int, constants: WidthConstants
+) -> PlacedRun:
+    """Stand the albums of a family together from the start of a shelf on (see _place_run)."""
+    return _place_run(store, family_albums_on_shelves(store).get(group_id, []), shelf_id, constants)
+
+
+def _place_run(
+    store: JsonStore, moving: list[int], shelf_id: int, constants: WidthConstants
+) -> PlacedRun:
+    """Stand these albums, in this order, from the start of a shelf on, running on over the
+    shelves after it in the same cabinet; what stood there moves up behind them.
+
+    The shelves before the chosen one, and the other cabinets, keep their albums except
+    these, which leave their places. Nothing drops off: what no longer fits stays at the end
+    of the last shelf of the cabinet, which is then reported as holding too much. The layout
+    as it was is kept as a version first.
     """
     usable, _skipped = usable_shelves(store)
     start = next((shelf for shelf in usable if shelf.id == shelf_id), None)
@@ -135,9 +163,8 @@ def place_cluster(
         raise ShelvesChanged
     in_cabinet = [shelf for shelf in usable if shelf.cabinet_id == start.cabinet_id]
     chain = in_cabinet[in_cabinet.index(start):]
-    moving = cluster_albums_on_shelves(store, cluster_id)
     if not moving:
-        return ClusterPlaced(0, ())
+        return PlacedRun(0, ())
     placements = store.load(Placement)
     order = {shelf.id: index for index, shelf in enumerate(chain)}
     leaving = set(moving)
@@ -162,13 +189,13 @@ def place_cluster(
     spots += [Spot(album_id, last.id, after + offset) for offset, album_id in enumerate(left_out)]
     on_last = sum(widths[spot.album_id] for spot in spots if spot.shelf_id == last.id)
 
-    save_if_unsaved(store, "before moving a cluster")
+    save_if_unsaved(store, "before moving albums together")
     store.save(
         Placement,
         [p for p in placements if p.shelf_id not in order and p.album_id not in leaving]
         + [Placement(spot.album_id, spot.shelf_id, spot.position, PlacementSource.MANUAL) for spot in spots],
     )
-    return ClusterPlaced(
+    return PlacedRun(
         len(moving), tuple(shelf.id for shelf in chain), max(0.0, on_last - last.width_cm) if left_out else 0.0
     )
 

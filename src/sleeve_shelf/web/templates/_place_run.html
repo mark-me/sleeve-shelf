@@ -1,0 +1,20 @@
+{# Moving a cluster or family to a shelf at once: the form, and what the last move did. #}
+
+{% macro placed_alert(placed, message) %}
+<div class="ss-alert mt-3" role="status">
+  {{ message }}
+  {{ _('A version from before is kept under Versions.') }} <a href="{{ url_for('layout.go', to=placed.cabinet_id) }}">{{ _('Layout') }}</a>
+  {% if placed.over_cm %}<br><span class="ss-over">{{ _('Not everything fitted: the last shelf of the cabinet holds %(cm)s cm more than its width.', cm=placed.over_cm | decimal) }}</span>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro place_form(action, targets, id) %}
+<form class="d-flex flex-wrap gap-2 align-items-center" method="post" action="{{ action }}">
+  <label for="{{ id }}" class="visually-hidden">{{ _('Shelf to start on') }}</label>
+  <select id="{{ id }}" class="form-select" name="shelf_id" style="max-width: 320px;">
+    {% for target in targets %}<option value="{{ target.id }}">{{ target.name }}</option>{% endfor %}
+  </select>
+  <button class="ss-button ss-button-primary" type="submit">{{ caller() }}</button>
+</form>
+<p class="ss-muted small mt-2 mb-0">{{ _('A showcase, and a cabinet kept outside the sorting, keep what stands there. The layout as it is now is kept as a version first.') }}</p>
+{% endmacro %}

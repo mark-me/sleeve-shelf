@@ -23,7 +23,7 @@ A proposed cluster is marked *proposed* until you confirm it; the artists to che
 
 When a new purchase makes an artist's styles point to another cluster than the one it stands in, the app says so and waits: **Move** the artist, or **Keep** it where it is. Nothing moves by itself.
 
-To move a **whole cluster** at once, open it on the Clusters screen and, under **Move to a shelf**, choose the shelf it should start on. Its albums go to the start of that shelf in sorting order and run on over the next shelves of that cabinet; what stood there moves up behind them. The other cabinets keep their albums, and a showcase keeps its sample. If not everything fits, the rest stays at the end of the cabinet's last shelf and the page says how much too full it is. A version from before is kept, so you can always go back.
+To move a **whole cluster** at once, open it on the Clusters screen and, under **Move to a shelf**, choose the shelf it should start on. A **family** moves the same way, from under it on the Families screen. Its albums go to the start of that shelf in sorting order and run on over the next shelves of that cabinet; what stood there moves up behind them. The other cabinets keep their albums, and a showcase keeps its sample. If not everything fits, the rest stays at the end of the cabinet's last shelf and the page says how much too full it is. A version from before is kept, so you can always go back.
 
 ## 👪 Artist families
 
