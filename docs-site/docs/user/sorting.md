@@ -38,7 +38,7 @@ On the **Families** screen you accept a suggestion (leaving out members you don'
 
 An artist's **start year** decides its **era band**: before 1960, the 1960s, and so on to the 2020s and later. The whole catalogue of an artist stays in that band, so reissues and late albums don't scatter it. When the start year is not known, the earliest original release year among its albums stands in; you can always set it on the artist's page.
 
-Within a cluster, artists stand by era band, oldest first; within a band alphabetically by name as written, so *The Stooges* is under T; an artist's own albums by original year, then title.
+Within a cluster, artists stand by era band, oldest first. **Within a band, the artists keep the order they stand in on your shelves now**, and so do an artist's own albums: that order is yours — related artists side by side, albums by title if that is how you keep them — and the app doesn't overrule it. Only an artist or album that stands nowhere yet goes by the rule: artists alphabetically by name as written (so *The Stooges* is under T), an artist's albums by original year, then title — placed before the first one on the shelf that the rule puts after it.
 
 ## 📐 Filling the shelves
 

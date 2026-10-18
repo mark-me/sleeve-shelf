@@ -15,7 +15,7 @@ flowchart LR
 ```
 
 1. **`build_units`** turns artists into *units*: an artist on its own, or a family taken as one. Each unit gets a cluster (confirmed, or proposed — see below), an era band from its start year (`eras.band_of`), and a sort name.
-2. **`order_albums`** puts every album in its place in one long row: by the clusters' order, era band, unit name, original year, title.
+2. **`order_albums`** puts every album in its place in one long row: by the clusters' order and era band; within a band the units, and within a unit the albums, keep the order they stand in now (`standing`, each album's place along the walked shelves, from `proposal._standing`). Only what stands nowhere yet goes by unit name, or by original year and title, before the first standing one the rule puts after it (`_keep_order`). `sort_collection(store, unplaced)` treats albums being moved as standing nowhere.
 3. **`place`** fills the shelves with that row, in walking order. A shelf takes albums until the next one no longer fits; a shelf once passed is not gone back to. Location rules restrict albums to a cabinet, and a cabinet a rule points to takes only its bound albums. What doesn't fit is returned, not forced in.
 
 `proposal.py` runs these steps and saves the result as a `ProposedPlacement`; `taking_part.py` decides which albums take part (LPs, and whatever already stands on a shelf) and which shelves are filled (not a showcase, not a cabinet kept outside the sorting, not a shelf without a width).

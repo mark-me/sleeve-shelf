@@ -199,7 +199,8 @@ def plan(
     without_spot: list[int] = []
     if how is How.BELONGS:
         others = [p for p in placements if p.album_id not in set(moving)]
-        spots = belonging(store, moving, others)
+        # Where they stand now is what is being changed, so it says nothing about their order.
+        spots = belonging(store, moving, others, sort_collection(store, set(moving)))
         without_spot = [album_id for album_id in moving if album_id not in spots]
         moving = [album_id for album_id in moving if album_id in spots]
     leaving = set(moving)

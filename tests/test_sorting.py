@@ -24,6 +24,7 @@ from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import suggest_families
 from sleeve_shelf.sorting.order import (
     OrderedAlbum,
+    Unit,
     build_units,
     cluster_order_from_layout,
     order_albums,
@@ -473,3 +474,32 @@ def test_keeping_albums_in_place_never_leaves_more_out_and_keeps_the_order():
 
     assert calm_left == greedy_left == [2]
     assert [s.album_id for s in calm] == [s.album_id for s in greedy] == [1, 3, 4, 5]
+
+
+def test_the_owner_s_order_within_a_band_and_an_artist_is_kept_and_only_the_new_go_by_the_rule():
+    clusters = [Cluster(1, "Jazz", 0)]
+    units = [
+        Unit("Chet Baker", (1,), 1, False, 1952, "before 1960"),
+        Unit("Art Blakey", (2,), 1, False, 1944, "before 1960"),
+        Unit("Bill Evans", (3,), 1, False, 1956, "before 1960"),
+        Unit("Zoot Sims", (4,), 1, False, 1950, "before 1960"),
+    ]
+    albums = [
+        Album(10, 1, "Sings", original_release_year=1954),
+        Album(11, 1, "Chet", original_release_year=1959),
+        Album(12, 1, "Chet Is Back", original_release_year=1962),
+        Album(20, 2, "Moanin'", original_release_year=1958),
+        Album(30, 3, "Portrait In Jazz", original_release_year=1959),
+        Album(40, 4, "Zoot!", original_release_year=1956),
+    ]
+    # On the shelf: Chet Baker before Art Blakey (not alphabetical), and Chet before Sings
+    # (not by year). Bill Evans, Zoot Sims and Chet Is Back stand nowhere yet.
+    standing = {11: 0, 10: 1, 20: 2}
+
+    ordered = [entry.album_id for entry in order_albums(units, albums, clusters, standing)]
+
+    # Bill Evans goes before the first standing artist the alphabet puts after him (Chet
+    # Baker); Zoot Sims, after all of them, at the end. Chet Is Back (1962) after both.
+    assert ordered == [30, 11, 10, 12, 20, 40]
+    # Without anything standing it is the rule throughout.
+    assert [e.album_id for e in order_albums(units, albums, clusters)] == [20, 30, 10, 11, 12, 40]

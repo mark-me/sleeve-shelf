@@ -63,8 +63,9 @@ def test_proposal_is_kept_next_to_the_layout_until_accepted(client):
 
     proposed = client.get("/browse?layout=proposal&shelf=1").text
     assert "You are browsing the proposal" in proposed
-    # Jazz was first on the shelves, so it stays first; within it Art Blakey, then Chet by year.
-    assert proposed.index("Moanin") < proposed.index("Sings") < proposed.index("Chet &middot; 1959")
+    # Jazz was first on the shelves, so it stays first; within its band the owner's order of
+    # the artists and of their albums is kept: Chet Baker before Art Blakey, Chet before Sings.
+    assert proposed.index("Chet &middot; 1959") < proposed.index("Sings") < proposed.index("Moanin")
     assert "Fun House" in client.get("/browse?layout=proposal&shelf=2").text
     assert "layout=proposal" in proposed
 
@@ -75,7 +76,7 @@ def test_accepting_makes_the_proposal_the_layout(client):
     assert client.post("/proposal/accept").headers["Location"] == "/browse"
 
     shelf = _shelf_page(client, 1)
-    assert shelf.index("Moanin") < shelf.index("Sings") < shelf.index("Chet &middot; 1959")
+    assert shelf.index("Chet &middot; 1959") < shelf.index("Sings") < shelf.index("Moanin")
     assert "Jazz · before 1960" in shelf
     assert "Box" in client.get("/unplaced").text
     assert "Generate a proposal" in client.get("/proposal/").text
@@ -539,8 +540,8 @@ def test_all_albums_of_an_artist_can_be_moved_at_once(client):
     _move(client, "artist", 1, 3)
 
     shelf_c = client.get("/browse?shelf=3").text
-    # Both albums, in year order: Sings (1954) before Chet (1959).
-    assert shelf_c.index("Sings") < shelf_c.index("Chet &middot; 1959")
+    # Both albums, in the order they stood in: Chet before Sings.
+    assert shelf_c.index("Chet &middot; 1959") < shelf_c.index("Sings")
     assert "Moanin" in _shelf_page(client, 1)
 
 

@@ -9,6 +9,7 @@ from sleeve_shelf.domain import (
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
+    Cabinet,
     Cluster,
     EraBand,
     EraBandSource,
@@ -17,8 +18,10 @@ from sleeve_shelf.domain import (
     Placement,
     PlacementSource,
     ProposedPlacement,
+    Shelf,
     Style,
     WidthConstants,
+    in_order,
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.sorting.order import OrderedAlbum, Unit, build_units, order_albums
@@ -38,7 +41,9 @@ def has_proposal(store: JsonStore) -> bool:
     return store.exists(ProposedPlacement)
 
 
-def sort_collection(store: JsonStore) -> Sorted:
+def sort_collection(store: JsonStore, unplaced: set[int] | frozenset[int] = frozenset()) -> Sorted:
+    """The albums in the order a proposal stands them in. Albums in unplaced are sorted as if
+    they stood nowhere yet — those being moved, whose place now is not the owner's choice."""
     ensure_cluster_order(store)
     placed_ids = {
         p.album_id for p in store.load(Placement)
@@ -55,8 +60,30 @@ def sort_collection(store: JsonStore) -> Sorted:
     units = build_units(
         store.load(Artist), albums, confirmed, store.load(AliasGroup), store.load(Style), connected
     )
-    ordered = order_albums(units, albums, store.load(Cluster))
+    standing = {album_id: index for album_id, index in _standing(store).items() if album_id not in unplaced}
+    ordered = order_albums(units, albums, store.load(Cluster), standing)
     return Sorted(units, ordered, {album.id: album for album in albums})
+
+
+def _standing(store: JsonStore) -> dict[int, int]:
+    """Each album's place along the walked shelves as they stand now. A showcase and a
+    cabinet kept outside the sorting are left out: what stands there says nothing about
+    the order of the shelves that are sorted."""
+    kept = kept_shelf_ids(store)
+    shelves = store.load(Shelf)
+    walk = {
+        shelf.id: index
+        for index, shelf in enumerate(
+            shelf
+            for cabinet in in_order(store.load(Cabinet))
+            for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
+        )
+    }
+    standing = sorted(
+        (p for p in store.load(Placement) if p.shelf_id in walk and p.shelf_id not in kept),
+        key=lambda p: (walk[p.shelf_id], p.position),
+    )
+    return {p.album_id: index for index, p in enumerate(standing)}
 
 
 def generate_proposal(store: JsonStore, constants: WidthConstants, room_percent: int = 0) -> None:
