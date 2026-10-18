@@ -441,3 +441,35 @@ def test_a_few_albums_kept_elsewhere_are_no_place_to_add_to():
     assert suggest_spots([17], ordered, units, layout)[17].shelf_id == 2
     home = suggest_spots([17], ordered, units, layout, None, {1: 100, 2: 200})
     assert home[17] == SuggestedSpot(17, 1, 2, None, "artist")
+
+
+def test_shelf_boundaries_are_chosen_to_keep_albums_where_they_stand():
+    from sleeve_shelf.sorting.placement import fill_shelves, fill_shelves_keeping
+
+    albums = [(i, 1.0) for i in range(1, 9)]
+    shelves = [(10, 4.0), (20, 4.0), (30, 4.0)]
+    # Today shelf 10 holds 1-3, 20 holds 4-6, 30 holds 7-8: filling to the brim would
+    # push 4 onto shelf 10, and everything after it along.
+    standing = {1: 10, 2: 10, 3: 10, 4: 20, 5: 20, 6: 20, 7: 30, 8: 30}
+
+    greedy, _ = fill_shelves(albums, shelves)
+    calm, left_out = fill_shelves_keeping(albums, shelves, standing)
+
+    assert sum(standing[s.album_id] == s.shelf_id for s in greedy) == 5
+    assert [(s.album_id, s.shelf_id, s.position) for s in calm] == [
+        (1, 10, 0), (2, 10, 1), (3, 10, 2), (4, 20, 0), (5, 20, 1), (6, 20, 2), (7, 30, 0), (8, 30, 1),
+    ]
+    assert left_out == []
+
+
+def test_keeping_albums_in_place_never_leaves_more_out_and_keeps_the_order():
+    from sleeve_shelf.sorting.placement import fill_shelves, fill_shelves_keeping
+
+    albums = [(1, 0.5), (2, 3.0), (3, 0.5), (4, 0.5), (5, 0.5)]
+    shelves = [(10, 1.0), (20, 1.0)]
+    # Nothing stands anywhere yet: the order and what is left out are those of filling to the brim.
+    greedy, greedy_left = fill_shelves(albums, shelves)
+    calm, calm_left = fill_shelves_keeping(albums, shelves, {})
+
+    assert calm_left == greedy_left == [2]
+    assert [s.album_id for s in calm] == [s.album_id for s in greedy] == [1, 3, 4, 5]

@@ -7,6 +7,7 @@ import pytest
 from openpyxl import Workbook
 
 from sleeve_shelf import create_app
+from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import Album
 from sleeve_shelf.persistence import JsonStore
 
@@ -41,6 +42,11 @@ def client(tmp_path):
     content.seek(0)
     client.post("/setup/upload", data={"workbook": (content, "layout.xlsx")})
     client.post("/setup/confirm")
+    # The shelves here hold exactly three LPs; these tests are about the sorting, so a
+    # proposal fills them to the brim (the room left free has a test of its own).
+    settings = load_settings(client.application.config["DATA_DIR"])
+    settings.shelf_room_percent = 0
+    save_settings(client.application.config["DATA_DIR"], settings)
     return client
 
 
@@ -961,3 +967,18 @@ def test_sending_a_block_in_the_proposal_leaves_the_shelves_alone(client):
     assert sent.status_code == 200
     assert _shelf_page(client, 1) == before
     assert "Moanin" in client.get("/browse?layout=proposal&shelf=3").text
+
+
+def test_a_proposal_keeps_room_on_each_shelf_and_says_what_carrying_it_out_takes(client):
+    form = {"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15", "surcharge_gatefold_cm": "0.2"}
+    bad = client.post("/settings/", data={**form, "shelf_room_percent": "80"})
+    assert bad.status_code == 400 and "from 0 to 50" in bad.text
+    assert client.post("/settings/", data={**form, "table_records": "0"}).status_code == 400
+    client.post("/settings/", data={**form, "shelf_room_percent": "0", "table_records": "2"})
+
+    client.post("/proposal/generate")
+    page = client.get("/proposal/").text
+
+    moved = int(re.search(r'ss-stat-number">(\d+)</div><div class="ss-stat-label">go to another shelf', page).group(1))
+    assert f"&asymp; {-(-moved // 2)}</div>" in page and "rounds of a table full (2 records)" in page
+    assert "keeps 0% of its width free" in page

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-18 23:39+0200\n"
+"POT-Creation-Date: 2026-10-19 00:12+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -194,6 +194,7 @@ msgid "Rules"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/proposal/index.html
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Settings"
 msgstr ""
@@ -224,6 +225,14 @@ msgstr ""
 
 #: src/sleeve_shelf/web/settings.py
 msgid "The showcase fill has to be a whole percentage from 1 to 100."
+msgstr ""
+
+#: src/sleeve_shelf/web/settings.py
+msgid "The room left on a shelf has to be a whole percentage from 0 to 50."
+msgstr ""
+
+#: src/sleeve_shelf/web/settings.py
+msgid "The records on the table have to be a whole number from 1 to 1000."
 msgstr ""
 
 #: src/sleeve_shelf/web/settings.py
@@ -2333,6 +2342,18 @@ msgid "do not fit"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
+#, python-format
+msgid "round of a table full (%(num)d records)"
+msgid_plural "rounds of a table full (%(num)d records)"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+#, python-format
+msgid "The order is the same as when every shelf is filled to the brim, but the shelf boundaries are chosen so as many albums as possible stay where they stand, and each shelf keeps %(percent)d%% of its width free for what comes later. Both figures are settings."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Browse the proposal"
 msgstr ""
 
@@ -2561,6 +2582,26 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "A top-loader is flipped through to see the fronts, so it needs room left over. The Showcase screen warns when a top-loader holds more than this."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Reorganising"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Room a proposal leaves free on each shelf, as a percentage of its width"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "So a few new purchases later do not set a whole cabinet moving. 0 fills every shelf to the brim."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Records on the table"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "How many records you can have out of the cabinets at once while reorganising. A proposal says how many rounds of a table full it takes."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html

@@ -50,6 +50,12 @@ def index():
         fill_text = request.form.get("showcase_fill_percent", "").strip()
         if fill_text and not (fill_text.isdigit() and 1 <= int(fill_text) <= 100):
             errors.append(_("The showcase fill has to be a whole percentage from 1 to 100."))
+        room_text = request.form.get("shelf_room_percent", "").strip()
+        if room_text and not (room_text.isdigit() and 0 <= int(room_text) <= 50):
+            errors.append(_("The room left on a shelf has to be a whole percentage from 0 to 50."))
+        table_text = request.form.get("table_records", "").strip()
+        if table_text and not (table_text.isdigit() and 1 <= int(table_text) <= 1000):
+            errors.append(_("The records on the table have to be a whole number from 1 to 1000."))
         sideman_text = request.form.get("sideman_bands", "").strip()
         if sideman_text and not (sideman_text.isdigit() and 1 <= int(sideman_text) <= 20):
             errors.append(_("The number of bands has to be a whole number from 1 to 20."))
@@ -58,6 +64,10 @@ def index():
                 settings.showcase_fill_percent = int(fill_text)
             if sideman_text:
                 settings.sideman_bands = int(sideman_text)
+            if room_text:
+                settings.shelf_room_percent = int(room_text)
+            if table_text:
+                settings.table_records = int(table_text)
             for name in WIDTH_FIELDS:
                 setattr(settings, name, numbers[name])
             settings.count_bonus_discs_as_vinyl = "count_bonus_discs_as_vinyl" in request.form
@@ -89,6 +99,8 @@ def index():
             else "count_bonus_discs_as_vinyl" in request.form,
             showcase_fill=request.form.get("showcase_fill_percent", settings.showcase_fill_percent),
             sideman_bands=request.form.get("sideman_bands", settings.sideman_bands),
+            shelf_room_percent=request.form.get("shelf_room_percent", settings.shelf_room_percent),
+            table_records=request.form.get("table_records", settings.table_records),
             masked_token=f"••••{token[-4:]}" if token else None,
             errors=errors,
             saved=request.args.get("saved") and not errors,

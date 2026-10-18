@@ -47,6 +47,20 @@
       <div class="form-text">{{ _('A top-loader is flipped through to see the fronts, so it needs room left over. The Showcase screen warns when a top-loader holds more than this.') }}</div>
     </div>
 
+    <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);" id="reorganising"><h2>{{ _('Reorganising') }}</h2></div>
+    <div class="ss-card-body d-flex flex-column gap-3">
+      <div>
+        <label for="shelf_room_percent" class="form-label fw-semibold">{{ _('Room a proposal leaves free on each shelf, as a percentage of its width') }}</label>
+        <input id="shelf_room_percent" class="form-control" style="max-width: 160px;" name="shelf_room_percent" inputmode="numeric" value="{{ shelf_room_percent }}">
+        <div class="form-text">{{ _('So a few new purchases later do not set a whole cabinet moving. 0 fills every shelf to the brim.') }}</div>
+      </div>
+      <div>
+        <label for="table_records" class="form-label fw-semibold">{{ _('Records on the table') }}</label>
+        <input id="table_records" class="form-control" style="max-width: 160px;" name="table_records" inputmode="numeric" value="{{ table_records }}">
+        <div class="form-text">{{ _('How many records you can have out of the cabinets at once while reorganising. A proposal says how many rounds of a table full it takes.') }}</div>
+      </div>
+    </div>
+
     <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Artist families') }}</h2></div>
     <div class="ss-card-body">
       <label for="sideman_bands" class="form-label fw-semibold">{{ _('Most bands a musician can be in before counting as a sideman') }}</label>

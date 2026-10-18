@@ -30,7 +30,9 @@
     <div class="ss-stat"><div class="ss-stat-number">{{ moved_count }}</div><div class="ss-stat-label">{{ _('go to another shelf') }}</div></div>
     <div class="ss-stat"><div class="ss-stat-number">{{ staying_count }}</div><div class="ss-stat-label">{{ _('stay on their shelf') }}</div></div>
     <div class="ss-stat"><div class="ss-stat-number">{{ left_out | length }}</div><div class="ss-stat-label">{{ _('do not fit') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">&asymp; {{ rounds }}</div><div class="ss-stat-label">{{ ngettext('round of a table full (%(num)d records)', 'rounds of a table full (%(num)d records)', rounds, num=table_records) }}</div></div>
   </div>
+  <p class="ss-muted small mt-2">{{ _('The order is the same as when every shelf is filled to the brim, but the shelf boundaries are chosen so as many albums as possible stay where they stand, and each shelf keeps %(percent)d%% of its width free for what comes later. Both figures are settings.', percent=room_percent) }} <a href="{{ url_for('settings.index') }}#reorganising">{{ _('Settings') }}</a></p>
 
   <div class="d-flex flex-wrap gap-2 mt-3">
     <a class="ss-button" href="{{ url_for('browse.browse', layout='proposal') }}">{{ _('Browse the proposal') }}</a>

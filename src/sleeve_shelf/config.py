@@ -22,6 +22,11 @@ class Settings:
     count_bonus_discs_as_vinyl: bool = True
     # The part of a showcase shelf's width albums may take, leaving room to flip through them.
     showcase_fill_percent: int = 60
+    # The part of each shelf's width a proposal leaves free, so a few purchases later do not
+    # set a whole cabinet moving.
+    shelf_room_percent: int = 10
+    # How many records may be out of the cabinets at once when reorganising: a table full.
+    table_records: int = 50
     # A person in more bands of the collection than this is a sideman: their bands are not
     # suggested as their family, and connect to them only loosely.
     sideman_bands: int = 4

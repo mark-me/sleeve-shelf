@@ -1,5 +1,7 @@
 """Sorting proposal: generate one, compare it with the current layout, accept or discard it."""
 
+from math import ceil
+
 from flask import Blueprint, current_app, redirect, render_template, url_for
 
 from sleeve_shelf import proposal
@@ -75,21 +77,27 @@ def index():
         ),
         key=lambda row: (row["artist"].casefold(), row["title"].casefold()),
     )
+    moved_count = sum(1 for album_id, shelf_id in proposed.items() if current.get(album_id) != shelf_id)
+    settings = load_settings(current_app.config["DATA_DIR"])
     return render_template(
         "proposal/index.html",
         **context,
         cabinets=cabinets,
         placed_count=len(proposed),
         left_out=left_out,
-        moved_count=sum(1 for album_id, shelf_id in proposed.items() if current.get(album_id) != shelf_id),
+        moved_count=moved_count,
         staying_count=sum(1 for album_id, shelf_id in proposed.items() if current.get(album_id) == shelf_id),
+        # What carrying it out takes: every album that moves passes over the table once.
+        table_records=settings.table_records,
+        rounds=ceil(moved_count / settings.table_records),
+        room_percent=settings.shelf_room_percent,
     )
 
 
 @blueprint.post("/generate")
 def generate():
     settings = load_settings(current_app.config["DATA_DIR"])
-    proposal.generate_proposal(get_store(), settings.width_constants)
+    proposal.generate_proposal(get_store(), settings.width_constants, settings.shelf_room_percent)
     return redirect(url_for("proposal.index"))
 
 

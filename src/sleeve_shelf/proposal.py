@@ -59,8 +59,14 @@ def sort_collection(store: JsonStore) -> Sorted:
     return Sorted(units, ordered, {album.id: album for album in albums})
 
 
-def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
-    """Sort the collection and fill the shelves, saved as a proposal next to the current layout."""
+def generate_proposal(store: JsonStore, constants: WidthConstants, room_percent: int = 0) -> None:
+    """Sort the collection and fill the shelves, saved as a proposal next to the current layout.
+
+    Each shelf is filled to at most (100 - room_percent)% of its width, and the boundaries
+    between the shelves are chosen so as many albums as possible stay on the shelf they stand
+    on now: the order is the same as filling each shelf to the brim, but far fewer records
+    have to be moved to carry it out (see sorting.placement.fill_shelves_keeping).
+    """
     result = sort_collection(store)
     usable, _skipped = usable_shelves(store)
     cabinet_of = mandatory_cabinets(store, result)
@@ -79,8 +85,12 @@ def generate_proposal(store: JsonStore, constants: WidthConstants) -> None:
         for o in result.ordered
         if o.album_id not in displayed
     ]
+    share = (100 - room_percent) / 100
+    standing = {p.album_id: p.shelf_id for p in store.load(Placement)}
     spots, _left_out = place(
-        albums, [(shelf.id, shelf.cabinet_id, shelf.width_cm) for shelf in usable]
+        albums,
+        [(shelf.id, shelf.cabinet_id, shelf.width_cm * share) for shelf in usable],
+        standing,
     )
     store.save(
         ProposedPlacement,

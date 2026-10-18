@@ -44,6 +44,8 @@ Within a cluster, artists stand by era band, oldest first; within a band alphabe
 
 The sorted albums are stood on the shelves as one continuous row, in the order of your cabinets: a shelf is filled until the next album no longer fits, then the row runs on to the next shelf. A shelf without a width, a showcase, and a cabinet kept outside the sorting are skipped. What doesn't fit is not forced in: it is left without a place, and the proposal says how many.
 
+Where one shelf ends and the next begins is chosen so that **as many albums as possible stay on the shelf they stand on now**. The order is exactly the same as filling every shelf to the brim; the shelves are just filled less evenly, so that carrying out a proposal takes far fewer records out of the cabinets. And every shelf keeps **10% of its width free** (a setting), so a few new purchases later don't set a whole cabinet moving. The proposal says how many albums go to another shelf and about how many **rounds of a table full** that is — how many records fit on your table is a setting too. With widths that are still estimates, the shelves are usually too full to leave much choice: measuring them is what lets this keep albums in place.
+
 ## 📍 Location rules
 
 A **rule** binds a cluster, a family, an artist or a single album to a cabinet. A proposal places it there and nowhere else, and keeps everything without a rule out of that cabinet. The most specific rule wins: an album's own, then its artist's, its family's, its cluster's.
