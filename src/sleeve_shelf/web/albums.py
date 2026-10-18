@@ -13,7 +13,14 @@ from flask import (
 from flask_babel import gettext as _
 
 from sleeve_shelf.config import load_settings
-from sleeve_shelf.domain import Album, Artist, Placement, Style, find_by_id
+from sleeve_shelf.domain import (
+    Album,
+    Artist,
+    Placement,
+    ReleaseEnrichment,
+    Style,
+    find_by_id,
+)
 from sleeve_shelf.ingestion.deezer import DeezerClient
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.listening import listening, turn_down
@@ -43,12 +50,17 @@ def detail(album_id: int):
     )
     style_names = {style.id: style.name for style in store.load(Style)}
     placed = {p.album_id for p in store.load(Placement)}
+    release = next(
+        (r for r in store.load(ReleaseEnrichment) if r.release_id == album.release_id), None
+    )
     return render_template(
         "albums/detail.html",
         album=album,
         artist=artist,
         row=row,
         styles=[style_names[i] for i in album.style_ids if i in style_names],
+        # None while the release was not fetched with its tracklist yet.
+        tracklist=release.tracklist if release else None,
         takes_part=takes_part(album, placed),
         is_placed=album_id in placed,
         spot=None if album_id in placed else described_spots(store).get(album_id),

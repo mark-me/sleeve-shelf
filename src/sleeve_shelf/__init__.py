@@ -181,7 +181,7 @@ def main(arguments: list[str] | None = None) -> None:
         "import-discogs", help="link the collection to a Discogs CSV export"
     )
     import_discogs.add_argument("export", type=Path)
-    commands.add_parser("enrich", help="fetch styles and original years from Discogs")
+    commands.add_parser("enrich", help="fetch styles, original years, tracklists and pictures from Discogs")
     set_picture_command = commands.add_parser(
         "set-picture", help="add your own picture of an artist, for when a browser can't upload"
     )

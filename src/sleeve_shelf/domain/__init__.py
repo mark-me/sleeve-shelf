@@ -21,6 +21,7 @@ from sleeve_shelf.domain.enrichment import (
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
+    Track,
 )
 from sleeve_shelf.domain.lookup import find_by_id
 from sleeve_shelf.domain.placement import (
@@ -68,6 +69,7 @@ __all__ = [
     "ShelfLayer",
     "ShelfType",
     "Style",
+    "Track",
     "WidthConstants",
     "in_order",
     "move",

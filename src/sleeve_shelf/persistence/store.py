@@ -39,6 +39,7 @@ from sleeve_shelf.domain import (
     ShelfLayer,
     ShelfType,
     Style,
+    Track,
 )
 
 SNAPSHOT_DIR = "placements"
@@ -65,6 +66,10 @@ _FORMAT_TOKENS_TYPE = (
     "STRUCT(disc_count INTEGER, is_180_gram BOOLEAN, is_gatefold BOOLEAN,"
     " is_compound BOOLEAN, qualifiers VARCHAR[])"
 )
+
+def _tracklist(value: list) -> tuple[Track, ...]:
+    return tuple(Track(**track) for track in value)
+
 
 _PLACEMENT_COLUMNS = {
     "album_id": "INTEGER",
@@ -194,8 +199,9 @@ _TABLES: dict[type, _Table] = {
             "master_id": "INTEGER",
             "fetched_at": "TIMESTAMP",
             "year": "INTEGER",
+            "tracklist": "STRUCT(position VARCHAR, title VARCHAR, duration VARCHAR)[]",
         },
-        {"styles": tuple},
+        {"styles": tuple, "tracklist": _tracklist},
     ),
     MasterEnrichment: _Table(
         "discogs_masters.json",

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-18 16:29+0200\n"
+"POT-Creation-Date: 2026-10-18 16:44+0200\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -548,6 +548,14 @@ msgid "not linked"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Tracklist"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "The tracklist comes with the next fetch from Discogs."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Listening needs an internet connection."
 msgstr ""
 
@@ -964,11 +972,11 @@ msgid "How this screen works"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
-msgid "Search by artist or album"
+msgid "Search by artist, album or song"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
-msgid "Search by artist or album…"
+msgid "Search by artist, album or song…"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
@@ -991,11 +999,22 @@ msgid "Back to browsing"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
+msgid "Song"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/browse/results.html
+#, python-format
+msgid "and %(num)d more song"
+msgid_plural "and %(num)d more songs"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/browse/results.html
 msgid "Choosing a result opens its shelf, with the album marked."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
-msgid "No artist or album matches this search."
+msgid "No artist, album or song matches this search."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
@@ -1699,7 +1718,7 @@ msgid "No matches are waiting for confirmation."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Fetch styles, original years and pictures"
+msgid "Fetch styles, original years, tracklists and pictures"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1715,7 +1734,7 @@ msgid "Discogs allows about one lookup per second; each release takes up to two,
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Styles and original years"
+msgid "Styles, original years and tracklists"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
@@ -1760,7 +1779,7 @@ msgid "Now storing the covers and pictures here."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Now fetching styles and original years."
+msgid "Now fetching styles, original years and tracklists."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/discogs/index.html

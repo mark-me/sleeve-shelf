@@ -100,7 +100,7 @@ def test_search_ignores_case_and_accents_and_links_to_the_shelf(client):
     assert "2 results for" in miles
     assert "/unplaced#album-4" in miles
 
-    assert "No artist or album matches" in client.get("/browse?q=zappa").text
+    assert "No artist, album or song matches" in client.get("/browse?q=zappa").text
 
 
 def test_unplaced_albums_are_listed(client):

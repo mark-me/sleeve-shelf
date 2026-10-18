@@ -126,7 +126,7 @@
   </section>
 
   <section class="ss-card mt-4 {{ 'ss-step-current' if current == 'enrich' }}" id="enrich">
-    <div class="ss-card-head"><h2>3 · {{ _('Fetch styles, original years and pictures') }}</h2>{% if job.running %}<span class="ss-chip ss-chip-now">{{ _('running') }}</span>{% elif fetch_open and current != 'enrich' %}<span class="ss-chip">{{ _('to do') }}</span>{% else %}{{ state('enrich', _('to do'), _('done') if linked_count else none) }}{% endif %}</div>
+    <div class="ss-card-head"><h2>3 · {{ _('Fetch styles, original years, tracklists and pictures') }}</h2>{% if job.running %}<span class="ss-chip ss-chip-now">{{ _('running') }}</span>{% elif fetch_open and current != 'enrich' %}<span class="ss-chip">{{ _('to do') }}</span>{% else %}{{ state('enrich', _('to do'), _('done') if linked_count else none) }}{% endif %}</div>
     <div class="ss-card-body">
       <p>{{ _('Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. Last, the covers and pictures themselves are stored here, so the pages show them without Discogs. You can stop and continue at any time: nothing is fetched twice.') }}</p>
 
@@ -144,7 +144,7 @@
       {% endmacro %}
 
       <div id="job" data-status-url="{{ url_for('discogs.enrichment_status') }}" data-running="{{ 'true' if job.running else 'false' }}" data-seconds-per-lookup="{{ seconds_per_lookup }}">
-        {{ part_bar('albums', _('Styles and original years'), albums_progress, _('%(done)s of %(total)s linked albums', done=albums_progress[0], total=albums_progress[1])) }}
+        {{ part_bar('albums', _('Styles, original years and tracklists'), albums_progress, _('%(done)s of %(total)s linked albums', done=albums_progress[0], total=albums_progress[1])) }}
         {{ part_bar('pictures', _('Artist pictures'), pictures_progress, _('%(done)s of %(total)s artists', done=pictures_progress[0], total=pictures_progress[1])) }}
         {{ part_bar('covers', _('Images stored here'), covers_progress, _('%(done)s of %(total)s images', done=covers_progress[0], total=covers_progress[1])) }}
         {% if covers_gone_count %}
@@ -156,7 +156,7 @@
 
         {% if job.running %}
         <p class="mb-3">
-          <span class="fw-semibold" id="job-part">{% if job.part == 'pictures' %}{{ _('Now fetching the artist pictures.') }}{% elif job.part == 'covers' %}{{ _('Now storing the covers and pictures here.') }}{% else %}{{ _('Now fetching styles and original years.') }}{% endif %}</span>
+          <span class="fw-semibold" id="job-part">{% if job.part == 'pictures' %}{{ _('Now fetching the artist pictures.') }}{% elif job.part == 'covers' %}{{ _('Now storing the covers and pictures here.') }}{% else %}{{ _('Now fetching styles, original years and tracklists.') }}{% endif %}</span>
           <span id="job-text">{{ _('%(done)s of about %(total)s lookups in this run.', done=job.done, total=job.total) }}</span>
           <span id="job-left">{% if minutes_left > 1 %}{{ _('About %(minutes)s minutes left.', minutes=minutes_left) }}{% else %}{{ _('Less than a minute left.') }}{% endif %}</span>
         </p>
@@ -256,7 +256,7 @@
       covers: {{ _('%(done)s of %(total)s images', done='__done__', total='__total__') | tojson }},
       nowCovers: {{ _('Now storing the covers and pictures here.') | tojson }},
       run: {{ _('%(done)s of about %(total)s lookups in this run.', done='__done__', total='__total__') | tojson }},
-      nowAlbums: {{ _('Now fetching styles and original years.') | tojson }},
+      nowAlbums: {{ _('Now fetching styles, original years and tracklists.') | tojson }},
       nowPictures: {{ _('Now fetching the artist pictures.') | tojson }},
       minutes: {{ _('About %(minutes)s minutes left.', minutes='__minutes__') | tojson }},
       soon: {{ _('Less than a minute left.') | tojson }},

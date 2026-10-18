@@ -5,6 +5,7 @@ import urllib.error
 
 import pytest
 
+from sleeve_shelf.domain import Track
 from sleeve_shelf.ingestion.discogs_api import (
     DiscogsClient,
     DiscogsError,
@@ -133,6 +134,41 @@ def test_artist_lookup_also_gives_members_groups_and_aliases():
     # A record without those lists is complete: there is simply nothing to list.
     assert (plain.member_ids, plain.group_ids, plain.alias_ids) == ((), (), ())
     assert gone.member_ids == ()
+
+
+def test_a_release_comes_with_its_songs_and_no_headings():
+    api = _Api(
+        {
+            "styles": [],
+            "tracklist": [
+                {"type_": "heading", "position": "", "title": "Side One"},
+                {"type_": "track", "position": "A1", "title": "Ol' '55 ", "duration": "3:58"},
+                # A suite listed with its parts counts by its parts.
+                {
+                    "type_": "index",
+                    "position": "",
+                    "title": "Medley",
+                    "sub_tracks": [
+                        {"type_": "track", "position": "B1a", "title": "Part One"},
+                        {"type_": "track", "position": "B1b", "title": "Part Two", "duration": ""},
+                    ],
+                },
+                {"type_": "track", "position": "B2", "title": ""},
+                {"position": "3", "title": "Without A Type"},
+            ],
+        },
+        404,
+    )
+    client = api.client()
+
+    assert client.release(1).tracklist == (
+        Track("A1", "Ol' '55", "3:58"),
+        Track("B1a", "Part One"),
+        Track("B1b", "Part Two"),
+        Track("3", "Without A Type"),
+    )
+    # One that no longer exists has no songs, rather than an unknown tracklist.
+    assert client.release(2).tracklist == ()
 
 
 def test_release_without_master_and_missing_release():

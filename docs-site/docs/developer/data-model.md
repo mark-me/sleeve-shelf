@@ -140,6 +140,7 @@ erDiagram
         int master_id
         int year
         datetime fetched_at
+        list tracklist "position, title, duration; null: fetched before tracklists were kept"
     }
     AlbumListening {
         int album_id PK, FK
