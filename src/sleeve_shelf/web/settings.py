@@ -134,9 +134,9 @@ def password():
     if form.get("new", "") != form.get("repeat", ""):
         return back(password_error=_("The two new passwords differ."))
     try:
-        new_hash = set_password(data_dir, form.get("new", ""))
+        new_key = set_password(data_dir, form.get("new", ""))
     except ValueError:
         return back(password_error=_("A password has at least %(num)d characters.", num=MIN_PASSWORD_LENGTH))
     # This device stays logged in; others log in again with the new password.
-    remember_owner(new_hash)
+    remember_owner(new_key)
     return back(password="set")

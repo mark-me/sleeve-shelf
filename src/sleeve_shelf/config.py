@@ -32,6 +32,10 @@ class Settings:
     sideman_bands: int = 4
     # The owner's password, hashed; without one the app is open and everyone is the owner.
     owner_password_hash: str | None = None
+    # What a logged-in device keeps in its session: random, made anew with every password,
+    # so changing the password logs out the other devices. Nothing in it comes from the
+    # password itself.
+    owner_login_key: str | None = None
 
     @property
     def width_constants(self) -> WidthConstants:

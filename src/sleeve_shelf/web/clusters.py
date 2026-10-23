@@ -21,6 +21,7 @@ from sleeve_shelf.domain import (
     find_by_id,
 )
 from sleeve_shelf.web.context import get_store
+from sleeve_shelf.web.login import redirect_within
 
 blueprint = Blueprint("clusters", __name__, url_prefix="/clusters")
 
@@ -105,4 +106,4 @@ def delete(cluster_id: int):
 @blueprint.post("/styles/<int:style_id>")
 def move_style(style_id: int):
     point_style(get_store(), style_id, request.form.get("cluster_id", type=int))
-    return redirect(request.form.get("next") or url_for("clusters.index"))
+    return redirect_within(request.form.get("next"), url_for("clusters.index"))

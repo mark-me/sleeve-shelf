@@ -147,3 +147,20 @@ def test_a_shelf_saved_before_widths_could_be_measured_counts_as_estimated(tmp_p
     ]))
 
     assert JsonStore(tmp_path).load(Shelf)[0].width_measured is False
+
+
+def test_a_saved_version_is_only_ever_a_plain_file_in_its_folder(tmp_path):
+    import pytest
+
+    from sleeve_shelf.domain import Placement
+
+    store = JsonStore(tmp_path)
+    store.save(Placement, [Placement(1, 1, 0)])
+    store.save_snapshot("20261024-101500--before-moving")
+    assert store.load_snapshot("20261024-101500--before-moving") == [Placement(1, 1, 0)]
+
+    for name in ("../placement_current", "..", "a/b", "a.b", "", "x\x00y"):
+        with pytest.raises(ValueError):
+            store.load_snapshot(name)
+        with pytest.raises(ValueError):
+            store.save_snapshot(name)

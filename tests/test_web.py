@@ -647,3 +647,9 @@ def test_a_joint_billing_can_be_moved_or_put_with_another_artist_it_names(tmp_pa
     artists = {a.id: a for a in JsonStore(tmp_path / "data").load(Artist)}
     assert artists[6].alias_group_id == artists[5].alias_group_id is not None
     assert artists[4].alias_group_id is None
+
+
+def test_putting_back_a_version_that_does_not_exist_is_refused(client):
+    _load(client)
+    assert client.post("/versions/20990101-000000/restore").status_code == 404
+    assert client.post("/versions/..%2Fplacement_current/restore").status_code == 404

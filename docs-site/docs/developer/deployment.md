@@ -99,7 +99,7 @@ Set the password before turning funnel on: `docker exec -it sleeve-shelf python 
 
 ## 🔐 Configuration and secrets
 
-`config.yaml` in the data directory holds the settings, the Discogs personal access token and the hash of the owner's password. It is git-ignored and never baked into the image; the UI only shows the token's last four characters. It is written readable by the app's own user only (600), and a copy written earlier with wider permissions is put right when the app starts. On a running container, load a workbook from the command line. The container is read-only, so the file goes into the data volume — the one place `docker cp` can write to — and is removed again afterwards:
+`config.yaml` in the data directory holds the settings, the Discogs personal access token, the owner's login key and the hash of the owner's password. It is git-ignored and never baked into the image; the UI only shows the token's last four characters. It is written readable by the app's own user only (600), and a copy written earlier with wider permissions is put right when the app starts. On a running container, load a workbook from the command line. The container is read-only, so the file goes into the data volume — the one place `docker cp` can write to — and is removed again afterwards:
 
 ```sh
 docker cp layout.xlsx sleeve-shelf:/data/layout.xlsx

@@ -1,6 +1,6 @@
 """Versions: saved layouts, and going back to one."""
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 from flask_babel import ngettext
 
@@ -29,7 +29,10 @@ def save():
 
 @blueprint.post("/<name>/restore")
 def restore(name: str):
-    missing = restore_version(get_store(), name)
+    store = get_store()
+    if name not in store.snapshots():
+        abort(404)
+    missing = restore_version(store, name)
     message = _("The version has been put back.")
     if missing:
         message += " " + ngettext(

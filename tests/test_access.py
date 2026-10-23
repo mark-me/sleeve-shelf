@@ -236,12 +236,12 @@ def test_after_logging_in_only_a_page_of_this_app_is_gone_to(app):
 def test_a_login_is_tied_to_the_password_it_was_checked_against(app):
     from flask import session
 
-    from sleeve_shelf.access import verified_hash
+    from sleeve_shelf.access import verified_key
 
     data_dir = app.config["DATA_DIR"]
     set_password(data_dir, PASSWORD)
     # The old password is checked, then changed by another request before the login ends.
-    old = verified_hash(data_dir, PASSWORD)
+    old = verified_key(data_dir, PASSWORD)
     set_password(data_dir, "a newer strong one")
     with app.test_request_context("/"):
         login.remember_owner(old)
@@ -260,3 +260,27 @@ def test_a_session_key_cut_short_is_made_anew(tmp_path):
     assert len(key) == 64 and path.read_text() == key.decode()
     assert path.stat().st_mode & 0o777 == 0o600
     assert session_key(tmp_path) == key
+
+
+def test_a_login_holds_a_random_key_that_each_new_password_replaces(app):
+    from sleeve_shelf.config import load_settings, save_settings
+
+    data_dir = app.config["DATA_DIR"]
+    first = set_password(data_dir, PASSWORD)
+    second = set_password(data_dir, PASSWORD)
+    # Random, not derived from the password: the same password gets another key.
+    assert first != second and len(second) >= 40
+    assert load_settings(data_dir).owner_login_key == second
+
+    # A password set before login keys were kept gets one when it is next used.
+    settings = load_settings(data_dir)
+    settings.owner_login_key = None
+    save_settings(data_dir, settings)
+    client = app.test_client()
+    client.post("/login", data={"password": PASSWORD})
+    assert load_settings(data_dir).owner_login_key and client.get("/dashboard/").status_code == 200
+
+    from sleeve_shelf.access import remove_password
+
+    remove_password(data_dir)
+    assert load_settings(data_dir).owner_login_key is None
