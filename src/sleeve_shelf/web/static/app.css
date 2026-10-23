@@ -67,20 +67,13 @@ h2 { font-size: 1.15rem; margin: 0; }
   text-decoration: none;
 }
 
-.ss-menu-button,
-.ss-theme-toggle {
+.ss-menu-button {
   min-width: 44px;
   height: 44px;
   border: none;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
-}
-
-.ss-theme-toggle {
-  width: 100%;
-  font-size: 0.875rem;
-  font-weight: 500;
 }
 
 .ss-nav {
@@ -148,17 +141,6 @@ h2 { font-size: 1.15rem; margin: 0; }
 details.ss-card > summary { cursor: pointer; list-style: revert; }
 details.ss-card > summary h2 { display: inline; }
 details.ss-card:not([open]) > summary { border-bottom: none; }
-
-/* The menu in groups, in the order the app is used. */
-.ss-nav-group {
-  margin-top: 14px;
-  padding: 0 20px 2px;
-  color: #8B93A6;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 
 .ss-nav-count {
   min-width: 22px;

@@ -21,9 +21,6 @@ from sleeve_shelf.ingestion.discogs_api import (
 )
 from sleeve_shelf.persistence import JsonStore
 
-# The parts of a round, in order.
-PARTS = ("collection", "import", "albums", "pictures", "covers")
-
 # done and total count the lookups of this run. part is what is being done now. collection
 # is [pages fetched, pages] and releases how many the collection holds; synced is what
 # taking it over did. albums, pictures and covers say how many of all of them are in:
