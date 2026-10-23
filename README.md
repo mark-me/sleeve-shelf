@@ -70,7 +70,7 @@ The first links the loaded albums to the releases in your Discogs export and add
 ### With Docker
 
 ```sh
-docker run -d --name sleeve-shelf -p 5000:5000 -v sleeve-shelf-data:/data ghcr.io/mark-me/sleeve-shelf:latest
+docker run -d --name sleeve-shelf -p 127.0.0.1:5000:5000 -v sleeve-shelf-data:/data ghcr.io/mark-me/sleeve-shelf:latest
 ```
 
 The collection is kept in the `/data` volume. Use the `:test` tag for the test branch, or a version such as `:1.0.0` for a specific release.
@@ -78,8 +78,9 @@ The collection is kept in the `/data` volume. Use the `:test` tag for the test b
 Two Compose examples are in [`docker/`](docker/): [`docker-compose.yml`](docker/docker-compose.yml) runs a pinned release on port 5000, and [`docker-compose.test.yml`](docker/docker-compose.test.yml) runs the latest build of the `test` branch on port 5001 with its own data volume, so a production and a test container can run side by side on one machine. To load a workbook from the command line inside the container:
 
 ```sh
-docker cp layout.xlsx sleeve-shelf:/tmp/layout.xlsx
-docker exec sleeve-shelf python -m sleeve_shelf load /tmp/layout.xlsx
+docker cp layout.xlsx sleeve-shelf:/data/layout.xlsx
+docker exec sleeve-shelf python -m sleeve_shelf load /data/layout.xlsx
+docker exec sleeve-shelf rm /data/layout.xlsx
 ```
 
 Run the tests with `uv run python -m pytest`.

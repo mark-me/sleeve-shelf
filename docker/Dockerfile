@@ -10,7 +10,7 @@ FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
 
 
 # Build stage: install the locked dependencies and the app into a virtual environment.
-FROM python:3.13-slim-bookworm AS build
+FROM python:3.13-slim-trixie AS build
 
 COPY --from=uv /uv /usr/local/bin/uv
 
@@ -33,7 +33,7 @@ RUN .venv/bin/python -c "from sleeve_shelf.web.language import compile_catalogue
 
 
 # Docs stage: the documentation site, built with Zensical, which the app serves as its help.
-FROM python:3.13-slim-bookworm AS docs
+FROM python:3.13-slim-trixie AS docs
 
 COPY --from=uv /uv /usr/local/bin/uv
 
@@ -52,7 +52,7 @@ RUN cd docs-site && uv run --no-sync python -m zensical build --strict
 
 
 # Runtime stage: only Python, the virtual environment, and the built help.
-FROM python:3.13-slim-bookworm
+FROM python:3.13-slim-trixie
 
 ARG APP_VERSION=dev
 

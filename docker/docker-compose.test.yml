@@ -2,7 +2,7 @@
 #
 #   docker compose -f docker-compose.test.yml up -d
 #
-# Then open http://<host>:5001
+# Then open http://localhost:5001 on the host, or the address your proxy gives it
 #
 # Uses its own port, container name, and volume, so it runs next to the
 # production container (docker-compose.yml) without touching its data.
@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
     # Shielded: nothing but /data (and /tmp, in memory) can be written, the app gains no
     # privileges and has none of root's, and it gets a bounded share of the machine. Should
-    # anyone ever break in, there is little they can do. It uses about 75 MB.
+    # anyone ever break in, there is little they can do. It uses about 135 MB.
     read_only: true
     tmpfs:
       - /tmp
@@ -26,12 +26,23 @@ services:
       - ALL
     mem_limit: 512m
     pids_limit: 200
+    # Only this machine can reach the port: a proxy on it (Tailscale, Caddy, nginx…) passes
+    # visitors on. Docker opens a published port past the host's firewall, so "5001:5000"
+    # would put the app, without HTTPS, before the whole local network. With tsdproxy no
+    # port is needed at all — see the labels below and the developer guide.
     ports:
-      - "5001:5000"
+      - "127.0.0.1:5001:5000"
     environment:
-      # Behind Tailscale Funnel or a reverse proxy: the one proxy that may say who a visitor
-      # is. Leave it out when the app is reached directly.
+      # Behind Tailscale Funnel, tsdproxy or a reverse proxy: the one proxy that may say who a
+      # visitor is. Leave it out when the app is reached directly.
       SLEEVE_SHELF_PROXIES: "1"
+      TZ: "Europe/Amsterdam"
+    # With tsdproxy the app gets a name of its own on the tailnet, with HTTPS (see
+    # docker-compose.yml). Leave out ports: above when using this.
+    # labels:
+    #   tsdproxy.enable: "true"
+    #   tsdproxy.name: "sleeve-shelf-test"
+    #   tsdproxy.port.1: "443/https:5000/http"
     volumes:
       - sleeve-shelf-test-data:/data
 
