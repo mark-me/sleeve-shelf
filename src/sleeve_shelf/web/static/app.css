@@ -128,6 +128,19 @@ h2 { font-size: 1.15rem; margin: 0; }
   text-align: center;
 }
 .ss-step-done { background: var(--ss-accent); color: #1E293B; }
+/* A step of a round that runs: a ring that turns; one that stopped or failed. */
+.ss-step-now { position: relative; background: transparent; color: var(--ss-accent); }
+.ss-step-now::after {
+  content: ""; position: absolute; inset: -2px; border-radius: 50%;
+  border: 2px solid var(--ss-accent); border-right-color: transparent;
+  animation: ss-turn 0.9s linear infinite;
+}
+@keyframes ss-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ss-step-now::after { animation: none; } }
+.ss-step-failed { background: #D9534F; color: #fff; }
+.ss-step-is-todo .ss-row-artist, .ss-step-is-skipped .ss-row-artist { color: var(--ss-muted); }
+.ss-step .ss-row-text { gap: 6px; }
+.ss-step-bar { max-width: 480px; }
 
 /* A screen of steps: the step that waits for the user stands out. */
 .ss-step-current { border-color: var(--ss-accent); box-shadow: 0 0 0 1px var(--ss-accent); }

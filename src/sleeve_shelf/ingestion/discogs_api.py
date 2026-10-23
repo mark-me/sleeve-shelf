@@ -130,8 +130,12 @@ class DiscogsClient:
             alias_ids=ids("aliases"),
         )
 
-    def collection(self) -> list[dict]:
-        """Every release in the collection of the token's owner, as the API gives them."""
+    def collection(self, progress: Callable[[int, int, int], None] | None = None) -> list[dict]:
+        """Every release in the collection of the token's owner, as the API gives them.
+
+        progress is told after each page: the pages fetched, of how many, and how many
+        releases the collection holds — Discogs says so with the first page.
+        """
         username = (self._get("/oauth/identity") or {}).get("username")
         if not username:
             raise DiscogsError("Discogs did not say whose token this is.")
@@ -145,7 +149,11 @@ class DiscogsClient:
             if data is None:
                 raise DiscogsError("Discogs has no collection for this token.")
             releases.extend(data.get("releases") or ())
-            if page >= (data.get("pagination") or {}).get("pages", 1):
+            pagination = data.get("pagination") or {}
+            pages = pagination.get("pages", 1)
+            if progress is not None:
+                progress(page, pages, pagination.get("items", len(releases)))
+            if page >= pages:
                 return releases
             page += 1
 

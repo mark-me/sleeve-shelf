@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-19 01:04+0200\n"
+"POT-Creation-Date: 2026-10-24 00:22+0200\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -65,14 +65,6 @@ msgstr "Er zijn geen releases in dit bestand gevonden."
 #: src/sleeve_shelf/web/discogs.py
 msgid "Set your Discogs token first."
 msgstr "Stel eerst je Discogs-token in."
-
-#: src/sleeve_shelf/web/discogs.py
-msgid "Wait for the fetching to finish, or stop it, before syncing."
-msgstr "Wacht tot het ophalen klaar is, of stop het, voordat je synchroniseert."
-
-#: src/sleeve_shelf/web/discogs.py
-msgid "Your Discogs collection is empty."
-msgstr "Je Discogs-collectie is leeg."
 
 #: src/sleeve_shelf/web/discogs.py
 msgid "Paste your Discogs personal access token."
@@ -968,6 +960,7 @@ msgstr "Hoe dit scherm werkt"
 
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Waiting for you"
 msgstr "Wacht op jou"
 
@@ -1462,10 +1455,6 @@ msgstr[0] "%(num)d regel"
 msgstr[1] "%(num)d regels"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "waiting for you"
-msgstr "wacht op jou"
-
-#: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "not generated"
 msgstr "niet gemaakt"
 
@@ -1491,6 +1480,11 @@ msgid "done"
 msgstr "klaar"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "waiting for you"
+msgstr "wacht op jou"
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Sorting proposal"
 msgstr "Sorteervoorstel"
@@ -1512,8 +1506,16 @@ msgid "artists"
 msgstr "artiesten"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Bring your collection in from Discogs, in three steps from top to bottom: sync, confirm the matches, fetch. The step that waits for you is marked."
-msgstr "Haal je collectie binnen van Discogs, in drie stappen van boven naar beneden: synchroniseren, de koppelingen bevestigen, ophalen. De stap die op jou wacht is gemarkeerd."
+msgid "running"
+msgstr "bezig"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "to do"
+msgstr "te doen"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "One button brings your collection in from Discogs and keeps everything up to date: new purchases, styles, years, tracklists, pictures and covers. What needs your decision shows under “Waiting for you”."
+msgstr "Eén knop haalt je collectie binnen van Discogs en houdt alles bij: nieuwe aankopen, stijlen, jaren, tracklists, foto’s en hoezen. Wat jouw beslissing vraagt, staat onder “Wacht op jou”."
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "linked to a release"
@@ -1522,10 +1524,6 @@ msgstr "gekoppeld aan een release"
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "enriched"
 msgstr "verrijkt"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "matches to confirm"
-msgstr "koppelingen te bevestigen"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Discogs access token"
@@ -1557,115 +1555,172 @@ msgid "Sync with Discogs"
 msgstr "Synchroniseren met Discogs"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "to take over"
-msgstr "over te nemen"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "This is what taking over your Discogs collection would do. Nothing has changed yet."
-msgstr "Dit zou het overnemen van je Discogs-collectie doen. Er is nog niets veranderd."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "This is what importing the export would do. Nothing has changed yet."
-msgstr "Dit zou het importeren van de export doen. Er is nog niets veranderd."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Taking it over also brings the album covers, and notes which artist on Discogs each artist is — which the artist pictures need."
-msgstr "Overnemen brengt ook de albumhoezen mee, en legt vast welke artiest op Discogs elke artiest is — dat hebben de artiestfoto’s nodig."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "vinyl releases in your collection"
-msgstr "vinylreleases in je collectie"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "vinyl releases in the export"
-msgstr "vinylreleases in de export"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "linked to your albums"
-msgstr "gekoppeld aan je albums"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "new, unplaced albums"
-msgstr "nieuwe albums zonder plek"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(num)d release that is not vinyl is skipped."
-msgid_plural "%(num)d releases that are not vinyl are skipped."
-msgstr[0] "%(num)d release die geen vinyl is, wordt overgeslagen."
-msgstr[1] "%(num)d releases die geen vinyl zijn, worden overgeslagen."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(num)d of your albums stays without a release."
-msgid_plural "%(num)d of your albums stay without a release."
-msgstr[0] "%(num)d van je albums blijft zonder release."
-msgstr[1] "%(num)d van je albums blijven zonder release."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(num)d linked album gets its format, and with it its estimated width, brought up to date."
-msgid_plural "%(num)d linked albums get their format, and with it their estimated width, brought up to date."
-msgstr[0] "Van %(num)d gekoppeld album worden het formaat en daarmee de geschatte breedte bijgewerkt."
-msgstr[1] "Van %(num)d gekoppelde albums worden het formaat en daarmee de geschatte breedte bijgewerkt."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Albums that are already linked are left as they are."
-msgstr "Albums die al gekoppeld zijn, blijven zoals ze zijn."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(num)d album is no longer in your Discogs collection"
-msgid_plural "%(num)d albums are no longer in your Discogs collection"
-msgstr[0] "%(num)d album staat niet meer in je Discogs-collectie"
-msgstr[1] "%(num)d albums staan niet meer in je Discogs-collectie"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "They are kept as they are, on their shelf, and listed at the bottom of this screen and on the Dashboard. There you can remove one, after confirming."
-msgstr "Ze blijven zoals ze zijn, in hun vak, en staan onderaan dit scherm en op het Overzicht. Daar kun je er een verwijderen, na bevestiging."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Take over"
-msgstr "Overnemen"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Fetches your collection straight from Discogs, so new purchases come in without an export. It takes about a second per hundred releases; you see what it would do, here, before anything changes."
-msgstr "Haalt je collectie rechtstreeks van Discogs, zodat nieuwe aankopen binnenkomen zonder export. Het duurt ongeveer een seconde per honderd releases; je ziet hier wat het zou doen voordat er iets verandert."
+msgid "Stop"
+msgstr "Stoppen"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Sync"
 msgstr "Synchroniseren"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Stopped. Sync again to go on: nothing is fetched twice."
+msgstr "Gestopt. Synchroniseer opnieuw om verder te gaan: niets wordt twee keer opgehaald."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Your Discogs collection is empty."
+msgstr "Je Discogs-collectie is leeg."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "Stopped: %(error)s Sync again to go on."
+msgstr "Gestopt: %(error)s Synchroniseer opnieuw om verder te gaan."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Set your token above first."
 msgstr "Stel eerst hierboven je token in."
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Or upload a Discogs export instead"
-msgstr "Of upload in plaats daarvan een Discogs-export"
+msgid "Fetch your collection"
+msgstr "Je collectie ophalen"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you see what it would do before anything changes."
-msgstr "Open op discogs.com je collectie en kies Export. Upload hier het CSV-bestand dat je krijgt. Alleen vinyl wordt overgenomen; je ziet wat het zou doen voordat er iets verandert."
+msgid "Pages of a hundred releases"
+msgstr "Pagina’s van honderd releases"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs export (.csv)"
-msgstr "Discogs-export (.csv)"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Upload"
-msgstr "Uploaden"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Confirm the matches"
-msgstr "De koppelingen bevestigen"
+msgid "Asking Discogs whose collection this is…"
+msgstr "Discogs vragen van wie deze collectie is…"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
-msgid "%(num)d to confirm"
-msgid_plural "%(num)d to confirm"
-msgstr[0] "%(num)d te bevestigen"
-msgstr[1] "%(num)d te bevestigen"
+msgid "%(done)s of %(total)s · %(releases)s releases"
+msgstr "%(done)s van %(total)s · %(releases)s releases"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(releases)s releases in your collection"
+msgstr "%(releases)s releases in je collectie"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Straight from Discogs, a hundred releases a second."
+msgstr "Rechtstreeks van Discogs, honderd releases per seconde."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Compare and take over"
+msgstr "Vergelijken en overnemen"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d new album"
+msgid_plural "%(num)d new albums"
+msgstr[0] "%(num)d nieuw album"
+msgstr[1] "%(num)d nieuwe albums"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d format brought up to date"
+msgid_plural "%(num)d formats brought up to date"
+msgstr[0] "%(num)d formaat bijgewerkt"
+msgstr[1] "%(num)d formaten bijgewerkt"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d no longer on Discogs"
+msgid_plural "%(num)d no longer on Discogs"
+msgstr[0] "%(num)d niet meer op Discogs"
+msgstr[1] "%(num)d niet meer op Discogs"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d match to confirm"
+msgid_plural "%(num)d matches to confirm"
+msgstr[0] "%(num)d koppeling te bevestigen"
+msgstr[1] "%(num)d koppelingen te bevestigen"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Nothing changed since the last time."
+msgstr "Niets veranderd sinds de vorige keer."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "New purchases become albums without a place; nothing is removed or moved, and what is uncertain waits for you."
+msgstr "Nieuwe aankopen worden albums zonder plek; er wordt niets verwijderd of verplaatst, en wat onzeker is, wacht op jou."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Fetch styles, years, tracklists and pictures"
+msgstr "Stijlen, jaren, tracklists en foto’s ophalen"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Styles, original years and tracklists"
+msgstr "Stijlen, oorspronkelijke jaren en tracklists"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(done)s of %(total)s linked albums"
+msgstr "%(done)s van %(total)s gekoppelde albums"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Artist pictures"
+msgstr "Artiestfoto’s"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(done)s of %(total)s artists"
+msgstr "%(done)s van %(total)s artiesten"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone."
+msgid_plural "%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone."
+msgstr[0] "%(num)d artiest heeft geen naam op Discogs en krijgt geen foto: een sync benoemt een artiest via een release die alleen op naam van die artiest staat."
+msgstr[1] "%(num)d artiesten hebben geen naam op Discogs en krijgen geen foto: een sync benoemt een artiest via een release die alleen op naam van die artiest staat."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Store covers and pictures here"
+msgstr "Hoezen en foto’s hier opslaan"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Images stored here"
+msgstr "Hier opgeslagen afbeeldingen"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(done)s of %(total)s images"
+msgstr "%(done)s van %(total)s afbeeldingen"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d image is no longer at Discogs and could not be stored."
+msgid_plural "%(num)d images are no longer at Discogs and could not be stored."
+msgstr[0] "%(num)d afbeelding staat niet meer op Discogs en kon niet worden opgeslagen."
+msgstr[1] "%(num)d afbeeldingen staan niet meer op Discogs en konden niet worden opgeslagen."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "About %(minutes)s minutes left."
+msgstr "Nog ongeveer %(minutes)s minuten."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Less than a minute left."
+msgstr "Nog minder dan een minuut."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "You can leave this page: the round goes on."
+msgstr "Je kunt deze pagina verlaten: de ronde gaat door."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "Still to fetch, about %(num)d minute at most."
+msgid_plural "Still to fetch, about %(num)d minutes at most."
+msgstr[0] "Nog op te halen, hoogstens ongeveer %(num)d minuut."
+msgstr[1] "Nog op te halen, hoogstens ongeveer %(num)d minuten."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Only fetch, without syncing"
+msgstr "Alleen ophalen, zonder te synchroniseren"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Discogs allows about one lookup a second. Nothing is fetched twice, so after the first time a round takes seconds."
+msgstr "Discogs staat ongeveer één opvraging per seconde toe. Niets wordt twee keer opgehaald, dus na de eerste keer duurt een ronde seconden."
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "A release that looks like one of your albums but is not titled the same waits here. Until you say so the album has no release, and nothing can be fetched for it."
@@ -1694,153 +1749,11 @@ msgid "“Different” keeps your album without a release and adds the Discogs r
 msgstr "“Ander album” houdt je album zonder release en voegt de Discogs-release toe als nieuw album zonder plek."
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "No matches are waiting for confirmation."
-msgstr "Er wachten geen koppelingen op bevestiging."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Fetch styles, original years, tracklists and pictures"
-msgstr "Stijlen, oorspronkelijke jaren, tracklists en foto’s ophalen"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "running"
-msgstr "bezig"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "to do"
-msgstr "te doen"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. Last, the covers and pictures themselves are stored here, so the pages show them without Discogs. You can stop and continue at any time: nothing is fetched twice."
-msgstr "Discogs staat ongeveer één opvraging per seconde toe; elke release kost er hoogstens twee, en elke artiest één voor zijn foto. Als laatste worden de hoezen en foto’s zelf hier opgeslagen, zodat de pagina’s ze zonder Discogs tonen. Je kunt altijd stoppen en verdergaan: niets wordt twee keer opgehaald."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Styles, original years and tracklists"
-msgstr "Stijlen, oorspronkelijke jaren en tracklists"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
 #, python-format
-msgid "%(done)s of %(total)s linked albums"
-msgstr "%(done)s van %(total)s gekoppelde albums"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Artist pictures"
-msgstr "Artiestfoto’s"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(done)s of %(total)s artists"
-msgstr "%(done)s van %(total)s artiesten"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Images stored here"
-msgstr "Hier opgeslagen afbeeldingen"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(done)s of %(total)s images"
-msgstr "%(done)s van %(total)s afbeeldingen"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(num)d image is no longer at Discogs and could not be stored."
-msgid_plural "%(num)d images are no longer at Discogs and could not be stored."
-msgstr[0] "%(num)d afbeelding staat niet meer op Discogs en kon niet worden opgeslagen."
-msgstr[1] "%(num)d afbeeldingen staan niet meer op Discogs en konden niet worden opgeslagen."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone."
-msgid_plural "%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone."
-msgstr[0] "%(num)d artiest heeft geen naam op Discogs en krijgt geen foto: een sync benoemt een artiest via een release die alleen op naam van die artiest staat."
-msgstr[1] "%(num)d artiesten hebben geen naam op Discogs en krijgen geen foto: een sync benoemt een artiest via een release die alleen op naam van die artiest staat."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Now storing the covers and pictures here."
-msgstr "Nu worden de hoezen en foto’s hier opgeslagen."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Now fetching styles, original years and tracklists."
-msgstr "Nu worden stijlen, oorspronkelijke jaren en tracklists opgehaald."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Now fetching the artist pictures."
-msgstr "Nu worden de artiestfoto’s opgehaald."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(done)s of about %(total)s lookups in this run."
-msgstr "%(done)s van ongeveer %(total)s opvragingen in deze ronde."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "About %(minutes)s minutes left."
-msgstr "Nog ongeveer %(minutes)s minuten."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Less than a minute left."
-msgstr "Nog minder dan een minuut."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Stop"
-msgstr "Stoppen"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "Stopped after %(done)d lookups. Start again to continue: nothing is fetched twice."
-msgstr "Gestopt na %(done)d opvragingen. Start opnieuw om verder te gaan: niets wordt twee keer opgehaald."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "Fetching stopped: %(error)s Start again to continue."
-msgstr "Het ophalen is gestopt: %(error)s Start opnieuw om verder te gaan."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "No album is linked to a release yet — import your collection first."
-msgstr "Er is nog geen album aan een release gekoppeld — importeer eerst je collectie."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Everything has been fetched."
-msgstr "Alles is opgehaald."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Not everything has been fetched yet."
-msgstr "Nog niet alles is opgehaald."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "%(num)d linked album still has to be fetched."
-msgid_plural "%(num)d linked albums still have to be fetched."
-msgstr[0] "%(num)d gekoppeld album moet nog worden opgehaald."
-msgstr[1] "%(num)d gekoppelde albums moeten nog worden opgehaald."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "The picture of %(num)d artist still has to be fetched."
-msgid_plural "The pictures of %(num)d artists still have to be fetched."
-msgstr[0] "De foto van %(num)d artiest moet nog worden opgehaald."
-msgstr[1] "De foto’s van %(num)d artiesten moeten nog worden opgehaald."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "The image of %(num)d cover or artist still has to be stored."
-msgid_plural "The images of %(num)d covers and artists still have to be stored."
-msgstr[0] "De afbeelding van %(num)d hoes of artiest moet nog worden opgeslagen."
-msgstr[1] "De afbeeldingen van %(num)d hoezen en artiesten moeten nog worden opgeslagen."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#, python-format
-msgid "That takes about %(num)d minute at most."
-msgid_plural "That takes about %(num)d minutes at most."
-msgstr[0] "Dat duurt hoogstens ongeveer %(num)d minuut."
-msgstr[1] "Dat duurt hoogstens ongeveer %(num)d minuten."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Start fetching"
-msgstr "Ophalen starten"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "No longer in your Discogs collection"
-msgstr "Niet meer in je Discogs-collectie"
+msgid "%(num)d album is no longer in your Discogs collection"
+msgid_plural "%(num)d albums are no longer in your Discogs collection"
+msgstr[0] "%(num)d album staat niet meer in je Discogs-collectie"
+msgstr[1] "%(num)d albums staan niet meer in je Discogs-collectie"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "I still have it"
@@ -1868,6 +1781,60 @@ msgstr "Opnieuw vragen"
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "You said you still have these. They are no longer counted as waiting; an album that returns to your Discogs collection leaves this list by itself."
 msgstr "Je zei dat je deze nog hebt. Ze tellen niet meer mee als wachtend; een album dat terugkomt in je Discogs-collectie verdwijnt vanzelf uit deze lijst."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Or import a Discogs export"
+msgstr "Of een Discogs-export importeren"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "This is what importing the export would do. Nothing has changed yet."
+msgstr "Dit zou het importeren van de export doen. Er is nog niets veranderd."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "vinyl releases in the export"
+msgstr "vinylreleases in de export"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "linked to your albums"
+msgstr "gekoppeld aan je albums"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "matches to confirm"
+msgstr "koppelingen te bevestigen"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "new, unplaced albums"
+msgstr "nieuwe albums zonder plek"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d release that is not vinyl is skipped."
+msgid_plural "%(num)d releases that are not vinyl are skipped."
+msgstr[0] "%(num)d release die geen vinyl is, wordt overgeslagen."
+msgstr[1] "%(num)d releases die geen vinyl zijn, worden overgeslagen."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#, python-format
+msgid "%(num)d of your albums stays without a release."
+msgid_plural "%(num)d of your albums stay without a release."
+msgstr[0] "%(num)d van je albums blijft zonder release."
+msgstr[1] "%(num)d van je albums blijven zonder release."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Albums that are already linked are left as they are."
+msgstr "Albums die al gekoppeld zijn, blijven zoals ze zijn."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you see what it would do before anything changes."
+msgstr "Open op discogs.com je collectie en kies Export. Upload hier het CSV-bestand dat je krijgt. Alleen vinyl wordt overgenomen; je ziet wat het zou doen voordat er iets verandert."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Discogs export (.csv)"
+msgstr "Discogs-export (.csv)"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Upload"
+msgstr "Uploaden"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Layout workbook"
