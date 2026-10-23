@@ -428,9 +428,8 @@ def test_an_album_that_left_discogs_can_be_kept_without_being_asked_again(app, c
     assert "Kept although not on Discogs (1)" in page and "/discogs/gone/3/ask-again" in page
     assert len(_store(app).load(Album)) == 3
     # The next sync does not ask again.
-    preview = client.post("/discogs/sync", follow_redirects=True).text
-    client.post("/discogs/import/confirm")
-    assert "no longer in your Discogs collection" not in preview
+    _sync(app, client)
+    assert client.get("/discogs/enrich/status").get_json()["synced"]["gone"] == 0
     assert "/discogs/gone/3/remove" not in client.get("/discogs/").text
 
     # Taking it back lists the album as gone once more.
