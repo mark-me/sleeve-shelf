@@ -115,16 +115,34 @@ def best_album(artist: str, title: str, candidates: list[dict]) -> DeezerAlbum |
 
 def first_artist(artist: str) -> str:
     """The first of several artists credited together: "Duke Ellington, Charles Mingus"."""
-    name = re.sub(r"\s*\(\d+\)$", "", artist)
-    return re.split(r",|\s+(?:&|and|with|featuring|feat\.)\s+", name, maxsplit=1, flags=re.I)[0].strip()
+    # Spaces made single first, so the patterns below need no \\s* or \\s+, which take
+    # quadratic time on a long run of spaces.
+    name = re.sub(r"\(\d+\)$", "", " ".join(artist.split())).rstrip()
+    return re.split(r",| (?:&|and|with|featuring|feat\.) ", name, maxsplit=1, flags=re.I)[0].strip()
 
 
 def _plain(text: str) -> str:
     """A name as compared: no accents, no "(2)" or other bracketed additions, no signs."""
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().casefold()
-    text = re.sub(r"\s*\(\d+\)$", "", text.strip())
-    text = re.sub(r"[\(\[].*?[\)\]]", "", text)
-    return re.sub(r"[^a-z0-9]+", " ", text).strip()
+    return re.sub(r"[^a-z0-9]+", " ", _without_brackets(text)).strip()
+
+
+def _without_brackets(text: str) -> str:
+    """The text without what stands between an opening bracket and the next closing one —
+    "(2)", "(Remastered)", "[Live]" — in one pass: a pattern for it takes quadratic time on
+    many opening brackets that are never closed. An opening bracket that is not closed stays."""
+    next_close: list[int | None] = [None] * (len(text) + 1)
+    for index in range(len(text) - 1, -1, -1):
+        next_close[index] = index if text[index] in ")]" else next_close[index + 1]
+    kept, index = [], 0
+    while index < len(text):
+        close = next_close[index + 1] if text[index] in "([" else None
+        if close is not None:
+            index = close + 1
+            continue
+        kept.append(text[index])
+        index += 1
+    return "".join(kept)
 
 
 def _similar(ours: str, theirs: str) -> float:

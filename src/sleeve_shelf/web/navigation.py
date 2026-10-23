@@ -49,6 +49,7 @@ SECTIONS = (
         _("Shelves"),
         (
             Tab("layout.index", _("Layout"), ("layout",), help="user/shelves/#layout"),
+            Tab("moving.index", _("Move"), ("moving",), help="user/shelves/#move"),
             Tab("proposal.index", _("Proposal"), ("proposal",), help="user/sorting/#the-sorting-proposal"),
             Tab("showcase.index", _("Showcase"), ("showcase",), help="user/shelves/#showcase"),
             Tab("versions.index", _("Versions"), ("versions",), help="user/shelves/#versions"),
@@ -57,7 +58,8 @@ SECTIONS = (
     ),
     Section(
         "sorting",
-        _("Sorting"),
+        # Named Sorting until it held more than what a proposal sorts by (2026-10-18).
+        _("Organise"),
         (
             Tab("artists.index", _("Artists"), ("artists",), "artists", "user/sorting/#clusters"),
             Tab("families.index", _("Families"), ("families",), "families", "user/sorting/#artist-families"),

@@ -23,30 +23,41 @@ def has_password(data_dir: str | Path) -> bool:
 
 
 def check_password(data_dir: str | Path, password: str) -> bool:
-    return verified_hash(data_dir, password) is not None
+    return verified_key(data_dir, password) is not None
 
 
-def verified_hash(data_dir: str | Path, password: str) -> str | None:
-    """The stored hash the password matches, or None. A login is tied to exactly this hash,
-    so a password changed meanwhile cannot lend its successor to an old login."""
-    stored = load_settings(data_dir).owner_password_hash
-    return stored if stored and check_password_hash(stored, password) else None
+def verified_key(data_dir: str | Path, password: str) -> str | None:
+    """The login key of the password the given one matches, or None. The key is read
+    together with the hash it was checked against, so a password changed meanwhile cannot
+    lend its successor to an old login. A password set before login keys were kept gets
+    one now."""
+    settings = load_settings(data_dir)
+    stored = settings.owner_password_hash
+    if not stored or not check_password_hash(stored, password):
+        return None
+    if not settings.owner_login_key:
+        settings.owner_login_key = secrets.token_urlsafe(KEY_BYTES)
+        save_settings(data_dir, settings)
+    return settings.owner_login_key
 
 
 def set_password(data_dir: str | Path, password: str) -> str:
-    """Set or change the owner's password, returning its hash; ValueError when too short."""
+    """Set or change the owner's password, returning its new login key; ValueError when too
+    short. Every other device is logged out, as its key no longer counts."""
     if len(password) < MIN_PASSWORD_LENGTH:
         raise ValueError(f"A password has at least {MIN_PASSWORD_LENGTH} characters")
     settings = load_settings(data_dir)
     settings.owner_password_hash = generate_password_hash(password)
+    settings.owner_login_key = secrets.token_urlsafe(KEY_BYTES)
     save_settings(data_dir, settings)
-    return settings.owner_password_hash
+    return settings.owner_login_key
 
 
 def remove_password(data_dir: str | Path) -> None:
     """Open the app again: no password, everyone the owner."""
     settings = load_settings(data_dir)
     settings.owner_password_hash = None
+    settings.owner_login_key = None
     save_settings(data_dir, settings)
 
 

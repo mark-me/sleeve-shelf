@@ -1,7 +1,18 @@
 # syntax=docker/dockerfile:1
 
+# Every stage runs on the same Python image: the virtual environment made in the build stage
+# only works with the Python it was made for (its packages are in lib/python3.X). The image
+# appears in each FROM below, so Dependabot moves them together. A new Python version comes
+# with .python-version, which the tests run on.
+#
+# uv comes from its own image, at a fixed version.
+FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
+
+
 # Build stage: install the locked dependencies and the app into a virtual environment.
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS build
+FROM python:3.13-slim-trixie AS build
+
+COPY --from=uv /uv /usr/local/bin/uv
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -17,10 +28,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY src ./src
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --no-editable
+# The translations are read compiled (.mo); the running container cannot write them.
+RUN .venv/bin/python -c "from sleeve_shelf.web.language import compile_catalogues; compile_catalogues()"
 
 
 # Docs stage: the documentation site, built with Zensical, which the app serves as its help.
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS docs
+FROM python:3.13-slim-trixie AS docs
+
+COPY --from=uv /uv /usr/local/bin/uv
 
 ENV UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=never
@@ -37,7 +52,7 @@ RUN cd docs-site && uv run --no-sync python -m zensical build --strict
 
 
 # Runtime stage: only Python, the virtual environment, and the built help.
-FROM python:3.14-slim-bookworm
+FROM python:3.13-slim-trixie
 
 ARG APP_VERSION=dev
 
@@ -56,6 +71,10 @@ RUN python -m pip uninstall --yes pip \
 
 COPY --from=build /app/.venv /app/.venv
 COPY --from=docs /app/docs-site/site /app/help
+
+# The build fails here, not the container at its start, when the environment does not fit
+# this Python.
+RUN python -c "import sleeve_shelf, waitress"
 
 USER sleeve
 

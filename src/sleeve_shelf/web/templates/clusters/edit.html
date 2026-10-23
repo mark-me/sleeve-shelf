@@ -24,6 +24,9 @@
     </div>
   </form>
 
+  <p class="mt-4"><a class="ss-button" href="{{ url_for('moving.index', kind='cluster', id=cluster.id) }}">{{ _('Move…') }}</a>
+    <span class="ss-muted small ms-2">{{ _('The whole cluster at once, to a shelf or to where it belongs.') }}</span></p>
+
   <h2 class="mt-5">{{ _('Discogs styles pointing here') }} ({{ styles | length }})</h2>
   <p class="ss-muted mt-1">{{ _('A new artist whose albums carry one of these styles is proposed this cluster. Point a style elsewhere if it fits another cluster better.') }}</p>
   {% if styles %}

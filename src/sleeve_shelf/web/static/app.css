@@ -67,20 +67,13 @@ h2 { font-size: 1.15rem; margin: 0; }
   text-decoration: none;
 }
 
-.ss-menu-button,
-.ss-theme-toggle {
+.ss-menu-button {
   min-width: 44px;
   height: 44px;
   border: none;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
-}
-
-.ss-theme-toggle {
-  width: 100%;
-  font-size: 0.875rem;
-  font-weight: 500;
 }
 
 .ss-nav {
@@ -128,6 +121,19 @@ h2 { font-size: 1.15rem; margin: 0; }
   text-align: center;
 }
 .ss-step-done { background: var(--ss-accent); color: #1E293B; }
+/* A step of a round that runs: a ring that turns; one that stopped or failed. */
+.ss-step-now { position: relative; background: transparent; color: var(--ss-accent); }
+.ss-step-now::after {
+  content: ""; position: absolute; inset: -2px; border-radius: 50%;
+  border: 2px solid var(--ss-accent); border-right-color: transparent;
+  animation: ss-turn 0.9s linear infinite;
+}
+@keyframes ss-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ss-step-now::after { animation: none; } }
+.ss-step-failed { background: #D9534F; color: #fff; }
+.ss-step-is-todo .ss-row-artist, .ss-step-is-skipped .ss-row-artist { color: var(--ss-muted); }
+.ss-step .ss-row-text { gap: 6px; }
+.ss-step-bar { max-width: 480px; }
 
 /* A screen of steps: the step that waits for the user stands out. */
 .ss-step-current { border-color: var(--ss-accent); box-shadow: 0 0 0 1px var(--ss-accent); }
@@ -135,17 +141,6 @@ h2 { font-size: 1.15rem; margin: 0; }
 details.ss-card > summary { cursor: pointer; list-style: revert; }
 details.ss-card > summary h2 { display: inline; }
 details.ss-card:not([open]) > summary { border-bottom: none; }
-
-/* The menu in groups, in the order the app is used. */
-.ss-nav-group {
-  margin-top: 14px;
-  padding: 0 20px 2px;
-  color: #8B93A6;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
 
 .ss-nav-count {
   min-width: 22px;
@@ -286,6 +281,8 @@ a.ss-row:hover .ss-row-artist { color: var(--ss-accent); }
 .ss-block .ss-cover { margin: -2px 0 -2px -4px; pointer-events: none; }
 .ss-row-artist { font-size: 0.95rem; font-weight: 600; }
 .ss-row-title { font-size: 0.82rem; color: var(--ss-muted); }
+.ss-row-song { font-size: 0.82rem; overflow-wrap: anywhere; }
+.ss-track-position { min-width: 2.5rem; font-variant-numeric: tabular-nums; }
 .ss-row-place { font-size: 0.78rem; color: var(--ss-muted); text-align: right; }
 
 .ss-chip {
@@ -655,7 +652,8 @@ a.ss-row-title { text-decoration: none; }
 
 /* Logging in or out, at the very end of the menu. */
 .ss-nav .ss-nav-login {
-  display: block; width: 100%; height: auto; padding: 6px 20px; border: 0; background: none;
-  color: #8B93A6; font-size: 0.82rem; text-align: left; text-decoration: none;
+  display: flex; align-items: center; gap: 8px; width: 100%; height: auto; padding: 6px 20px;
+  border: 0; background: none; color: #8B93A6; font-size: 0.82rem; text-align: left; text-decoration: none;
 }
+.ss-nav .ss-nav-login svg { flex: none; fill: currentColor; }
 .ss-nav .ss-nav-login:hover { color: #fff; }

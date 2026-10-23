@@ -23,12 +23,14 @@ A proposed cluster is marked *proposed* until you confirm it; the artists to che
 
 When a new purchase makes an artist's styles point to another cluster than the one it stands in, the app says so and waits: **Move** the artist, or **Keep** it where it is. Nothing moves by itself.
 
+To move a **whole cluster** or **family** at once, use **Move…** on its page, which opens the [Move](shelves.md#move) screen.
+
 ## 👪 Artist families
 
 A **family** keeps an artist's other names, bands and side projects together as one unit. The app suggests families:
 
-- **from the names** — *Chet Baker* gathers *Chet Baker Quartet* and *Chet Baker & Crew*;
-- **from Discogs** — an artist under several names, or a person with the bands they are in: *Nick Cave* gathers *Grinderman* and *The Birthday Party*.
+- **from the names** — *Chet Baker* gathers *Chet Baker Quartet* and *Chet Baker & Crew*. A name that names several artists, such as *Chick Webb And His Orchestra Featuring Ella Fitzgerald*, goes to the one with the most albums in your collection (here Ella Fitzgerald), counted with her family. The suggestion names the others too: **Rather with …** puts it there instead. And if such a name already sits in a family while another family it names has more albums, the app suggests moving it — it never moves it by itself;
+- **from Discogs** — an artist under several names, or a person with the bands they are in: *Nick Cave* gathers *Grinderman* and *The Birthday Party*. Someone in more than four bands of your collection is taken to be a sideman, whose bands are not suggested as their family; you can change that number under Settings.
 
 On the **Families** screen you accept a suggestion (leaving out members you don't want), turn it down for good, or make families by hand. *Accept all* asks first how many families it is about to make.
 
@@ -36,11 +38,13 @@ On the **Families** screen you accept a suggestion (leaving out members you don'
 
 An artist's **start year** decides its **era band**: before 1960, the 1960s, and so on to the 2020s and later. The whole catalogue of an artist stays in that band, so reissues and late albums don't scatter it. When the start year is not known, the earliest original release year among its albums stands in; you can always set it on the artist's page.
 
-Within a cluster, artists stand by era band, oldest first; within a band alphabetically by name as written, so *The Stooges* is under T; an artist's own albums by original year, then title.
+Within a cluster, artists stand by era band, oldest first. **Within a band, the artists keep the order they stand in on your shelves now**, and so do an artist's own albums: that order is yours — related artists side by side, albums by title if that is how you keep them — and the app doesn't overrule it. Only an artist or album that stands nowhere yet goes by the rule: artists alphabetically by name as written (so *The Stooges* is under T), an artist's albums by original year, then title — placed before the first one on the shelf that the rule puts after it.
 
 ## 📐 Filling the shelves
 
 The sorted albums are stood on the shelves as one continuous row, in the order of your cabinets: a shelf is filled until the next album no longer fits, then the row runs on to the next shelf. A shelf without a width, a showcase, and a cabinet kept outside the sorting are skipped. What doesn't fit is not forced in: it is left without a place, and the proposal says how many.
+
+Where one shelf ends and the next begins is chosen so that **as many albums as possible stay on the shelf they stand on now**. The order is exactly the same as filling every shelf to the brim; the shelves are just filled less evenly, so that carrying out a proposal takes far fewer records out of the cabinets. And every shelf keeps **10% of its width free** (a setting), so a few new purchases later don't set a whole cabinet moving. The proposal says how many albums go to another shelf and about how many **rounds of a table full** that is — how many records fit on your table is a setting too. With widths that are still estimates, the shelves are usually too full to leave much choice: measuring them is what lets this keep albums in place.
 
 ## 📍 Location rules
 

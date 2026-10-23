@@ -1,23 +1,34 @@
-"""The enrichment as a background job: it runs for a long time, so not inside a request."""
+"""A round with Discogs as a background job: it runs for a long time, so not inside a request.
+
+A round syncs the collection — fetches it page by page and takes it over — and then fetches
+what the cache still lacks: styles, years and tracklists, artist pictures, and the images
+themselves. It can also only fetch, after an export was imported.
+"""
 
 import threading
 from collections.abc import Callable
 from pathlib import Path
 
+from sleeve_shelf.config import load_settings
+from sleeve_shelf.discogs_import import import_discogs_collection
 from sleeve_shelf.enrichment import enrich_collection
 from sleeve_shelf.ingestion.discogs_api import (
     SECONDS_BETWEEN_IMAGES,
     SECONDS_BETWEEN_REQUESTS,
     DiscogsClient,
     DiscogsError,
+    collection_items,
 )
 from sleeve_shelf.persistence import JsonStore
 
-# done and total count the lookups of this run. part is what is being fetched now, and
-# albums and pictures say how many of all of them are in: [done, total].
+# done and total count the lookups of this run. part is what is being done now. collection
+# is [pages fetched, pages] and releases how many the collection holds; synced is what
+# taking it over did. albums, pictures and covers say how many of all of them are in:
+# [done, total].
 _IDLE = {
-    "done": 0, "total": 0, "outcome": None, "error": None,
-    "part": None, "albums": None, "pictures": None, "covers": None,
+    "done": 0, "total": 0, "outcome": None, "error": None, "synced_round": False,
+    "part": None, "collection": None, "releases": None, "synced": None,
+    "albums": None, "pictures": None, "covers": None,
 }
 
 
@@ -39,16 +50,17 @@ class EnrichmentJob:
         self._state = dict(_IDLE)
 
     def start(
-        self, data_dir: Path, token: str, client_factory: Callable = DiscogsClient
+        self, data_dir: Path, token: str, client_factory: Callable = DiscogsClient, sync: bool = False
     ) -> bool:
-        """Start the job unless one is already running."""
+        """Start a round — with sync, the collection is fetched and taken over first —
+        unless one is already running."""
         with self._lock:
             if self.running:
                 return False
             self._stop.clear()
-            self._state = dict(_IDLE)
+            self._state = dict(_IDLE, synced_round=sync)
             self._thread = threading.Thread(
-                target=self._run, args=(data_dir, token, client_factory), daemon=True
+                target=self._run, args=(data_dir, token, client_factory, sync), daemon=True
             )
             self._thread.start()
             return True
@@ -72,7 +84,7 @@ class EnrichmentJob:
         seconds = lookups * SECONDS_BETWEEN_REQUESTS + images * SECONDS_BETWEEN_IMAGES
         return {**state, "running": self.running, "seconds_left": round(seconds)}
 
-    def _run(self, data_dir: Path, token: str, client_factory: Callable) -> None:
+    def _run(self, data_dir: Path, token: str, client_factory: Callable, sync: bool) -> None:
         def progress(done: int, total: int) -> None:
             self._state.update(done=done, total=total)
             if self._stop.is_set():
@@ -81,9 +93,41 @@ class EnrichmentJob:
         def part(name: str, done: int, total: int) -> None:
             self._state.update({"part": name, name: [done, total]})
 
+        def page(fetched: int, pages: int, releases: int) -> None:
+            self._state.update(part="collection", collection=[fetched, pages], releases=releases)
+            if self._stop.is_set():
+                raise _Stopped
+
         try:
             # A store of its own: a DuckDB connection is not shared between threads.
-            enrich_collection(JsonStore(data_dir), client_factory(token), progress, part)
+            store = JsonStore(data_dir)
+            client = client_factory(token)
+            if sync:
+                self._state.update(part="collection", collection=[0, 0])
+                releases = client.collection(page)
+                if not releases:
+                    self._state["outcome"] = "empty"
+                    return
+                # Taking it over never removes or moves anything: new albums stand on no
+                # shelf, albums gone from Discogs are only marked, and matches it is not sure
+                # of wait for the user. So it is taken over without asking first.
+                self._state.update(part="import")
+                settings = load_settings(data_dir)
+                result = import_discogs_collection(
+                    store,
+                    collection_items(releases, settings.count_bonus_discs_as_vinyl),
+                    settings.width_constants,
+                    refresh_formats=True,
+                )
+                self._state["synced"] = {
+                    "vinyl": result.vinyl_count,
+                    "added": result.added,
+                    "matched": result.matched,
+                    "proposed": result.proposed,
+                    "refreshed": result.refreshed,
+                    "gone": len(result.gone),
+                }
+            enrich_collection(store, client, progress, part)
             self._state["outcome"] = "finished"
         except _Stopped:
             self._state["outcome"] = "stopped"

@@ -6,7 +6,9 @@
 
 Every album has a **▶** button: it plays the album's 30-second previews from Deezer, one track after another, and shows the track playing under the title. Press it again to stop; pressing another album stops the first. When Deezer doesn't have the album, the row says so — its page may still have videos.
 
-**Search** finds artists and albums across all shelves. The results follow as you type; choosing one opens its shelf with the album marked. Emptying the search field takes you back to browsing.
+**Search** finds artists, albums and songs across all shelves. The results follow as you type; choosing one opens its shelf with the album marked. Emptying the search field takes you back to browsing.
+
+Every word you type has to be in the artist and title, or in the artist, title and one song together: *waits martha* finds the Tom Waits album with *Martha* on it. An album found by a song names that song under its title, with its place on the record (♪ B1 · Martha). Songs are known once the fetch run has brought the tracklists from Discogs (see [Fetching styles, years and pictures](discogs.md#fetching-styles-years-and-pictures)).
 
 ## 💿 An album's page
 
@@ -15,6 +17,7 @@ Open an album from a search result, a shelf, or its artist's page. It shows:
 - where it stands, and what it is sorted under (cluster and era band)
 - its original release year — from Discogs, or confirmed by you
 - its format, Discogs styles and Discogs release
+- its **tracklist**: the songs with their place on the record and their length
 - its width, estimated or measured
 - the location rules that apply to it, and a way to put it on another shelf
 

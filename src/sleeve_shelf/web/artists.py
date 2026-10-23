@@ -36,7 +36,6 @@ from sleeve_shelf.domain import (
     find_by_id,
 )
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.placing import move_albums
 from sleeve_shelf.shifts import cluster_shifts, keep_cluster
 from sleeve_shelf.sorting.connections import connections_of
 from sleeve_shelf.sorting.eras import band_of
@@ -44,7 +43,8 @@ from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
 from sleeve_shelf.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store
-from sleeve_shelf.web.places import described_rules, shelf_options
+from sleeve_shelf.web.login import redirect_within
+from sleeve_shelf.web.places import described_rules
 
 blueprint = Blueprint("artists", __name__, url_prefix="/artists")
 
@@ -230,8 +230,6 @@ def edit(artist_id: int):
             band=band_of(artist.start_year or derived_year),
             family=family,
             rules=described_rules(store, artist_id),
-            shelves=shelf_options(store),
-            movable_count=len(sorted_albums),
             moved=request.args.get("moved"),
             wikipedia_url="https://en.wikipedia.org/wiki/Special:Search?search="
             + quote(sort_name(artist.name)),
@@ -247,25 +245,10 @@ def edit(artist_id: int):
     )
 
 
-@blueprint.post("/<int:artist_id>/move")
-def move(artist_id: int):
-    """Stand all the artist's albums that take part on one shelf, in year and title order."""
-    store = get_store()
-    shelf_id = request.form.get("shelf_id", type=int)
-    if shelf_id is not None and all(option["id"] != shelf_id for option in shelf_options(store)):
-        abort(404)
-    albums = sorted(
-        _albums_taking_part(store).get(artist_id, []),
-        key=lambda album: (album.original_release_year or 9999, album.title.casefold()),
-    )
-    move_albums(store, [album.id for album in albums], shelf_id)
-    return redirect(url_for("artists.edit", artist_id=artist_id, moved=1))
-
-
 @blueprint.post("/<int:artist_id>/confirm")
 def confirm(artist_id: int):
     artist_service.confirm_cluster(get_store(), artist_id)
-    return redirect(request.form.get("next") or url_for("artists.index"))
+    return redirect_within(request.form.get("next"), url_for("artists.index"))
 
 
 @blueprint.post("/<int:artist_id>/shift/<any(accept, keep):choice>")
@@ -277,7 +260,7 @@ def decide_shift(artist_id: int, choice: str):
         artist_service.set_cluster(store, artist_id, shift.proposed_cluster_id)
     elif shift is not None:
         keep_cluster(store, artist_id)
-    return redirect(request.form.get("next") or url_for("artists.edit", artist_id=artist_id))
+    return redirect_within(request.form.get("next"), url_for("artists.edit", artist_id=artist_id))
 
 
 def _picture(store, artist: Artist):

@@ -5,16 +5,18 @@
 The image is defined in `docker/Dockerfile`. It keeps all data in `/data`, listens on port 5000, and serves the app with Waitress. Mount a volume on `/data` so the collection survives a new container:
 
 ```sh
-docker run -d --name sleeve-shelf -p 5000:5000 \
+docker run -d --name sleeve-shelf -p 127.0.0.1:5000:5000 \
   -v sleeve-shelf-data:/data ghcr.io/mark-me/sleeve-shelf:latest
 ```
 
-`docker/docker-compose.yml` runs a pinned release on port 5000; `docker/docker-compose.test.yml` runs the latest build of the `test` branch on port 5001 with its own volume, so the two can run side by side.
+`docker/docker-compose.yml` runs a pinned release on port 5000; `docker/docker-compose.test.yml` runs the latest build of the `test` branch on port 5001 with its own volume, so the two can run side by side. Both publish their port on `127.0.0.1` only: Docker opens a published port past the host's own firewall (on NixOS too), so `5000:5000` would put the app, without HTTPS, before the whole local network. A proxy on the same machine passes visitors on.
 
-Both shield the container: `read_only: true` with `/tmp` in memory, so only `/data` can be written; `no-new-privileges` and `cap_drop: [ALL]`, so the app can gain no rights; and limits of 512 MB of memory and 200 processes. The app needs about 75 MB. With `docker run` the same is:
+The image is built on `python:3.13-slim-trixie` (Debian 13) since 2026-10-24: on Debian 12 the scan listed 255 known vulnerabilities without a fix in the system packages, on Debian 13 164, none of them critical.
+
+Both shield the container: `read_only: true` with `/tmp` in memory, so only `/data` can be written; `no-new-privileges` and `cap_drop: [ALL]`, so the app can gain no rights; and limits of 512 MB of memory and 200 processes. The app needs about 135 MB. With `docker run` the same is:
 
 ```sh
-docker run -d --name sleeve-shelf -p 5000:5000 -v sleeve-shelf-data:/data \
+docker run -d --name sleeve-shelf -p 127.0.0.1:5000:5000 -v sleeve-shelf-data:/data \
   --read-only --tmpfs /tmp --security-opt no-new-privileges:true --cap-drop ALL \
   --memory 512m --pids-limit 200 ghcr.io/mark-me/sleeve-shelf:latest
 ```
@@ -61,13 +63,48 @@ trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-cod
 
 Dependabot (`.github/dependabot.yml`) opens pull requests every Monday for the Python packages in `uv.lock`, the GitHub Actions, and the base images in `docker/Dockerfile`. Minor and patch updates of the packages and of the actions come grouped in one pull request each; a new major version comes on its own. Every action in the workflows is pinned to a commit, with its version noted beside it; Dependabot moves both together. Trivy's version in `security.yml` is set by hand.
 
+Every stage of the Dockerfile runs on the same Python image, and uv comes from its own image at a fixed version: the virtual environment made in the build stage only works with the Python it was made for. Dependabot does not propose a new Python version (3.13 to 3.14); that goes together with `.python-version`, on which the tests run, and is done by hand in both places. Should the stages still differ, the build stops at `import sleeve_shelf, waitress` instead of the container failing at its start.
+
+## 🌍 Public through tsdproxy
+
+The app is meant to be reachable from the internet (decided 2026-10-16, confirmed 2026-10-24); visitors can only look the collection up once the owner's password is set. [tsdproxy](https://almeidapaulopt.github.io/tsdproxy/) gives a container a name of its own on the tailnet, with HTTPS, and *funnel* opens it to the internet. It reaches the container over the Docker network, so no port has to be published:
+
+```yaml
+services:
+  sleeve-shelf:
+    image: ghcr.io/mark-me/sleeve-shelf:0.6.1
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Amsterdam
+      - SLEEVE_SHELF_PROXIES=1    # tsdproxy says who a visitor is
+    volumes:
+      - /data/sleeve-shelf:/data  # writable for uid 1000
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    pids_limit: 200
+    labels:
+      tsdproxy.enable: "true"
+      tsdproxy.name: "sleeve-shelf"
+      tsdproxy.port.1: "443/https:5000/http"
+      tsdproxy.funnel: "true"
+```
+
+Set the password before turning funnel on: `docker exec -it sleeve-shelf python -m sleeve_shelf set-password`. Without `SLEEVE_SHELF_PROXIES`, every visitor arrives from tsdproxy's address, and one visitor guessing passwords or playing many previews holds up everyone. Keep `/data/sleeve-shelf` in your backups: it is the whole collection, the pictures you added included.
+
 ## 🔐 Configuration and secrets
 
-`config.yaml` in the data directory holds the settings, the Discogs personal access token and the hash of the owner's password. It is git-ignored and never baked into the image; the UI only shows the token's last four characters. It is written readable by the app's own user only (600), and a copy written earlier with wider permissions is put right when the app starts. On a running container, load a workbook from the command line with:
+`config.yaml` in the data directory holds the settings, the Discogs personal access token, the owner's login key and the hash of the owner's password. It is git-ignored and never baked into the image; the UI only shows the token's last four characters. It is written readable by the app's own user only (600), and a copy written earlier with wider permissions is put right when the app starts. On a running container, load a workbook from the command line. The container is read-only, so the file goes into the data volume — the one place `docker cp` can write to — and is removed again afterwards:
 
 ```sh
-docker cp layout.xlsx sleeve-shelf:/tmp/layout.xlsx
-docker exec sleeve-shelf python -m sleeve_shelf load /tmp/layout.xlsx
+docker cp layout.xlsx sleeve-shelf:/data/layout.xlsx
+docker exec sleeve-shelf python -m sleeve_shelf load /data/layout.xlsx
+docker exec sleeve-shelf rm /data/layout.xlsx
 ```
 
 ## 🧾 The log

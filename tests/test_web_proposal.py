@@ -7,6 +7,7 @@ import pytest
 from openpyxl import Workbook
 
 from sleeve_shelf import create_app
+from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import Album
 from sleeve_shelf.persistence import JsonStore
 
@@ -41,6 +42,11 @@ def client(tmp_path):
     content.seek(0)
     client.post("/setup/upload", data={"workbook": (content, "layout.xlsx")})
     client.post("/setup/confirm")
+    # The shelves here hold exactly three LPs; these tests are about the sorting, so a
+    # proposal fills them to the brim (the room left free has a test of its own).
+    settings = load_settings(client.application.config["DATA_DIR"])
+    settings.shelf_room_percent = 0
+    save_settings(client.application.config["DATA_DIR"], settings)
     return client
 
 
@@ -57,8 +63,9 @@ def test_proposal_is_kept_next_to_the_layout_until_accepted(client):
 
     proposed = client.get("/browse?layout=proposal&shelf=1").text
     assert "You are browsing the proposal" in proposed
-    # Jazz was first on the shelves, so it stays first; within it Art Blakey, then Chet by year.
-    assert proposed.index("Moanin") < proposed.index("Sings") < proposed.index("Chet &middot; 1959")
+    # Jazz was first on the shelves, so it stays first; within its band the owner's order of
+    # the artists and of their albums is kept: Chet Baker before Art Blakey, Chet before Sings.
+    assert proposed.index("Chet &middot; 1959") < proposed.index("Sings") < proposed.index("Moanin")
     assert "Fun House" in client.get("/browse?layout=proposal&shelf=2").text
     assert "layout=proposal" in proposed
 
@@ -69,7 +76,7 @@ def test_accepting_makes_the_proposal_the_layout(client):
     assert client.post("/proposal/accept").headers["Location"] == "/browse"
 
     shelf = _shelf_page(client, 1)
-    assert shelf.index("Moanin") < shelf.index("Sings") < shelf.index("Chet &middot; 1959")
+    assert shelf.index("Chet &middot; 1959") < shelf.index("Sings") < shelf.index("Moanin")
     assert "Jazz · before 1960" in shelf
     assert "Box" in client.get("/unplaced").text
     assert "Generate a proposal" in client.get("/proposal/").text
@@ -507,8 +514,13 @@ def test_the_rules_that_apply_are_shown_with_the_one_that_decides(client):
     assert "Rule for the cluster" in blakey and "Rule for the artist" not in blakey
 
 
-def test_an_album_can_be_moved_from_its_page(client):
-    client.post("/albums/1/move", data={"shelf_id": "2"})
+def _move(client, kind, item_id, shelf, how="end"):
+    return client.post("/move/", data={"kind": kind, "id": str(item_id), "how": how, "shelf": str(shelf)})
+
+
+def test_an_album_can_be_moved_from_the_move_screen(client):
+    assert 'href="/move/?kind=album&amp;id=1"' in client.get("/albums/1").text
+    _move(client, "album", 1, 2)
 
     assert "Chet &middot; 1959" not in _shelf_page(client, 1)
     shelf_b = _shelf_page(client, 2)
@@ -518,20 +530,19 @@ def test_an_album_can_be_moved_from_its_page(client):
     # A version from before the move can be put back.
     assert "/restore" in client.get("/versions/").text
 
-    client.post("/albums/1/move", data={"shelf_id": ""})
+    _move(client, "album", 1, 0)
     assert "Not on a shelf" in client.get("/albums/1").text
     assert "Chet" in client.get("/unplaced").text
-    assert client.post("/albums/1/move", data={"shelf_id": "99"}).status_code == 404
+    assert _move(client, "album", 1, 99).status_code == 400
 
 
 def test_all_albums_of_an_artist_can_be_moved_at_once(client):
-    client.post("/artists/1/move", data={"shelf_id": "3"})
+    _move(client, "artist", 1, 3)
 
     shelf_c = client.get("/browse?shelf=3").text
-    # Both albums, in year order: Sings (1954) before Chet (1959).
-    assert shelf_c.index("Sings") < shelf_c.index("Chet &middot; 1959")
+    # Both albums, in the order they stood in: Chet before Sings.
+    assert shelf_c.index("Chet &middot; 1959") < shelf_c.index("Sings")
     assert "Moanin" in _shelf_page(client, 1)
-    assert "Moved." in client.get("/artists/1?moved=1").text
 
 
 def test_width_can_be_set_on_the_album_page(client):
@@ -597,6 +608,20 @@ def test_a_proposal_leaves_the_showcase_as_it_is(client):
     assert "Chet &middot; 1959" in showcase and "Moanin" in showcase
     # The albums on display took no place in the row: Sings leads the first ordinary shelf.
     assert "Sings" in _shelf_page(client, 2)
+
+
+def test_the_bands_before_counting_as_a_sideman_are_a_setting(client):
+    from sleeve_shelf.config import load_settings
+
+    form = {"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15", "surcharge_gatefold_cm": "0.2"}
+    assert 'name="sideman_bands" inputmode="numeric" value="4"' in client.get("/settings/").text
+
+    bad = client.post("/settings/", data={**form, "sideman_bands": "0"})
+    assert bad.status_code == 400 and "whole number from 1 to 20" in bad.text
+
+    client.post("/settings/", data={**form, "sideman_bands": "6"})
+    assert load_settings(client.application.config["DATA_DIR"]).sideman_bands == 6
+    assert 'value="6"' in client.get("/settings/").text
 
 
 def test_showcase_fill_is_a_setting_and_a_full_top_loader_is_flagged(client):
@@ -862,7 +887,7 @@ def test_the_dashboard_shows_the_first_few_to_place_and_links_to_the_rest(client
 
 def test_an_album_from_the_workbook_is_not_marked_as_new_and_a_purchase_comes_first(client):
     # The box set leaves its shelf: an album that was there from the start, now without a place.
-    client.post("/albums/5/move", data={"shelf_id": ""})
+    _move(client, "album", 5, 0)
     assert ">New</span>" not in client.get("/dashboard/").text
 
     _buy(client, "The Stooges", "Raw Power")
@@ -943,3 +968,18 @@ def test_sending_a_block_in_the_proposal_leaves_the_shelves_alone(client):
     assert sent.status_code == 200
     assert _shelf_page(client, 1) == before
     assert "Moanin" in client.get("/browse?layout=proposal&shelf=3").text
+
+
+def test_a_proposal_keeps_room_on_each_shelf_and_says_what_carrying_it_out_takes(client):
+    form = {"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15", "surcharge_gatefold_cm": "0.2"}
+    bad = client.post("/settings/", data={**form, "shelf_room_percent": "80"})
+    assert bad.status_code == 400 and "from 0 to 50" in bad.text
+    assert client.post("/settings/", data={**form, "table_records": "0"}).status_code == 400
+    client.post("/settings/", data={**form, "shelf_room_percent": "0", "table_records": "2"})
+
+    client.post("/proposal/generate")
+    page = client.get("/proposal/").text
+
+    moved = int(re.search(r'ss-stat-number">(\d+)</div><div class="ss-stat-label">go to another shelf', page).group(1))
+    assert f"&asymp; {-(-moved // 2)}</div>" in page and "rounds of a table full (2 records)" in page
+    assert "keeps 0% of its width free" in page

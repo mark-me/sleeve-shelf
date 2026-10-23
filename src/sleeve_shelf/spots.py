@@ -12,7 +12,7 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.proposal import mandatory_cabinets, sort_collection
+from sleeve_shelf.proposal import Sorted, mandatory_cabinets, sort_collection
 from sleeve_shelf.sorting.spots import EMPTY, SuggestedSpot, suggest_spots
 from sleeve_shelf.taking_part import kept_shelf_ids
 from sleeve_shelf.versions import keep_restore_point
@@ -38,29 +38,19 @@ class Spot:
         return self.suggestion.shelf_id
 
 
-def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Spot]:
-    """A spot for every album that is sorted but stands on no shelf yet.
+def belonging(
+    store: JsonStore, album_ids: list[int], placements: list[Placement], result: Sorted | None = None
+) -> dict[int, SuggestedSpot]:
+    """Where each of these albums belongs among the placements given, which must not hold
+    them: next to the albums it belongs with, as they stand (see sorting.spots).
 
-    The shelves are taken as they are. A showcase and a cabinet kept outside the
-    sorting are no place to add to; an album a location rule binds to a cabinet gets
-    a spot in that cabinet. An album of an artist without a cluster gets none.
+    A showcase and a cabinet kept outside the sorting are no place to go to; an album a
+    location rule binds to a cabinet goes within it. An album of an artist without a
+    cluster, or one that is not sorted, gets no spot.
     """
-    result = sort_collection(store)
-    placements = store.load(Placement)
-    standing = {p.album_id for p in placements}
-    waiting = [album_id for album_id in result.albums if album_id not in standing]
-    if not waiting:
-        return {}
-
+    result = result or sort_collection(store)
     kept = kept_shelf_ids(store)
-    cabinets = in_order(store.load(Cabinet))
-    all_shelves = store.load(Shelf)
-    shelves = [
-        shelf
-        for cabinet in cabinets
-        for shelf in in_order([s for s in all_shelves if s.cabinet_id == cabinet.id])
-        if shelf.id not in kept
-    ]
+    shelves = _walked_shelves(store, kept)
     walk = {shelf.id: index for index, shelf in enumerate(shelves)}
     layout = [
         (p.album_id, p.shelf_id)
@@ -77,24 +67,54 @@ def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Sp
     bound = mandatory_cabinets(store, result)
     allowed = {
         album_id: {shelf.id for shelf in shelves if shelf.cabinet_id == bound[album_id]}
-        for album_id in waiting
+        for album_id in album_ids
         if album_id in bound
     }
     found = suggest_spots(
-        waiting,
+        album_ids,
         result.ordered,
         unit_of,
         layout,
         allowed,
         {shelf.id: shelf.cabinet_id for shelf in shelves},
     )
-
     clustered = {entry.album_id for entry in result.ordered if entry.cluster_id is not None}
     for album_id, shelf_ids in allowed.items():
         first = next((shelf.id for shelf in shelves if shelf.id in shelf_ids), None)
         if album_id not in found and album_id in clustered and first is not None:
             # Bound to a cabinet nothing stands in yet: it opens that cabinet.
             found[album_id] = SuggestedSpot(album_id, first, None, None, EMPTY)
+    return found
+
+
+def _walked_shelves(store: JsonStore, kept: set[int]) -> list[Shelf]:
+    """The shelves something can be added to, in walking order."""
+    all_shelves = store.load(Shelf)
+    return [
+        shelf
+        for cabinet in in_order(store.load(Cabinet))
+        for shelf in in_order([s for s in all_shelves if s.cabinet_id == cabinet.id])
+        if shelf.id not in kept
+    ]
+
+
+def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Spot]:
+    """A spot for every album that is sorted but stands on no shelf yet.
+
+    The shelves are taken as they are (see belonging).
+    """
+    result = sort_collection(store)
+    placements = store.load(Placement)
+    standing = {p.album_id for p in placements}
+    waiting = [album_id for album_id in result.albums if album_id not in standing]
+    if not waiting:
+        return {}
+    found = belonging(store, waiting, placements, result)
+    bound = mandatory_cabinets(store, result)
+    cabinets = in_order(store.load(Cabinet))
+    shelves = _walked_shelves(store, kept_shelf_ids(store))
+    walk = {shelf.id for shelf in shelves}
+    layout = [(p.album_id, p.shelf_id) for p in placements if p.shelf_id in walk]
 
     all_albums = {album.id: album for album in store.load(Album)}
 

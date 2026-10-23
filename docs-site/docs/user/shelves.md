@@ -6,13 +6,26 @@
 
 When your cabinets are spread over rooms, each room gets a tab. *Go to cabinet…* at the top stays in view while you scroll and jumps to any cabinet, or to the albums not on a shelf.
 
-## ✋ Moving albums
+## ✋ Dragging in Layout
 
 Drag a block to another spot on the same shelf, or to another shelf. Every move is saved at once, and a version of the layout from before you started is kept.
 
 On a phone, **hold a block for a moment** until it lifts, then drag it. A quick swipe that starts on a block scrolls the page instead, so you don't move albums by accident.
 
 For a shelf far away, use the ⋮ on a block (or right-click it) and pick the shelf from the list: the block goes to the end of that shelf, and the page jumps there so you can drag it to its exact spot.
+
+## 🚚 Move
+
+**Move** (under Shelves) moves more than one block at a time: an album, an artist, a family, or a whole cluster. The pages of an album, artist and cluster, and each family, have a **Move…** button that opens it with that already chosen.
+
+1. **What** — search for it, or come from its page. Of an artist, family or cluster the albums that stand on a shelf go, in sorting order; what stands in a showcase or a cabinet kept outside the sorting stays there.
+2. **Where to** — one of three:
+    - **Where it belongs**: next to what each album goes with, on your shelves as they stand — the artist's other albums, the artists of its era in its cluster, or its cluster. A location rule is kept to. Handy to put back something you moved before, without a whole proposal. An album whose artist has no cluster stays where it is.
+    - **At the front of a shelf**: it runs on over the next shelves of that cabinet, and what stood there moves up behind it. A shelf counts as at least as wide as what stands on it now, so an estimated width that is too narrow doesn't push albums on. What no longer fits stays at the end of the cabinet's last shelf.
+    - **At the end of a shelf**: after what stands there; nothing else moves. Choose *Not on a shelf* to take it off the shelves.
+3. **What changes** — every shelf that changes, with its albums now and after and how full it gets; a shelf that ends up over its width is marked. Only **Move** changes anything, and the layout from before is kept as a version.
+
+To put albums in their exact spot on a shelf, drag them in Layout afterwards.
 
 ## 🗄️ Cabinets and shelves
 

@@ -1,22 +1,45 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Discogs sync') }}{% endblock %}
 
-{% macro state(name, open, done_text) %}
-{% if current == name %}<span class="ss-chip ss-chip-now">{{ open }}</span>{% elif done_text %}<span class="ss-chip">{{ done_text }}</span>{% endif %}
+{# One bar: how far a part is, as [done, total]. #}
+{% macro bar(name, label, progress, text) %}
+<div class="ss-step-bar">
+  <div class="d-flex flex-wrap justify-content-between gap-2 small">
+    <span>{{ label }}</span>
+    <span id="{{ name }}-text" class="ss-muted">{{ text }}</span>
+  </div>
+  <div class="progress mt-1" role="progressbar" aria-label="{{ label }}">
+    <div id="{{ name }}-bar" class="progress-bar" style="width: {{ (100 * progress[0] / progress[1]) | round(0, 'floor') | int if progress and progress[1] else 0 }}%"></div>
+  </div>
+</div>
 {% endmacro %}
+
+{# A step of the round: its state as a mark, its title, and what it did or does. #}
+{% macro step(number, key, title) %}
+{% set state = steps[key] %}
+<li class="ss-row ss-step ss-step-is-{{ state }}" id="step-{{ key }}">
+  <span class="ss-step-number {{ 'ss-step-done' if state == 'done' }} {{ 'ss-step-now' if state == 'now' }} {{ 'ss-step-failed' if state in ('stopped', 'failed') }}" aria-hidden="true">{% if state == 'done' %}&#10003;{% elif state in ('stopped', 'failed') %}!{% elif state == 'skipped' %}&ndash;{% else %}{{ number }}{% endif %}</span>
+  <div class="ss-row-text">
+    <span class="ss-row-artist">{{ title }}
+      <span class="visually-hidden">: {% if state == 'done' %}{{ _('done') }}{% elif state == 'now' %}{{ _('running') }}{% elif state == 'todo' %}{{ _('to do') }}{% endif %}</span></span>
+    {{ caller() }}
+  </div>
+</li>
+{% endmacro %}
+
 {% block content %}
 <div class="ss-page" style="max-width: 820px;">
   <h1>{{ _('Discogs sync') }}</h1>
-  <p class="ss-muted mt-1">{{ _('Bring your collection in from Discogs, in three steps from top to bottom: sync, confirm the matches, fetch. The step that waits for you is marked.') }}</p>
+  <p class="ss-muted mt-1">{{ _('One button brings your collection in from Discogs and keeps everything up to date: new purchases, styles, years, tracklists, pictures and covers. What needs your decision shows under “Waiting for you”.') }}</p>
 
   <div class="ss-stats mt-3">
     <div class="ss-stat"><div class="ss-stat-number">{{ album_count }}</div><div class="ss-stat-label">{{ _('albums') }}</div></div>
     <div class="ss-stat"><div class="ss-stat-number">{{ linked_count }}</div><div class="ss-stat-label">{{ _('linked to a release') }}</div></div>
     <div class="ss-stat"><div class="ss-stat-number">{{ fetched_count }}</div><div class="ss-stat-label">{{ _('enriched') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ proposals | length }}</div><div class="ss-stat-label">{{ _('matches to confirm') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ proposals | length + gone | length }}</div><div class="ss-stat-label">{{ _('waiting for you') }}</div></div>
   </div>
 
-  {# The token comes before everything else, and steps aside once it is set. #}
+  {# The token: in the way only while it is missing. #}
   <details class="ss-card mt-4" id="token-block" {{ 'open' if not masked_token or token_error }}>
     <summary class="ss-card-head"><h2>{{ _('Discogs access token') }}</h2>{% if masked_token %}<span class="ss-chip">{{ _('set: %(token)s', token=masked_token) }}</span>{% else %}<span class="ss-chip ss-chip-now">{{ _('needed first') }}</span>{% endif %}</summary>
     <div class="ss-card-body">
@@ -38,68 +61,93 @@
     </div>
   </details>
 
-  <section class="ss-card mt-4 {{ 'ss-step-current' if current == 'sync' }}" id="sync">
-    <div class="ss-card-head"><h2>1 · {{ _('Sync with Discogs') }}</h2>{{ state('sync', _('to take over'), none) }}</div>
-    <div class="ss-card-body">
-      {% if error %}
-      <div class="ss-alert mb-3" role="alert">{{ error }}</div>
-      {% endif %}
-      {% if preview %}
-      {% set outcome = preview.outcome %}
-      <p class="fw-semibold mb-1">{% if preview.synced %}{{ _('This is what taking over your Discogs collection would do. Nothing has changed yet.') }}{% else %}{{ _('This is what importing the export would do. Nothing has changed yet.') }}{% endif %}</p>
-      {% if preview.synced %}<p class="ss-muted small">{{ _('Taking it over also brings the album covers, and notes which artist on Discogs each artist is — which the artist pictures need.') }}</p>{% endif %}
-      <div class="ss-stats mt-3">
-        <div class="ss-stat"><div class="ss-stat-number">{{ outcome.vinyl_count }}</div><div class="ss-stat-label">{% if preview.synced %}{{ _('vinyl releases in your collection') }}{% else %}{{ _('vinyl releases in the export') }}{% endif %}</div></div>
-        <div class="ss-stat"><div class="ss-stat-number">{{ outcome.matched }}</div><div class="ss-stat-label">{{ _('linked to your albums') }}</div></div>
-        <div class="ss-stat"><div class="ss-stat-number">{{ outcome.proposed }}</div><div class="ss-stat-label">{{ _('matches to confirm') }}</div></div>
-        <div class="ss-stat"><div class="ss-stat-number">{{ outcome.added }}</div><div class="ss-stat-label">{{ _('new, unplaced albums') }}</div></div>
-      </div>
-      <ul class="ss-muted small mt-3">
-        <li>{{ ngettext('%(num)d release that is not vinyl is skipped.', '%(num)d releases that are not vinyl are skipped.', outcome.skipped_non_vinyl) }}</li>
-        <li>{{ ngettext('%(num)d of your albums stays without a release.', '%(num)d of your albums stay without a release.', outcome.unmatched_albums) }}</li>
-        {% if preview.synced %}
-        <li>{{ ngettext('%(num)d linked album gets its format, and with it its estimated width, brought up to date.', '%(num)d linked albums get their format, and with it their estimated width, brought up to date.', outcome.refreshed) }}</li>
-        {% else %}
-        <li>{{ _('Albums that are already linked are left as they are.') }}</li>
-        {% endif %}
-      </ul>
-      {% if outcome.gone %}
-      <p class="fw-semibold mb-1">{{ ngettext('%(num)d album is no longer in your Discogs collection', '%(num)d albums are no longer in your Discogs collection', outcome.gone | length) }}</p>
-      <ul class="small">
-        {% for artist, title in outcome.gone %}<li>{{ artist }} — {{ title }}</li>{% endfor %}
-      </ul>
-      <p class="ss-muted small">{{ _('They are kept as they are, on their shelf, and listed at the bottom of this screen and on the Dashboard. There you can remove one, after confirming.') }}</p>
-      {% endif %}
-      <div class="d-flex flex-wrap gap-2">
-        <form method="post" action="{{ url_for('discogs.confirm_import') }}">
-          <button class="ss-button ss-button-primary" type="submit">{% if preview.synced %}{{ _('Take over') }}{% else %}{{ _('Import') }}{% endif %}</button>
-        </form>
-        <form method="post" action="{{ url_for('discogs.discard_import') }}">
-          <button class="ss-button" type="submit">{{ _('Discard') }}</button>
-        </form>
-      </div>
-      {% else %}
-      <p>{{ _('Fetches your collection straight from Discogs, so new purchases come in without an export. It takes about a second per hundred releases; you see what it would do, here, before anything changes.') }}</p>
-      <form method="post" action="{{ url_for('discogs.sync') }}">
-        <button class="ss-button {{ 'ss-button-primary' if not current }} {{ 'disabled' if not masked_token or job.running }}" type="submit" {{ 'disabled' if not masked_token or job.running }}>{{ _('Sync') }}</button>
-        {% if not masked_token %}<span class="ss-muted small ms-2">{{ _('Set your token above first.') }}</span>{% endif %}
+  {# The round: one button, and each step as it goes. #}
+  <section class="ss-card mt-4 {{ 'ss-step-current' if job.running }}" id="round" data-status-url="{{ url_for('discogs.enrichment_status') }}" data-running="{{ 'true' if job.running else 'false' }}" data-part="{{ job.part or '' }}">
+    <div class="ss-card-head">
+      <h2>{{ _('Sync with Discogs') }}</h2>
+      {% if job.running %}
+      <form method="post" action="{{ url_for('discogs.stop_enrichment') }}">
+        <button class="ss-button ss-button-small" type="submit">{{ _('Stop') }}</button>
       </form>
-      <details class="mt-4">
-        <summary class="ss-muted small">{{ _('Or upload a Discogs export instead') }}</summary>
-        <p class="mt-2">{{ _('On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you see what it would do before anything changes.') }}</p>
-        <form method="post" action="{{ url_for('discogs.upload') }}" enctype="multipart/form-data">
-          <label for="export" class="form-label fw-semibold">{{ _('Discogs export (.csv)') }}</label>
-          <input id="export" class="form-control" type="file" name="export" accept=".csv" required>
-          <button class="ss-button mt-3" type="submit">{{ _('Upload') }}</button>
-        </form>
-      </details>
+      {% else %}
+      <form method="post" action="{{ url_for('discogs.sync') }}">
+        <button class="ss-button ss-button-primary" type="submit" {{ 'disabled' if not masked_token }}>{{ _('Sync') }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% if error %}
+    <div class="ss-card-body pb-0"><div class="ss-alert" role="alert">{{ error }}</div></div>
+    {% endif %}
+    {% if not job.running and job.outcome == 'stopped' %}
+    <div class="ss-card-body pb-0"><div class="ss-alert">{{ _('Stopped. Sync again to go on: nothing is fetched twice.') }}</div></div>
+    {% elif not job.running and job.outcome == 'empty' %}
+    <div class="ss-card-body pb-0"><div class="ss-alert" role="alert">{{ _('Your Discogs collection is empty.') }}</div></div>
+    {% elif not job.running and job.outcome == 'failed' %}
+    <div class="ss-card-body pb-0"><div class="ss-alert" role="alert">{{ _('Stopped: %(error)s Sync again to go on.', error=job.error) }}</div></div>
+    {% elif not masked_token %}
+    <div class="ss-card-body pb-0 ss-muted small">{{ _('Set your token above first.') }}</div>
+    {% endif %}
+
+    <ol class="ss-steps">
+      {% call step(1, 'collection', _('Fetch your collection')) %}
+        {% if steps.collection == 'now' %}
+        {# Drawn from the start: the script fills in the pages once Discogs has said how many. #}
+        {% set pages = job.collection or [0, 0] %}
+        {{ bar('collection', _('Pages of a hundred releases'), pages, _('%(done)s of %(total)s · %(releases)s releases', done=pages[0], total=pages[1], releases=job.releases) if pages[1] else _('Asking Discogs whose collection this is…')) }}
+        {% elif job.releases and steps.collection != 'skipped' %}
+        <span class="ss-row-title">{{ _('%(releases)s releases in your collection', releases=job.releases | decimal(0)) }}</span>
+        {% else %}
+        <span class="ss-row-title">{{ _('Straight from Discogs, a hundred releases a second.') }}</span>
+        {% endif %}
+      {% endcall %}
+      {% call step(2, 'import', _('Compare and take over')) %}
+        {% if job.synced %}
+        {% set s = job.synced %}
+        {# Only what changed. #}
+        {% set changes = [
+          ngettext('%(num)d new album', '%(num)d new albums', s.added) if s.added else '',
+          ngettext('%(num)d format brought up to date', '%(num)d formats brought up to date', s.refreshed) if s.refreshed else '',
+          ngettext('%(num)d no longer on Discogs', '%(num)d no longer on Discogs', s.gone) if s.gone else '',
+          ngettext('%(num)d match to confirm', '%(num)d matches to confirm', s.proposed) if s.proposed else '',
+        ] | select | list %}
+        <span class="ss-row-title">{{ changes | join(' · ') if changes else _('Nothing changed since the last time.') }}</span>
+        {% else %}
+        <span class="ss-row-title">{{ _('New purchases become albums without a place; nothing is removed or moved, and what is uncertain waits for you.') }}</span>
+        {% endif %}
+      {% endcall %}
+      {% call step(3, 'fetch', _('Fetch styles, years, tracklists and pictures')) %}
+        {{ bar('albums', _('Styles, original years and tracklists'), albums_progress, _('%(done)s of %(total)s linked albums', done=albums_progress[0], total=albums_progress[1])) }}
+        {{ bar('pictures', _('Artist pictures'), pictures_progress, _('%(done)s of %(total)s artists', done=pictures_progress[0], total=pictures_progress[1])) }}
+        {% if unnamed_count %}
+        <span class="ss-row-title">{{ ngettext('%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone.', '%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone.', unnamed_count) }}</span>
+        {% endif %}
+      {% endcall %}
+      {% call step(4, 'store', _('Store covers and pictures here')) %}
+        {{ bar('covers', _('Images stored here'), covers_progress, _('%(done)s of %(total)s images', done=covers_progress[0], total=covers_progress[1])) }}
+        {% if covers_gone_count %}
+        <span class="ss-row-title">{{ ngettext('%(num)d image is no longer at Discogs and could not be stored.', '%(num)d images are no longer at Discogs and could not be stored.', covers_gone_count) }}</span>
+        {% endif %}
+      {% endcall %}
+    </ol>
+    <div class="ss-card-body pt-0 ss-muted small">
+      {% if job.running %}
+      <span id="job-left">{% if minutes_left > 1 %}{{ _('About %(minutes)s minutes left.', minutes=minutes_left) }}{% else %}{{ _('Less than a minute left.') }}{% endif %}</span>
+      {{ _('You can leave this page: the round goes on.') }}
+      {% elif fetch_open and masked_token and linked_count %}
+      {{ ngettext('Still to fetch, about %(num)d minute at most.', 'Still to fetch, about %(num)d minutes at most.', minutes) }}
+      <form class="d-inline" method="post" action="{{ url_for('discogs.start_enrichment') }}"><button class="ss-link-button" type="submit">{{ _('Only fetch, without syncing') }}</button></form>
+      {% else %}
+      {{ _('Discogs allows about one lookup a second. Nothing is fetched twice, so after the first time a round takes seconds.') }}
       {% endif %}
     </div>
   </section>
 
-  <section class="ss-card mt-4 {{ 'ss-step-current' if current == 'matches' }}" id="matches">
-    <div class="ss-card-head"><h2>2 · {{ _('Confirm the matches') }}</h2>{{ state('matches', ngettext('%(num)d to confirm', '%(num)d to confirm', proposals | length), _('done')) }}</div>
+  {# What only the owner can decide, after a round. #}
+  {% if proposals or gone %}
+  <section class="ss-card mt-4 ss-step-current" id="waiting">
+    <div class="ss-card-head"><h2>{{ _('Waiting for you') }}</h2></div>
     {% if proposals %}
+    <div class="ss-group" id="matches">{{ ngettext('%(num)d match to confirm', '%(num)d matches to confirm', proposals | length) }}</div>
     <div class="ss-card-body ss-muted small">{{ _('A release that looks like one of your albums but is not titled the same waits here. Until you say so the album has no release, and nothing can be fetched for it.') }}</div>
     {% endif %}
     {% if proposals %}
@@ -120,86 +168,9 @@
     </div>
     {% endfor %}
     <div class="ss-card-body ss-muted small">{{ _('“Different” keeps your album without a release and adds the Discogs release as a new, unplaced album.') }}</div>
-    {% else %}
-    <div class="ss-card-body ss-muted">{{ _('No matches are waiting for confirmation.') }}</div>
     {% endif %}
-  </section>
-
-  <section class="ss-card mt-4 {{ 'ss-step-current' if current == 'enrich' }}" id="enrich">
-    <div class="ss-card-head"><h2>3 · {{ _('Fetch styles, original years and pictures') }}</h2>{% if job.running %}<span class="ss-chip ss-chip-now">{{ _('running') }}</span>{% elif fetch_open and current != 'enrich' %}<span class="ss-chip">{{ _('to do') }}</span>{% else %}{{ state('enrich', _('to do'), _('done') if linked_count else none) }}{% endif %}</div>
-    <div class="ss-card-body">
-      <p>{{ _('Discogs allows about one lookup per second; each release takes up to two, and each artist one for its picture. Last, the covers and pictures themselves are stored here, so the pages show them without Discogs. You can stop and continue at any time: nothing is fetched twice.') }}</p>
-
-      {# One bar per part: how many of all of them are in, earlier runs included. #}
-      {% macro part_bar(name, label, progress, text) %}
-      <div class="mb-3">
-        <div class="d-flex flex-wrap justify-content-between gap-2 small">
-          <span class="fw-semibold">{{ label }}</span>
-          <span id="{{ name }}-text" class="ss-muted">{{ text }}</span>
-        </div>
-        <div class="progress mt-1" role="progressbar" aria-label="{{ label }}">
-          <div id="{{ name }}-bar" class="progress-bar" style="width: {{ (100 * progress[0] / progress[1]) | round(0, 'floor') | int if progress[1] else 0 }}%"></div>
-        </div>
-      </div>
-      {% endmacro %}
-
-      <div id="job" data-status-url="{{ url_for('discogs.enrichment_status') }}" data-running="{{ 'true' if job.running else 'false' }}" data-seconds-per-lookup="{{ seconds_per_lookup }}">
-        {{ part_bar('albums', _('Styles and original years'), albums_progress, _('%(done)s of %(total)s linked albums', done=albums_progress[0], total=albums_progress[1])) }}
-        {{ part_bar('pictures', _('Artist pictures'), pictures_progress, _('%(done)s of %(total)s artists', done=pictures_progress[0], total=pictures_progress[1])) }}
-        {{ part_bar('covers', _('Images stored here'), covers_progress, _('%(done)s of %(total)s images', done=covers_progress[0], total=covers_progress[1])) }}
-        {% if covers_gone_count %}
-        <p class="ss-muted small">{{ ngettext('%(num)d image is no longer at Discogs and could not be stored.', '%(num)d images are no longer at Discogs and could not be stored.', covers_gone_count) }}</p>
-        {% endif %}
-        {% if unnamed_count %}
-        <p class="ss-muted small">{{ ngettext('%(num)d artist is not named on Discogs and gets no picture: a sync names an artist by a release credited to that artist alone.', '%(num)d artists are not named on Discogs and get no picture: a sync names an artist by a release credited to that artist alone.', unnamed_count) }}</p>
-        {% endif %}
-
-        {% if job.running %}
-        <p class="mb-3">
-          <span class="fw-semibold" id="job-part">{% if job.part == 'pictures' %}{{ _('Now fetching the artist pictures.') }}{% elif job.part == 'covers' %}{{ _('Now storing the covers and pictures here.') }}{% else %}{{ _('Now fetching styles and original years.') }}{% endif %}</span>
-          <span id="job-text">{{ _('%(done)s of about %(total)s lookups in this run.', done=job.done, total=job.total) }}</span>
-          <span id="job-left">{% if minutes_left > 1 %}{{ _('About %(minutes)s minutes left.', minutes=minutes_left) }}{% else %}{{ _('Less than a minute left.') }}{% endif %}</span>
-        </p>
-        <form method="post" action="{{ url_for('discogs.stop_enrichment') }}">
-          <button class="ss-button" type="submit">{{ _('Stop') }}</button>
-        </form>
-        {% else %}
-        {% set nothing_to_fetch = not to_fetch_count and not pictures_to_fetch_count and not covers_to_fetch_count %}
-        {% if job.outcome == 'stopped' %}
-        <div class="ss-alert mb-3">{{ _('Stopped after %(done)d lookups. Start again to continue: nothing is fetched twice.', done=job.done) }}</div>
-        {% elif job.outcome == 'failed' %}
-        <div class="ss-alert mb-3" role="alert">{{ _('Fetching stopped: %(error)s Start again to continue.', error=job.error) }}</div>
-        {% endif %}
-        <p class="mb-3">
-          {% if not linked_count %}
-          {{ _('No album is linked to a release yet — import your collection first.') }}
-          {% elif nothing_to_fetch %}
-          <span class="fw-semibold">{{ _('Everything has been fetched.') }}</span>
-          {% else %}
-          <span class="fw-semibold">{{ _('Not everything has been fetched yet.') }}</span>
-          {% if to_fetch_count %}
-          {{ ngettext('%(num)d linked album still has to be fetched.', '%(num)d linked albums still have to be fetched.', to_fetch_count) }}
-          {% endif %}
-          {% if pictures_to_fetch_count %}
-          {{ ngettext('The picture of %(num)d artist still has to be fetched.', 'The pictures of %(num)d artists still have to be fetched.', pictures_to_fetch_count) }}
-          {% endif %}
-          {% if covers_to_fetch_count %}
-          {{ ngettext('The image of %(num)d cover or artist still has to be stored.', 'The images of %(num)d covers and artists still have to be stored.', covers_to_fetch_count) }}
-          {% endif %}
-          {{ ngettext('That takes about %(num)d minute at most.', 'That takes about %(num)d minutes at most.', minutes) }}
-          {% endif %}
-        </p>
-        <form method="post" action="{{ url_for('discogs.start_enrichment') }}">
-          <button class="ss-button {{ 'ss-button-primary' if current == 'enrich' }} {{ 'disabled' if nothing_to_fetch or not masked_token }}" type="submit" {{ 'disabled' if nothing_to_fetch or not masked_token }}>{{ _('Start fetching') }}</button>
-        </form>
-        {% endif %}
-      </div>
-    </div>
-  </section>
-
-  {% if gone or kept %}
-  <section class="ss-card mt-4" id="gone">
-    <div class="ss-card-head"><h2>{{ _('No longer in your Discogs collection') }}</h2></div>
+    {% if gone %}
+    <div class="ss-group" id="gone">{{ ngettext('%(num)d album is no longer in your Discogs collection', '%(num)d albums are no longer in your Discogs collection', gone | length) }}</div>
     {% for entry in gone %}
     <div class="ss-row">
       <div class="ss-row-text">
@@ -214,11 +185,14 @@
       </div>
     </div>
     {% endfor %}
-    {% if gone %}
     <div class="ss-card-body ss-muted small">{{ _('The last sync or import did not find these releases. “I still have it” keeps the album and stops asking; an album is only removed when you choose Remove and confirm. Until you choose, it stays where it is and is listed here after every sync.') }}</div>
     {% endif %}
-    {% if kept %}
-    <div class="ss-group">{{ ngettext('Kept although not on Discogs (%(num)d)', 'Kept although not on Discogs (%(num)d)', kept | length) }}</div>
+  </section>
+  {% endif %}
+
+  {% if kept %}
+  <details class="ss-card mt-4" id="kept">
+    <summary class="ss-card-head"><h2>{{ ngettext('Kept although not on Discogs (%(num)d)', 'Kept although not on Discogs (%(num)d)', kept | length) }}</h2></summary>
     {% for entry in kept %}
     <div class="ss-row">
       <div class="ss-row-text">
@@ -231,10 +205,45 @@
     </div>
     {% endfor %}
     <div class="ss-card-body ss-muted small">{{ _('You said you still have these. They are no longer counted as waiting; an album that returns to your Discogs collection leaves this list by itself.') }}</div>
-    {% endif %}
-  </section>
-
+  </details>
   {% endif %}
+
+  {# Another way in: an export, with a look at what it would do first. #}
+  <details class="ss-card mt-4" id="export" {{ 'open' if preview }}>
+    <summary class="ss-card-head"><h2>{{ _('Or import a Discogs export') }}</h2></summary>
+    <div class="ss-card-body">
+      {% if preview %}
+      <p class="fw-semibold mb-1">{{ _('This is what importing the export would do. Nothing has changed yet.') }}</p>
+      <div class="ss-stats mt-3">
+        <div class="ss-stat"><div class="ss-stat-number">{{ preview.vinyl_count }}</div><div class="ss-stat-label">{{ _('vinyl releases in the export') }}</div></div>
+        <div class="ss-stat"><div class="ss-stat-number">{{ preview.matched }}</div><div class="ss-stat-label">{{ _('linked to your albums') }}</div></div>
+        <div class="ss-stat"><div class="ss-stat-number">{{ preview.proposed }}</div><div class="ss-stat-label">{{ _('matches to confirm') }}</div></div>
+        <div class="ss-stat"><div class="ss-stat-number">{{ preview.added }}</div><div class="ss-stat-label">{{ _('new, unplaced albums') }}</div></div>
+      </div>
+      <ul class="ss-muted small mt-3">
+        <li>{{ ngettext('%(num)d release that is not vinyl is skipped.', '%(num)d releases that are not vinyl are skipped.', preview.skipped_non_vinyl) }}</li>
+        <li>{{ ngettext('%(num)d of your albums stays without a release.', '%(num)d of your albums stay without a release.', preview.unmatched_albums) }}</li>
+        <li>{{ _('Albums that are already linked are left as they are.') }}</li>
+        {% if preview.gone %}<li>{{ ngettext('%(num)d album is no longer in your Discogs collection', '%(num)d albums are no longer in your Discogs collection', preview.gone | length) }}</li>{% endif %}
+      </ul>
+      <div class="d-flex flex-wrap gap-2">
+        <form method="post" action="{{ url_for('discogs.confirm_import') }}">
+          <button class="ss-button ss-button-primary" type="submit">{{ _('Import') }}</button>
+        </form>
+        <form method="post" action="{{ url_for('discogs.discard_import') }}">
+          <button class="ss-button" type="submit">{{ _('Discard') }}</button>
+        </form>
+      </div>
+      {% else %}
+      <p>{{ _('On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you see what it would do before anything changes.') }}</p>
+      <form method="post" action="{{ url_for('discogs.upload') }}" enctype="multipart/form-data">
+        <label for="export-file" class="form-label fw-semibold">{{ _('Discogs export (.csv)') }}</label>
+        <input id="export-file" class="form-control" type="file" name="export" accept=".csv" required>
+        <button class="ss-button mt-3" type="submit">{{ _('Upload') }}</button>
+      </form>
+      {% endif %}
+    </div>
+  </details>
 
   <section class="ss-card mt-4" id="workbook">
     <div class="ss-card-head"><h2>{{ _('Layout workbook') }}</h2></div>
@@ -246,48 +255,49 @@
 </div>
 
 <script nonce="{{ csp_nonce() }}">
-  // While the fetching runs, keep the progress up to date and reload once it ends.
+  // While a round runs, keep its bars up to date; when it moves to another step, or ends,
+  // the page is shown afresh with that step.
   (function () {
-    const job = document.getElementById("job");
-    if (job.dataset.running !== "true") return;
+    const round = document.getElementById("round");
+    if (round.dataset.running !== "true") return;
     const texts = {
+      collection: {{ _('%(done)s of %(total)s · %(releases)s releases', done='__done__', total='__total__', releases='__releases__') | tojson }},
       albums: {{ _('%(done)s of %(total)s linked albums', done='__done__', total='__total__') | tojson }},
       pictures: {{ _('%(done)s of %(total)s artists', done='__done__', total='__total__') | tojson }},
       covers: {{ _('%(done)s of %(total)s images', done='__done__', total='__total__') | tojson }},
-      nowCovers: {{ _('Now storing the covers and pictures here.') | tojson }},
-      run: {{ _('%(done)s of about %(total)s lookups in this run.', done='__done__', total='__total__') | tojson }},
-      nowAlbums: {{ _('Now fetching styles and original years.') | tojson }},
-      nowPictures: {{ _('Now fetching the artist pictures.') | tojson }},
       minutes: {{ _('About %(minutes)s minutes left.', minutes='__minutes__') | tojson }},
       soon: {{ _('Less than a minute left.') | tojson }},
     };
-    const fill = (text, done, total) => text.replace("__done__", done).replace("__total__", total);
-    const show = function (name, progress) {
-      if (!progress) return;
+    const number = (value) => Number(value).toLocaleString(document.documentElement.lang || undefined);
+    const show = function (name, progress, releases) {
+      const bar = document.getElementById(name + "-bar");
+      if (!progress || !bar) return;
       const [done, total] = progress;
-      document.getElementById(name + "-bar").style.width = (total ? Math.floor((100 * done) / total) : 0) + "%";
-      document.getElementById(name + "-text").textContent = fill(texts[name], done, total);
+      if (!total) return;
+      bar.style.width = (total ? Math.floor((100 * done) / total) : 0) + "%";
+      document.getElementById(name + "-text").textContent = texts[name]
+        .replace("__done__", number(done)).replace("__total__", number(total))
+        .replace("__releases__", number(releases || 0));
     };
     const timer = setInterval(async function () {
       try {
-        const status = await (await fetch(job.dataset.statusUrl)).json();
-        if (!status.running) {
+        const status = await (await fetch(round.dataset.statusUrl)).json();
+        if (!status.running || (status.part || "") !== round.dataset.part) {
           clearInterval(timer);
           window.location.reload();
           return;
         }
+        show("collection", status.collection, status.releases);
         show("albums", status.albums);
         show("pictures", status.pictures);
         show("covers", status.covers);
-        document.getElementById("job-part").textContent =
-          status.part === "pictures" ? texts.nowPictures : status.part === "covers" ? texts.nowCovers : texts.nowAlbums;
-        document.getElementById("job-text").textContent = fill(texts.run, status.done, status.total);
+        const left = document.getElementById("job-left");
         const minutes = Math.ceil(status.seconds_left / 60);
-        document.getElementById("job-left").textContent = minutes > 1 ? texts.minutes.replace("__minutes__", minutes) : texts.soon;
+        if (left) left.textContent = minutes > 1 ? texts.minutes.replace("__minutes__", minutes) : texts.soon;
       } catch (error) {
         // A missed update is harmless; the next one catches up.
       }
-    }, 2000);
+    }, 1000);
   })();
 </script>
 {% endblock %}

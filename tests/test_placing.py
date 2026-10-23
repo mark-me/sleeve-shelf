@@ -107,3 +107,4 @@ def test_a_target_has_one_rule_and_a_new_one_replaces_it(store):
 
     remove_rule(store, second.id)
     assert [r.target_type for r in store.load(LocationRule)] == [LocationRuleTarget.ALBUM]
+

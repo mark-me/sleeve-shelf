@@ -2,18 +2,18 @@
 #
 #   docker compose -f docker-compose.yml up -d
 #
-# Then open http://<host>:5000
+# Then open http://localhost:5000 on the host, or the address your proxy gives it
 
 services:
   sleeve-shelf:
     # Pin the release you want to run; see the published versions at
     # https://github.com/mark-me/sleeve-shelf/pkgs/container/sleeve-shelf
-    image: ghcr.io/mark-me/sleeve-shelf:0.1.0
+    image: ghcr.io/mark-me/sleeve-shelf:0.6.1
     container_name: sleeve-shelf
     restart: unless-stopped
     # Shielded: nothing but /data (and /tmp, in memory) can be written, the app gains no
     # privileges and has none of root's, and it gets a bounded share of the machine. Should
-    # anyone ever break in, there is little they can do. It uses about 75 MB.
+    # anyone ever break in, there is little they can do. It uses about 135 MB.
     read_only: true
     tmpfs:
       - /tmp
@@ -23,12 +23,25 @@ services:
       - ALL
     mem_limit: 512m
     pids_limit: 200
+    # Only this machine can reach the port: a proxy on it (Tailscale, Caddy, nginx…) passes
+    # visitors on. Docker opens a published port past the host's firewall, so "5000:5000"
+    # would put the app, without HTTPS, before the whole local network. With tsdproxy no
+    # port is needed at all — see the labels below and the developer guide.
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     environment:
-      # Behind Tailscale Funnel or a reverse proxy: the one proxy that may say who a visitor
-      # is. Leave it out when the app is reached directly.
+      # Behind Tailscale Funnel, tsdproxy or a reverse proxy: the one proxy that may say who a
+      # visitor is. Leave it out when the app is reached directly.
       SLEEVE_SHELF_PROXIES: "1"
+      TZ: "Europe/Amsterdam"
+    # With tsdproxy (https://almeidapaulopt.github.io/tsdproxy/) the app gets a name of its own
+    # on the tailnet, with HTTPS; funnel opens it to the internet, which is fine once the
+    # owner's password is set (set-password). Leave out ports: above when using this.
+    # labels:
+    #   tsdproxy.enable: "true"
+    #   tsdproxy.name: "sleeve-shelf"
+    #   tsdproxy.port.1: "443/https:5000/http"
+    #   tsdproxy.funnel: "true"
     volumes:
       # The collection (JSON files) lives here and survives upgrades.
       - sleeve-shelf-data:/data

@@ -5,12 +5,12 @@ them. Everything else — every change, every other screen, and any screen added
 asks for the login. Without a password the app is open and everyone is the owner.
 """
 
-import hashlib
+import hmac
 import threading
 import time
 from collections import deque
 from collections.abc import Callable
-from urllib.parse import urlsplit
+from urllib.parse import urlparse, urlsplit
 
 from flask import (
     Blueprint,
@@ -26,7 +26,7 @@ from flask import (
 from flask_babel import gettext as _
 from werkzeug.wrappers import Response
 
-from sleeve_shelf.access import has_password, verified_hash
+from sleeve_shelf.access import has_password, verified_key
 from sleeve_shelf.config import load_settings
 
 blueprint = Blueprint("login", __name__)
@@ -103,29 +103,27 @@ _pages = _Window(lambda: (VISITOR_PAGES_PER_WINDOW, VISITOR_PAGE_SECONDS))
 _reported: dict[str, float] = {}
 
 
-def _password_hash() -> str | None:
-    return load_settings(current_app.config["DATA_DIR"]).owner_password_hash
-
-
-def _fingerprint(password_hash: str) -> str:
-    # A login is tied to the password it was made with: changing it logs out other devices.
-    return hashlib.sha256(password_hash.encode()).hexdigest()[:16]
-
-
 def is_owner() -> bool:
     """Whether the one looking may change things: logged in, or no password set at all."""
     if "is_owner" not in g:
-        stored = _password_hash()
-        g.is_owner = not stored or session.get("owner") == _fingerprint(stored)
+        settings = load_settings(current_app.config["DATA_DIR"])
+        if not settings.owner_password_hash:
+            g.is_owner = True
+        else:
+            # The login key of the password as it is now; a device logged in under an
+            # earlier password holds another one.
+            held = session.get("owner")
+            key = settings.owner_login_key
+            g.is_owner = bool(key and isinstance(held, str) and hmac.compare_digest(held, key))
     return g.is_owner
 
 
-def remember_owner(password_hash: str) -> None:
-    """Log this device in as the owner, tied to the hash that was verified: until logging
-    out, or until the password changes."""
+def remember_owner(login_key: str) -> None:
+    """Log this device in as the owner, with the login key of the password that was
+    verified: until logging out, or until the password changes."""
     session.clear()
     session.permanent = True
-    session["owner"] = _fingerprint(password_hash)
+    session["owner"] = login_key
     g.pop("is_owner", None)
 
 
@@ -140,8 +138,8 @@ def guard():
         if request.endpoint in VISITOR_PAGES:
             return None
         return redirect(url_for("login.page", next=request.full_path))
-    # The one thing a visitor may send: the password.
-    if request.endpoint == "login.page":
+    # What a visitor may send: the password, and the language for the device.
+    if request.endpoint in ("login.page", "language.choose"):
         return None
     abort(403)
 
@@ -180,26 +178,45 @@ def _wait(address: str) -> int:
     return max(0, int(last + wait - time.monotonic() + 0.999))
 
 
-def _safe_next(target: str | None) -> str:
-    """Where to go after logging in: a page of this app, never another site. A backslash is
-    refused too, as browsers read "/\\elsewhere.example" as another site."""
-    if (
+def _within(target: str | None) -> bool:
+    """Whether target is a page of this app, never another site. A backslash is refused too,
+    as browsers read "/\\elsewhere.example" as another site, and so is a control character,
+    which browsers drop ("/\t/elsewhere.example")."""
+    return bool(
         target
         and target.startswith("/")
         and not target.startswith("//")
         and "\\" not in target
         and not any(ord(char) < 32 or ord(char) == 127 for char in target)
         and not urlsplit(target).netloc
-    ):
-        return target
-    return url_for("index")
+    )
+
+
+def safe_next(target: str | None) -> str:
+    """Where to go after logging in: a page of this app, else the start."""
+    return target if _within(target) else url_for("index")
+
+
+def redirect_within(target: str | None, fallback: str) -> Response:
+    """Go to target when it is a page of this app, else to fallback.
+
+    _within decides; the check right beside the redirect — backslashes out, no host and no
+    scheme, in the form CodeQL's own advice gives — is what a code scanner recognises as
+    guarding it.
+    """
+    if not _within(target):
+        return redirect(fallback)
+    target = target.replace("\\", "")
+    if not urlparse(target).netloc and not urlparse(target).scheme:
+        return redirect(target)
+    return redirect(fallback)
 
 
 @blueprint.route("/login", methods=["GET", "POST"])
 def page():
     if not has_password(current_app.config["DATA_DIR"]):
         return redirect(url_for("index"))
-    target = _safe_next(request.values.get("next"))
+    target = safe_next(request.values.get("next"))
     error = None
     status = 200
     if request.method == "POST":
@@ -209,11 +226,11 @@ def page():
             error = _("Too many attempts. Try again in %(seconds)d seconds.", seconds=wait)
             status = 429
             current_app.logger.warning("Login refused, too many attempts, from %s", address)
-        elif verified := verified_hash(current_app.config["DATA_DIR"], request.form.get("password", "")):
+        elif verified := verified_key(current_app.config["DATA_DIR"], request.form.get("password", "")):
             _failures.pop(address, None)
             remember_owner(verified)
             current_app.logger.info("Owner logged in from %s", address)
-            return redirect(target)
+            return redirect_within(target, url_for("index"))
         else:
             count, _last = _failures.get(address, (0, 0.0))
             _failures[address] = (count + 1, time.monotonic())

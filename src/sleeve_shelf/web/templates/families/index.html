@@ -38,11 +38,19 @@
   {% for suggestion in suggestions %}
   <div class="ss-card mt-3">
     <form method="post" action="{{ url_for('families.accept', anchor_id=suggestion.anchor.id) }}">
-      <div class="ss-group">{% if suggestion.family %}{{ _('Add to the family “%(family)s”', family=suggestion.family) }}{% else %}{{ suggestion.anchor.name }}{% endif %} <span class="ss-muted fw-normal">&middot; {% if suggestion.source == 'discogs' %}{{ _('Discogs lists them as members, groups or other names of each other') }}{% else %}{{ _('from the names') }}{% endif %}</span></div>
+      <input type="hidden" name="source" value="{{ suggestion.source }}">
+      <div class="ss-group">{% if suggestion.family %}{{ _('Add to the family “%(family)s”', family=suggestion.family) }}{% if suggestion.family_albums is not none %} <span class="ss-muted fw-normal">({{ ngettext('%(num)d album', '%(num)d albums', suggestion.family_albums) }})</span>{% endif %}{% else %}{{ suggestion.anchor.name }}{% endif %} <span class="ss-muted fw-normal">&middot; {% if suggestion.source == 'discogs' %}{{ _('Discogs lists them as members, groups or other names of each other') }}{% else %}{{ _('from the names') }}{% endif %}</span></div>
       <div class="ss-row"><div class="ss-row-text">{{ member_line(suggestion.anchor) }}</div></div>
       {% for member in suggestion.members %}
       <label class="ss-row" for="member-{{ member.id }}">
-        <div class="ss-row-text">{{ member_line(member) }}</div>
+        <div class="ss-row-text">
+          {{ member_line(member) }}
+          {% if member.family %}<span class="ss-row-title">{{ _('Moves out of the family “%(family)s”.', family=member.family) }}</span>{% endif %}
+          {% for other in member.others %}
+          <span class="ss-row-title">{{ _('Also names %(name)s (%(albums)s).', name=other.name, albums=ngettext('%(num)d album', '%(num)d albums', other.albums)) }}
+            <button class="ss-link-button" type="submit" formaction="{{ url_for('families.put_with', artist_id=member.id, with_id=other.id) }}" formnovalidate>{{ _('Rather with %(name)s', name=other.name) }}</button></span>
+          {% endfor %}
+        </div>
         <input id="member-{{ member.id }}" class="form-check-input flex-shrink-0" type="checkbox" name="member" value="{{ member.id }}" checked>
       </label>
       {% endfor %}
@@ -83,6 +91,9 @@
     {% else %}
     <div class="ss-card-body ss-muted">{{ _('No artists in this family yet.') }}</div>
     {% endfor %}
+    {% if family.members %}
+    <div class="ss-card-body"><a class="ss-button ss-button-small" href="{{ url_for('moving.index', kind='family', id=family.group.id) }}">{{ _('Move…') }}</a></div>
+    {% endif %}
     <form class="ss-card-body d-flex flex-wrap gap-2" method="post" action="{{ url_for('families.add_member', group_id=family.group.id) }}">
       <label for="add-{{ family.group.id }}" class="visually-hidden">{{ _('Artist to add') }}</label>
       <input id="add-{{ family.group.id }}" class="form-control" style="max-width: 360px;" name="artist" list="free-artists" placeholder="{{ _('Add an artist…') }}" autocomplete="off" required>

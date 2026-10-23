@@ -86,6 +86,21 @@
     </div>
   </div>
 
+  {% if tracklist %}
+  <h2 class="mt-5">{{ _('Tracklist') }}</h2>
+  <div class="ss-card mt-3">
+    {% for track in tracklist %}
+    <div class="ss-row">
+      <span class="ss-track-position ss-muted">{{ track.position }}</span>
+      <span class="ss-row-text">{{ track.title }}</span>
+      {% if track.duration %}<span class="ss-row-place">{{ track.duration }}</span>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% elif album.release_id and tracklist is none and is_owner %}
+  <p class="ss-muted small mt-4 mb-0">{{ _('The tracklist comes with the next fetch from Discogs.') }} <a href="{{ url_for('discogs.index') }}#enrich">{{ _('Discogs sync') }}</a></p>
+  {% endif %}
+
   {# Filled after the page is shown, from Deezer and Discogs; without a connection it says so. #}
   <section id="listen" class="mt-5" data-url="{{ url_for('albums.listen', album_id=album.id) }}" data-offline="{{ _('Listening needs an internet connection.') }}">
     <h2>{{ _('Listen') }}</h2>
@@ -103,20 +118,18 @@
       <label for="width_cm" class="form-label fw-semibold">{{ _('Measured width in cm') }}</label>
       <div class="d-flex flex-wrap gap-2">
         <input id="width_cm" class="form-control" style="width: 120px;" name="width_cm" inputmode="decimal"
-               value="{{ '%g' | format(album.manual_width_cm) if album.manual_width_cm is not none else '' }}">
+               value="{{ album.manual_width_cm | editable if album.manual_width_cm is not none else '' }}">
         <button class="ss-button" type="submit">{{ _('Save') }}</button>
       </div>
       <div class="form-text">
-        {% if album.computed_width_cm is not none %}{{ _('Estimated from the format: %(width).1f cm.', width=album.computed_width_cm) }}{% endif %}
+        {% if album.computed_width_cm is not none %}{{ _('Estimated from the format: %(width)s cm.', width=album.computed_width_cm | decimal) }}{% endif %}
         {% if not album.width_confirmed %}{{ _('A box set or bundle: the estimate is rough until you measure it.') }}{% endif %}
         {{ _('Leave empty to use the estimate.') }}
       </div>
     </div>
   </form>
 
-  {% set move_url = url_for('albums.move', album_id=album.id) %}
-  {% set move_label = _('Stand this album on') %}
-  {% set current_shelf_id = row.shelf_id if row else none %}
+  {% set move_link = url_for('moving.index', kind='album', id=album.id) %}
   {% include "_rules_and_move.html" %}
   {% endif %}
 </div>

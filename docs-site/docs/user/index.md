@@ -10,8 +10,8 @@ The menu has five sections. Each opens on its first screen; the other screens of
 | --- | --- | --- |
 | **Dashboard** | Dashboard | See what is waiting for you, and the steps towards a new layout |
 | **Collection** | Browse / Search · Unplaced · Discogs sync | Look up records, place the ones without a spot, bring the collection in from Discogs |
-| **Shelves** | Layout · Proposal · Showcase · Versions · Cabinets | Rearrange the shelves, let the app propose a layout, manage top-loaders, go back to an earlier layout, describe your cabinets |
-| **Sorting** | Artists · Families · Clusters · Rules | Decide what the sorting goes by: an artist's cluster and start year, which artists stand together, the order of the clusters, and fixed places |
+| **Shelves** | Layout · Move · Proposal · Showcase · Versions · Cabinets | Rearrange the shelves, move an album, artist, family or cluster at once, let the app propose a layout, manage top-loaders, go back to an earlier layout, describe your cabinets |
+| **Organise** | Artists · Families · Clusters · Rules | Decide what belongs together and where: an artist's cluster and start year, which artists stand together, the order of the clusters, and fixed places |
 | **Settings** | Settings | Width estimates, the Discogs token, light or dark |
 
 A number next to a section or tab tells you how many things wait there for a decision — matches to confirm, suggested families, albums without a place, shelves that are too full.

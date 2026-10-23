@@ -63,9 +63,9 @@
             <td class="fw-semibold"><a href="{{ url_for('storage.edit_shelf', shelf_id=shelf.id) }}">{{ shelf.name }}</a></td>
             {% if columns.type %}<td class="d-none d-md-table-cell">{% if shelf.type == 'top_loader' %}{{ _('Top-loader') }}{% elif shelf.type == 'front_loader' %}{{ _('Front-loader') }}{% else %}&mdash;{% endif %}</td>{% endif %}
             {% if columns.layer %}<td class="d-none d-md-table-cell">{% if shelf.layer == 'top' %}{{ _('Top') }}{% elif shelf.layer == 'bottom' %}{{ _('Bottom') }}{% else %}&mdash;{% endif %}</td>{% endif %}
-            <td class="text-end">{% if shelf.width_cm is none %}&mdash;{% elif shelf.width_measured %}{{ '%.1f' | format(shelf.width_cm) }} cm{% else %}<span class="ss-estimate" title="{{ _('Estimated, not measured yet') }}">&asymp; {{ '%.1f' | format(shelf.width_cm) }} cm</span>{% endif %}</td>
+            <td class="text-end">{% if shelf.width_cm is none %}&mdash;{% elif shelf.width_measured %}{{ (shelf.width_cm) | decimal }} cm{% else %}<span class="ss-estimate" title="{{ _('Estimated, not measured yet') }}">&asymp; {{ (shelf.width_cm) | decimal }} cm</span>{% endif %}</td>
             {% set over = shelf.width_cm is not none and row.filled_cm > shelf.width_cm %}
-            <td class="text-end {{ ('ss-over' if shelf.width_measured else 'ss-over-estimate') if over }}">{{ '%.1f' | format(row.filled_cm) }} cm</td>
+            <td class="text-end {{ ('ss-over' if shelf.width_measured else 'ss-over-estimate') if over }}">{{ (row.filled_cm) | decimal }} cm</td>
             <td class="text-end d-none d-md-table-cell">{{ row.albums }}</td>
             {% if columns.reachability %}<td class="text-end d-none d-md-table-cell">{{ shelf.reachability_score if shelf.reachability_score is not none else '—' }}</td>{% endif %}
             {% if columns.showcase %}<td class="d-none d-md-table-cell">{% if shelf.is_showcase %}<span class="ss-chip">{{ _('Yes') }}</span>{% else %}&mdash;{% endif %}</td>{% endif %}

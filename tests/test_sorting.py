@@ -24,6 +24,7 @@ from sleeve_shelf.sorting.eras import band_of
 from sleeve_shelf.sorting.families import suggest_families
 from sleeve_shelf.sorting.order import (
     OrderedAlbum,
+    Unit,
     build_units,
     cluster_order_from_layout,
     order_albums,
@@ -85,7 +86,9 @@ def test_families_are_suggested_from_discogs_membership_groups_and_aliases():
         ArtistEnrichment(108, None, None, NOW),
     ]
 
-    suggestions = suggest_families(artists, enrichments=enrichments, album_counts={5: 3, 4: 1})
+    suggestions = suggest_families(
+        artists, enrichments=enrichments, album_counts={5: 3, 4: 1}, max_bands=3
+    )
 
     assert [(s.anchor_id, s.member_ids, s.group_id, s.source) for s in suggestions] == [
         # The person anchors the family of his bands, which is named after him.
@@ -93,7 +96,10 @@ def test_families_are_suggested_from_discogs_membership_groups_and_aliases():
         (5, (4,), None, "discogs"),
     ]
     # Turning down the artist a family would be named after settles it.
-    assert suggest_families(artists, {1, 5}, enrichments) == []
+    assert suggest_families(artists, {1, 5}, enrichments, max_bands=3) == []
+    # With room for four bands, the person in four is no sideman and gathers his bands.
+    wider = suggest_families(artists, enrichments=enrichments, album_counts={5: 3, 4: 1})
+    assert {s.anchor_id: set(s.member_ids) for s in wider}[6] == {7, 8, 9, 10}
 
 
 def test_discogs_adds_to_an_existing_family_and_leaves_what_names_suggest():
@@ -327,7 +333,7 @@ def test_a_sidemans_bands_are_a_loose_connection_and_a_close_one_goes_before_the
     records = [_record(10, groups=(20, 30, 40, 50)), _record(60, groups=(20,)), _record(70, groups=(20,))]
     assignments = [ArtistClusterAssignment(1, 7, True), ArtistClusterAssignment(6, 8, True)]
 
-    hints = clusters_by_connection(artists, assignments, records, {1: 9, 6: 1})
+    hints = clusters_by_connection(artists, assignments, records, {1: 9, 6: 1}, max_bands=3)
 
     # Band 3 knows only the sideman: an indication.
     assert hints[3] == ClusterHint(7, (1,), decisive=False)
@@ -335,6 +341,8 @@ def test_a_sidemans_bands_are_a_loose_connection_and_a_close_one_goes_before_the
     assert hints[2] == ClusterHint(7, (1,), decisive=False)
     # Artist 7 is only connected to a band without a cluster, which gives nothing to go by.
     assert set(hints) == {2, 3, 4, 5}
+    # With room for four bands artist 1 is no sideman: a band of his own is close again.
+    assert clusters_by_connection(artists, assignments, records, {1: 9, 6: 1})[3].decisive
 
 
 def test_a_connection_goes_before_the_styles_and_a_curated_cluster_before_both():
@@ -434,3 +442,117 @@ def test_a_few_albums_kept_elsewhere_are_no_place_to_add_to():
     assert suggest_spots([17], ordered, units, layout)[17].shelf_id == 2
     home = suggest_spots([17], ordered, units, layout, None, {1: 100, 2: 200})
     assert home[17] == SuggestedSpot(17, 1, 2, None, "artist")
+
+
+def test_shelf_boundaries_are_chosen_to_keep_albums_where_they_stand():
+    from sleeve_shelf.sorting.placement import fill_shelves, fill_shelves_keeping
+
+    albums = [(i, 1.0) for i in range(1, 9)]
+    shelves = [(10, 4.0), (20, 4.0), (30, 4.0)]
+    # Today shelf 10 holds 1-3, 20 holds 4-6, 30 holds 7-8: filling to the brim would
+    # push 4 onto shelf 10, and everything after it along.
+    standing = {1: 10, 2: 10, 3: 10, 4: 20, 5: 20, 6: 20, 7: 30, 8: 30}
+
+    greedy, _ = fill_shelves(albums, shelves)
+    calm, left_out = fill_shelves_keeping(albums, shelves, standing)
+
+    assert sum(standing[s.album_id] == s.shelf_id for s in greedy) == 5
+    assert [(s.album_id, s.shelf_id, s.position) for s in calm] == [
+        (1, 10, 0), (2, 10, 1), (3, 10, 2), (4, 20, 0), (5, 20, 1), (6, 20, 2), (7, 30, 0), (8, 30, 1),
+    ]
+    assert left_out == []
+
+
+def test_keeping_albums_in_place_never_leaves_more_out_and_keeps_the_order():
+    from sleeve_shelf.sorting.placement import fill_shelves, fill_shelves_keeping
+
+    albums = [(1, 0.5), (2, 3.0), (3, 0.5), (4, 0.5), (5, 0.5)]
+    shelves = [(10, 1.0), (20, 1.0)]
+    # Nothing stands anywhere yet: the order and what is left out are those of filling to the brim.
+    greedy, greedy_left = fill_shelves(albums, shelves)
+    calm, calm_left = fill_shelves_keeping(albums, shelves, {})
+
+    assert calm_left == greedy_left == [2]
+    assert [s.album_id for s in calm] == [s.album_id for s in greedy] == [1, 3, 4, 5]
+
+
+def test_the_owner_s_order_within_a_band_and_an_artist_is_kept_and_only_the_new_go_by_the_rule():
+    clusters = [Cluster(1, "Jazz", 0)]
+    units = [
+        Unit("Chet Baker", (1,), 1, False, 1952, "before 1960"),
+        Unit("Art Blakey", (2,), 1, False, 1944, "before 1960"),
+        Unit("Bill Evans", (3,), 1, False, 1956, "before 1960"),
+        Unit("Zoot Sims", (4,), 1, False, 1950, "before 1960"),
+    ]
+    albums = [
+        Album(10, 1, "Sings", original_release_year=1954),
+        Album(11, 1, "Chet", original_release_year=1959),
+        Album(12, 1, "Chet Is Back", original_release_year=1962),
+        Album(20, 2, "Moanin'", original_release_year=1958),
+        Album(30, 3, "Portrait In Jazz", original_release_year=1959),
+        Album(40, 4, "Zoot!", original_release_year=1956),
+    ]
+    # On the shelf: Chet Baker before Art Blakey (not alphabetical), and Chet before Sings
+    # (not by year). Bill Evans, Zoot Sims and Chet Is Back stand nowhere yet.
+    standing = {11: 0, 10: 1, 20: 2}
+
+    ordered = [entry.album_id for entry in order_albums(units, albums, clusters, standing)]
+
+    # Bill Evans goes before the first standing artist the alphabet puts after him (Chet
+    # Baker); Zoot Sims, after all of them, at the end. Chet Is Back (1962) after both.
+    assert ordered == [30, 11, 10, 12, 20, 40]
+    # Without anything standing it is the rule throughout.
+    assert [e.album_id for e in order_albums(units, albums, clusters)] == [20, 30, 10, 11, 12, 40]
+
+
+def test_a_joint_billing_goes_to_the_artist_with_the_most_albums_and_names_the_others():
+    artists = [
+        Artist(4, "Duke Ellington"),
+        Artist(5, "John Coltrane"),
+        Artist(6, "Duke Ellington & John Coltrane"),
+        Artist(7, "John Coltrane Quartet"),
+    ]
+    # Coltrane counts with every name that leads to him: 2 + 3 against Ellington's 4.
+    counts = {4: 4, 5: 2, 6: 1, 7: 3}
+
+    suggestions = suggest_families(artists, album_counts=counts)
+
+    duet = next(s for s in suggestions if 6 in s.member_ids)
+    assert duet.anchor_id == 5 and dict(duet.others) == {6: (4,)}
+    # The quartet names only Coltrane: nothing else to choose.
+    assert dict(next(s for s in suggestions if 7 in s.member_ids).others).get(7) is None
+
+
+def test_a_joint_billing_in_a_family_is_suggested_to_move_to_a_family_with_more_albums():
+    artists = [
+        Artist(1, "Chick Webb And His Orchestra", alias_group_id=1),
+        Artist(2, "Chick Webb And His Orchestra Featuring Ella Fitzgerald", alias_group_id=1),
+        Artist(3, "Ella Fitzgerald", alias_group_id=2),
+        Artist(4, "Ella Fitzgerald & Louis Armstrong", alias_group_id=2),
+        Artist(5, "Louis Armstrong"),
+    ]
+    counts = {1: 1, 2: 1, 3: 7, 4: 2, 5: 4}
+
+    suggestions = suggest_families(artists, album_counts=counts)
+
+    move = next(s for s in suggestions if 2 in s.member_ids)
+    # To Ella's family (9 albums) from Chick Webb's (1, not counting the album that moves).
+    assert (move.anchor_id, move.group_id, move.source) == (3, 2, "names")
+    # Louis Armstrong has fewer albums than Ella's family: the duet stays where it is.
+    assert all(4 not in s.member_ids for s in suggestions)
+    # Turning the move down settles it.
+    assert all(2 not in s.member_ids for s in suggest_families(artists, {2}, album_counts=counts))
+
+
+def test_a_name_is_compared_without_its_discogs_number_and_in_time_whatever_its_length():
+    import time
+
+    from sleeve_shelf.sorting.families import sort_name
+
+    assert sort_name("Melanie (2)") == "melanie"
+    assert sort_name("Them (3) Featuring: Van Morrison") == "them featuring: van morrison"
+    assert sort_name("  Neil Young With  Crazy Horse ") == "neil young with crazy horse"
+    # A long run of spaces, as a search text may hold, takes no time.
+    started = time.monotonic()
+    sort_name(" " * 100_000 + "x")
+    assert time.monotonic() - started < 0.5

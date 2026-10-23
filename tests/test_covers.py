@@ -170,14 +170,13 @@ def test_images_from_before_the_folders_are_sorted_into_them(app, tmp_path):
 def test_discogs_screen_says_how_many_images_are_stored(app, client):
     page = client.get("/discogs/").text
     assert "0 of 4 images" in page
-    assert "The images of 4 covers and artists still have to be stored." in page
+    assert 'ss-step-is-todo" id="step-store"' in page
 
     download_images(_store(app), _Images(), [THUMB, GONE, LARGE, PICTURE])
 
     page = client.get("/discogs/").text
     # The image that is gone counts as dealt with: 3 stored of the 4 the pages show.
     assert "3 of 4 images" in page
-    assert "still have to be stored" not in page
     assert "1 image is no longer at Discogs and could not be stored." in page
 
 

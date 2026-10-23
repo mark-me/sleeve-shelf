@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 import shutil
 import time
 from collections.abc import Callable, Iterable
@@ -39,9 +40,12 @@ from sleeve_shelf.domain import (
     ShelfLayer,
     ShelfType,
     Style,
+    Track,
 )
 
 SNAPSHOT_DIR = "placements"
+# What the name of a saved version is made of (see versions.save_version).
+_SNAPSHOT_NAME = re.compile(r"[A-Za-z0-9_-]+")
 SWAP_ATTEMPTS = 6
 
 
@@ -65,6 +69,10 @@ _FORMAT_TOKENS_TYPE = (
     "STRUCT(disc_count INTEGER, is_180_gram BOOLEAN, is_gatefold BOOLEAN,"
     " is_compound BOOLEAN, qualifiers VARCHAR[])"
 )
+
+def _tracklist(value: list) -> tuple[Track, ...]:
+    return tuple(Track(**track) for track in value)
+
 
 _PLACEMENT_COLUMNS = {
     "album_id": "INTEGER",
@@ -194,8 +202,9 @@ _TABLES: dict[type, _Table] = {
             "master_id": "INTEGER",
             "fetched_at": "TIMESTAMP",
             "year": "INTEGER",
+            "tracklist": "STRUCT(position VARCHAR, title VARCHAR, duration VARCHAR)[]",
         },
-        {"styles": tuple},
+        {"styles": tuple, "tracklist": _tracklist},
     ),
     MasterEnrichment: _Table(
         "discogs_masters.json",
@@ -403,11 +412,22 @@ class JsonStore:
         """Run a read query; refer to entities through relation()."""
         return self._connection.execute(sql, parameters or []).fetchall()
 
+    def _snapshot_path(self, name: str) -> Path:
+        """The file of a saved version. Its name is a plain file name — letters, digits, "-"
+        and "_" — and the path stays inside the folder of versions; anything else is refused,
+        as a name can come from a request."""
+        if not _SNAPSHOT_NAME.fullmatch(name):
+            raise ValueError(f"Not a name of a saved version: {name!r}")
+        folder = os.path.normpath(self.data_dir / SNAPSHOT_DIR)
+        path = os.path.normpath(os.path.join(folder, name + ".json"))
+        if not path.startswith(folder + os.sep):
+            raise ValueError(f"Not a name of a saved version: {name!r}")
+        return Path(path)
+
     def save_snapshot(self, name: str) -> Path:
         """Keep a copy of the current placement as a saved layout version."""
-        snapshots = self.data_dir / SNAPSHOT_DIR
-        snapshots.mkdir(parents=True, exist_ok=True)
-        target = snapshots / f"{name}.json"
+        target = self._snapshot_path(name)
+        target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(self.data_dir / _TABLES[Placement].filename, target)
         return target
 
@@ -418,7 +438,7 @@ class JsonStore:
     def load_snapshot(self, name: str) -> list[Placement]:
         """The placements of a saved layout version."""
         table = _TABLES[Placement]
-        path = self.data_dir / SNAPSHOT_DIR / f"{name}.json"
+        path = self._snapshot_path(name)
         rows = self._connection.execute(
             f"SELECT * FROM {self._read(table, path)}"
         ).fetchall()
@@ -427,7 +447,7 @@ class JsonStore:
     def snapshot_is_current(self, name: str) -> bool:
         """Whether a saved version is exactly the current layout."""
         current = self.data_dir / _TABLES[Placement].filename
-        saved = self.data_dir / SNAPSHOT_DIR / f"{name}.json"
+        saved = self._snapshot_path(name)
         if not (current.exists() and saved.exists()):
             return False
         # Compared by content, not by bytes: an older version may still carry the old column names.

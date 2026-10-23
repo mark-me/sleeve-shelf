@@ -70,6 +70,7 @@ def clusters_by_connection(
     assignments: list[ArtistClusterAssignment],
     enrichments: list[ArtistEnrichment],
     album_counts: dict[int, int],
+    max_bands: int = MAX_BANDS,
 ) -> dict[int, ClusterHint]:
     """For each artist without a confirmed cluster: the cluster of whom Discogs connects it to.
 
@@ -79,7 +80,7 @@ def clusters_by_connection(
 
     The close connections are the ones a family is suggested from: other names, and a
     person with a band that no other artist in the collection is in, unless the person is
-    a sideman. With any of those the hint is decisive and goes by them alone. Otherwise it
+    a sideman (in more than max_bands bands of the collection). With any of those the hint is decisive and goes by them alone. Otherwise it
     goes by the loose ones — a band several artists share, a sideman's bands — and is no
     more than an indication: measured against the curated collection those are right
     about as often as the styles are.
@@ -117,7 +118,7 @@ def clusters_by_connection(
     # Who a band belongs to: the artists in it that are no sidemen, each under one name.
     owners: dict[int, set[int]] = {}
     for person, bands in bands_of.items():
-        if len(bands) <= MAX_BANDS:
+        if len(bands) <= max_bands:
             for band in bands:
                 owners.setdefault(band, set()).add(root(person))
 
@@ -132,7 +133,7 @@ def clusters_by_connection(
         connect(close, one, other)
     for person, bands in bands_of.items():
         for band in bands:
-            own = len(bands) <= MAX_BANDS and owners.get(band) == {root(person)}
+            own = len(bands) <= max_bands and owners.get(band) == {root(person)}
             connect(close if own else loose, person, band)
 
     curated = {a.artist_id: a.cluster_id for a in assignments if a.confirmed}

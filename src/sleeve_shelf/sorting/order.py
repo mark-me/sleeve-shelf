@@ -121,41 +121,71 @@ def build_units(
     return units
 
 
-def order_albums(units: list[Unit], albums: list[Album], clusters: list[Cluster]) -> list[OrderedAlbum]:
+def order_albums(
+    units: list[Unit],
+    albums: list[Album],
+    clusters: list[Cluster],
+    standing: dict[int, int] | None = None,
+) -> list[OrderedAlbum]:
     """Every album of the units in shelf order.
 
     Clusters follow their curated position; within a cluster the era bands run
-    oldest first, units alphabetically, and a unit's albums by original year
-    (unknown last) and title. Albums without a cluster come at the very end.
+    oldest first. Albums without a cluster come at the very end.
+
+    Within a band the units, and within a unit its albums, keep the order they stand
+    in now (standing: album -> its place along the walked shelves): that order is the
+    owner's own, and the sorting has no rule that says otherwise. Only what stands
+    nowhere yet goes by the rule — units alphabetically, an artist's albums by original
+    year (unknown last) and title — before the first one standing that the rule puts
+    after it. Without standing, everything goes by the rule.
     """
+    standing = standing or {}
     position = {
         cluster.id: (cluster.position if cluster.position is not None else len(clusters), cluster.id)
         for cluster in clusters
     }
     last = (len(clusters) + 1, 0)
     unit_of = {artist_id: unit for unit in units for artist_id in unit.artist_ids}
-
-    def key(album: Album):
-        unit = unit_of[album.artist_id]
-        return (
-            position.get(unit.cluster_id, last),
-            band_index(unit.band),
-            unit.name,
-            album.original_release_year or 9999,
-            album.title.casefold(),
-            album.id,
-        )
-
     placed = [album for album in albums if album.artist_id in unit_of]
-    return [
-        OrderedAlbum(
-            album.id,
-            unit_of[album.artist_id].cluster_id,
-            unit_of[album.artist_id].band,
-            unit_of[album.artist_id].name,
+
+    def album_rule(album: Album):
+        return (album.original_release_year or 9999, album.title.casefold(), album.id)
+
+    albums_of: dict[tuple[int, ...], list[Album]] = {}
+    for album in placed:
+        albums_of.setdefault(unit_of[album.artist_id].artist_ids, []).append(album)
+    bands: dict[tuple, list[Unit]] = {}
+    for unit in units:
+        if unit.artist_ids in albums_of:
+            bands.setdefault((position.get(unit.cluster_id, last), band_index(unit.band)), []).append(unit)
+
+    def where(unit: Unit) -> float | None:
+        # Where the unit stands now: the middle of its albums that stand, so a few kept
+        # elsewhere don't move it.
+        places = sorted(standing[a.id] for a in albums_of[unit.artist_ids] if a.id in standing)
+        return places[len(places) // 2] if places else None
+
+    ordered: list[OrderedAlbum] = []
+    for band_key in sorted(bands):
+        for unit in _keep_order(bands[band_key], where, lambda u: (u.name, u.artist_ids)):
+            for album in _keep_order(albums_of[unit.artist_ids], lambda a: standing.get(a.id), album_rule):
+                ordered.append(OrderedAlbum(album.id, unit.cluster_id, unit.band, unit.name))
+    return ordered
+
+
+def _keep_order(items: list, where, rule) -> list:
+    """The items that stand somewhere in the order they stand in; each one that stands
+    nowhere goes before the first standing one the rule puts after it, else at the end.
+    Those that stand nowhere keep the rule's order among themselves."""
+    result = sorted((item for item in items if where(item) is not None), key=where)
+    standing_ones = {id(item) for item in result}
+    for item in sorted((item for item in items if where(item) is None), key=rule):
+        index = next(
+            (k for k, other in enumerate(result) if id(other) in standing_ones and rule(other) > rule(item)),
+            len(result),
         )
-        for album in sorted(placed, key=key)
-    ]
+        result.insert(index, item)
+    return result
 
 
 def cluster_order_from_layout(layout_cluster_ids: list[int | None]) -> list[int]:

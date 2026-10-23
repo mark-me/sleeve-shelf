@@ -218,3 +218,18 @@ def test_only_web_addresses_are_taken_as_videos(store):
     )])
     shown = listening(store, 1, _Deezer(None), None)
     assert [video.title for video in shown.videos] == ["Martha"]
+
+
+def test_names_and_titles_are_read_in_time_whatever_their_shape():
+    import time
+
+    from sleeve_shelf.ingestion.deezer import _plain, first_artist
+
+    assert first_artist("Duke Ellington  &  Charles Mingus (2)") == "Duke Ellington"
+    assert _plain("Closing Time (Remastered) [Live]") == "closing time"
+    # An opening bracket that is never closed stays, as before.
+    assert _plain("A (b) (c") == "a c"
+    started = time.monotonic()
+    first_artist(" " * 100_000 + "x")
+    _plain("(" * 100_000 + "x")
+    assert time.monotonic() - started < 1

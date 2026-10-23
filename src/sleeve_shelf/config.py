@@ -22,8 +22,20 @@ class Settings:
     count_bonus_discs_as_vinyl: bool = True
     # The part of a showcase shelf's width albums may take, leaving room to flip through them.
     showcase_fill_percent: int = 60
+    # The part of each shelf's width a proposal leaves free, so a few purchases later do not
+    # set a whole cabinet moving.
+    shelf_room_percent: int = 10
+    # How many records may be out of the cabinets at once when reorganising: a table full.
+    table_records: int = 50
+    # A person in more bands of the collection than this is a sideman: their bands are not
+    # suggested as their family, and connect to them only loosely.
+    sideman_bands: int = 4
     # The owner's password, hashed; without one the app is open and everyone is the owner.
     owner_password_hash: str | None = None
+    # What a logged-in device keeps in its session: random, made anew with every password,
+    # so changing the password logs out the other devices. Nothing in it comes from the
+    # password itself.
+    owner_login_key: str | None = None
 
     @property
     def width_constants(self) -> WidthConstants:

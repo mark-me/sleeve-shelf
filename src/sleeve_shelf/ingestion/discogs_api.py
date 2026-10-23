@@ -8,7 +8,12 @@ import urllib.request
 from collections.abc import Callable
 from datetime import datetime
 
-from sleeve_shelf.domain import ArtistEnrichment, MasterEnrichment, ReleaseEnrichment
+from sleeve_shelf.domain import (
+    ArtistEnrichment,
+    MasterEnrichment,
+    ReleaseEnrichment,
+    Track,
+)
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
 from sleeve_shelf.ingestion.formats import parse_format
 
@@ -68,7 +73,7 @@ class DiscogsClient:
         self._last_request: float | None = None
 
     def release(self, release_id: int) -> ReleaseEnrichment:
-        """Styles, master and year of a release; one that no longer exists yields none."""
+        """Styles, master, year and songs of a release; one that no longer exists yields none."""
         data = self._get(f"/releases/{release_id}") or {}
         return ReleaseEnrichment(
             release_id=release_id,
@@ -76,6 +81,7 @@ class DiscogsClient:
             master_id=data.get("master_id") or None,
             fetched_at=datetime.now().replace(microsecond=0),
             year=data.get("year") or None,
+            tracklist=tracklist(data.get("tracklist")),
         )
 
     def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
@@ -124,8 +130,12 @@ class DiscogsClient:
             alias_ids=ids("aliases"),
         )
 
-    def collection(self) -> list[dict]:
-        """Every release in the collection of the token's owner, as the API gives them."""
+    def collection(self, progress: Callable[[int, int, int], None] | None = None) -> list[dict]:
+        """Every release in the collection of the token's owner, as the API gives them.
+
+        progress is told after each page: the pages fetched, of how many, and how many
+        releases the collection holds — Discogs says so with the first page.
+        """
         username = (self._get("/oauth/identity") or {}).get("username")
         if not username:
             raise DiscogsError("Discogs did not say whose token this is.")
@@ -139,7 +149,11 @@ class DiscogsClient:
             if data is None:
                 raise DiscogsError("Discogs has no collection for this token.")
             releases.extend(data.get("releases") or ())
-            if page >= (data.get("pagination") or {}).get("pages", 1):
+            pagination = data.get("pagination") or {}
+            pages = pagination.get("pages", 1)
+            if progress is not None:
+                progress(page, pages, pagination.get("items", len(releases)))
+            if page >= pages:
                 return releases
             page += 1
 
@@ -197,6 +211,20 @@ class DiscogsClient:
             if wait > 0:
                 self._sleep(wait)
         self._last_request = self._clock()
+
+
+def tracklist(entries: list[dict] | None) -> tuple[Track, ...]:
+    """The songs of a Discogs tracklist, in order. A heading ("Side A") is no song; a medley
+    or suite listed with its parts counts by its parts."""
+    tracks: list[Track] = []
+    for entry in entries or ():
+        parts = entry.get("sub_tracks") or ()
+        kind = entry.get("type_") or "track"
+        for track in parts if parts else ([entry] if kind in ("track", "index") else []):
+            title = (track.get("title") or "").strip()
+            if title:
+                tracks.append(Track(track.get("position") or "", title, track.get("duration") or None))
+    return tuple(tracks)
 
 
 def is_web_address(address: str | None) -> bool:

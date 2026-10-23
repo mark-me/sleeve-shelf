@@ -11,6 +11,7 @@ from sleeve_shelf.domain import (
     Cluster,
     EraBand,
     Placement,
+    ReleaseEnrichment,
     Shelf,
 )
 from sleeve_shelf.persistence.store import JsonStore
@@ -47,6 +48,9 @@ class AlbumRow:
     cover_url: str | None = None
     # The day a sync or import added the album; None for one that came with the workbook.
     added_on: date | None = None
+    # In search results: the songs that matched, as (position, title), when the artist and
+    # title alone did not.
+    tracks: tuple[tuple[str, str], ...] = ()
 
 
 class BrowseQueries:
@@ -107,30 +111,62 @@ class BrowseQueries:
         return sorted(rows, key=lambda row: -(row.added_on.toordinal() if row.added_on else 0))
 
     def search(self, text: str) -> list[AlbumRow]:
-        """Albums whose artist or title contains every word of the text."""
+        """Albums whose artist and title contain every word of the text, or whose artist,
+        title and one of its songs do; such an album comes with the songs that matched."""
         terms = text.split()
         if not terms:
             return []
-        condition = " AND ".join(
-            "contains(strip_accents(lower(artist || ' ' || title)), strip_accents(lower(?)))"
-            for _ in terms
-        )
-        return self._albums(f"WHERE {condition}", terms)
 
-    def _albums(self, where: str, parameters: list) -> list[AlbumRow]:
+        def every_term(text_sql: str) -> str:
+            return " AND ".join(
+                f"contains(strip_accents(lower({text_sql})), strip_accents(lower(?)))"
+                for _ in terms
+            )
+
+        by_album = every_term("located.artist || ' ' || located.title")
+        by_song = every_term("located.artist || ' ' || located.title || ' ' || song.title")
+        # The songs of each album, from its release, in the order they are on the record.
+        songs = f"""
+            , song AS (
+                SELECT album.id AS album_id, unnest(release.tracklist).title AS title,
+                       unnest(release.tracklist).position AS position,
+                       unnest(range(len(release.tracklist))) AS number
+                FROM {self._store.relation(Album)} AS album
+                JOIN {self._store.relation(ReleaseEnrichment)} AS release
+                    ON release.release_id = album.release_id
+            ),
+            found AS (
+                SELECT song.album_id,
+                       list([coalesce(song.position, ''), song.title] ORDER BY song.number) AS tracks
+                FROM song JOIN located ON located.album_id = song.album_id
+                WHERE ({by_song}) AND NOT ({by_album})
+                GROUP BY song.album_id
+            )
+        """
+        return self._albums(
+            f"WHERE ({by_album}) OR found.album_id IS NOT NULL", terms * 3, songs
+        )
+
+    def _albums(self, where: str, parameters: list, songs: str = "") -> list[AlbumRow]:
         rows = self._store.query(
             f"""
             {self._located_albums()}
-            SELECT album_id, artist, title, year, cluster, era_band, shelf_id, cabinet, shelf,
-                   is_lp, artist_id, cover_url, added_on
+            {songs}
+            SELECT located.album_id, artist, title, year, cluster, era_band, shelf_id, cabinet,
+                   shelf, is_lp, artist_id, cover_url, added_on,
+                   {"found.tracks" if songs else "NULL"}
             FROM located
+            {"LEFT JOIN found ON found.album_id = located.album_id" if songs else ""}
             {where}
             ORDER BY cabinet_order NULLS LAST, cabinet_id, shelf_order, shelf_id,
-                     position, title, album_id
+                     position, title, located.album_id
             """,
             parameters,
         )
-        return [AlbumRow(*row) for row in rows]
+        return [
+            AlbumRow(*row[:-1], tracks=tuple(tuple(track) for track in row[-1] or ()))
+            for row in rows
+        ]
 
     def _located_albums(self) -> str:
         """CTE giving each album its location, if it has one."""

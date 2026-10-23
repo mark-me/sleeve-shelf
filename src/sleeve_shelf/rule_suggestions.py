@@ -80,9 +80,6 @@ def rule_suggestions(store: JsonStore) -> list[RuleSuggestion]:
         cabinet, count = Counter(current[i] for i in ids).most_common(1)[0]
         return cabinet if count == len(ids) else None
 
-    def proposal_for(ids: list[int]) -> int | None:
-        return Counter(proposed.get(i) for i in ids).most_common(1)[0][0]
-
     assignments = {a.artist_id: a.cluster_id for a in store.load(ArtistClusterAssignment)}
     family_of = {artist.id: artist.alias_group_id for artist in store.load(Artist)}
     existing = {

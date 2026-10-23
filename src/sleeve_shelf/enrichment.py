@@ -2,7 +2,8 @@
 and artist pictures fetched and cached, then applied to the albums and artists."""
 
 from collections import Counter, defaultdict
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from dataclasses import replace
 
 from sleeve_shelf.collection import ensure_cluster_order
 from sleeve_shelf.covers import download_images, image_urls, missing_images
@@ -22,6 +23,17 @@ from sleeve_shelf.persistence import JsonStore
 SAVE_CACHE_EVERY = 25
 
 
+def releases_to_fetch(
+    albums: Iterable[Album], releases: dict[int, ReleaseEnrichment]
+) -> tuple[set[int], set[int]]:
+    """The releases of the albums still to be asked for: those never fetched, and those
+    fetched before tracklists were kept, which are asked for again for their tracklist."""
+    linked = {album.release_id for album in albums if album.release_id is not None}
+    new = linked - releases.keys()
+    without_tracks = {i for i in linked & releases.keys() if releases[i].tracklist is None}
+    return new, without_tracks
+
+
 def enrich_collection(
     store: JsonStore,
     client: DiscogsClient,
@@ -39,9 +51,8 @@ def enrich_collection(
     releases = {release.release_id: release for release in store.load(ReleaseEnrichment)}
     masters = {master.master_id: master for master in store.load(MasterEnrichment)}
     pictures = {artist.discogs_artist_id: artist for artist in store.load(ArtistEnrichment)}
-    release_ids = sorted(
-        {a.release_id for a in albums if a.release_id is not None} - releases.keys()
-    )
+    new_ids, tracklist_ids = releases_to_fetch(albums, releases)
+    release_ids = sorted(new_ids | tracklist_ids)
     artist_ids = sorted(
         discogs_id
         for discogs_id in {
@@ -51,10 +62,8 @@ def enrich_collection(
         if discogs_id not in pictures or pictures[discogs_id].member_ids is None
     )
     # Each new release may bring one master lookup with it.
-    done, saved, total = 0, 0, 2 * len(release_ids) + len(artist_ids)
-    linked_count = len(release_ids) + len(
-        {a.release_id for a in albums if a.release_id is not None} & releases.keys()
-    )
+    done, saved, total = 0, 0, 2 * len(new_ids) + len(tracklist_ids) + len(artist_ids)
+    linked_count = len({a.release_id for a in albums if a.release_id is not None})
     named_count = len(
         {a.discogs_artist_id for a in store.load(Artist) if a.discogs_artist_id is not None}
     )
@@ -63,13 +72,20 @@ def enrich_collection(
     try:
         for count, release_id in enumerate(release_ids, start=1):
             release = client.release(release_id)
-            releases[release_id] = release
+            # Fetched now, so asked for with its tracklist: none is an empty one, never again.
+            release = replace(release, tracklist=release.tracklist or ())
             done += 1
-            if release.master_id is None or release.master_id in masters:
-                total -= 1
+            if release_id in tracklist_ids:
+                # Fetched before for its styles and year: only the tracklist is new. What the
+                # sorting goes by is left as it was, so nothing moves because of this.
+                releases[release_id] = replace(releases[release_id], tracklist=release.tracklist)
             else:
-                masters[release.master_id] = client.master(release.master_id)
-                done += 1
+                releases[release_id] = release
+                if release.master_id is None or release.master_id in masters:
+                    total -= 1
+                else:
+                    masters[release.master_id] = client.master(release.master_id)
+                    done += 1
             part("albums", linked_count - len(release_ids) + count, linked_count)
             progress(done, total)
             if done - saved >= SAVE_CACHE_EVERY:
