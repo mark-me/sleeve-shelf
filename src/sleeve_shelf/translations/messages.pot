@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-24 00:22+0200\n"
+"POT-Creation-Date: 2026-10-24 00:31+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1426,7 +1426,7 @@ msgid "Generate a proposal, adjust it, and accept it"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Sync with Discogs, fetch styles and original years, and confirm the matches."
+msgid "Sync with Discogs — one round brings in styles, years and pictures too — and confirm the matches."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html

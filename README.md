@@ -58,7 +58,7 @@ uv run python -m sleeve_shelf load path/to/layout.xlsx
 
 ### Linking the collection to Discogs
 
-Use the **Discogs** screen in the app: set your personal access token, sync your collection (or upload your collection export), and start fetching. The same can be done from the command line — put the token in `config.yaml` inside the data directory (`discogs_token: ...`; the file is git-ignored), then:
+Use the **Discogs** screen in the app: set your personal access token and press **Sync**. One round fetches your collection, takes it over, and fetches styles, years, tracklists, pictures and covers; what needs your decision is listed afterwards. You can also import your collection export instead. The same can be done from the command line — put the token in `config.yaml` inside the data directory (`discogs_token: ...`; the file is git-ignored), then:
 
 ```sh
 uv run python -m sleeve_shelf import-discogs path/to/discogs-collection.csv

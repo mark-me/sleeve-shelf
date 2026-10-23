@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-24 00:22+0200\n"
+"POT-Creation-Date: 2026-10-24 00:31+0200\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -1406,8 +1406,8 @@ msgid "Generate a proposal, adjust it, and accept it"
 msgstr "Een voorstel maken, aanpassen en accepteren"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Sync with Discogs, fetch styles and original years, and confirm the matches."
-msgstr "Synchroniseer met Discogs, haal stijlen en oorspronkelijke jaren op, en bevestig de koppelingen."
+msgid "Sync with Discogs — one round brings in styles, years and pictures too — and confirm the matches."
+msgstr "Synchroniseer met Discogs — één ronde haalt ook stijlen, jaren en foto’s binnen — en bevestig de koppelingen."
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "The cluster decides where an artist stands, the start year in which era band."
