@@ -6,7 +6,7 @@
 # with .python-version, which the tests run on.
 #
 # uv comes from its own image, at a fixed version.
-FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.5 AS uv
 
 
 # Build stage: install the locked dependencies and the app into a virtual environment.
