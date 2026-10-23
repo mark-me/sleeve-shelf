@@ -542,3 +542,17 @@ def test_a_joint_billing_in_a_family_is_suggested_to_move_to_a_family_with_more_
     assert all(4 not in s.member_ids for s in suggestions)
     # Turning the move down settles it.
     assert all(2 not in s.member_ids for s in suggest_families(artists, {2}, album_counts=counts))
+
+
+def test_a_name_is_compared_without_its_discogs_number_and_in_time_whatever_its_length():
+    import time
+
+    from sleeve_shelf.sorting.families import sort_name
+
+    assert sort_name("Melanie (2)") == "melanie"
+    assert sort_name("Them (3) Featuring: Van Morrison") == "them featuring: van morrison"
+    assert sort_name("  Neil Young With  Crazy Horse ") == "neil young with crazy horse"
+    # A long run of spaces, as a search text may hold, takes no time.
+    started = time.monotonic()
+    sort_name(" " * 100_000 + "x")
+    assert time.monotonic() - started < 0.5
