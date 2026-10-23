@@ -180,19 +180,35 @@ def _wait(address: str) -> int:
     return max(0, int(last + wait - time.monotonic() + 0.999))
 
 
-def safe_next(target: str | None) -> str:
-    """Where to go after logging in: a page of this app, never another site. A backslash is
-    refused too, as browsers read "/\\elsewhere.example" as another site."""
-    if (
+def _within(target: str | None) -> bool:
+    """Whether target is a page of this app, never another site. A backslash is refused too,
+    as browsers read "/\\elsewhere.example" as another site, and so is a control character,
+    which browsers drop ("/\t/elsewhere.example")."""
+    return bool(
         target
         and target.startswith("/")
         and not target.startswith("//")
         and "\\" not in target
         and not any(ord(char) < 32 or ord(char) == 127 for char in target)
         and not urlsplit(target).netloc
-    ):
-        return target
-    return url_for("index")
+    )
+
+
+def safe_next(target: str | None) -> str:
+    """Where to go after logging in: a page of this app, else the start."""
+    return target if _within(target) else url_for("index")
+
+
+def redirect_within(target: str | None, fallback: str) -> Response:
+    """Go to target when it is a page of this app, else to fallback.
+
+    The check stands right beside the redirect — no host and no scheme — so a code scanner
+    sees it guards the redirect; _within holds the rest of it.
+    """
+    parts = urlsplit(target or "")
+    if target and _within(target) and not parts.netloc and not parts.scheme:
+        return redirect(target)
+    return redirect(fallback)
 
 
 @blueprint.route("/login", methods=["GET", "POST"])
@@ -213,7 +229,7 @@ def page():
             _failures.pop(address, None)
             remember_owner(verified)
             current_app.logger.info("Owner logged in from %s", address)
-            return redirect(target)
+            return redirect_within(target, url_for("index"))
         else:
             count, _last = _failures.get(address, (0, 0.0))
             _failures[address] = (count + 1, time.monotonic())

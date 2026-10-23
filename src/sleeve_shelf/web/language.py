@@ -4,10 +4,10 @@ from pathlib import Path
 
 from babel.messages.mofile import write_mo
 from babel.messages.pofile import read_po
-from flask import Blueprint, redirect, request, url_for
+from flask import Blueprint, request, url_for
 from flask_babel import format_decimal
 
-from sleeve_shelf.web.login import safe_next
+from sleeve_shelf.web.login import redirect_within
 
 blueprint = Blueprint("language", __name__)
 
@@ -64,7 +64,9 @@ def choose():
     page it was chosen on (the menu), or to Settings."""
     chosen = request.form.get("language", "")
     target = request.form.get("next")
-    response = redirect(safe_next(target) if target else url_for("settings.index"))
+    # From the menu, back to that page (or the start, should it be no page of this app);
+    # from Settings, which sends none, back there.
+    response = redirect_within(target, url_for("index") if target else url_for("settings.index"))
     if chosen in LANGUAGES:
         response.set_cookie(
             COOKIE, chosen, max_age=COOKIE_DAYS * 24 * 3600, samesite="Lax", httponly=True
