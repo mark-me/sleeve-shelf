@@ -7,17 +7,21 @@ import pytest
 
 from sleeve_shelf import create_app
 from sleeve_shelf.access import set_password
+from sleeve_shelf.covers import ARTIST_DIR, COVER_DIR, cover_name
 from sleeve_shelf.domain import (
     Album,
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
     ArtistEnrichment,
+    Cabinet,
     Cluster,
+    Placement,
     ReleaseEnrichment,
+    Shelf,
     Track,
 )
-from sleeve_shelf.network import Tie, build, network, song_key
+from sleeve_shelf.network import Tie, TiedAlbum, build, network, song_key, ties_of
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web import login
 
@@ -132,6 +136,30 @@ def test_an_artist_only_on_albums_of_its_own_shares_no_song_with_itself():
     assert build(artists, albums, [], releases, [], []).links == ()
 
 
+def test_a_tie_comes_with_the_albums_to_take_from_the_shelf(tmp_path):
+    store = _collection(tmp_path)
+
+    tied = {t.point.artist_id: t for t in ties_of(store, network(store), 1)}
+
+    # A band: all of its albums.
+    assert tied[2].theirs == (TiedAlbum(21),) and tied[2].mine == ()
+    # A song: on each side the albums that have it, as each titles it.
+    assert tied[5].theirs == (TiedAlbum(51, ("Round Midnight (Live)",)),)
+    assert tied[5].mine == (TiedAlbum(11, ("'Round Midnight",)),)
+
+
+def test_a_band_that_shares_a_song_shows_all_its_albums(tmp_path):
+    store = _collection(tmp_path)
+    store.save(Album, store.load(Album) + [Album(22, 2, "Workin'", release_id=7)])
+    store.save(ReleaseEnrichment, store.load(ReleaseEnrichment) + [_release(7, "So What")])
+
+    quintet = next(t for t in ties_of(store, network(store), 1) if t.point.artist_id == 2)
+
+    assert quintet.link.ties == (Tie.MEMBER, Tie.BILLING, Tie.SONGS)
+    assert set(quintet.theirs) == {TiedAlbum(21), TiedAlbum(22, ("So What",))}
+    assert quintet.mine == (TiedAlbum(12, ("So What",)),)
+
+
 @pytest.fixture
 def client(tmp_path):
     _collection(tmp_path / "data")
@@ -148,6 +176,20 @@ def test_the_screen_shows_the_ties_of_an_artist_as_a_list(client):
     # The network is drawn by the vendored library, within the policy.
     assert "vendor/cytoscape.min.js" in page
     assert 'id="__________cytoscape_stylesheet"' in page
+
+
+def test_the_list_says_where_the_albums_of_a_tie_stand(tmp_path):
+    store = _collection(tmp_path / "data")
+    store.save(Cabinet, [Cabinet(1, "Kast")])
+    store.save(Shelf, [Shelf(1, 1, "c")])
+    store.save(Placement, [Placement(51, 1, 0)])
+    page = create_app(tmp_path / "data").test_client().get("/connections/?artist=1").get_data(as_text=True)
+
+    # Ella's album with the song, on its shelf; Miles' own album with it, on none yet.
+    assert 'href="/browse?shelf=1#album-51">Ella Sings</a>' in page
+    assert "Kast &middot; c" in page
+    assert 'href="/unplaced#album-11">Round About Midnight</a>' in page
+    assert "Round Midnight (Live)" in page
 
 
 def test_an_artist_tied_to_no_one_says_so(client):
@@ -177,8 +219,30 @@ def test_the_network_comes_as_compact_lists(client):
     data = client.get("/connections/network.json").get_json()
 
     assert data["clusters"] == [[1, "Jazz"], [2, "Songwriters"]]
-    assert [1, "Miles Davis", 2, 1] in data["artists"]
+    assert [1, "Miles Davis", 2, 1, None] in data["artists"]
     assert [1, 5, ["songs"], ["'Round Midnight"]] in data["links"]
+
+
+def test_the_network_draws_only_pictures_kept_with_the_app(tmp_path):
+    store = _collection(tmp_path / "data")
+    artists = store.load(Artist)
+    artists[4] = Artist(5, "Ella Fitzgerald", discogs_artist_id=105)
+    artists[5] = Artist(6, "Tom Waits", discogs_artist_id=106)
+    store.save(Artist, artists)
+    ella, waits = "https://i.discogs.com/ella.jpg", "https://i.discogs.com/waits.jpg"
+    store.save(
+        ArtistEnrichment,
+        [ArtistEnrichment(105, None, ella, FETCHED), ArtistEnrichment(106, None, waits, FETCHED)],
+    )
+    folder = tmp_path / "data" / COVER_DIR / ARTIST_DIR
+    folder.mkdir(parents=True)
+    (folder / cover_name(ella)).write_bytes(b"jpeg")
+
+    pictures = {a[0]: a[4] for a in create_app(tmp_path / "data").test_client().get("/connections/network.json").get_json()["artists"]}
+
+    # Ella's picture is stored; Tom Waits' is still at Discogs, which a canvas cannot draw.
+    assert pictures[5] == f"/covers/{ARTIST_DIR}/{cover_name(ella)}"
+    assert pictures[6] is None
 
 
 def test_the_tab_stands_next_to_browse_and_an_artists_page_links_to_it(client):

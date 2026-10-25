@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-26 00:15+0100\n"
+"POT-Creation-Date: 2026-10-26 00:48+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -134,6 +134,7 @@ msgstr "Artiesten"
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/browse/results.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 msgid "Unplaced"
 msgstr "Zonder plek"
@@ -1238,6 +1239,17 @@ msgid "Same song"
 msgstr "Zelfde nummer"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Songs"
+msgstr "Nummers"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "and %(num)d more album"
+msgid_plural "and %(num)d more albums"
+msgstr[0] "en nog %(num)d album"
+msgstr[1] "en nog %(num)d albums"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 #, python-format
 msgid "Connections of %(name)s"
 msgstr "Verbanden van %(name)s"
@@ -1298,10 +1310,6 @@ msgstr "Alles tonen"
 #, python-format
 msgid "Tied to %(name)s"
 msgstr "Verbonden met %(name)s"
-
-#: src/sleeve_shelf/web/templates/connections/index.html
-msgid "Songs"
-msgstr "Nummers"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Nothing ties this artist to another in your collection yet."

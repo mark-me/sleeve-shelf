@@ -3,6 +3,24 @@
 
 {% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
 
+{# The albums that show a tie, each with where it stands: the LP to take from the shelf. #}
+{% macro tied_albums(name, albums) %}
+<span class="ss-tie-albums-name">{{ name }}</span>
+<ul class="ss-tie-albums">
+  {% for tied in albums[:6] %}
+  {% set place = places.get(tied.album_id) %}
+  {% if place %}
+  <li>
+    <a href="{% if place.shelf_id is not none %}{{ url_for('browse.browse', shelf=place.shelf_id) }}{% else %}{{ url_for('browse.unplaced') }}{% endif %}#album-{{ place.album_id }}">{{ place.title }}</a>{% if place.year %} &middot; {{ place.year }}{% endif %}
+    <span class="ss-muted">&middot; {% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
+    {% if tied.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ tied.songs | join(', ') }}</span>{% endif %}
+  </li>
+  {% endif %}
+  {% endfor %}
+  {% if albums | length > 6 %}<li class="ss-muted">{{ ngettext('and %(num)d more album', 'and %(num)d more albums', albums | length - 6) }}</li>{% endif %}
+</ul>
+{% endmacro %}
+
 {% block head %}
 {# Cytoscape adds a stylesheet of its own unless one with this id is there; the policy would
    refuse it, so this one stands in for it. #}
@@ -78,14 +96,17 @@
   <h2 class="mt-5">{{ _('Tied to %(name)s', name=artist.name) }}</h2>
   {% if around %}
   <div class="ss-card mt-3">
-    {% for other, link in around %}
-    <div class="ss-row" data-ties="{{ link.ties | join(' ') }}">
+    {% for tied in around %}
+    {% set other, link = tied.point, tied.link %}
+    <div class="ss-row align-items-start" data-ties="{{ link.ties | join(' ') }}">
       <div class="ss-row-text">
         <a class="ss-row-artist" href="{{ url_for('connections.index', artist=other.artist_id) }}">{{ other.name }}</a>
         <span class="ss-row-title">{% for tie in link.ties %}<span class="ss-chip me-1"><span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span> {{ tie_name(tie) }}</span>{% endfor %}</span>
         {% if link.songs %}
         <span class="ss-row-song"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ link.songs[:5] | join(', ') }}{% if link.songs | length > 5 %} {{ ngettext('and %(num)d more song', 'and %(num)d more songs', link.songs | length - 5) }}{% endif %}</span>
         {% endif %}
+        {% if tied.theirs %}{{ tied_albums(other.name, tied.theirs) }}{% endif %}
+        {% if tied.mine %}{{ tied_albums(artist.name, tied.mine) }}{% endif %}
       </div>
       <a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=other.artist_id) }}">{{ _('Artist page') }}</a>
     </div>

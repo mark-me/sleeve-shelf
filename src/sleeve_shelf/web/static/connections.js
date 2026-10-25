@@ -97,17 +97,20 @@
     });
     const nodes = network.artists
       .filter(([id]) => depth.has(id))
-      .map(([id, name, count, cluster]) => ({
+      .map(([id, name, count, cluster, picture]) => ({
         data: {
           id: String(id),
           name: name,
           albums: count,
           cluster: cluster,
           colour: clusterColours.get(cluster) || colour("--ss-muted"),
-          size: Math.min(14 + 6 * Math.sqrt(count), 60),
+          // Around one artist a picture is recognised sooner than a name; over the whole
+          // collection hundreds of them would be specks.
+          picture: centre !== null && picture ? picture : null,
+          size: Math.min((centre !== null && picture ? 34 : 14) + 6 * Math.sqrt(count), 64),
           ring: 2 * (steps + 1 - depth.get(id)) + (close.has(id) ? 1 : 0),
         },
-        classes: id === centre ? "centre" : "",
+        classes: [id === centre ? "centre" : "", centre !== null && picture ? "picture" : ""].join(" "),
       }));
     // Around an artist songs are drawn only from the artist in the middle, as they lead only
     // from there; between the others they would tangle the rings.
@@ -157,6 +160,17 @@
           "min-zoomed-font-size": centre === null ? 9 : 0,
           "border-width": 1,
           "border-color": colour("--ss-surface"),
+        },
+      },
+      {
+        // The picture fills the point; the cluster's colour stays as its ring.
+        selector: "node.picture",
+        style: {
+          "background-image": "data(picture)",
+          "background-fit": "cover",
+          "background-clip": "node",
+          "border-width": 3,
+          "border-color": "data(colour)",
         },
       },
       { selector: "node.centre", style: { "border-width": 4, "border-color": colour("--ss-accent"), "font-weight": 600 } },

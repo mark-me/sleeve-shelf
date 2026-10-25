@@ -112,6 +112,57 @@ class Network:
         )
 
 
+@dataclass(frozen=True, slots=True)
+class TiedAlbum:
+    """An album that shows a tie: with a shared song, the songs it has of them."""
+
+    album_id: int
+    songs: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class Tied:
+    """An artist tied to the one in the middle, with the albums to take from the shelf."""
+
+    point: Point
+    link: Link
+    # The other's albums: all of them, unless a song is all that ties the two — then those
+    # that have one.
+    theirs: tuple[TiedAlbum, ...]
+    # With shared songs: the albums of the artist in the middle that have one.
+    mine: tuple[TiedAlbum, ...] = ()
+
+
+def tied_albums(
+    around: list[tuple[Point, Link]], artist_id: int, albums: list[Album], releases: list[ReleaseEnrichment]
+) -> list[Tied]:
+    """The ties of an artist with the albums that show them, oldest first."""
+    tracklists = {release.release_id: release.tracklist or () for release in releases}
+    by_artist: dict[int, list[Album]] = {}
+    for album in sorted(albums, key=lambda a: (a.original_release_year or 9999, sort_name(a.title), a.id)):
+        by_artist.setdefault(album.artist_id, []).append(album)
+
+    def having(owner: int, keys: set[str], every: bool = False) -> tuple[TiedAlbum, ...]:
+        found = []
+        for album in by_artist.get(owner, []):
+            songs = tuple(
+                dict.fromkeys(
+                    track.title for track in tracklists.get(album.release_id, ()) if song_key(track.title) in keys
+                )
+            )
+            if songs or every:
+                found.append(TiedAlbum(album.id, songs))
+        return tuple(found)
+
+    result = []
+    for point, link in around:
+        keys = {song_key(song) for song in link.songs}
+        # A band, a family, another name: all its albums, each with the shared songs it has.
+        every = link.ties != (Tie.SONGS,)
+        result.append(Tied(point, link, having(point.artist_id, keys, every), having(artist_id, keys)))
+    return result
+
+
 def build(
     artists: list[Artist],
     albums: list[Album],
@@ -190,6 +241,13 @@ def build(
         for artist in sorted(artists, key=lambda a: a.id)
     )
     return Network(points, links, tuple((c.id, c.name) for c in in_order(clusters)))
+
+
+def ties_of(store: JsonStore, shown: Network, artist_id: int) -> list[Tied]:
+    """The ties of one artist in the network, with the albums that show them."""
+    releases = store.load(ReleaseEnrichment) if store.exists(ReleaseEnrichment) else []
+    albums = store.load(Album) if store.exists(Album) else []
+    return tied_albums(shown.around(artist_id), artist_id, albums, releases)
 
 
 def network(store: JsonStore) -> Network:

@@ -40,3 +40,8 @@
 .ss-tie-family { border-top-style: dashed; border-color: var(--ss-tie-family); }
 .ss-tie-songs { border-top-width: 2px; border-color: var(--ss-tie-songs); }
 .ss-chip .ss-tie-swatch { width: 14px; }
+
+/* Under a tie in the list: the albums that show it, with where each stands. */
+.ss-tie-albums-name { margin-top: 6px; font-size: 0.8rem; font-weight: 600; }
+.ss-tie-albums { margin: 0; padding-left: 1.1rem; font-size: 0.85rem; }
+.ss-tie-albums li { margin: 2px 0; }
