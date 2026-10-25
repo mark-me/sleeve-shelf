@@ -3,8 +3,15 @@
 // tie. The switches show or hide each kind of tie, in the network and in the list below it.
 (function () {
   const box = document.getElementById("ss-network");
-  if (!box || !window.cytoscape) return;
+  if (!box) return;
   const info = document.getElementById("ss-network-info");
+  if (!window.cytoscape) {
+    // The library did not load: say so, rather than an empty network with directions for it.
+    info.textContent = box.dataset.failed;
+    const fitButton = document.querySelector("[data-network-fit]");
+    if (fitButton) fitButton.hidden = true;
+    return;
+  }
   const switches = Array.from(document.querySelectorAll("input[data-tie]"));
   const TIES = ["name", "member", "billing", "family", "songs"];
   const centre = box.dataset.artist ? Number(box.dataset.artist) : null;

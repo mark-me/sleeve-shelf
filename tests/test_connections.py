@@ -1,5 +1,6 @@
 """Tests for the Connections screen: what ties artists together, and the screen that shows it."""
 
+import re
 from datetime import datetime
 
 import pytest
@@ -199,4 +200,6 @@ def test_a_visitor_may_look_at_the_connections(tmp_path, monkeypatch):
     assert 'href="/connections/"' in menu
     # The family on an artist's page is the owner's screen; a visitor sees its name only.
     artist = visitor.get("/artists/3").get_data(as_text=True)
-    assert "/families/" not in artist and "Chet Baker" in artist
+    assert "/families/" not in artist
+    # The family's name in its own place, not only in the heading (the artist has the same name).
+    assert re.search(r"Family:\s*Chet Baker\s*&middot;", artist)
