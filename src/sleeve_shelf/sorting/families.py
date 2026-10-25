@@ -35,6 +35,28 @@ def sort_name(name: str) -> str:
     return " ".join(re.sub(r"\(\d+\)", "", name).casefold().split())
 
 
+def names_inside(artists: list[Artist]) -> dict[int, list[int]]:
+    """For each artist whose name holds the names of others, as whole words: those others,
+    in the order they are named, the longer name first where two start at one place
+    ("The Miles Davis Quintet" holds "Miles Davis"; "Duke Ellington & John Coltrane" both)."""
+    names = {artist.id: sort_name(artist.name) for artist in artists}
+    patterns = {
+        artist_id: re.compile(r"(?<!\w)" + re.escape(name) + r"(?!\w)")
+        for artist_id, name in names.items()
+        if name
+    }
+    named: dict[int, list[int]] = {}
+    for artist_id, name in names.items():
+        found = sorted(
+            (match.start(), -len(names[other_id]), other_id)
+            for other_id, pattern in patterns.items()
+            if names[other_id] != name and (match := pattern.search(name))
+        )
+        if found:
+            named[artist_id] = [other_id for _, _, other_id in found]
+    return named
+
+
 def suggest_families(
     artists: list[Artist],
     dismissed_ids: frozenset[int] | set[int] = frozenset(),
@@ -71,20 +93,7 @@ def _families_from_names(
     """
     names = {artist.id: sort_name(artist.name) for artist in artists}
     family_of = {a.id: a.alias_group_id for a in artists if a.alias_group_id is not None}
-    patterns = {
-        artist_id: re.compile(r"(?<!\w)" + re.escape(name) + r"(?!\w)")
-        for artist_id, name in names.items()
-        if name
-    }
-    named: dict[int, list[int]] = {}
-    for artist_id, name in names.items():
-        found = sorted(
-            (match.start(), -len(names[other_id]), other_id)
-            for other_id, pattern in patterns.items()
-            if names[other_id] != name and (match := pattern.search(name))
-        )
-        if found:
-            named[artist_id] = [other_id for _, _, other_id in found]
+    named = names_inside(artists)
 
     def root(artist_id: int) -> int:
         # Follow the name named first: "The Miles Davis Quintet Together With ..." up to

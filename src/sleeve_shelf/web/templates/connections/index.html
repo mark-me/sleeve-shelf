@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Connections') }}{% endblock %}
+
+{% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
+
+{% block head %}
+{# Cytoscape adds a stylesheet of its own unless one with this id is there; the policy would
+   refuse it, so this one stands in for it. #}
+<link rel="stylesheet" id="__________cytoscape_stylesheet" href="{{ url_for('static', filename='connections.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 1200px;">
+  <h1>{% if artist %}{{ _('Connections of %(name)s', name=artist.name) }}{% else %}{{ _('Connections') }}{% endif %}</h1>
+  <p class="ss-muted mt-1">
+    {% if artist %}
+    {{ cluster or _('no cluster yet') }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', artist.albums) }} &middot;
+    <a href="{{ url_for('artists.edit', artist_id=artist.artist_id) }}">{{ _('Artist page') }}</a> &middot;
+    <a href="{{ url_for('connections.index') }}">{{ _('The whole collection') }}</a>
+    {% else %}
+    {{ _('How the artists in your collection are tied together: members of a band, other names, one name inside another, families, and the same song on albums of both. Choose an artist to put it in the middle.') }}
+    {% endif %}
+  </p>
+
+  <form class="mt-3" method="get" action="{{ url_for('connections.index') }}" role="search">
+    <label for="search" class="visually-hidden">{{ _('Search an artist') }}</label>
+    <input id="search" class="ss-search" type="search" name="q" value="{{ search_text }}" placeholder="{{ _('Search an artist…') }}" autocomplete="off">
+  </form>
+
+  {% if search_text and not artist %}
+  <div class="ss-card mt-3">
+    {% for point in found %}
+    <a class="ss-row ss-row-link" href="{{ url_for('connections.index', artist=point.artist_id) }}">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ point.name }}</span>
+        <span class="ss-row-title">{{ clusters.get(point.cluster_id) or _('no cluster yet') }}{% if point.artist_id not in tied %} &middot; {{ _('tied to no one') }}{% endif %}</span>
+      </div>
+    </a>
+    {% else %}
+    <div class="ss-card-body ss-muted">{{ _('No artist matches this search.') }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="d-flex flex-wrap align-items-center gap-3 mt-4" role="group" aria-label="{{ _('Which ties to show') }}">
+    {% for tie in ties %}
+    {# Same song ties almost every jazz artist to every other: on the whole collection it starts off. #}
+    <label class="ss-tie-switch">
+      <input type="checkbox" data-tie="{{ tie.value }}" {% if artist or tie != 'songs' %}checked{% endif %}>
+      <span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span>
+      <span data-tie-label>{{ tie_name(tie) }}</span>
+    </label>
+    {% endfor %}
+    {% if artist %}
+    <span class="ms-lg-auto">
+      {% if steps == 1 %}<a href="{{ url_for('connections.index', artist=artist.artist_id, steps=2) }}">{{ _('Two steps out') }}</a>{% else %}<a href="{{ url_for('connections.index', artist=artist.artist_id) }}">{{ _('One step out') }}</a>{% endif %}
+    </span>
+    {% endif %}
+  </div>
+
+  <div id="ss-network" class="ss-network mt-3"
+       data-url="{{ url_for('connections.data') }}"
+       data-centre-url="{{ url_for('connections.index', artist=0) }}"
+       {% if artist %}data-artist="{{ artist.artist_id }}" data-steps="{{ steps }}"{% endif %}
+       data-albums-one="{{ ngettext('%(num)d album', '%(num)d albums', 1) }}"
+       data-albums-many="{{ ngettext('%(num)d album', '%(num)d albums', 2) | replace('2', '{n}') }}"
+       data-no-cluster="{{ _('no cluster yet') }}"
+       data-empty="{{ _('Nothing to show with these ties.') }}"
+       data-failed="{{ _('The network could not be loaded.') }}">
+    <noscript><p class="ss-card-body ss-muted">{{ _('The network needs JavaScript; the list below shows the same ties.') }}</p></noscript>
+  </div>
+  <div class="d-flex flex-wrap align-items-start gap-3 mt-2">
+    <p id="ss-network-info" class="ss-muted small mb-0 flex-grow-1" aria-live="polite">{{ _('Tap an artist to put it in the middle, or a line to see what ties the two. Drag to move around; pinch or scroll to zoom.') }}</p>
+    <button class="ss-button" type="button" data-network-fit>{{ _('Show everything') }}</button>
+  </div>
+
+  {% if artist %}
+  <h2 class="mt-5">{{ _('Tied to %(name)s', name=artist.name) }}</h2>
+  {% if around %}
+  <div class="ss-card mt-3">
+    {% for other, link in around %}
+    <div class="ss-row" data-ties="{{ link.ties | join(' ') }}">
+      <div class="ss-row-text">
+        <a class="ss-row-artist" href="{{ url_for('connections.index', artist=other.artist_id) }}">{{ other.name }}</a>
+        <span class="ss-row-title">{% for tie in link.ties %}<span class="ss-chip me-1"><span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span> {{ tie_name(tie) }}</span>{% endfor %}</span>
+        {% if link.songs %}
+        <span class="ss-row-song"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ link.songs[:5] | join(', ') }}{% if link.songs | length > 5 %} {{ ngettext('and %(num)d more song', 'and %(num)d more songs', link.songs | length - 5) }}{% endif %}</span>
+        {% endif %}
+      </div>
+      <a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=other.artist_id) }}">{{ _('Artist page') }}</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('Nothing ties this artist to another in your collection yet.') }}</div></div>
+  {% endif %}
+  {% endif %}
+</div>
+<script src="{{ url_for('static', filename='vendor/cytoscape.min.js') }}"></script>
+<script src="{{ url_for('static', filename='connections.js') }}"></script>
+{% endblock %}

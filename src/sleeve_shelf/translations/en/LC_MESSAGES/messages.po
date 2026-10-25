@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-24 00:31+0200\n"
+"POT-Creation-Date: 2026-10-26 00:15+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -104,6 +104,12 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/browse/results.html
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 msgid "Browse / Search"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Connections"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -838,6 +844,7 @@ msgid "Members"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "no cluster yet"
 msgstr ""
 
@@ -851,10 +858,12 @@ msgid "The cluster and start year of an artist decide where its albums are sorte
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Search an artist"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Search an artist…"
 msgstr ""
 
@@ -912,6 +921,7 @@ msgid "Artist"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/moving/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Family"
@@ -1001,6 +1011,7 @@ msgid "Song"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 #, python-format
 msgid "and %(num)d more song"
 msgid_plural "and %(num)d more songs"
@@ -1038,6 +1049,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/families/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
@@ -1207,6 +1219,92 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/clusters/index.html
 msgid "Merging moves the artists, styles and location rules of the ticked clusters into the one with the most albums, which keeps its place in the order — and its name, unless you give another. Changes here count the next time a proposal is generated."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Other name"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Member"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "In the name"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Same song"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "Connections of %(name)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Artist page"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "The whole collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "How the artists in your collection are tied together: members of a band, other names, one name inside another, families, and the same song on albums of both. Choose an artist to put it in the middle."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "tied to no one"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "No artist matches this search."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Which ties to show"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Two steps out"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "One step out"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Nothing to show with these ties."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "The network could not be loaded."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "The network needs JavaScript; the list below shows the same ties."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Tap an artist to put it in the middle, or a line to see what ties the two. Drag to move around; pinch or scroll to zoom."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Show everything"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "Tied to %(name)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Songs"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Nothing ties this artist to another in your collection yet."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html

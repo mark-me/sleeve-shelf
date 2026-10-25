@@ -79,6 +79,9 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 - **Reorganising with a table full** (decided by Mark 2026-10-18; not built): with a large collection a reorganisation now means taking almost every record out — a fresh proposal for Mark's collection leaves 115 of 910 albums on their shelf, moves 371 to another shelf of the same cabinet and 424 to another cabinet, and 17 of 20 shelves lose most of what they hold, mainly because one change near the front pushes everything behind it along. Two parts, the first making the second lighter:
   - **A calmer proposal** (see Sorting logic §3, *Fewer moves*): the order of the albums stays exactly as good, but the boundaries between shelves are chosen so as many albums as possible stay on their shelf, and every shelf keeps some room free; the proposal says what carrying it out takes
   - **A plan to carry it out** (see Reorganisation screen): accepting a proposal starts a reorganisation — steps on the phone that never take more records out than fit on the table, in rounds that end with an empty table, so it can be spread over days
+- **Connections** (decided by Mark 2026-10-26): a screen next to Browse/Search that shows how the artists of the collection are tied together, as an interactive network (see Connections screen). Two steps:
+  - **With what the app already knows** (built 2026-10-26): members and bands and other names from Discogs, one name inside another, families, and the same song on albums of both
+  - **Credits** (second step, not built): the musicians, sidemen and producers Discogs lists per release (`extraartists`), kept by the fetch run as the tracklists are, a release fetched before asked for once more — with jazz this is where most ties are
 - Possibly later: other media formats (CD, etc.)
 
 ### Non-functional requirements
@@ -86,8 +89,8 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 - Open source
 - Single-user application: one owner, who can change everything. **Visitors** may look the collection up, nothing more (see below)
 - **Visitors and the owner's login** (decided and built 2026-10-16). A visitor without a login can search and browse the collection, open an album's and an artist's page to read them, listen (Deezer previews, Discogs videos), and read the user guide. Everything else — every change, and every other screen — needs the owner's login:
-  - **Closed unless listed**: one list in the app names what a visitor may open, and only to read (GET): Browse/Search, the album and artist pages, the previews, the help, covers, and the app's own files. Any other screen, and anything added later, asks for the login; a visitor's change is refused
-  - **What a visitor sees**: the menu holds only Collection (Browse / Search) and Help; the album and artist pages leave out their actions (moving, location rules, width, own picture, *Put it there*, *Not this album*). Layout, Showcase, and the other screens are the owner's only
+  - **Closed unless listed**: one list in the app names what a visitor may open, and only to read (GET): Browse/Search, Connections (2026-10-26), the album and artist pages, the previews, the help, covers, and the app's own files. Any other screen, and anything added later, asks for the login; a visitor's change is refused
+  - **What a visitor sees**: the menu holds only Collection (Browse / Search, and Connections since 2026-10-26) and Help; the album and artist pages leave out their actions (moving, location rules, width, own picture, *Put it there*, *Not this album*). Layout, Showcase, and the other screens are the owner's only
   - **Listening by a visitor is allowed**, though the first listen to an album keeps what Deezer found in `listening.json` — the only thing a visitor writes, and harmless
   - **The login**: a page asking for a password only, as there is one owner. The password is stored hashed; it is set with a command (`set-password`) and changed under Settings. Logged in, a device stays logged in until the owner logs out. After a few failed attempts each next attempt waits longer
   - **Without a password the app stays open**, everyone being the owner, as before; Settings says so. Setting a password is what makes visitors visitors
@@ -523,6 +526,7 @@ The menu has five sections (decided 2026-10-14): what is done daily on top, what
 - **Dashboard** — overview and open confirmations (see below)
 - **Collection** — the records themselves
   - **Browse / Search** — crate-digging view of the collection, following the actual physical shelf order; search by artist and album (see Phase 1)
+  - **Connections** — how the artists are tied together, as a network to move around in; around one artist, or the whole collection (see Connections screen, Phase 3)
   - **Unplaced albums** — albums without a spot on a shelf (see Initial load), so they can be resolved rather than silently dropped. Each LP shows its suggested spot — the shelf, the albums it would stand between, and whether it fits — with a button to put it there; after that the page says where it now stands, with a link. An LP without a spot says why: the artist has no cluster yet, or nothing stands where it could go (see Sorting logic §4)
   - **Discogs sync** — the Discogs screen: sync or import the collection, fetch styles and original years, confirm proposed matches (see below). Loading a layout workbook (see Initial load) is reached from the bottom of this screen
 - **Shelves** — the physical cabinets and what stands in them
@@ -581,6 +585,21 @@ An artist's page is reached from Layout (the name on a block) and from Browse/Se
 - Search bar filtering by artist, album title or song (songs since 2026-10-18, Phase 3). Every word typed must occur in the artist or title, or in the artist, title and one song together: such a result names the songs that matched, up to three and how many more, under its title. An album found by its artist and title alone names no song; case and accents are ignored. A result links to its shelf with the album marked, or to the Unplaced albums list when it has no spot. The artist name on a shelf row opens that artist (see Artists screen)
 - Each row shows the album's cover as a small square, on a shelf and in search results. An album without a cover keeps the space so the rows line up; while no album in the list has a cover (before the first sync) no space is kept at all
 - **Mobile is the priority form factor for this screen** in particular — realistically used standing in front of the shelves: single-column layout, touch targets sized for tapping (prev/next shelf, search field), and the search bar / breadcrumb stay reachable without scrolling back up (e.g. sticky positioning)
+
+### Connections screen
+
+Decided by Mark on 2026-10-26: a tab next to Browse/Search, which visitors may open too. Built 2026-10-26.
+
+- **A point is an artist**, not an album: its size follows its number of albums, its colour its cluster — clusters next to each other on the shelves have colours next to each other, an artist without a cluster is grey
+- **A line is a tie**, of one or more kinds, each with its own colour and a switch to show or hide it:
+  - **Member** — a person in a band, as Discogs lists it (either record naming the other)
+  - **Other name** — another name of the same artist, as Discogs lists it
+  - **In the name** — one artist's name inside the other's: *Chet Baker Quartet* and *Chet Baker*, *Duke Ellington & John Coltrane* and both
+  - **Family** — the artists of one family
+  - **Same song** — the same song on albums of both, compared without case, accents, punctuation and what stands between brackets ("'Round Midnight (Take 2)" is "Round Midnight"); a line with more songs is thicker. Titles that say nothing about the song — *Intro*, *Interlude*, *Theme*, *Untitled* and the like — tie no one. Styles are no tie: with 172 of them everything would hang together
+- **Around one artist**: the artist in the middle, the artists tied to it around it, optionally two steps out; below the network the same ties as a list, with what ties them and the songs they share, each artist linking to its page. Reached by choosing an artist on the screen, and from an artist's page (**Connections**)
+- **The whole collection**: every artist with at least one tie shown, artists on their own left out; *Same song* starts switched off there, as it ties almost every jazz artist to every other
+- Tapping an artist puts it in the middle; tapping a line shows what ties the two. Moving, zooming (two fingers on a phone) and dragging work as one expects from a map. The network is drawn with Cytoscape.js, kept with the app like Bootstrap, so it works offline and within the Content-Security-Policy
 
 ### Discogs screen
 
@@ -723,7 +742,7 @@ Decided by Mark on 2026-10-18: moving albums was spread over the pages of an alb
 
 The detail of an artist and of an album are two pages.
 
-**The artist** is the Artists screen's page for one artist (see above). On a wide screen (2026-10-15) its albums and related artists stand on the left and its settings — start year and cluster, location rules and moving, the picture — on the right; on a phone it is one column with the settings first. It holds: cluster with its confirmation status and the action to correct it, start year and era band, family, and the artist's albums with year, format, and where each stands. Each album links to its own page.
+**The artist** is the Artists screen's page for one artist (see above). On a wide screen (2026-10-15) its albums and related artists stand on the left and its settings — start year and cluster, location rules and moving, the picture — on the right; on a phone it is one column with the settings first. It holds: cluster with its confirmation status and the action to correct it, start year and era band, family (a link to the Families screen for the owner, its name alone for a visitor, who may not open that screen — chosen without asking, 2026-10-26), and the artist's albums with year, format, and where each stands. Each album links to its own page.
 
 **The album** has a page of its own, reached from its title on a shelf in Browse/Search, in the Unplaced albums list, and on its artist's page. It shows:
 
@@ -738,6 +757,7 @@ The detail of an artist and of an album are two pages.
 **On both pages:**
 
 - **Location rules**: the rules that bear on the artist or album are listed, the deciding one first and marked — an album's own rule, then the artist's, the family's, the cluster's — the others marked as overruled. Without any, the page says so. Rules are changed on the Location rules screen
+- **Connections** (2026-10-26), on the artist's page only: opens the Connections screen around the artist; visitors see it too
 - **Move…** (2026-10-18; before, a form of its own that put the album, or all of the artist's albums, at the end of a shelf): opens the Move screen with the album or artist chosen
 - **Suggested spot** (2026-10-12): the page of an LP that stands on no shelf shows its suggested spot — the shelf (linking to it in Browse/Search), the two albums it would stand between, what the spot goes by (the artist's own albums, its era band, its cluster, the order of the clusters, or a location rule), and how much room the shelf has left — with a button to put it there. Moving it to any shelf by hand remains possible below
 
@@ -771,6 +791,9 @@ Phase 2 is closed (see Phase 2). What is left is work that waits for measurement
 - **Reorganising** (2026-10-18, not built), still open: how the plan is worked out (a heuristic is enough, as long as it keeps to the table and says when it cannot); whether a running reorganisation blocks other changes to the layout or is worked out again after them; how a step shows its albums so they are found quickly (cover, spine order); whether the calmer proposal replaces the current one or is offered next to it
 - **The Move screen** (2026-10-18), chosen without asking: of an artist, family or cluster only the albums on a sorted shelf move, so an artist's albums without a place no longer come along (they did with the artist's own form before); "Where it belongs" finds each album's place exactly as a suggested spot for a new purchase does, so a whole artist that is a cluster of its own goes by the order of the clusters, and albums that go to one place stand there together in sorting order; at the front of a showcase or a shelf without a width the albums are simply put in front, as nothing can run on by width there; the plan shown is worked out again when Move is pressed, so it always starts from the shelves as they are then; moving works on the shelves as they are, not on a proposal; the ⋮ on a block in Layout stays as it is
 - **Song search** (2026-10-18): every word of the search has to be in the artist, title and one song together — words spread over two songs do not count; a result names at most three songs and how many more; an album found by its artist and title names no song, even when one would match too; the tracklist on an album's page is shown to visitors as well
+
+- **Connections** (2026-10-26), chosen without asking: a single word as a song title ties too, so two different songs called *Gone* make a tie; around one artist the network shows one step by default, two on request — the second step following every tie but songs, which lead only from the artist in the middle; around one artist a song is drawn only from the artist in the middle, and an artist tied by more than a song stands on the inner ring of its step; the colours of the clusters follow their order on the shelves rather than being chosen per cluster (there are 37); on the whole collection names are shown only when zoomed in; a tap on an artist re-centres rather than first showing it. In the collection as it stands (2026-10-26): Discogs ties 132 of 663 artists, 44 names hold two or more others, and the same song ties about 1,900 pairs of artists (*Summertime* is on albums of 15)
+- **Credits for Connections**: the second step (see Phase 3) — still to decide whether a musician who appears on only one album of the collection is worth a point
 
 ### Parked from Phase 1a
 

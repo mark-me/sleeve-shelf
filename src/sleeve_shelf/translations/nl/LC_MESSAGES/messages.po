@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-24 00:31+0200\n"
+"POT-Creation-Date: 2026-10-26 00:15+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -137,6 +137,12 @@ msgstr "Artiesten"
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 msgid "Unplaced"
 msgstr "Zonder plek"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Connections"
+msgstr "Verbanden"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/browse/results.html
@@ -811,10 +817,6 @@ msgid "Members"
 msgstr "Leden"
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "no cluster yet"
-msgstr "nog geen cluster"
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
 #, python-format
 msgid "Picture of %(name)s"
 msgstr "Foto van %(name)s"
@@ -840,6 +842,11 @@ msgid "Albums"
 msgstr "Albums"
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "no cluster yet"
+msgstr "nog geen cluster"
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
@@ -849,14 +856,6 @@ msgstr "Annuleren"
 #: src/sleeve_shelf/web/templates/artists/index.html
 msgid "The cluster and start year of an artist decide where its albums are sorted."
 msgstr "Het cluster en het beginjaar van een artiest bepalen waar zijn albums worden gesorteerd."
-
-#: src/sleeve_shelf/web/templates/artists/index.html
-msgid "Search an artist"
-msgstr "Zoek een artiest"
-
-#: src/sleeve_shelf/web/templates/artists/index.html
-msgid "Search an artist…"
-msgstr "Zoek een artiest…"
 
 #: src/sleeve_shelf/web/templates/artists/index.html
 msgid "All"
@@ -931,16 +930,27 @@ msgstr[0] "%(num)d artiest"
 msgstr[1] "%(num)d artiesten"
 
 #: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Artist"
-msgstr "Artiest"
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Search an artist"
+msgstr "Zoek een artiest"
 
 #: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Search an artist…"
+msgstr "Zoek een artiest…"
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/moving/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Family"
 msgstr "Familie"
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Artist"
+msgstr "Artiest"
 
 #: src/sleeve_shelf/web/templates/base.html
 msgid "Open menu"
@@ -1001,19 +1011,20 @@ msgid "Song"
 msgstr "Nummer"
 
 #: src/sleeve_shelf/web/templates/browse/results.html
-#, python-format
-msgid "and %(num)d more song"
-msgid_plural "and %(num)d more songs"
-msgstr[0] "en nog %(num)d nummer"
-msgstr[1] "en nog %(num)d nummers"
-
-#: src/sleeve_shelf/web/templates/browse/results.html
 msgid "Choosing a result opens its shelf, with the album marked."
 msgstr "Een resultaat kiezen opent zijn vak, met het album gemarkeerd."
 
 #: src/sleeve_shelf/web/templates/browse/results.html
 msgid "No artist, album or song matches this search."
 msgstr "Geen artiest, album of nummer past bij deze zoekopdracht."
+
+#: src/sleeve_shelf/web/templates/browse/results.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "and %(num)d more song"
+msgid_plural "and %(num)d more songs"
+msgstr[0] "en nog %(num)d nummer"
+msgstr[1] "en nog %(num)d nummers"
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 msgid "Previous shelf"
@@ -1054,6 +1065,7 @@ msgstr "Dit vak is leeg."
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/families/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
@@ -1208,6 +1220,92 @@ msgstr "Samenvoegen"
 #: src/sleeve_shelf/web/templates/clusters/index.html
 msgid "Merging moves the artists, styles and location rules of the ticked clusters into the one with the most albums, which keeps its place in the order — and its name, unless you give another. Changes here count the next time a proposal is generated."
 msgstr "Samenvoegen verplaatst de artiesten, stijlen en locatieregels van de aangevinkte clusters naar het cluster met de meeste albums, dat zijn plek in de volgorde houdt — en zijn naam, tenzij je een andere geeft. Wijzigingen hier tellen mee bij het volgende voorstel."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Other name"
+msgstr "Andere naam"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Member"
+msgstr "Lid"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "In the name"
+msgstr "In de naam"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Same song"
+msgstr "Zelfde nummer"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "Connections of %(name)s"
+msgstr "Verbanden van %(name)s"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Artist page"
+msgstr "Artiestpagina"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "The whole collection"
+msgstr "De hele collectie"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "How the artists in your collection are tied together: members of a band, other names, one name inside another, families, and the same song on albums of both. Choose an artist to put it in the middle."
+msgstr "Hoe de artiesten in je collectie met elkaar verbonden zijn: leden van een band, andere namen, de ene naam in de andere, families, en hetzelfde nummer op albums van allebei. Kies een artiest om die in het midden te zetten."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "tied to no one"
+msgstr "met niemand verbonden"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "No artist matches this search."
+msgstr "Geen artiest past bij deze zoekopdracht."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Which ties to show"
+msgstr "Welke verbanden je ziet"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Two steps out"
+msgstr "Twee stappen verder"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "One step out"
+msgstr "Eén stap verder"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Nothing to show with these ties."
+msgstr "Niets te zien met deze verbanden."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "The network could not be loaded."
+msgstr "Het netwerk kon niet geladen worden."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "The network needs JavaScript; the list below shows the same ties."
+msgstr "Het netwerk heeft JavaScript nodig; de lijst hieronder toont dezelfde verbanden."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Tap an artist to put it in the middle, or a line to see what ties the two. Drag to move around; pinch or scroll to zoom."
+msgstr "Tik op een artiest om die in het midden te zetten, of op een lijn om te zien wat de twee verbindt. Sleep om rond te kijken; knijp of scroll om te zoomen."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Show everything"
+msgstr "Alles tonen"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "Tied to %(name)s"
+msgstr "Verbonden met %(name)s"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Songs"
+msgstr "Nummers"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Nothing ties this artist to another in your collection yet."
+msgstr "Nog niets verbindt deze artiest met een andere in je collectie."
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format

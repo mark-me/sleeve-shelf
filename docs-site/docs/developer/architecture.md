@@ -26,7 +26,7 @@ flowchart TB
 | `src/sleeve_shelf/ingestion/` | Reading the outside world: the layout workbook, the Discogs CSV export, the Discogs API, the format-string parser. |
 | `src/sleeve_shelf/sorting/` | The sorting engine: pure functions on domain objects. |
 | `src/sleeve_shelf/persistence/` | `JsonStore` (one JSON file per entity) and the read queries for Browse. |
-| `src/sleeve_shelf/*.py` | Application services that tie the layers together, such as `placing` (moving albums by hand, location rules), `storage` (cabinets and shelves), `taking_part` (which albums are sorted and which shelves a proposal fills). |
+| `src/sleeve_shelf/*.py` | Application services that tie the layers together, such as `placing` (moving albums by hand, location rules), `storage` (cabinets and shelves), `taking_part` (which albums are sorted and which shelves a proposal fills), `network` (what ties artists together, for Connections). |
 | `src/sleeve_shelf/web/` | Flask blueprints, templates, static files. One blueprint per screen. |
 
 A blueprint never writes to the store itself: it reads and checks the form, calls a service, and turns the service's outcome into a page or a redirect. Business rules — *only an empty shelf can be removed*, *nothing drops off a shelf during a drag* — live in the services, where they have tests of their own.

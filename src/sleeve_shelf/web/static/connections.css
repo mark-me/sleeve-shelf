@@ -1,0 +1,42 @@
+/* The Connections screen: the network and the colours of the ties. Also stands in for the
+   stylesheet Cytoscape would add itself, which the Content-Security-Policy refuses. */
+.__________cytoscape_container { position: relative; }
+
+:root,
+[data-bs-theme="light"] {
+  --ss-tie-name: #7C3AED;
+  --ss-tie-member: #2563EB;
+  --ss-tie-billing: #C2410C;
+  --ss-tie-family: #059669;
+  --ss-tie-songs: #A8A29E;
+}
+
+[data-bs-theme="dark"] {
+  --ss-tie-name: #A78BFA;
+  --ss-tie-member: #60A5FA;
+  --ss-tie-billing: #FB923C;
+  --ss-tie-family: #34D399;
+  --ss-tie-songs: #78716C;
+}
+
+.ss-network {
+  position: relative;
+  height: 65vh;
+  min-height: 320px;
+  background: var(--ss-surface);
+  border: 1px solid var(--ss-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ss-tie-switch { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
+.ss-tie-switch input { width: 18px; height: 18px; }
+
+/* A tie as its line is drawn: colour, and dotted or dashed. */
+.ss-tie-swatch { display: inline-block; width: 22px; height: 0; vertical-align: middle; border-top: 3px solid; }
+.ss-tie-name { border-top-style: dotted; border-color: var(--ss-tie-name); }
+.ss-tie-member { border-color: var(--ss-tie-member); }
+.ss-tie-billing { border-color: var(--ss-tie-billing); }
+.ss-tie-family { border-top-style: dashed; border-color: var(--ss-tie-family); }
+.ss-tie-songs { border-top-width: 2px; border-color: var(--ss-tie-songs); }
+.ss-chip .ss-tie-swatch { width: 14px; }

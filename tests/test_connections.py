@@ -1,0 +1,202 @@
+"""Tests for the Connections screen: what ties artists together, and the screen that shows it."""
+
+from datetime import datetime
+
+import pytest
+
+from sleeve_shelf import create_app
+from sleeve_shelf.access import set_password
+from sleeve_shelf.domain import (
+    Album,
+    AliasGroup,
+    Artist,
+    ArtistClusterAssignment,
+    ArtistEnrichment,
+    Cluster,
+    ReleaseEnrichment,
+    Track,
+)
+from sleeve_shelf.network import Tie, build, network, song_key
+from sleeve_shelf.persistence import JsonStore
+from sleeve_shelf.web import login
+
+FETCHED = datetime(2026, 10, 26)
+
+
+def _release(release_id: int, *titles: str) -> ReleaseEnrichment:
+    return ReleaseEnrichment(
+        release_id, (), None, FETCHED, tracklist=tuple(Track(f"A{i}", t) for i, t in enumerate(titles, 1))
+    )
+
+
+def _collection(tmp_path) -> JsonStore:
+    """Miles Davis and his quintet (Discogs: a member), Chet Baker with his quartet (a family,
+    and one name inside the other), Ella Fitzgerald sharing a song with Miles, and Tom Waits
+    tied to no one."""
+    store = JsonStore(tmp_path)
+    store.save(Cluster, [Cluster(1, "Jazz", 0), Cluster(2, "Songwriters", 1)])
+    store.save(AliasGroup, [AliasGroup(1, "Chet Baker")])
+    store.save(
+        Artist,
+        [
+            Artist(1, "Miles Davis", discogs_artist_id=101),
+            Artist(2, "The Miles Davis Quintet", discogs_artist_id=102),
+            Artist(3, "Chet Baker", alias_group_id=1),
+            Artist(4, "Chet Baker Quartet", alias_group_id=1),
+            Artist(5, "Ella Fitzgerald"),
+            Artist(6, "Tom Waits"),
+        ],
+    )
+    store.save(ArtistClusterAssignment, [ArtistClusterAssignment(1, 1, True), ArtistClusterAssignment(6, 2, True)])
+    store.save(
+        ArtistEnrichment,
+        [ArtistEnrichment(101, None, None, FETCHED, group_ids=(102, 999))],
+    )
+    store.save(
+        Album,
+        [
+            Album(11, 1, "Round About Midnight", release_id=1),
+            Album(12, 1, "Kind of Blue", release_id=2),
+            Album(21, 2, "Relaxin'", release_id=3),
+            Album(31, 3, "Chet"),
+            Album(41, 4, "Quartet"),
+            Album(51, 5, "Ella Sings", release_id=5),
+            Album(61, 6, "Closing Time", release_id=6),
+        ],
+    )
+    store.save(
+        ReleaseEnrichment,
+        [
+            _release(1, "'Round Midnight", "Intro"),
+            _release(2, "So What", "All Blues"),
+            _release(3, "If I Were A Bell"),
+            _release(5, "Round Midnight (Live)", "Summertime", "Intro"),
+            _release(6, "Martha", "Intro"),
+        ],
+    )
+    return store
+
+
+def _ties(net) -> dict[tuple[int, int], tuple[Tie, ...]]:
+    return {(link.one, link.other): link.ties for link in net.links}
+
+
+def test_songs_are_compared_without_brackets_accents_punctuation_or_a_leading_the():
+    assert song_key("'Round Midnight (Take 2)") == "round midnight"
+    assert song_key("Round  Midnight [Live]") == "round midnight"
+    assert song_key("Café Bleu") == "cafe bleu"
+    assert song_key("The Girl From Ipanema") == "girl from ipanema"
+
+
+def test_each_kind_of_tie_is_found(tmp_path):
+    net = network(_collection(tmp_path))
+
+    assert _ties(net) == {
+        # Discogs lists the quintet among Miles' groups, and his name is inside its name.
+        (1, 2): (Tie.MEMBER, Tie.BILLING),
+        # A family, and one name inside the other.
+        (3, 4): (Tie.BILLING, Tie.FAMILY),
+        (1, 5): (Tie.SONGS,),
+    }
+    songs = next(link for link in net.links if (link.one, link.other) == (1, 5)).songs
+    # The title as first found; "Intro" ties no one, so Tom Waits stays on his own.
+    assert songs == ("'Round Midnight",)
+
+
+def test_a_band_is_a_tie_whichever_record_names_the_other(tmp_path):
+    store = _collection(tmp_path)
+    store.save(ArtistEnrichment, [ArtistEnrichment(102, None, None, FETCHED, member_ids=(101,))])
+
+    assert _ties(network(store))[(1, 2)] == (Tie.MEMBER, Tie.BILLING)
+
+
+def test_the_closest_ties_come_first_around_an_artist(tmp_path):
+    net = network(_collection(tmp_path))
+
+    around = net.around(1)
+
+    assert [point.name for point, _ in around] == ["The Miles Davis Quintet", "Ella Fitzgerald"]
+    assert net.around(6) == []
+    # Each artist with its albums and cluster; the clusters in their order on the shelves.
+    miles = next(point for point in net.points if point.artist_id == 1)
+    assert (miles.albums, miles.cluster_id) == (2, 1)
+    assert net.clusters == ((1, "Jazz"), (2, "Songwriters"))
+
+
+def test_an_artist_only_on_albums_of_its_own_shares_no_song_with_itself():
+    artists = [Artist(1, "Miles Davis")]
+    albums = [Album(1, 1, "One", release_id=1), Album(2, 1, "Two", release_id=2)]
+    releases = [_release(1, "So What"), _release(2, "So What")]
+
+    assert build(artists, albums, [], releases, [], []).links == ()
+
+
+@pytest.fixture
+def client(tmp_path):
+    _collection(tmp_path / "data")
+    return create_app(tmp_path / "data").test_client()
+
+
+def test_the_screen_shows_the_ties_of_an_artist_as_a_list(client):
+    page = client.get("/connections/?artist=1").get_data(as_text=True)
+
+    assert "Connections of Miles Davis" in page
+    assert "The Miles Davis Quintet" in page
+    assert 'data-ties="member billing"' in page
+    assert "&#39;Round Midnight" in page
+    # The network is drawn by the vendored library, within the policy.
+    assert "vendor/cytoscape.min.js" in page
+    assert 'id="__________cytoscape_stylesheet"' in page
+
+
+def test_an_artist_tied_to_no_one_says_so(client):
+    page = client.get("/connections/?artist=6").get_data(as_text=True)
+
+    assert "Nothing ties this artist to another" in page
+    assert client.get("/connections/?artist=99").status_code == 404
+
+
+def test_the_screen_finds_an_artist_to_put_in_the_middle(client):
+    page = client.get("/connections/?q=chet").get_data(as_text=True)
+
+    assert "/connections/?artist=3" in page and "/connections/?artist=4" in page
+    assert "/connections/?artist=1" not in page
+    assert "No artist matches" in client.get("/connections/?q=nobody").get_data(as_text=True)
+
+
+def test_on_the_whole_collection_the_same_song_starts_switched_off(client):
+    whole = client.get("/connections/").get_data(as_text=True)
+    around = client.get("/connections/?artist=1").get_data(as_text=True)
+
+    assert '<input type="checkbox" data-tie="songs" >' in whole
+    assert '<input type="checkbox" data-tie="songs" checked>' in around
+
+
+def test_the_network_comes_as_compact_lists(client):
+    data = client.get("/connections/network.json").get_json()
+
+    assert data["clusters"] == [[1, "Jazz"], [2, "Songwriters"]]
+    assert [1, "Miles Davis", 2, 1] in data["artists"]
+    assert [1, 5, ["songs"], ["'Round Midnight"]] in data["links"]
+
+
+def test_the_tab_stands_next_to_browse_and_an_artists_page_links_to_it(client):
+    assert 'href="/connections/"' in client.get("/browse").get_data(as_text=True)
+    assert 'href="/connections/?artist=1"' in client.get("/artists/1").get_data(as_text=True)
+
+
+def test_a_visitor_may_look_at_the_connections(tmp_path, monkeypatch):
+    monkeypatch.setenv("SLEEVE_SHELF_HTTP_LOGIN", "1")
+    login._pages.clear()
+    _collection(tmp_path / "data")
+    app = create_app(tmp_path / "data")
+    set_password(app.config["DATA_DIR"], "a long and strong one")
+    visitor = app.test_client()
+
+    assert visitor.get("/connections/?artist=1").status_code == 200
+    assert visitor.get("/connections/network.json").status_code == 200
+    menu = visitor.get("/browse").get_data(as_text=True)
+    assert 'href="/connections/"' in menu
+    # The family on an artist's page is the owner's screen; a visitor sees its name only.
+    artist = visitor.get("/artists/3").get_data(as_text=True)
+    assert "/families/" not in artist and "Chet Baker" in artist

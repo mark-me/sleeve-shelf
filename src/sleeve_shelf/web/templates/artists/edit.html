@@ -14,7 +14,8 @@
       <h1>{{ artist.name }}</h1>
       <p class="ss-muted mt-1 mb-0">
         {{ _('Era band: %(band)s', band=band) }}
-        {% if family %} &middot; {{ _('Family:') }} <a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% endif %}
+        {% if family %} &middot; {{ _('Family:') }} {% if is_owner %}<a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% else %}{{ family.label }}{% endif %}{% endif %}
+        &middot; <a href="{{ url_for('connections.index', artist=artist.id) }}">{{ _('Connections') }}</a>
       </p>
     </div>
   </div>
