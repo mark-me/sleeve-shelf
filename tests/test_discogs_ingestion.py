@@ -11,6 +11,7 @@ from sleeve_shelf.ingestion.discogs_api import (
     DiscogsError,
     collection_items,
     format_text,
+    tracklist,
 )
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.formats import parse_format
@@ -161,14 +162,42 @@ def test_a_release_comes_with_its_songs_and_no_headings():
     )
     client = api.client()
 
+    # Asked for with their writers: Discogs naming none is an empty list, not an unknown one.
     assert client.release(1).tracklist == (
-        Track("A1", "Ol' '55", "3:58"),
-        Track("B1a", "Part One"),
-        Track("B1b", "Part Two"),
-        Track("3", "Without A Type"),
+        Track("A1", "Ol' '55", "3:58", ()),
+        Track("B1a", "Part One", None, ()),
+        Track("B1b", "Part Two", None, ()),
+        Track("3", "Without A Type", None, ()),
     )
     # One that no longer exists has no songs, rather than an unknown tracklist.
     assert client.release(2).tracklist == ()
+
+
+def test_a_song_comes_with_who_wrote_it():
+    entries = [
+        {"position": "A1", "title": "Yesterdays", "extraartists": [{"id": 11, "role": "Written-By"}, {"id": 99, "role": "Bass"}]},
+        {"position": "A2", "title": "Two"},
+        {"position": "A3", "title": "Three"},
+        {
+            "type_": "index",
+            "title": "Suite",
+            "extraartists": [{"id": 12, "role": "Composed By"}],
+            "sub_tracks": [{"position": "B1a", "title": "Part One"}],
+        },
+    ]
+    credits = [
+        {"id": 13, "role": "Lyrics By", "tracks": "A2 to A3"},
+        {"id": 14, "role": "Music By [Uncredited]", "tracks": "A3, B1a"},
+        {"id": 15, "role": "Producer", "tracks": ""},
+        {"id": 16, "role": "Songwriter", "tracks": ""},
+        # A name Discogs has no page for cannot be compared, so it is left out.
+        {"id": 0, "role": "Written-By", "tracks": ""},
+    ]
+
+    writers = [track.writers for track in tracklist(entries, credits)]
+
+    # The track's own credits, its suite's, and the release's for the tracks they name or all.
+    assert writers == [(11, 16), (13, 16), (13, 14, 16), (12, 14, 16)]
 
 
 def test_release_without_master_and_missing_release():

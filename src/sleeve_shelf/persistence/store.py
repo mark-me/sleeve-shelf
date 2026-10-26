@@ -71,7 +71,10 @@ _FORMAT_TOKENS_TYPE = (
 )
 
 def _tracklist(value: list) -> tuple[Track, ...]:
-    return tuple(Track(**track) for track in value)
+    return tuple(
+        Track(**{**track, "writers": None if track.get("writers") is None else tuple(track["writers"])})
+        for track in value
+    )
 
 
 _PLACEMENT_COLUMNS = {
@@ -202,7 +205,7 @@ _TABLES: dict[type, _Table] = {
             "master_id": "INTEGER",
             "fetched_at": "TIMESTAMP",
             "year": "INTEGER",
-            "tracklist": "STRUCT(position VARCHAR, title VARCHAR, duration VARCHAR)[]",
+            "tracklist": "STRUCT(position VARCHAR, title VARCHAR, duration VARCHAR, writers BIGINT[])[]",
         },
         {"styles": tuple, "tracklist": _tracklist},
     ),

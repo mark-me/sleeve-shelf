@@ -21,7 +21,7 @@ from sleeve_shelf.domain import (
     Shelf,
     Track,
 )
-from sleeve_shelf.network import Tie, TiedAlbum, build, network, song_key, ties_of
+from sleeve_shelf.network import Tie, TiedAlbum, build, network, song_key, tied_albums, ties_of
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web import login
 
@@ -91,6 +91,66 @@ def test_songs_are_compared_without_brackets_accents_punctuation_or_a_leading_th
     assert song_key("Round  Midnight [Live]") == "round midnight"
     assert song_key("Café Bleu") == "cafe bleu"
     assert song_key("The Girl From Ipanema") == "girl from ipanema"
+    # Only brackets at the end fall away: at the start they are part of the title.
+    assert song_key("( Dance With The ) Guitar Man") == "dance with the guitar man"
+    assert song_key("Round Midnight (Take 2) [Bonus]") == "round midnight"
+    assert song_key("(Nice Dream)") == "nice dream"
+
+
+def _songs_by(*albums: tuple[int, str, tuple[int, ...] | None]):
+    """Artists 1, 2, … each with one album holding one song, by the writers given."""
+    artists = [Artist(i, f"Artist {i}") for i in range(1, len(albums) + 1)]
+    records = [Album(i, i, f"Album {i}", release_id=i) for i in range(1, len(albums) + 1)]
+    releases = [
+        ReleaseEnrichment(i, (), None, FETCHED, tracklist=(Track("A1", title, None, writers),))
+        for i, (_, title, writers) in enumerate(albums, 1)
+    ]
+    return {(link.one, link.other): link.songs for link in build(artists, records, [], releases, [], []).links}
+
+
+def test_a_title_by_other_writers_is_another_song():
+    kern, rose = (11,), (21,)
+
+    # Bud Powell and Ella have Kern's; Guns N' Roses has a song of its own by that name.
+    assert _songs_by((1, "Yesterdays", kern), (2, "Yesterdays", kern), (3, "Yesterdays", rose)) == {(1, 2): ("Yesterdays",)}
+    # Tracks that share one writer of several are one song, also through a third.
+    assert set(_songs_by((1, "Song", (1,)), (2, "Song", (1, 2)), (3, "Song", (2,)))) == {(1, 2), (1, 3), (2, 3)}
+
+
+def test_a_song_without_its_writers_counts_when_its_title_is_one_song():
+    kern, rose = (11,), (21,)
+
+    # Every track with writers is Kern's: one without them is taken for his too.
+    assert set(_songs_by((1, "Yesterdays", kern), (2, "Yesterdays", kern), (3, "Yesterdays", ()))) == {(1, 2), (1, 3), (2, 3)}
+    # Two songs of that title: one without writers could be either, so it ties no one.
+    assert _songs_by((1, "Yesterdays", kern), (2, "Yesterdays", kern), (3, "Yesterdays", rose), (4, "Yesterdays", None)) == {(1, 2): ("Yesterdays",)}
+    # No writers known at all, as before a fetch run brought them: the title decides.
+    assert set(_songs_by((1, "Yesterdays", None), (2, "Yesterdays", ()))) == {(1, 2)}
+
+
+def test_the_albums_of_a_tie_are_those_with_the_same_song():
+    artists = [Artist(1, "Bud Powell"), Artist(2, "Guns N' Roses")]
+    albums = [Album(1, 1, "Jazz Giant", release_id=1), Album(2, 2, "Greatest Hits", release_id=2), Album(3, 2, "Covers", release_id=3)]
+    releases = [
+        ReleaseEnrichment(1, (), None, FETCHED, tracklist=(Track("A1", "Yesterdays", None, (11,)), Track("A2", "Tea", None, (5,)))),
+        ReleaseEnrichment(2, (), None, FETCHED, tracklist=(Track("A1", "Yesterdays", None, (21,)),)),
+        ReleaseEnrichment(3, (), None, FETCHED, tracklist=(Track("A1", "Tea", None, (5,)),)),
+    ]
+    net = build(artists, albums, [], releases, [], [])
+
+    tied = tied_albums(net.around(1), 1, artists, albums, releases)
+
+    # Tied by "Tea" alone: their "Yesterdays" is another song, so its album is not shown.
+    assert [t.theirs for t in tied] == [(TiedAlbum(3, ("Tea",)),)]
+    assert tied[0].mine == (TiedAlbum(1, ("Tea",)),)
+
+
+def test_a_compilation_shares_no_song():
+    artists = [Artist(1, "Miles Davis"), Artist(2, "Various", discogs_artist_id=194), Artist(3, "Bill Evans")]
+    albums = [Album(1, 1, "One", release_id=1), Album(2, 2, "Jazz Hits", release_id=2), Album(3, 3, "Two", release_id=3)]
+    releases = [_release(1, "So What"), _release(2, "So What", "Waltz For Debby"), _release(3, "Waltz For Debby")]
+
+    assert build(artists, albums, [], releases, [], []).links == ()
 
 
 def test_each_kind_of_tie_is_found(tmp_path):

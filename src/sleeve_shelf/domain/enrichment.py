@@ -14,6 +14,9 @@ class Track:
     position: str
     title: str
     duration: str | None = None
+    # Who wrote it, as Discogs credits them: Discogs artist ids. Empty when Discogs names no
+    # one; None for a track fetched before writers were kept, fetched again once for them.
+    writers: tuple[int, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)

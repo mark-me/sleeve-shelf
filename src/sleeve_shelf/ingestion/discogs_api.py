@@ -1,6 +1,7 @@
 """Client for the Discogs API: the collection, and the release, master and artist lookups."""
 
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -81,7 +82,7 @@ class DiscogsClient:
             master_id=data.get("master_id") or None,
             fetched_at=datetime.now().replace(microsecond=0),
             year=data.get("year") or None,
-            tracklist=tracklist(data.get("tracklist")),
+            tracklist=tracklist(data.get("tracklist"), data.get("extraartists")),
         )
 
     def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
@@ -213,18 +214,53 @@ class DiscogsClient:
         self._last_request = self._clock()
 
 
-def tracklist(entries: list[dict] | None) -> tuple[Track, ...]:
-    """The songs of a Discogs tracklist, in order. A heading ("Side A") is no song; a medley
-    or suite listed with its parts counts by its parts."""
-    tracks: list[Track] = []
+# The credits that name who wrote a song: "Written-By", "Composed By", "Lyrics By", "Music By"…
+_WRITER_ROLE = re.compile(r"writ|compos|lyrics|music by|words by|songwriter", re.IGNORECASE)
+
+
+def _writers(credits: list[dict] | None) -> set[int]:
+    return {c["id"] for c in credits or () if c.get("id") and _WRITER_ROLE.search(c.get("role") or "")}
+
+
+def tracklist(entries: list[dict] | None, credits: list[dict] | None = None) -> tuple[Track, ...]:
+    """The songs of a Discogs tracklist, in order, each with who wrote it. A heading ("Side A")
+    is no song; a medley or suite listed with its parts counts by its parts.
+
+    The writers come from the track's own credits, its medley's, and the release's credits
+    for the tracks they name ("A1 to A3, B2"), or for all of them when they name none.
+    """
+    songs: list[tuple[dict, set[int]]] = []
     for entry in entries or ():
         parts = entry.get("sub_tracks") or ()
         kind = entry.get("type_") or "track"
         for track in parts if parts else ([entry] if kind in ("track", "index") else []):
-            title = (track.get("title") or "").strip()
-            if title:
-                tracks.append(Track(track.get("position") or "", title, track.get("duration") or None))
-    return tuple(tracks)
+            if (track.get("title") or "").strip():
+                own = _writers(track.get("extraartists"))
+                songs.append((track, own | (_writers(entry.get("extraartists")) if parts else set())))
+    positions = [track.get("position") or "" for track, _ in songs]
+    for credit in credits or ():
+        writers = _writers([credit])
+        if not writers:
+            continue
+        for index in _credited(credit.get("tracks") or "", positions):
+            songs[index][1].update(writers)
+    return tuple(
+        Track(track.get("position") or "", track["title"].strip(), track.get("duration") or None, tuple(sorted(writers)))
+        for track, writers in songs
+    )
+
+
+def _credited(tracks: str, positions: list[str]) -> list[int]:
+    """The tracks a release credit is for: all of them when it names none, else those it names,
+    one by one or as a range ("A1 to A3")."""
+    if not tracks.strip():
+        return list(range(len(positions)))
+    found: list[int] = []
+    for part in tracks.split(","):
+        ends = [end.strip() for end in part.split(" to ")]
+        if all(end in positions for end in ends):
+            found += range(positions.index(ends[0]), positions.index(ends[-1]) + 1)
+    return found
 
 
 def is_web_address(address: str | None) -> bool:

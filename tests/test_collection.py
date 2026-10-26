@@ -237,11 +237,36 @@ def test_a_release_fetched_before_tracklists_were_kept_is_asked_again_for_its_tr
     old, new = sorted(store.load(ReleaseEnrichment), key=lambda r: r.release_id)
     # Only the tracklist is taken over: what the sorting goes by stays as it was.
     assert old.styles == ("Cool Jazz",) and old.year == 1959
-    assert old.tracklist == (Track("A1", "Let's Get Lost", "3:42"),)
+    assert old.tracklist == (Track("A1", "Let's Get Lost", "3:42", ()),)
     assert new.styles == ("Hard Bop",) and new.tracklist == old.tracklist
 
     enrich_collection(store, client)
     assert len(client.calls) == 2
+
+
+def test_a_release_fetched_before_writers_were_kept_is_asked_again_for_them(tmp_path):
+    class Writers(_Client):
+        def release(self, release_id):
+            fetched = super().release(release_id)
+            return ReleaseEnrichment(
+                release_id, ("Hard Bop",), fetched.master_id, NOW, 2018,
+                tracklist=(Track("A1", "Yesterdays", "3:42", (11,)),),
+            )
+
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Bud Powell")])
+    store.save(Album, [Album(1, 1, "Jazz Giant", release_id=10)])
+    # The tracklist is in, the writers of its songs are not.
+    store.save(ReleaseEnrichment, [ReleaseEnrichment(10, ("Bop",), None, NOW, 1956, tracklist=(Track("A1", "Yesterdays"),))])
+    client = Writers()
+
+    enrich_collection(store, client)
+    enrich_collection(store, client)
+
+    assert client.calls == [("release", 10)]
+    release = store.load(ReleaseEnrichment)[0]
+    # Only the tracklist is taken over, now with its writers.
+    assert release.styles == ("Bop",) and release.tracklist == (Track("A1", "Yesterdays", "3:42", (11,)),)
 
 
 def test_a_release_without_songs_is_not_asked_for_again(tmp_path):
