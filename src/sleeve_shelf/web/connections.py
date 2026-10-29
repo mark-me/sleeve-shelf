@@ -34,9 +34,13 @@ def index():
             key=lambda point: sort_name(point.name),
         )[:FOUND_LIMIT]
     clusters = dict(shown.clusters)
+    switched, ties_param = _switched(artist_id is not None)
     return render_template(
         "connections/index.html",
         ties=list(Tie),
+        # The kinds of tie switched on, and how links carry them (None: the defaults).
+        switched=switched,
+        ties_param=ties_param,
         artist=points.get(artist_id),
         cluster=clusters.get(points[artist_id].cluster_id) if artist_id is not None else None,
         steps=2 if request.args.get("steps") == "2" else 1,
@@ -48,6 +52,17 @@ def index():
         found=found,
         tied={point for link in shown.links for point in (link.one, link.other)},
     )
+
+
+def _switched(around_one: bool) -> tuple[set[Tie], str | None]:
+    """The kinds of tie switched on: as the link says once the user switched one, or else the
+    defaults — everything, but Same song only around one artist, as over the whole
+    collection it ties almost every jazz artist to every other."""
+    given = request.args.get("ties")
+    if given is None:
+        return {tie for tie in Tie if around_one or tie is not Tie.SONGS}, None
+    switched = {tie for tie in Tie if tie.value in given.split(",")}
+    return switched, ",".join(tie.value for tie in Tie if tie in switched)
 
 
 @blueprint.get("/network.json")

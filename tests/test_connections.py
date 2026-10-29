@@ -262,6 +262,28 @@ def test_the_network_comes_with_full_screen_a_legend_and_a_way_to_the_middle(cli
     assert 'data-centre-url="/connections/?artist=0"' in page
 
 
+def test_the_switches_go_along_in_the_links_once_switched(client):
+    page = client.get("/connections/?artist=1&ties=member,family").get_data(as_text=True)
+
+    assert '<input type="checkbox" data-tie="member" checked>' in page
+    assert '<input type="checkbox" data-tie="songs" >' in page
+    # On to another artist, the whole collection and the search: the same switches.
+    assert 'href="/connections/?artist=2&amp;ties=member,family"' in page
+    assert 'href="/connections/?ties=member,family"' in page
+    assert '<input type="hidden" name="ties" value="member,family">' in page
+    # Not switched yet: the links carry nothing, so each page starts with its defaults.
+    plain = client.get("/connections/?artist=1").get_data(as_text=True)
+    assert 'href="/connections/?artist=2"' in plain and 'name="ties"' not in plain
+
+
+def test_a_ties_albums_are_folded_away_under_their_count(client):
+    page = client.get("/connections/?artist=1").get_data(as_text=True)
+
+    # Ella: her album with the song and Miles' own.
+    ella = page[page.index('id="tie-5"'):]
+    assert re.search(r"<details [^>]*data-tie-albums>\s*<summary>2 albums</summary>", ella)
+
+
 def test_an_artist_tied_to_no_one_says_so(client):
     page = client.get("/connections/?artist=6").get_data(as_text=True)
 

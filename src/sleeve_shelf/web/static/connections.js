@@ -7,6 +7,7 @@
   if (!box) return;
   const infoText = document.querySelector("[data-info-text]");
   const centreLink = document.querySelector("[data-network-centre]");
+  const albumsLink = document.querySelector("[data-network-albums]");
   const hint = infoText.textContent;
   if (!window.cytoscape) {
     // The library did not load: say so, rather than an empty network with directions for it.
@@ -26,6 +27,9 @@
   // The artist tapped once, whose ties are lit up.
   let selected = null;
   const legend = document.querySelector("[data-network-legend]");
+  // The switches go along in the links once the user has switched one; until then each page
+  // starts as it does by default.
+  let keepTies = new URL(window.location.href).searchParams.has("ties");
 
   function active() {
     return new Set(switches.filter((input) => input.checked).map((input) => input.dataset.tie));
@@ -209,18 +213,49 @@
     return { name: "cose", animate: false, randomize: true, nodeRepulsion: () => 8000, idealEdgeLength: () => 60, padding: 24 };
   }
 
+  function withTies(href) {
+    const url = new URL(href, window.location.href);
+    if (keepTies) url.searchParams.set("ties", TIES.filter((tie) => active().has(tie)).join(","));
+    return url.pathname + url.search + url.hash;
+  }
+
   function centreUrl(id) {
     let url = box.dataset.centreUrl.replace("artist=0", "artist=" + id);
     if (steps === 2) url += "&steps=2";
-    return url;
+    return withTies(url);
   }
 
-  // The line under the network; with an artist, the way to put it in the middle.
+  // Every link to this screen, and the address of the page itself, take the switches along.
+  function carryTies() {
+    keepTies = true;
+    document.querySelectorAll('a[href^="/connections/"]').forEach((link) => {
+      link.setAttribute("href", withTies(link.getAttribute("href")));
+    });
+    const hidden = document.querySelector('form[role="search"] input[name="ties"]');
+    const value = TIES.filter((tie) => active().has(tie)).join(",");
+    if (hidden) hidden.value = value;
+    else {
+      const field = document.createElement("input");
+      field.type = "hidden";
+      field.name = "ties";
+      field.value = value;
+      document.querySelector('form[role="search"]').append(field);
+    }
+    window.history.replaceState(null, "", withTies(window.location.href));
+  }
+
+  // The line under the network; with an artist, the way to put it in the middle and to its
+  // albums in the list below.
   function say(text, artistId) {
     infoText.textContent = text;
     const offered = artistId !== undefined && artistId !== null && artistId !== centre;
     centreLink.hidden = !offered;
     if (offered) centreLink.href = centreUrl(artistId);
+    const row = offered ? document.getElementById("tie-" + artistId) : null;
+    albumsLink.hidden = !(row && row.querySelector("[data-tie-albums]"));
+    if (!albumsLink.hidden) albumsLink.href = "#tie-" + artistId;
+    document.querySelectorAll(".ss-row-current").forEach((other) => other.classList.remove("ss-row-current"));
+    if (row) row.classList.add("ss-row-current");
   }
 
   function describe(node, offer) {
@@ -373,10 +408,123 @@
   switches.forEach((input) =>
     input.addEventListener("change", () => {
       filterList();
+      carryTies();
       if (network) draw();
     })
   );
   filterList();
+
+  // The albums of the artist lit up, opened in the list.
+  albumsLink.addEventListener("click", () => {
+    const row = document.querySelector(albumsLink.getAttribute("href"));
+    const albums = row && row.querySelector("[data-tie-albums]");
+    if (albums) albums.open = true;
+    if (frame.classList.contains("ss-network-full")) full(false);
+  });
+
+  // The way here: the artists put in the middle one after another in this tab. Going back to
+  // one of them cuts the way off there.
+  const TRAIL_KEY = "sleeve-shelf-connections-trail";
+  const TRAIL_LENGTH = 8;
+  const trailBox = document.querySelector("[data-network-trail]");
+
+  function readTrail() {
+    try {
+      return JSON.parse(sessionStorage.getItem(TRAIL_KEY)) || [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function showTrail() {
+    let trail = readTrail();
+    if (centre !== null) {
+      const index = trail.findIndex(([id]) => id === centre);
+      trail = index >= 0 ? trail.slice(0, index + 1) : trail.concat([[centre, box.dataset.artistName]]);
+      trail = trail.slice(-TRAIL_LENGTH);
+      try {
+        sessionStorage.setItem(TRAIL_KEY, JSON.stringify(trail));
+      } catch (error) {
+        // Without storage there is no way to show; the page works the same.
+      }
+    }
+    trailBox.replaceChildren();
+    if (trail.length < 2) return;
+    trail.forEach(([id, name], index) => {
+      if (index) {
+        const sep = document.createElement("span");
+        sep.className = "ss-trail-sep";
+        sep.setAttribute("aria-hidden", "true");
+        sep.textContent = "›";
+        trailBox.append(sep);
+      }
+      if (id === centre) {
+        const here = document.createElement("strong");
+        here.textContent = name;
+        here.setAttribute("aria-current", "page");
+        trailBox.append(here);
+      } else {
+        const link = document.createElement("a");
+        link.href = centreUrl(id);
+        link.textContent = name;
+        trailBox.append(link);
+      }
+    });
+    trailBox.hidden = false;
+  }
+
+  showTrail();
+
+  // While typing: the artists of the network. One in view is lit up on the map; another
+  // opens its connections. Enter still searches as before.
+  const search = document.getElementById("search");
+  const suggest = document.querySelector("[data-network-suggest]");
+  const SUGGESTED = 8;
+
+  function plain(text) {
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  }
+
+  function suggestFor(text) {
+    suggest.replaceChildren();
+    const words = plain(text).split(/\s+/).filter(Boolean);
+    if (!network || !words.length) {
+      suggest.hidden = true;
+      return;
+    }
+    const inView = (id) => cy && cy.getElementById(String(id)).nonempty();
+    const found = network.artists
+      .filter(([, name]) => words.every((word) => plain(name).includes(word)))
+      .sort((a, b) => Number(inView(b[0])) - Number(inView(a[0])) || a[1].localeCompare(b[1]))
+      .slice(0, SUGGESTED);
+    found.forEach(([id, name, , cluster]) => {
+      const row = document.createElement("button");
+      row.type = "button";
+      row.className = "ss-suggest-row";
+      const label = document.createElement("span");
+      label.textContent = name;
+      const note = document.createElement("span");
+      note.className = "ss-muted small";
+      note.textContent = inView(id) ? clusterNames.get(cluster) || box.dataset.noCluster : suggest.dataset.notInView;
+      row.append(label, note);
+      row.addEventListener("click", () => {
+        suggest.hidden = true;
+        if (inView(id)) {
+          select(cy.getElementById(String(id)));
+          box.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        } else {
+          window.location.href = centreUrl(id);
+        }
+      });
+      suggest.append(row);
+    });
+    suggest.hidden = !found.length;
+  }
+
+  search.addEventListener("input", () => suggestFor(search.value));
+  search.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") suggest.hidden = true;
+  });
 
   const fitButton = document.querySelector("[data-network-fit]");
   if (fitButton) fitButton.addEventListener("click", () => cy && fit());

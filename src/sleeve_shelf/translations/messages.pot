@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-29 23:30+0100\n"
+"POT-Creation-Date: 2026-10-29 23:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1252,6 +1252,10 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Your way here"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 #, python-format
 msgid "Connections of %(name)s"
 msgstr ""
@@ -1266,6 +1270,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "How the artists in your collection are tied together: members of a band, other names, one name inside another, families, and the same song on albums of both. Choose an artist to put it in the middle."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "not in view: opens its connections"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
@@ -1314,6 +1322,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Put in the middle"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Its albums in the list"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html

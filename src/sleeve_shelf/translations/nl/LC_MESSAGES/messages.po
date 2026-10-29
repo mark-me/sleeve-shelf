@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-29 23:30+0100\n"
+"POT-Creation-Date: 2026-10-29 23:37+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -1253,6 +1253,10 @@ msgstr[0] "en nog %(num)d album"
 msgstr[1] "en nog %(num)d albums"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Your way here"
+msgstr "Je weg hierheen"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 #, python-format
 msgid "Connections of %(name)s"
 msgstr "Verbanden van %(name)s"
@@ -1268,6 +1272,10 @@ msgstr "De hele collectie"
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "How the artists in your collection are tied together: members of a band, other names, one name inside another, families, and the same song on albums of both. Choose an artist to put it in the middle."
 msgstr "Hoe de artiesten in je collectie met elkaar verbonden zijn: leden van een band, andere namen, de ene naam in de andere, families, en hetzelfde nummer op albums van allebei. Kies een artiest om die in het midden te zetten."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "not in view: opens its connections"
+msgstr "niet in beeld: opent zijn verbanden"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "tied to no one"
@@ -1316,6 +1324,10 @@ msgstr "Tik op een artiest om zijn verbanden te zien, en nog eens om hem in het 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Put in the middle"
 msgstr "Zet in het midden"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Its albums in the list"
+msgstr "Zijn albums in de lijst"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Tap a cluster to light up its artists"

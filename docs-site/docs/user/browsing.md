@@ -30,7 +30,9 @@ The switches above the network show or hide each kind. Songs are compared withou
 
 Tap an artist once to light it up with its ties — the rest fades, and the line under the network says who it is — and again (or **Put in the middle**) to put it in the middle. On the whole collection the network zooms in to it. Tap the background to light everything up again, or a line to see what ties the two. Drag to move around, and pinch (or scroll) to zoom; **Show everything** fits the network back on the screen.
 
-On a phone a finger on the network moves the network rather than the page, so it stands a little lower there; **Full screen** gives it the whole screen until you press **Close**. Under the network the **clusters** in view are listed with their colour: tap one to light up its artists. Visitors can look at the connections too.
+On a phone a finger on the network moves the network rather than the page, so it stands a little lower there; **Full screen** gives it the whole screen until you press **Close**. Under the network the **clusters** in view are listed with their colour: tap one to light up its artists.
+
+While you type an artist in the search field, the artists of the network are offered: choosing one lights it up on the map, or opens its connections when it is not in view. Switches you change stay as you set them while you go from artist to artist, and above the heading **your way here** — the artists you put in the middle one after another — takes you back. In the list each tie's albums are folded away under their number; lighting up an artist offers **Its albums in the list**. Visitors can look at the connections too.
 
 ## 💿 An album's page
 
