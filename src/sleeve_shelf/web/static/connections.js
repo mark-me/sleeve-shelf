@@ -1,15 +1,17 @@
 // Connections: draws the network of artists with Cytoscape, from the screen's JSON. Around one
 // artist it shows the artists tied to it, one or two steps out; otherwise every artist with a
 // tie. The switches show or hide each kind of tie, in the network and in the list below it.
+// A first tap on an artist lights up its ties, a second puts it in the middle.
 (function () {
   const box = document.getElementById("ss-network");
   if (!box) return;
-  const info = document.getElementById("ss-network-info");
+  const infoText = document.querySelector("[data-info-text]");
+  const centreLink = document.querySelector("[data-network-centre]");
+  const hint = infoText.textContent;
   if (!window.cytoscape) {
     // The library did not load: say so, rather than an empty network with directions for it.
-    info.textContent = box.dataset.failed;
-    const fitButton = document.querySelector("[data-network-fit]");
-    if (fitButton) fitButton.hidden = true;
+    infoText.textContent = box.dataset.failed;
+    document.querySelectorAll("[data-network-fit], [data-network-full]").forEach((button) => (button.hidden = true));
     return;
   }
   const switches = Array.from(document.querySelectorAll("input[data-tie]"));
@@ -21,6 +23,9 @@
   let clusterColours = new Map();
   let clusterNames = new Map();
   let cy = null;
+  // The artist tapped once, whose ties are lit up.
+  let selected = null;
+  const legend = document.querySelector("[data-network-legend]");
 
   function active() {
     return new Set(switches.filter((input) => input.checked).map((input) => input.dataset.tie));
@@ -39,11 +44,13 @@
     return count === 1 ? box.dataset.albumsOne : box.dataset.albumsMany.replace("{n}", count);
   }
 
-  // Clusters next to each other on the shelves get colours next to each other.
+  // Clusters next to each other on the shelves get colours next to each other, one lighter
+  // and one darker in turn, so neighbours can still be told apart.
   function colourClusters() {
     const count = Math.max(network.clusters.length, 1);
     network.clusters.forEach(([id, name], index) => {
-      clusterColours.set(id, "hsl(" + Math.round((index / count) * 330) + ", 55%, 52%)");
+      const lightness = index % 2 ? 40 : 62;
+      clusterColours.set(id, "hsl(" + Math.round((index / count) * 330) + ", 60%, " + lightness + "%)");
       clusterNames.set(id, name);
     });
   }
@@ -160,6 +167,8 @@
           "min-zoomed-font-size": centre === null ? 9 : 0,
           "border-width": 1,
           "border-color": colour("--ss-surface"),
+          "transition-property": "opacity",
+          "transition-duration": "150ms",
         },
       },
       {
@@ -177,7 +186,13 @@
       { selector: "edge", style: { width: "data(width)", "curve-style": "straight", opacity: 0.85 } },
     ]
       .concat(lines)
-      .concat([{ selector: "edge.songs", style: { opacity: 0.6 } }]);
+      .concat([
+        { selector: "edge.songs", style: { opacity: 0.6 } },
+        // What is lit up stands out; the rest fades, names and all.
+        { selector: "node.chosen", style: { "border-width": 4, "border-color": colour("--ss-text"), "font-weight": 600, "z-index": 10 } },
+        { selector: "node.lit", style: { "min-zoomed-font-size": 0, "z-index": 9 } },
+        { selector: ".faded", style: { opacity: 0.12, "text-opacity": 0 } },
+      ]);
   }
 
   function layout() {
@@ -194,9 +209,24 @@
     return { name: "cose", animate: false, randomize: true, nodeRepulsion: () => 8000, idealEdgeLength: () => 60, padding: 24 };
   }
 
-  function describe(node) {
+  function centreUrl(id) {
+    let url = box.dataset.centreUrl.replace("artist=0", "artist=" + id);
+    if (steps === 2) url += "&steps=2";
+    return url;
+  }
+
+  // The line under the network; with an artist, the way to put it in the middle.
+  function say(text, artistId) {
+    infoText.textContent = text;
+    const offered = artistId !== undefined && artistId !== null && artistId !== centre;
+    centreLink.hidden = !offered;
+    if (offered) centreLink.href = centreUrl(artistId);
+  }
+
+  function describe(node, offer) {
     const data = node.data();
-    info.textContent = [data.name, clusterNames.get(data.cluster) || box.dataset.noCluster, albums(data.albums)].join(" · ");
+    const text = [data.name, clusterNames.get(data.cluster) || box.dataset.noCluster, albums(data.albums)].join(" · ");
+    say(text, offer ? Number(data.id) : null);
   }
 
   function describeLine(edge) {
@@ -206,7 +236,85 @@
     if (data.songs.length) {
       text += " · ♪ " + data.songs.slice(0, 8).join(", ") + (data.songs.length > 8 ? " …" : "");
     }
-    info.textContent = text;
+    say(text);
+  }
+
+  // Light up some of the network and fade the rest; nothing given lights up everything.
+  function light(kept, chosen) {
+    cy.batch(() => {
+      cy.elements().removeClass("faded lit chosen");
+      if (!kept) return;
+      cy.elements().not(kept).addClass("faded");
+      kept.nodes().addClass("lit");
+      if (chosen) chosen.addClass("chosen");
+    });
+  }
+
+  // Over the whole collection what lights up is a speck: zoom to it.
+  function zoomTo(kept) {
+    if (centre !== null) return;
+    cy.stop();
+    cy.animate(
+      { fit: { eles: kept, padding: 60 } },
+      {
+        duration: 300,
+        complete: () => {
+          if (cy.zoom() > MAX_FIT_ZOOM) cy.zoom({ level: MAX_FIT_ZOOM, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } });
+        },
+      }
+    );
+  }
+
+  function select(node) {
+    selected = node.id();
+    pressLegend(null);
+    light(node.closedNeighborhood(), node);
+    zoomTo(node.closedNeighborhood());
+    describe(node, true);
+  }
+
+  function unselect() {
+    selected = null;
+    pressLegend(null);
+    light(null);
+    say(hint);
+  }
+
+  // The clusters of the artists in view, in their order on the shelves.
+  function fillLegend() {
+    const shown = new Set(cy.nodes().map((node) => node.data("cluster")));
+    legend.replaceChildren();
+    network.clusters
+      .filter(([id]) => shown.has(id))
+      .forEach(([id, name]) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "ss-legend-item";
+        item.dataset.cluster = id;
+        item.setAttribute("aria-pressed", "false");
+        const dot = document.createElement("span");
+        dot.className = "ss-legend-dot";
+        dot.style.background = clusterColours.get(id);
+        item.append(dot, document.createTextNode(name));
+        item.addEventListener("click", () => lightCluster(id, item));
+        legend.append(item);
+      });
+    legend.closest("details").hidden = !legend.children.length;
+  }
+
+  function pressLegend(item) {
+    legend.querySelectorAll("[aria-pressed]").forEach((other) => other.setAttribute("aria-pressed", String(other === item)));
+  }
+
+  function lightCluster(id, item) {
+    if (item.getAttribute("aria-pressed") === "true") return unselect();
+    selected = null;
+    const members = cy.nodes().filter((node) => node.data("cluster") === id);
+    light(members.union(members.edgesWith(members)));
+    zoomTo(members);
+    pressLegend(item);
+    const count = members.length === 1 ? box.dataset.artistsOne : box.dataset.artistsMany.replace("{n}", members.length);
+    say(clusterNames.get(id) + " · " + count);
   }
 
   // Fit the network on the screen, but a handful of artists not larger than life.
@@ -230,18 +338,33 @@
     if (!cy) {
       cy = cytoscape({ container: box, style: style(), minZoom: 0.05, maxZoom: 4 });
       cy.on("tap", "node", (event) => {
-        const id = Number(event.target.id());
-        if (id === centre) return describe(event.target);
-        let url = box.dataset.centreUrl.replace("artist=0", "artist=" + id);
-        if (steps === 2) url += "&steps=2";
-        window.location.href = url;
+        const node = event.target;
+        // A second tap on the artist lit up puts it in the middle.
+        if (selected === node.id() && Number(node.id()) !== centre) {
+          window.location.href = centreUrl(node.id());
+          return;
+        }
+        select(node);
       });
-      cy.on("mouseover", "node", (event) => describe(event.target));
-      cy.on("tap", "edge", (event) => describeLine(event.target));
+      cy.on("tap", "edge", (event) => {
+        selected = null;
+        pressLegend(null);
+        light(event.target.union(event.target.connectedNodes()));
+        describeLine(event.target);
+      });
+      cy.on("tap", (event) => {
+        if (event.target === cy) unselect();
+      });
+      // With a mouse: who it is, without lighting anything up.
+      cy.on("mouseover", "node", (event) => {
+        if (selected === null) describe(event.target, false);
+      });
     }
+    selected = null;
     cy.elements().remove();
     cy.add(items);
-    if (!cy.edges().length) info.textContent = box.dataset.empty;
+    say(cy.edges().length ? hint : box.dataset.empty);
+    fillLegend();
     const placing = cy.layout(layout());
     placing.one("layoutstop", fit);
     placing.run();
@@ -257,6 +380,26 @@
 
   const fitButton = document.querySelector("[data-network-fit]");
   if (fitButton) fitButton.addEventListener("click", () => cy && fit());
+
+  // Full screen: the network with its line and legend over the whole page, until closed.
+  const frame = document.getElementById("ss-network-frame");
+  const fullButton = document.querySelector("[data-network-full]");
+
+  function full(on) {
+    frame.classList.toggle("ss-network-full", on);
+    document.body.classList.toggle("ss-no-scroll", on);
+    fullButton.textContent = on ? fullButton.dataset.close : fullButton.dataset.open;
+    fullButton.setAttribute("aria-pressed", String(on));
+    if (cy) {
+      cy.resize();
+      fit();
+    }
+  }
+
+  fullButton.addEventListener("click", () => full(!frame.classList.contains("ss-network-full")));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && frame.classList.contains("ss-network-full")) full(false);
+  });
 
   // The light and dark theme have colours of their own.
   new MutationObserver(() => cy && cy.style(style())).observe(document.documentElement, {
@@ -275,6 +418,6 @@
       draw();
     })
     .catch(() => {
-      info.textContent = box.dataset.failed;
+      say(box.dataset.failed);
     });
 })();

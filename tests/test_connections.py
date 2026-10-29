@@ -252,6 +252,16 @@ def test_the_list_says_where_the_albums_of_a_tie_stand(tmp_path):
     assert "Round Midnight (Live)" in page
 
 
+def test_the_network_comes_with_full_screen_a_legend_and_a_way_to_the_middle(client):
+    page = client.get("/connections/?artist=1").get_data(as_text=True)
+
+    # The script fills the legend and offers the artist tapped; without it they stay hidden.
+    assert "data-network-full" in page and "Full screen" in page
+    assert "data-network-legend" in page
+    assert re.search(r'<a [^>]*data-network-centre hidden>Put in the middle</a>', page)
+    assert 'data-centre-url="/connections/?artist=0"' in page
+
+
 def test_an_artist_tied_to_no_one_says_so(client):
     page = client.get("/connections/?artist=6").get_data(as_text=True)
 

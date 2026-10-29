@@ -76,20 +76,34 @@
     {% endif %}
   </div>
 
-  <div id="ss-network" class="ss-network mt-3"
+  {# The network with what goes with it; on a phone it can fill the screen. #}
+  <div id="ss-network-frame" class="ss-network-frame mt-3">
+  <div class="ss-network-bar">
+    <button class="ss-button" type="button" data-network-fit>{{ _('Show everything') }}</button>
+    <button class="ss-button" type="button" data-network-full aria-pressed="false" data-open="{{ _('Full screen') }}" data-close="{{ _('Close') }}">{{ _('Full screen') }}</button>
+  </div>
+  <div id="ss-network" class="ss-network"
        data-url="{{ url_for('connections.data') }}"
        data-centre-url="{{ url_for('connections.index', artist=0) }}"
        {% if artist %}data-artist="{{ artist.artist_id }}" data-steps="{{ steps }}"{% endif %}
        data-albums-one="{{ ngettext('%(num)d album', '%(num)d albums', 1) }}"
        data-albums-many="{{ ngettext('%(num)d album', '%(num)d albums', 2) | replace('2', '{n}') }}"
+       data-artists-one="{{ ngettext('%(num)d artist', '%(num)d artists', 1) }}"
+       data-artists-many="{{ ngettext('%(num)d artist', '%(num)d artists', 2) | replace('2', '{n}') }}"
        data-no-cluster="{{ _('no cluster yet') }}"
        data-empty="{{ _('Nothing to show with these ties.') }}"
        data-failed="{{ _('The network could not be loaded.') }}">
     <noscript><p class="ss-card-body ss-muted">{{ _('The network needs JavaScript; the list below shows the same ties.') }}</p></noscript>
   </div>
-  <div class="d-flex flex-wrap align-items-start gap-3 mt-2">
-    <p id="ss-network-info" class="ss-muted small mb-0 flex-grow-1" aria-live="polite">{{ _('Tap an artist to put it in the middle, or a line to see what ties the two. Drag to move around; pinch or scroll to zoom.') }}</p>
-    <button class="ss-button" type="button" data-network-fit>{{ _('Show everything') }}</button>
+  <p id="ss-network-info" class="ss-network-info small mb-0 mt-2" aria-live="polite">
+    <span data-info-text>{{ _('Tap an artist to see its ties, and again to put it in the middle; tap a line to see what ties the two. Drag to move around; pinch or scroll to zoom.') }}</span>
+    <a class="ms-2 fw-semibold" href="#" data-network-centre hidden>{{ _('Put in the middle') }}</a>
+  </p>
+  {# The clusters in view with their colour; filled by the script. #}
+  <details class="ss-network-legend mt-2" open hidden>
+    <summary class="small ss-muted">{{ _('Clusters') }}</summary>
+    <div class="d-flex flex-wrap gap-2 mt-2" data-network-legend aria-label="{{ _('Tap a cluster to light up its artists') }}"></div>
+  </details>
   </div>
 
   {% if artist %}

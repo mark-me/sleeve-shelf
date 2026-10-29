@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-26 00:48+0100\n"
+"POT-Creation-Date: 2026-10-29 23:30+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -184,6 +184,7 @@ msgstr ""
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/clusters/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Clusters"
 msgstr ""
 
@@ -294,6 +295,7 @@ msgid "Shelf “%(name)s” still holds albums; move them before removing it."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_cover.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Close"
 msgstr ""
@@ -909,6 +911,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/index.html
 #: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
 #, python-format
 msgid "%(num)d artist"
 msgid_plural "%(num)d artists"
@@ -1287,6 +1290,14 @@ msgid "One step out"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Show everything"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Full screen"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Nothing to show with these ties."
 msgstr ""
 
@@ -1299,11 +1310,15 @@ msgid "The network needs JavaScript; the list below shows the same ties."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
-msgid "Tap an artist to put it in the middle, or a line to see what ties the two. Drag to move around; pinch or scroll to zoom."
+msgid "Tap an artist to see its ties, and again to put it in the middle; tap a line to see what ties the two. Drag to move around; pinch or scroll to zoom."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
-msgid "Show everything"
+msgid "Put in the middle"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Tap a cluster to light up its artists"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
