@@ -657,3 +657,7 @@ a.ss-row-title { text-decoration: none; }
 }
 .ss-nav .ss-nav-login svg { flex: none; fill: currentColor; }
 .ss-nav .ss-nav-login:hover { color: #fff; }
+
+/* Other albums under a song on an album's page: a short list with where each stands. */
+.ss-album-list { margin: 0; padding-left: 1.1rem; font-size: 0.85rem; }
+.ss-album-list li { margin: 2px 0; }

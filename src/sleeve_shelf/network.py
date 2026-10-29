@@ -2,10 +2,11 @@
 ties them together — members and other names from Discogs, one name inside another,
 families, and the same song on albums of both."""
 
+import heapq
 import re
 import unicodedata
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 
 from sleeve_shelf.domain import (
@@ -307,11 +308,99 @@ def build(
     return Network(points, links, tuple((c.id, c.name) for c in in_order(clusters)))
 
 
+# What a step along a way costs: a song shared is a looser tie than a band, a family or a name,
+# so a way goes by those where it can.
+_STEP = 1
+_SONG_STEP = 3
+
+
+def way(shown: Network, start: int, end: int, switched: set[Tie] | frozenset[Tie]) -> list[tuple[Point, Link | None]] | None:
+    """The shortest way from one artist to another along the ties switched on, as each artist
+    with the tie that leads to it (none for the first); None when there is no way.
+
+    A step by a song alone counts as three, so the way goes by closer ties where it can; of
+    two ways as long, the one with fewer steps. A tie on the way names only the kinds that
+    are switched on.
+    """
+    points = {point.artist_id: point for point in shown.points}
+    if start not in points or end not in points:
+        return None
+    next_to: dict[int, list[tuple[int, Link, int]]] = {}
+    for link in shown.links:
+        kinds = tuple(tie for tie in link.ties if tie in switched)
+        if not kinds:
+            continue
+        step = replace(link, ties=kinds, songs=link.songs if Tie.SONGS in kinds else ())
+        cost = _SONG_STEP if kinds == (Tie.SONGS,) else _STEP
+        next_to.setdefault(link.one, []).append((link.other, step, cost))
+        next_to.setdefault(link.other, []).append((link.one, step, cost))
+    came_by: dict[int, tuple[int, Link] | None] = {start: None}
+    best = {start: (0, 0)}
+    queue = [(0, 0, start)]
+    while queue:
+        cost, steps, artist_id = heapq.heappop(queue)
+        if artist_id == end:
+            break
+        if (cost, steps) > best[artist_id]:
+            continue
+        for other, link, step_cost in next_to.get(artist_id, ()):
+            reached = (cost + step_cost, steps + 1)
+            if other not in best or reached < best[other]:
+                best[other] = reached
+                came_by[other] = (artist_id, link)
+                heapq.heappush(queue, (*reached, other))
+    if end not in came_by:
+        return None
+    found: list[tuple[Point, Link | None]] = []
+    artist_id = end
+    while came_by[artist_id] is not None:
+        before, link = came_by[artist_id]
+        found.append((points[artist_id], link))
+        artist_id = before
+    found.append((points[start], None))
+    return found[::-1]
+
+
+def songs_elsewhere(
+    album_id: int, artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]
+) -> list[tuple[str, tuple[int, ...]]]:
+    """The songs of an album that other albums of the collection have too, in the album's
+    order, each as its title on this album and those other albums — of any artist, the same
+    one included (a live record, a compilation of its own)."""
+    others: dict[str, list[int]] = {}
+    title_here: dict[str, str] = {}
+    for key, heard in _songs(artists, albums, releases):
+        here = [h for h in heard if h.album_id == album_id]
+        if not here:
+            continue
+        title_here.setdefault(key, here[0].title)
+        found = others.setdefault(key, [])
+        for h in heard:
+            if h.album_id != album_id and h.album_id not in found:
+                found.append(h.album_id)
+    release_id = next((album.release_id for album in albums if album.id == album_id), None)
+    tracks = next((r.tracklist or () for r in releases if r.release_id == release_id), ())
+    # Where each song first comes on the album.
+    position = {song_key(track.title): index for index, track in reversed(list(enumerate(tracks)))}
+    return [
+        (title_here[key], tuple(found))
+        for key, found in sorted(others.items(), key=lambda item: (position.get(item[0], len(tracks)), item[0]))
+        if found
+    ]
+
+
 def ties_of(store: JsonStore, shown: Network, artist_id: int) -> list[Tied]:
     """The ties of one artist in the network, with the albums that show them."""
     releases = store.load(ReleaseEnrichment) if store.exists(ReleaseEnrichment) else []
     albums = store.load(Album) if store.exists(Album) else []
     return tied_albums(shown.around(artist_id), artist_id, store.load(Artist), albums, releases)
+
+
+def album_songs_elsewhere(store: JsonStore, album_id: int) -> list[tuple[str, tuple[int, ...]]]:
+    """The songs of an album that other albums of the collection have too (see songs_elsewhere)."""
+    if not store.exists(ReleaseEnrichment):
+        return []
+    return songs_elsewhere(album_id, store.load(Artist), store.load(Album), store.load(ReleaseEnrichment))
 
 
 def network(store: JsonStore) -> Network:

@@ -32,7 +32,9 @@ Tap an artist once to light it up with its ties — the rest fades, and the line
 
 On a phone a finger on the network moves the network rather than the page, so it stands a little lower there; **Full screen** gives it the whole screen until you press **Close**. Under the network the **clusters** in view are listed with their colour: tap one to light up its artists.
 
-While you type an artist in the search field, the artists of the network are offered: choosing one lights it up on the map, or opens its connections when it is not in view. Switches you change stay as you set them while you go from artist to artist, and above the heading **your way here** — the artists you put in the middle one after another — takes you back. In the list each tie's albums are folded away under their number; lighting up an artist offers **Its albums in the list**. Visitors can look at the connections too.
+While you type an artist in the search field, the artists of the network are offered: choosing one lights it up on the map, or opens its connections when it is not in view. Switches you change stay as you set them while you go from artist to artist, and above the heading **your way here** — the artists you put in the middle one after another — takes you back. In the list each tie's albums are folded away under their number; lighting up an artist offers **Its albums in the list**.
+
+**The way to another artist**: around one artist, search a second one under *The way to another artist*. The network then shows only the artists between the two — the shortest way along the ties switched on, through bands, names and families where it can, through shared songs where it must — and the list the steps one by one. *Tom Waits › Nina Simone › Chet Baker*: who would have thought. Visitors can look at the connections too.
 
 ## 💿 An album's page
 
@@ -42,6 +44,8 @@ Open an album from a search result, a shelf, or its artist's page. It shows:
 - its original release year — from Discogs, or confirmed by you
 - its format, Discogs styles and Discogs release
 - its **tracklist**: the songs with their place on the record and their length
+- **the same songs elsewhere**: the other albums in your collection with one of its songs, and where each stands — another version to pull from the shelf
+- **Connections**, beside the artist's name: the artist in the middle of its [connections](#connections)
 - its width, estimated or measured
 - the location rules that apply to it, and a way to put it on another shelf
 

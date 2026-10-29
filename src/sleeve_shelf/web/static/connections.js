@@ -19,6 +19,8 @@
   const TIES = ["name", "member", "billing", "family", "songs"];
   const centre = box.dataset.artist ? Number(box.dataset.artist) : null;
   const steps = Number(box.dataset.steps || 1);
+  // The way to another artist, as the artists along it: then the network shows only that.
+  const wayIds = box.dataset.way ? box.dataset.way.split(",").map(Number) : null;
   const MAX_FIT_ZOOM = 1.25;
   let network = null;
   let clusterColours = new Map();
@@ -66,7 +68,9 @@
       .filter((link) => link.ties.length);
     const songsOnly = (link) => link.ties.every((tie) => tie === "songs");
     const depth = new Map();
-    if (centre !== null) {
+    if (wayIds) {
+      wayIds.forEach((id, index) => depth.set(id, index));
+    } else if (centre !== null) {
       // A song leads only from the artist in the middle: followed further, songs would tie
       // in most of the collection.
       const next = new Map();
@@ -125,9 +129,12 @@
       }));
     // Around an artist songs are drawn only from the artist in the middle, as they lead only
     // from there; between the others they would tangle the rings.
+    const onTheWay = (link) => Math.abs(wayIds.indexOf(link.one) - wayIds.indexOf(link.other)) === 1;
     const edges = links
       .filter((link) => depth.has(link.one) && depth.has(link.other))
-      .filter((link) => centre === null || !songsOnly(link) || link.one === centre || link.other === centre)
+      .filter((link) =>
+        wayIds ? onTheWay(link) : centre === null || !songsOnly(link) || link.one === centre || link.other === centre
+      )
       .map((link) => ({
         data: {
           id: link.one + "-" + link.other,
@@ -200,6 +207,10 @@
   }
 
   function layout() {
+    if (wayIds) {
+      // One step below the other, from the artist in the middle to the other one.
+      return { name: "breadthfirst", roots: [String(wayIds[0])], spacingFactor: 1.1, animate: false, padding: 24 };
+    }
     if (centre !== null) {
       return {
         name: "concentric",
@@ -409,7 +420,9 @@
     input.addEventListener("change", () => {
       filterList();
       carryTies();
-      if (network) draw();
+      // The way goes along the ties switched on: worked out again for the new ones.
+      if (wayIds) window.location.reload();
+      else if (network) draw();
     })
   );
   filterList();

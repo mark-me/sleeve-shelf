@@ -24,6 +24,7 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.ingestion.deezer import DeezerClient
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.listening import listening, turn_down
+from sleeve_shelf.network import album_songs_elsewhere
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.taking_part import albums_taking_part, takes_part
@@ -52,6 +53,11 @@ def detail(album_id: int):
     release = next(
         (r for r in store.load(ReleaseEnrichment) if r.release_id == album.release_id), None
     )
+    # The same songs on other albums of the collection, each album with where it stands.
+    elsewhere = album_songs_elsewhere(store, album_id)
+    if elsewhere:
+        rows = {r.album_id: r for r in BrowseQueries(store).everything()}
+        elsewhere = [(title, [rows[i] for i in others if i in rows]) for title, others in elsewhere]
     return render_template(
         "albums/detail.html",
         album=album,
@@ -60,6 +66,7 @@ def detail(album_id: int):
         styles=[style_names[i] for i in album.style_ids if i in style_names],
         # None while the release was not fetched with its tracklist yet.
         tracklist=release.tracklist if release else None,
+        elsewhere=elsewhere,
         takes_part=takes_part(album, placed),
         is_placed=album_id in placed,
         spot=None if album_id in placed else described_spots(store).get(album_id),

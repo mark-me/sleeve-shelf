@@ -21,7 +21,7 @@ from sleeve_shelf.domain import (
     Shelf,
     Track,
 )
-from sleeve_shelf.network import Tie, TiedAlbum, build, network, song_key, tied_albums, ties_of
+from sleeve_shelf.network import Link, Network, Point, Tie, TiedAlbum, build, network, song_key, songs_elsewhere, tied_albums, ties_of, way
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web import login
 
@@ -220,6 +220,49 @@ def test_a_band_that_shares_a_song_shows_all_its_albums(tmp_path):
     assert quintet.mine == (TiedAlbum(12, ("So What",)),)
 
 
+def _network(*links: Link) -> Network:
+    ids = sorted({i for link in links for i in (link.one, link.other)} | {9})
+    return Network(tuple(Point(i, f"Artist {i}", 1, None) for i in ids), links, ())
+
+
+def test_the_way_goes_by_close_ties_rather_than_a_song():
+    shown = _network(
+        Link(1, 2, (Tie.SONGS,), ("Summertime",)),
+        Link(1, 3, (Tie.MEMBER,)),
+        Link(2, 3, (Tie.FAMILY,)),
+    )
+
+    found = way(shown, 1, 2, set(Tie))
+
+    # Two close steps weigh less than one song.
+    assert [point.artist_id for point, _ in found] == [1, 3, 2]
+    assert [link.ties if link else None for _, link in found] == [None, (Tie.MEMBER,), (Tie.FAMILY,)]
+    # With those switched off, the song is the way.
+    by_song = way(shown, 1, 2, {Tie.SONGS})
+    assert [point.artist_id for point, _ in by_song] == [1, 2] and by_song[1][1].songs == ("Summertime",)
+
+
+def test_a_way_names_only_the_ties_switched_on_and_may_not_exist():
+    shown = _network(Link(1, 2, (Tie.MEMBER, Tie.SONGS), ("So What",)))
+
+    _, (_, link) = way(shown, 1, 2, {Tie.MEMBER})
+    assert link.ties == (Tie.MEMBER,) and link.songs == ()
+    # Artist 9 is tied to no one; one step is no way at all.
+    assert way(shown, 1, 9, set(Tie)) is None
+    assert way(shown, 1, 2, {Tie.FAMILY}) is None
+    assert [p.artist_id for p, _ in way(shown, 1, 1, set(Tie))] == [1]
+
+
+def test_an_albums_songs_elsewhere_in_the_collection(tmp_path):
+    store = _collection(tmp_path)
+
+    found = songs_elsewhere(11, store.load(Artist), store.load(Album), store.load(ReleaseEnrichment))
+
+    # Its own title for the song; "Intro" counts for nothing.
+    assert found == [("'Round Midnight", (51,))]
+    assert songs_elsewhere(12, store.load(Artist), store.load(Album), store.load(ReleaseEnrichment)) == []
+
+
 @pytest.fixture
 def client(tmp_path):
     _collection(tmp_path / "data")
@@ -282,6 +325,42 @@ def test_a_ties_albums_are_folded_away_under_their_count(client):
     # Ella: her album with the song and Miles' own.
     ella = page[page.index('id="tie-5"'):]
     assert re.search(r"<details [^>]*data-tie-albums>\s*<summary>2 albums</summary>", ella)
+
+
+def test_the_screen_finds_the_way_to_another_artist(client):
+    # First the artists matching what was typed, the artist itself left out.
+    found = client.get("/connections/?artist=2&way=ella").get_data(as_text=True)
+    assert 'href="/connections/?artist=2&amp;to=5#way"' in found
+
+    page = client.get("/connections/?artist=2&to=5").get_data(as_text=True)
+
+    # The quintet, Miles by a band, Ella by a song; the network shows only the way.
+    assert "From The Miles Davis Quintet to Ella Fitzgerald" in page and "2 steps" in page
+    assert 'data-way="2,1,5"' in page
+    steps = page[page.index('class="ss-card ss-way'):]
+    assert steps.index("The Miles Davis Quintet") < steps.index("Miles Davis</a>") < steps.index("Ella Fitzgerald")
+    # Instead of the list of ties.
+    assert "Tied to The Miles Davis Quintet" not in page
+
+
+def test_no_way_is_said_and_an_unknown_artist_is_not_found(client):
+    page = client.get("/connections/?artist=1&to=6").get_data(as_text=True)
+
+    assert "No way leads from Miles Davis to Tom Waits" in page
+    # Without the songs, Ella is out of reach too.
+    assert "No way leads" in client.get("/connections/?artist=1&to=5&ties=member,family").get_data(as_text=True)
+    assert client.get("/connections/?artist=1&to=99").status_code == 404
+    assert client.get("/connections/?to=5").status_code == 404
+
+
+def test_an_albums_page_shows_its_songs_elsewhere_and_its_connections(client):
+    page = client.get("/albums/11").get_data(as_text=True)
+
+    assert 'href="/connections/?artist=1"' in page
+    assert "The same songs elsewhere" in page
+    assert 'href="/albums/51">Ella Fitzgerald — Ella Sings</a>' in page
+    # An album none of whose songs is elsewhere has no such part.
+    assert "The same songs elsewhere" not in client.get("/albums/12").get_data(as_text=True)
 
 
 def test_an_artist_tied_to_no_one_says_so(client):

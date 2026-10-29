@@ -97,3 +97,9 @@ body.ss-no-scroll { overflow: hidden; }
 .ss-suggest-row { display: flex; width: 100%; justify-content: space-between; gap: 12px; padding: 10px 16px; border: 0; border-bottom: 1px solid var(--ss-border); background: none; color: var(--ss-text); text-align: left; }
 .ss-suggest-row:last-child { border-bottom: 0; }
 .ss-suggest-row:hover, .ss-suggest-row:focus { background: var(--ss-chip); }
+
+/* The way from one artist to another: each step, with the tie that leads to it above it. */
+.ss-way { list-style: none; padding: 0; }
+.ss-way li + li { border-top: 1px solid var(--ss-border); }
+.ss-way .ss-row { border-bottom: 0; }
+.ss-way-tie { padding: 8px 16px 0 32px; font-size: 0.85rem; border-left: 3px solid var(--ss-border); margin-left: 16px; }

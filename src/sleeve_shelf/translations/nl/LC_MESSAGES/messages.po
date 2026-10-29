@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-29 23:37+0100\n"
+"POT-Creation-Date: 2026-10-29 23:46+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -120,6 +120,22 @@ msgstr "Verplaatsen"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/browse/results.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/discogs/remove.html
+msgid "Unplaced"
+msgstr "Zonder plek"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Connections"
+msgstr "Verbanden"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Discogs sync"
 msgstr "Discogs-sync"
@@ -130,20 +146,6 @@ msgstr "Discogs-sync"
 #: src/sleeve_shelf/web/templates/clusters/index.html
 msgid "Artists"
 msgstr "Artiesten"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/browse/results.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-#: src/sleeve_shelf/web/templates/discogs/remove.html
-msgid "Unplaced"
-msgstr "Zonder plek"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-msgid "Connections"
-msgstr "Verbanden"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/browse/results.html
@@ -555,6 +557,14 @@ msgid "Tracklist"
 msgstr "Tracklist"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "The same songs elsewhere"
+msgstr "Dezelfde nummers elders"
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Other albums in your collection with a song of this one."
+msgstr "Andere albums in je collectie met een nummer van dit album."
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "The tracklist comes with the next fetch from Discogs."
 msgstr "De tracklist komt mee met de volgende ophaalronde van Discogs."
 
@@ -605,6 +615,14 @@ msgstr "Opslaan"
 #: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Moved. A version from before the move is kept under Versions."
 msgstr "Verplaatst. Een versie van vóór het verplaatsen staat onder Versies."
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "and %(num)d more album"
+msgid_plural "and %(num)d more albums"
+msgstr[0] "en nog %(num)d album"
+msgstr[1] "en nog %(num)d albums"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/layout/index.html
@@ -1246,13 +1264,6 @@ msgid "Songs"
 msgstr "Nummers"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
-#, python-format
-msgid "and %(num)d more album"
-msgid_plural "and %(num)d more albums"
-msgstr[0] "en nog %(num)d album"
-msgstr[1] "en nog %(num)d albums"
-
-#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Your way here"
 msgstr "Je weg hierheen"
 
@@ -1332,6 +1343,45 @@ msgstr "Zijn albums in de lijst"
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Tap a cluster to light up its artists"
 msgstr "Tik op een cluster om zijn artiesten te laten oplichten"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "The way to another artist"
+msgstr "De weg naar een andere artiest"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "How %(name)s and another artist hang together: the shortest way along the ties switched on, by bands, names and families where it can."
+msgstr "Hoe %(name)s en een andere artiest samenhangen: de kortste weg langs de verbanden die aan staan, waar het kan via bands, namen en families."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Search the other artist"
+msgstr "Zoek de andere artiest"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Search the other artist…"
+msgstr "Zoek de andere artiest…"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "From %(one)s to %(other)s"
+msgstr "Van %(one)s naar %(other)s"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "%(num)d step"
+msgid_plural "%(num)d steps"
+msgstr[0] "%(num)d stap"
+msgstr[1] "%(num)d stappen"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "Back to the connections of %(name)s"
+msgstr "Terug naar de verbanden van %(name)s"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "No way leads from %(one)s to %(other)s along the ties switched on."
+msgstr "Geen weg leidt van %(one)s naar %(other)s langs de verbanden die aan staan."
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 #, python-format

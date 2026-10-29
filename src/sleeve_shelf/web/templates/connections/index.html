@@ -74,7 +74,7 @@
       <span data-tie-label>{{ tie_name(tie) }}</span>
     </label>
     {% endfor %}
-    {% if artist %}
+    {% if artist and not to %}
     <span class="ms-lg-auto">
       {% if steps == 1 %}<a href="{{ url_for('connections.index', artist=artist.artist_id, steps=2, ties=ties_param) }}">{{ _('Two steps out') }}</a>{% else %}<a href="{{ url_for('connections.index', artist=artist.artist_id, ties=ties_param) }}">{{ _('One step out') }}</a>{% endif %}
     </span>
@@ -91,6 +91,7 @@
        data-url="{{ url_for('connections.data') }}"
        data-centre-url="{{ url_for('connections.index', artist=0) }}"
        {% if artist %}data-artist="{{ artist.artist_id }}" data-artist-name="{{ artist.name }}" data-steps="{{ steps }}"{% endif %}
+       {% if the_way %}data-way="{{ the_way | map(attribute='0.artist_id') | join(',') }}"{% endif %}
        data-albums-one="{{ ngettext('%(num)d album', '%(num)d albums', 1) }}"
        data-albums-many="{{ ngettext('%(num)d album', '%(num)d albums', 2) | replace('2', '{n}') }}"
        data-artists-one="{{ ngettext('%(num)d artist', '%(num)d artists', 1) }}"
@@ -113,6 +114,58 @@
   </div>
 
   {% if artist %}
+  {# The way to another artist: choose one, and the network shows only the way there. #}
+  <section class="ss-card mt-5" id="way">
+    <div class="ss-card-head"><h2>{{ _('The way to another artist') }}</h2></div>
+    <div class="ss-card-body">
+      <p class="ss-muted small mt-0">{{ _('How %(name)s and another artist hang together: the shortest way along the ties switched on, by bands, names and families where it can.', name=artist.name) }}</p>
+      <form method="get" action="{{ url_for('connections.index') }}#way" role="search">
+        <input type="hidden" name="artist" value="{{ artist.artist_id }}">
+        {% if ties_param is not none %}<input type="hidden" name="ties" value="{{ ties_param }}">{% endif %}
+        <label for="way-search" class="visually-hidden">{{ _('Search the other artist') }}</label>
+        <input id="way-search" class="ss-search" type="search" name="way" value="{{ way_text }}" placeholder="{{ _('Search the other artist…') }}" autocomplete="off">
+      </form>
+    </div>
+    {% for point in way_found %}
+    <a class="ss-row ss-row-link" href="{{ url_for('connections.index', artist=artist.artist_id, to=point.artist_id, ties=ties_param) }}#way">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ point.name }}</span>
+        <span class="ss-row-title">{{ clusters.get(point.cluster_id) or _('no cluster yet') }}</span>
+      </div>
+    </a>
+    {% else %}
+    {% if way_text %}<div class="ss-card-body ss-muted">{{ _('No artist matches this search.') }}</div>{% endif %}
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if to %}
+  <h2 class="mt-5">{{ _('From %(one)s to %(other)s', one=artist.name, other=to.name) }}</h2>
+  {% if the_way %}
+  <p class="ss-muted mt-1">{{ ngettext('%(num)d step', '%(num)d steps', the_way | length - 1) }} &middot; <a href="{{ url_for('connections.index', artist=artist.artist_id, ties=ties_param) }}">{{ _('Back to the connections of %(name)s', name=artist.name) }}</a></p>
+  <ol class="ss-card ss-way mt-3">
+    {% for point, link in the_way %}
+    <li>
+      {% if link %}
+      <div class="ss-way-tie">
+        {% for tie in link.ties %}<span class="ss-chip me-1"><span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span> {{ tie_name(tie) }}</span>{% endfor %}
+        {% if link.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ link.songs[:3] | join(', ') }}{% if link.songs | length > 3 %} {{ ngettext('and %(num)d more song', 'and %(num)d more songs', link.songs | length - 3) }}{% endif %}</span>{% endif %}
+      </div>
+      {% endif %}
+      <div class="ss-row">
+        <div class="ss-row-text">
+          <a class="ss-row-artist" href="{{ url_for('connections.index', artist=point.artist_id, ties=ties_param) }}">{{ point.name }}</a>
+          <span class="ss-row-title">{{ clusters.get(point.cluster_id) or _('no cluster yet') }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', point.albums) }}</span>
+        </div>
+        <a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=point.artist_id) }}">{{ _('Artist page') }}</a>
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('No way leads from %(one)s to %(other)s along the ties switched on.', one=artist.name, other=to.name) }} <a href="{{ url_for('connections.index', artist=artist.artist_id, ties=ties_param) }}">{{ _('Back to the connections of %(name)s', name=artist.name) }}</a></div></div>
+  {% endif %}
+  {% elif artist %}
   <h2 class="mt-5">{{ _('Tied to %(name)s', name=artist.name) }}</h2>
   {% if around %}
   <div class="ss-card mt-3">

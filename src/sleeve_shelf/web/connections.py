@@ -5,7 +5,7 @@ from flask import Blueprint, abort, jsonify, render_template, request, url_for
 
 from sleeve_shelf.artists import picture_thumb
 from sleeve_shelf.domain import Artist, ArtistEnrichment
-from sleeve_shelf.network import Tie, network, ties_of
+from sleeve_shelf.network import Tie, network, ties_of, way
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.web.context import get_store
@@ -25,16 +25,17 @@ def index():
     artist_id = request.args.get("artist", type=int)
     if artist_id is not None and artist_id not in points:
         abort(404)
+    to_id = request.args.get("to", type=int)
+    if to_id is not None and (artist_id is None or to_id not in points):
+        abort(404)
     text = request.args.get("q", "").strip()
-    found = []
-    if artist_id is None and text:
-        words = sort_name(text).split()
-        found = sorted(
-            (point for point in shown.points if all(word in sort_name(point.name) for word in words)),
-            key=lambda point: sort_name(point.name),
-        )[:FOUND_LIMIT]
+    found = _matching(shown, text) if artist_id is None and text else []
+    # The way to another artist: first the artists matching what was typed, then the way.
+    way_text = request.args.get("way", "").strip()
+    way_found = _matching(shown, way_text, leave_out=artist_id) if artist_id is not None and way_text and to_id is None else []
     clusters = dict(shown.clusters)
     switched, ties_param = _switched(artist_id is not None)
+    the_way = way(shown, artist_id, to_id, switched) if to_id is not None else None
     return render_template(
         "connections/index.html",
         ties=list(Tie),
@@ -50,8 +51,25 @@ def index():
         clusters=clusters,
         search_text=text,
         found=found,
+        to=points.get(to_id),
+        the_way=the_way,
+        way_text=way_text,
+        way_found=way_found,
         tied={point for link in shown.links for point in (link.one, link.other)},
     )
+
+
+def _matching(shown, text: str, leave_out: int | None = None) -> list:
+    """The artists whose name holds every word typed, by name."""
+    words = sort_name(text).split()
+    return sorted(
+        (
+            point
+            for point in shown.points
+            if point.artist_id != leave_out and all(word in sort_name(point.name) for word in words)
+        ),
+        key=lambda point: sort_name(point.name),
+    )[:FOUND_LIMIT]
 
 
 def _switched(around_one: bool) -> tuple[set[Tie], str | None]:

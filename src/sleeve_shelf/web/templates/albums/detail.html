@@ -12,7 +12,7 @@
     {{ zoomable(album.cover_url, album.cover_image_url, _('Show the cover larger')) }}
     <div>
       <h1>{{ album.title }}</h1>
-      <p class="ss-muted mb-0 mt-1">{{ artist.name if artist }}{% if album.original_release_year %} &middot; {{ album.original_release_year }}{% endif %}</p>
+      <p class="ss-muted mb-0 mt-1">{{ artist.name if artist }}{% if album.original_release_year %} &middot; {{ album.original_release_year }}{% endif %}{% if artist %} &middot; <a href="{{ url_for('connections.index', artist=artist.id) }}">{{ _('Connections') }}</a>{% endif %}</p>
     </div>
   </div>
 
@@ -97,6 +97,29 @@
     </div>
     {% endfor %}
   </div>
+  {% if elsewhere %}
+  {# The same songs on other records: another version to pull from the shelf. #}
+  <h2 class="mt-5" id="elsewhere">{{ _('The same songs elsewhere') }}</h2>
+  <p class="ss-muted mt-1">{{ _('Other albums in your collection with a song of this one.') }}</p>
+  <div class="ss-card mt-3">
+    {% for title, others in elsewhere %}
+    <div class="ss-row align-items-start">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">&#9834; {{ title }}</span>
+        <ul class="ss-album-list mt-1">
+          {% for other in others[:5] %}
+          <li>
+            <a href="{{ url_for('albums.detail', album_id=other.album_id) }}">{{ other.artist }} — {{ other.title }}</a>{% if other.year %} &middot; {{ other.year }}{% endif %}
+            <span class="ss-muted">&middot; {% if other.shelf_id is not none %}{{ other.cabinet }} &middot; {{ other.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
+          </li>
+          {% endfor %}
+          {% if others | length > 5 %}<li class="ss-muted">{{ ngettext('and %(num)d more album', 'and %(num)d more albums', others | length - 5) }}</li>{% endif %}
+        </ul>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
   {% elif album.release_id and tracklist is none and is_owner %}
   <p class="ss-muted small mt-4 mb-0">{{ _('The tracklist comes with the next fetch from Discogs.') }} <a href="{{ url_for('discogs.index') }}#enrich">{{ _('Discogs sync') }}</a></p>
   {% endif %}
