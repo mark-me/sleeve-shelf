@@ -220,8 +220,10 @@
       single.className = "ss-block";
       single.dataset.albums = id;
       const name = link.cloneNode(true);
-      const title = document.createElement("span");
+      const title = document.createElement("a");
       title.className = "ss-block-title";
+      title.href = button.dataset.albumUrl.replace(/0$/, id);
+      title.draggable = false;
       title.textContent = titles[index] || "";
       if (covers[index]) {
         const cover = document.createElement("img");

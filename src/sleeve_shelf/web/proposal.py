@@ -70,7 +70,7 @@ def index():
     ]
     left_out = sorted(
         (
-            {"artist": artist_names[album.artist_id], "title": album.title,
+            {"album_id": album.id, "artist": artist_names[album.artist_id], "title": album.title,
              "was_placed": album.id in current}
             for album in albums
             if album.id not in proposed

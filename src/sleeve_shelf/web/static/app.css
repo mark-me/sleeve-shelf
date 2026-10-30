@@ -500,6 +500,8 @@ a.ss-row-artist:hover { color: var(--ss-accent); }
 a.ss-block-name { color: inherit !important; text-decoration: none; }
 a.ss-block-name:hover { color: var(--ss-accent) !important; }
 .ss-block-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+a.ss-block-title { color: var(--ss-muted) !important; text-decoration: none; }
+a.ss-block-title:hover { color: var(--ss-accent) !important; }
 .ss-block-title { color: var(--ss-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 
 .ss-block-count {

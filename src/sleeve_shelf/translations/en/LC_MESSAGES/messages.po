@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 17:43+0100\n"
+"POT-Creation-Date: 2026-10-30 23:23+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -116,6 +116,7 @@ msgid "Connections"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Statistics"
 msgstr ""
@@ -461,6 +462,118 @@ msgstr ""
 msgid "Put it there"
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Nothing to tell about this album yet: most of it comes with a fetch from Discogs."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+#, python-format
+msgid "%(num)d song"
+msgid_plural "%(num)d songs"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+#, python-format
+msgid "%(num)d minute"
+msgid_plural "%(num)d minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+#, python-format
+msgid "%(num)d also on other albums"
+msgid_plural "%(num)d also on other albums"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+#, python-format
+msgid "Number %(position)d of %(total)d by this artist, by year"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Before it:"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "After it:"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Who is on it"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "As Discogs credits them, those on the most albums of your collection first."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "only here"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "on %(num)d album"
+msgid_plural "on %(num)d albums"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+#, python-format
+msgid "and %(num)d more person"
+msgid_plural "and %(num)d more people"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "With the same people"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Other albums in your collection with several of the people on this one."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Who wrote the songs"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Number of songs on this album."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Its styles in your collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Number of albums with that Discogs style."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "Its label in your collection"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+msgid "The label of your own pressing, with its catalogue number, and the number of albums on it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+#, python-format
+msgid "Also from %(year)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/_figures.html
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/_figures.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "and %(num)d more album"
+msgid_plural "and %(num)d more albums"
+msgstr[0] ""
+msgstr[1] ""
+
 #: src/sleeve_shelf/web/templates/albums/_listen.html
 msgid "Many previews were played from here just now. Try again in a few minutes."
 msgstr ""
@@ -541,6 +654,58 @@ msgid "Give the artist a cluster"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Parts of this page"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Manage"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Width"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Measured width in cm"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/albums/widths.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/shelf_form.html
+msgid "Save"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#, python-format
+msgid "Estimated from the format: %(width)s cm."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "A box set or bundle: the estimate is rough until you measure it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Leave empty to use the estimate."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "This album stands on no shelf yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "A single or EP: it is kept outside the layout and gets no place in a sorting proposal."
 msgstr ""
 
@@ -603,15 +768,6 @@ msgid "Other albums in your collection with a song of this one."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/artists/_figures.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-#, python-format
-msgid "and %(num)d more album"
-msgid_plural "and %(num)d more albums"
-msgstr[0] ""
-msgstr[1] ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "The tracklist comes with the next fetch from Discogs."
 msgstr ""
 
@@ -625,38 +781,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Looking for previews…"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Width"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-msgid "Measured width in cm"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/albums/widths.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
-#: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Save"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#, python-format
-msgid "Estimated from the format: %(width)s cm."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-msgid "A box set or bundle: the estimate is rough until you measure it."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-msgid "Leave empty to use the estimate."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -778,18 +902,10 @@ msgid "Saved. Generate the proposal again to see the effect."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Parts of this page"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/artists/index.html
 #: src/sleeve_shelf/web/templates/moving/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Artist"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Manage"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
@@ -1140,7 +1256,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
-msgid "Choosing a result opens its shelf, with the album marked."
+msgid "The title opens the album, the place beside it its shelf with the album marked."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
@@ -1378,13 +1494,6 @@ msgstr ""
 #, python-format
 msgid "Connections of %(name)s"
 msgstr ""
-
-#: src/sleeve_shelf/web/templates/connections/index.html
-#, python-format
-msgid "on %(num)d album"
-msgid_plural "on %(num)d albums"
-msgstr[0] ""
-msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/stats/index.html
@@ -2459,11 +2568,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/login/page.html
 msgid "This device stays logged in until you log out."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Album"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html

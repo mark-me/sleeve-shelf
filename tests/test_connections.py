@@ -319,7 +319,7 @@ def test_the_screen_says_who_is_on_which_record(tmp_path):
     assert 'data-tie="credit" checked' in page and "On the record" in page
     assert "Massey Hall" in page and "Bud Powell: Piano, Arranged By" in page
     way_page = client.get("/connections/?artist=1&to=2").get_data(as_text=True)
-    assert "Bud Powell: Piano, Arranged By &middot; Massey Hall" in way_page
+    assert re.search(r'Bud Powell: Piano, Arranged By &middot; <a href="/albums/\d+">Massey Hall</a>', way_page)
     data = client.get("/connections/network.json").get_json()
     assert [1, 2, ["credit"], [], [["Bud Powell", "Piano, Arranged By", "Massey Hall"]], []] in data["links"]
 
@@ -643,9 +643,10 @@ def test_the_list_says_where_the_albums_of_a_tie_stand(tmp_path):
     page = create_app(tmp_path / "data").test_client().get("/connections/?artist=1").get_data(as_text=True)
 
     # Ella's album with the song, on its shelf; Miles' own album with it, on none yet.
-    assert 'href="/browse?shelf=1#album-51">Ella Sings</a>' in page
-    assert "Kast &middot; c" in page
-    assert 'href="/unplaced#album-11">Round About Midnight</a>' in page
+    assert 'href="/albums/51">Ella Sings</a>' in page
+    assert 'href="/browse?shelf=1#album-51">Kast &middot; c</a>' in page
+    assert 'href="/albums/11">Round About Midnight</a>' in page
+    assert 'href="/unplaced#album-11">Unplaced</a>' in page
     assert "Round Midnight (Live)" in page
 
 

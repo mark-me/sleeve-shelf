@@ -28,6 +28,8 @@
   {% if placed %}
   <div class="ss-alert mt-3">{{ _('Put at the suggested spot. A version from before is kept under Versions.') }}</div>
   {% endif %}
+  {# Waiting for a place: the owner's to act on, on Manage; a visitor reads it on the first tab. #}
+  {% set waiting %}
   {% if spot %}
   <div class="ss-card mt-3" id="spot">
     <div class="ss-card-body">
@@ -43,6 +45,46 @@
   {% else %}
   <div class="ss-alert mt-3">{{ _('No spot can be suggested yet: the artist has no cluster.') }} {% if artist %}<a href="{{ url_for('artists.edit', artist_id=artist.id, tab='manage') }}">{{ _('Give the artist a cluster') }}</a>{% endif %}</div>
   {% endif %}
+  {% endif %}
+  {% endset %}
+
+  {# What the album is comes first, then what the collection says about it; what can be changed
+     about it is the owner's. #}
+  <nav class="ss-tabs mt-4" aria-label="{{ _('Parts of this page') }}">
+    <a class="ss-tab{{ ' active' if tab == 'album' }}" href="{{ url_for('albums.detail', album_id=album.id) }}"{% if tab == 'album' %} aria-current="page"{% endif %}>{{ _('Album') }}</a>
+    <a class="ss-tab{{ ' active' if tab == 'statistics' }}" href="{{ url_for('albums.detail', album_id=album.id, tab='statistics') }}"{% if tab == 'statistics' %} aria-current="page"{% endif %}>{{ _('Statistics') }}</a>
+    {% if is_owner %}<a class="ss-tab{{ ' active' if tab == 'manage' }}" href="{{ url_for('albums.detail', album_id=album.id, tab='manage') }}"{% if tab == 'manage' %} aria-current="page"{% endif %}>{{ _('Manage') }}</a>{% endif %}
+  </nav>
+
+  {% if tab == 'statistics' %}
+  {% include "albums/_figures.html" %}
+  {% elif tab == 'manage' %}
+  {{ waiting }}
+  <h2 class="mt-4">{{ _('Width') }}</h2>
+  <form class="ss-card mt-3" method="post" action="{{ url_for('albums.set_width', album_id=album.id) }}">
+    <div class="ss-card-body">
+      <input type="hidden" name="next" value="album">
+      <label for="width_cm" class="form-label fw-semibold">{{ _('Measured width in cm') }}</label>
+      <div class="d-flex flex-wrap gap-2">
+        <input id="width_cm" class="form-control" style="width: 120px;" name="width_cm" inputmode="decimal"
+               value="{{ album.manual_width_cm | editable if album.manual_width_cm is not none else '' }}">
+        <button class="ss-button" type="submit">{{ _('Save') }}</button>
+      </div>
+      <div class="form-text">
+        {% if album.computed_width_cm is not none %}{{ _('Estimated from the format: %(width)s cm.', width=album.computed_width_cm | decimal) }}{% endif %}
+        {% if not album.width_confirmed %}{{ _('A box set or bundle: the estimate is rough until you measure it.') }}{% endif %}
+        {{ _('Leave empty to use the estimate.') }}
+      </div>
+    </div>
+  </form>
+
+  {% set move_link = url_for('moving.index', kind='album', id=album.id) %}
+  {% include "_rules_and_move.html" %}
+  {% else %}
+  {% if attention %}
+  <div class="ss-alert mt-3">{{ _('This album stands on no shelf yet.') }} <a href="{{ url_for('albums.detail', album_id=album.id, tab='manage') }}">{{ _('Manage') }}</a></div>
+  {% elif not is_owner %}
+  {{ waiting }}
   {% endif %}
   {% if not takes_part %}
   <div class="ss-alert mt-3">{{ _('A single or EP: it is kept outside the layout and gets no place in a sorting proposal.') }}</div>
@@ -133,27 +175,6 @@
   </section>
   <script src="{{ url_for('static', filename='listen.js') }}" defer></script>
 
-  {% if is_owner %}
-  <h2 class="mt-5">{{ _('Width') }}</h2>
-  <form class="ss-card mt-3" method="post" action="{{ url_for('albums.set_width', album_id=album.id) }}">
-    <div class="ss-card-body">
-      <input type="hidden" name="next" value="album">
-      <label for="width_cm" class="form-label fw-semibold">{{ _('Measured width in cm') }}</label>
-      <div class="d-flex flex-wrap gap-2">
-        <input id="width_cm" class="form-control" style="width: 120px;" name="width_cm" inputmode="decimal"
-               value="{{ album.manual_width_cm | editable if album.manual_width_cm is not none else '' }}">
-        <button class="ss-button" type="submit">{{ _('Save') }}</button>
-      </div>
-      <div class="form-text">
-        {% if album.computed_width_cm is not none %}{{ _('Estimated from the format: %(width)s cm.', width=album.computed_width_cm | decimal) }}{% endif %}
-        {% if not album.width_confirmed %}{{ _('A box set or bundle: the estimate is rough until you measure it.') }}{% endif %}
-        {{ _('Leave empty to use the estimate.') }}
-      </div>
-    </div>
-  </form>
-
-  {% set move_link = url_for('moving.index', kind='album', id=album.id) %}
-  {% include "_rules_and_move.html" %}
   {% endif %}
 </div>
 {{ zoom_dialog(album.cover_url, album.cover_image_url, _('Cover of %(title)s', title=album.title)) }}

@@ -6,7 +6,7 @@ import pytest
 
 from sleeve_shelf import create_app
 from sleeve_shelf.access import set_password
-from sleeve_shelf.collection_stats import artist_figures, collection_figures, from_the_shelf
+from sleeve_shelf.collection_stats import album_figures, artist_figures, collection_figures, from_the_shelf
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -269,3 +269,90 @@ def test_the_statistics_screen_opens_to_the_albums(client):
     assert 'href="/albums/1">Miles Davis — Kind Of Blue</a>' in page and "Kast &middot; a" in page
     # A person who is an artist in the collection links to the page.
     assert 'href="/artists/2"' in page
+
+
+def _album_figures_collection(tmp_path) -> JsonStore:
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Miles Davis", discogs_artist_id=101), Artist(2, "John Coltrane", discogs_artist_id=102)])
+    store.save(Cluster, [Cluster(1, "Jazz", 0)])
+    store.save(Style, [Style(1, "Modal", 1), Style(2, "Hard Bop", 1)])
+    store.save(
+        Album,
+        [
+            Album(1, 1, "Early", release_id=1, original_release_year=1955, style_ids=(2,)),
+            Album(2, 1, "Kind Of Blue", release_id=2, original_release_year=1959, style_ids=(1, 2)),
+            Album(3, 1, "Late", release_id=3, original_release_year=1970),
+            Album(4, 2, "Giant Steps", release_id=4, original_release_year=1959, style_ids=(2,)),
+            Album(5, 1, "No Year", release_id=5),
+        ],
+    )
+    bass, drums = Credit(900, "Paul Chambers (3)", "Bass"), Credit(901, "Jimmy Cobb", "Drums")
+    writer = Credit(800, "Bill Evans", "Written-By")
+    store.save(
+        ReleaseEnrichment,
+        [
+            ReleaseEnrichment(1, (), None, FETCHED, tracklist=(), credits=(bass, drums), labels=()),
+            ReleaseEnrichment(
+                2, (), None, FETCHED,
+                tracklist=(Track("A1", "So What", "9:22", ()), Track("A2", "Blue In Green", "5:37", (800,))),
+                credits=(bass, drums, Credit(102, "John Coltrane", "Tenor Saxophone"), Credit(101, "Miles Davis", "Trumpet"), writer, Credit(0, "Nobody", "Bass")),
+                labels=(ReleaseLabel(50, "Columbia", "CS 8163"),),
+            ),
+            ReleaseEnrichment(3, (), None, FETCHED, tracklist=(Track("A1", "Untimed", None, ()),), credits=(bass,), labels=(ReleaseLabel(50, "Columbia"),)),
+            ReleaseEnrichment(4, (), None, FETCHED, tracklist=(), credits=(), labels=(ReleaseLabel(60, "Not On Label (Miles Self-released)"),)),
+        ],
+    )
+    return store
+
+
+def test_the_figures_of_an_album(tmp_path):
+    figures = album_figures(_album_figures_collection(tmp_path), 2)
+
+    assert (figures.tracks, figures.minutes, figures.writers) == (2, 15, (("Bill Evans", 1),))
+    assert (figures.position, figures.of_artist, figures.earlier, figures.later) == (2, 3, 1, 3)
+    assert figures.same_year == (4,)
+    assert figures.styles == (("Hard Bop", 3), ("Modal", 1))
+    assert figures.labels == (("Columbia", 2, "CS 8163"),)
+    # Not its own artist, not someone without a page on Discogs; an artist's own albums count.
+    assert [(p.name, p.album_ids) for p in figures.people] == [
+        ("Paul Chambers", (1, 2, 3)),
+        ("Jimmy Cobb", (1, 2)),
+        ("John Coltrane", (2, 4)),
+    ]
+    assert figures.people[2].artist_id == 2
+    # Early has two of the same people; Late and Giant Steps only one.
+    assert figures.alike == ((1, ("Paul Chambers", "Jimmy Cobb")),)
+
+
+def test_an_album_with_little_known_has_figures_too(tmp_path):
+    store = _album_figures_collection(tmp_path)
+
+    figures = album_figures(store, 5)
+    assert (figures.tracks, figures.minutes, figures.position, figures.earlier, figures.later) == (0, None, None, None, None)
+    assert figures.people == () and figures.same_year == ()
+    # One song without a length: no total that would be too short.
+    assert album_figures(store, 3).minutes is None
+    # A label that is no label does not count.
+    assert album_figures(store, 4).labels == ()
+
+
+def test_an_album_page_has_three_tabs_with_editing_apart(tmp_path):
+    _album_figures_collection(tmp_path / "data")
+    client = create_app(tmp_path / "data").test_client()
+
+    album = client.get("/albums/2").text
+    assert "Tracklist" in album and 'id="listen"' in album and "Who is on it" not in album and "Measured width" not in album
+    assert 'href="/albums/2?tab=statistics"' in album and 'href="/albums/2?tab=manage"' in album
+
+    figures = client.get("/albums/2?tab=statistics").text
+    assert "Who is on it" in figures and "Paul Chambers" in figures and "With the same people" in figures
+    assert 'href="/albums/1">Miles Davis — Early</a>' in figures and "Also from 1959" in figures
+    assert 'href="/artists/2">John Coltrane</a>' in figures
+    assert "Tracklist" not in figures and "Measured width" not in figures and 'id="listen"' not in figures
+
+    manage = client.get("/albums/2?tab=manage").text
+    assert "Measured width" in manage and "Location rules" in manage and "/move/" in manage
+    assert "Tracklist" not in manage and "Who is on it" not in manage
+
+    empty = client.get("/albums/5?tab=statistics").text
+    assert "Nothing to tell about this album yet" in empty

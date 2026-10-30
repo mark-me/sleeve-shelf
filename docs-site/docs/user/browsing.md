@@ -6,7 +6,7 @@
 
 Every album has a **▶** button: it plays the album's 30-second previews from Deezer, one track after another, and shows the track playing under the title. Press it again to stop; pressing another album stops the first. When Deezer doesn't have the album, the row says so — its page may still have videos.
 
-**Search** finds artists, albums and songs across all shelves. The results follow as you type; choosing one opens its shelf with the album marked. Emptying the search field takes you back to browsing.
+**Search** finds artists, albums and songs across all shelves. The results follow as you type; the title opens the album's page, the artist its page, and the place beside it the shelf with the album marked. Emptying the search field takes you back to browsing.
 
 Every word you type has to be in the artist and title, or in the artist, title and one song together: *waits martha* finds the Tom Waits album with *Martha* on it. An album found by a song names that song under its title, with its place on the record (♪ B1 · Martha). Songs are known once the fetch run has brought the tracklists from Discogs (see [Fetching styles, years and pictures](discogs.md#fetching-styles-years-and-pictures)).
 
@@ -54,7 +54,9 @@ Credits and labels come with the fetch run; until it has run, those parts say so
 
 ## 💿 An album's page
 
-Open an album from a search result, a shelf, or its artist's page. It shows:
+Open an album by its title, wherever one is listed: a search result, a shelf, its artist's page, Layout, Connections, Statistics and the lists under Discogs and in a sorting proposal. The page has three tabs: **Album**, **Statistics** and — for you as owner — **Manage**.
+
+**Album** shows:
 
 - where it stands, and what it is sorted under (cluster and era band)
 - its original release year — from Discogs, or confirmed by you
@@ -62,8 +64,10 @@ Open an album from a search result, a shelf, or its artist's page. It shows:
 - its **tracklist**: the songs with their place on the record and their length
 - **the same songs elsewhere**: the other albums in your collection with one of its songs, and where each stands — another version to pull from the shelf
 - **Connections**, beside the artist's name: the artist in the middle of its [connections](#connections)
-- its width, estimated or measured
-- the location rules that apply to it, and a way to put it on another shelf
+
+**Statistics** shows what your collection says about the album: how many songs and minutes it has, its place among the artist's albums by year with those before and after it, who is on it and on how many of your albums, other albums with several of the same people, who wrote the songs, how many of your albums share its styles and label, and what else you have from its year.
+
+**Manage** holds what can be changed: the suggested spot of an album without a place, its width, the location rules that apply to it, and a way to put it on another shelf. The first tab says so when an album waits for a place.
 
 ### Listen
 

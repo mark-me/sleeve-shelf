@@ -460,8 +460,11 @@ def test_an_album_has_a_page_of_its_own(client):
 
     assert "<h1>Chet</h1>" in page and "Chet Baker" in page
     assert "Kast &middot; a" in page and "Jazz · voor 1960" in page
+    # A search result leads to it; the place beside it to the shelf.
+    assert 'href="/albums/1">Chet &middot; 1959</a>' in client.get("/browse?q=chet").text
     assert "1959 &middot; confirmed by hand" in page
-    assert "No location rule applies" in page
+    assert "No location rule applies" not in page
+    assert "No location rule applies" in client.get("/albums/1?tab=manage").text
     assert client.get("/albums/99").status_code == 404
     # It is reached from the shelf in Browse and from the artist's page.
     assert 'href="/albums/1"' in _shelf_page(client, 1)
@@ -507,7 +510,7 @@ def test_the_rules_that_apply_are_shown_with_the_one_that_decides(client):
     assert artist.count(">decides<") == 1 and "overruled" in artist
 
     client.post("/rules/new", data={"target_type": "album", "target": "Chet Baker — Sings", "cabinet_id": "1"})
-    album = client.get("/albums/2").text
+    album = client.get("/albums/2?tab=manage").text
     assert album.index("Rule for this album") < album.index("Rule for the artist")
     # Another artist in the cluster only has the cluster's rule.
     blakey = client.get("/artists/2?tab=manage").text
@@ -519,7 +522,7 @@ def _move(client, kind, item_id, shelf, how="end"):
 
 
 def test_an_album_can_be_moved_from_the_move_screen(client):
-    assert 'href="/move/?kind=album&amp;id=1"' in client.get("/albums/1").text
+    assert 'href="/move/?kind=album&amp;id=1"' in client.get("/albums/1?tab=manage").text
     _move(client, "album", 1, 2)
 
     assert "Chet &middot; 1959" not in _shelf_page(client, 1)
@@ -546,11 +549,12 @@ def test_all_albums_of_an_artist_can_be_moved_at_once(client):
 
 
 def test_width_can_be_set_on_the_album_page(client):
-    assert "A box set or bundle" in client.get("/albums/5").text
+    assert "A box set or bundle" in client.get("/albums/5?tab=manage").text
 
-    client.post("/albums/5/width", data={"width_cm": "1,4", "next": "album"})
+    saved = client.post("/albums/5/width", data={"width_cm": "1,4", "next": "album"})
 
-    page = client.get("/albums/5").text
+    assert saved.headers["Location"].endswith("/albums/5?tab=manage")
+    page = client.get("/albums/5?tab=manage").text
     assert 'value="1.4"' in page and "A box set or bundle" not in page
     bad = client.post("/albums/5/width", data={"width_cm": "x", "next": "album"}, follow_redirects=True)
     assert "above zero" in bad.text and "<h1>Box</h1>" in bad.text
@@ -799,7 +803,9 @@ def test_a_new_album_of_an_artist_on_the_shelves_is_suggested_a_spot_and_put_the
     assert "The shelf then holds" in listed and "Put it there" in listed
     # Nothing has moved yet.
     assert _shelf_page(client, 2) == before
-    page = client.get("/albums/6").text
+    # The album's first tab says it waits; the spot and the button are on Manage.
+    assert "This album stands on no shelf yet." in client.get("/albums/6").text
+    page = client.get("/albums/6?tab=manage").text
     assert "Suggested spot" in page and "With the other albums of the artist, by year." in page
 
     placed = client.post("/albums/6/place", data={"back": "list"}, follow_redirects=True)
@@ -808,21 +814,22 @@ def test_a_new_album_of_an_artist_on_the_shelves_is_suggested_a_spot_and_put_the
     shelf = _shelf_page(client, 2)
     assert "Raw Power" in shelf and shelf.index("Fun House") < shelf.index("Raw Power")
     assert "/restore" in client.get("/versions/").text
-    assert "Suggested spot" not in client.get("/albums/6").text
+    assert "Suggested spot" not in client.get("/albums/6?tab=manage").text
+    assert "This album stands on no shelf yet." not in client.get("/albums/6").text
 
 
 def test_an_album_of_an_artist_without_a_cluster_gets_no_spot_until_the_artist_has_one(client):
     _add_new_artist(client)
 
     assert "No spot yet: the artist has no cluster." in client.get("/unplaced").text
-    assert "No spot can be suggested yet" in client.get("/albums/6").text
+    assert "No spot can be suggested yet" in client.get("/albums/6?tab=manage").text
     # Asking to place it does nothing.
     client.post("/albums/6/place", data={"back": "album"})
     assert "Debut" in client.get("/unplaced").text
 
     client.post("/artists/4", data={"start_year": "", "cluster_id": "1", "new_cluster": ""})
 
-    page = client.get("/albums/6").text
+    page = client.get("/albums/6?tab=manage").text
     # A new artist in Jazz: on shelf a, with the Jazz artists that stand there.
     assert "Suggested spot" in page and "Kast &rsaquo; a" in page
     client.post("/albums/6/place", data={"back": "album"})
@@ -841,7 +848,7 @@ def test_a_spot_follows_a_location_rule_and_leaves_kept_shelves_alone(client):
     store.save(LocationRule, [LocationRule(1, LocationRuleTarget.ALBUM, 6, 2)])
 
     # Bound to a cabinet nothing stands in: it opens that cabinet, and fits there.
-    page = client.get("/albums/6").text
+    page = client.get("/albums/6?tab=manage").text
     assert "Case &rsaquo; x" in page and "as the first album there" in page
     assert "Nothing stands in that cabinet yet." in page and "It fits: 4.5 cm is left" in page
 
@@ -849,7 +856,7 @@ def test_a_spot_follows_a_location_rule_and_leaves_kept_shelves_alone(client):
     # found elsewhere: with the cluster's neighbours in the order of the clusters.
     store.save(LocationRule, [])
     client.post("/storage/cabinets/1", data={"name": "Kast", "location": "", "outside_sorting": "on"})
-    page = client.get("/albums/6").text
+    page = client.get("/albums/6?tab=manage").text
     assert "Suggested spot" not in page
     assert "nothing stands on the shelves it could go to" in page
 

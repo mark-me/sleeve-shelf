@@ -24,6 +24,7 @@ from sleeve_shelf.network import (
     NO_LABEL,
     Network,
     OnRecord,
+    album_songs_elsewhere,
     collection_songs,
     credited_on_albums,
     is_various,
@@ -42,6 +43,10 @@ COMPANION_ALBUMS = 2
 COMPANIONS = 6
 # How many a list on the Statistics screen holds.
 TOP = 20
+
+# Albums with at least this many people in common with an album are "with the same people".
+ALIKE_PEOPLE = 2
+ALIKE_ALBUMS = 5
 
 # How many artists the list of the most connected holds.
 HUBS = 10
@@ -78,6 +83,30 @@ class ArtistFigures:
     companions: tuple[Person, ...]
     # Albums of others the artist is on.
     appears_on: tuple[OnRecord, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class AlbumFigures:
+    tracks: int
+    # How long the songs last together; None unless Discogs gives every length.
+    minutes: int | None
+    # Who wrote the songs, with on how many of them.
+    writers: tuple[tuple[str, int], ...]
+    # Its place among the artist's albums by original year, and the albums either side of it.
+    position: int | None
+    of_artist: int
+    earlier: int | None
+    later: int | None
+    # The other albums of its original year.
+    same_year: tuple[int, ...]
+    # Its styles and labels, each with the albums of the collection that have it.
+    styles: tuple[tuple[str, int], ...]
+    labels: tuple[tuple[str, int, str], ...]
+    # Who is on it; each person's album_ids are all their albums in the collection.
+    people: tuple[Person, ...]
+    # Other albums with several of the same people, with those people.
+    alike: tuple[tuple[int, tuple[str, ...]], ...]
+    songs_elsewhere: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -214,6 +243,136 @@ def artist_figures(store: JsonStore, artist_id: int) -> ArtistFigures:
         appears_on=tuple(
             entry for entry in credited_on_albums(artists, albums, releases) if entry.artist_id == artist_id
         ),
+    )
+
+
+def _minutes(tracks) -> int | None:
+    """How long the songs last together; None unless Discogs gives the length of every one."""
+    seconds = 0
+    for track in tracks:
+        parts = (track.duration or "").split(":")
+        if len(parts) not in (2, 3) or not all(part.isdigit() for part in parts):
+            return None
+        seconds += sum(int(part) * 60 ** (len(parts) - 1 - index) for index, part in enumerate(parts))
+    return round(seconds / 60) if tracks else None
+
+
+def album_figures(store: JsonStore, album_id: int) -> AlbumFigures:
+    """What the collection says about one album."""
+    artists = store.load(Artist)
+    albums = store.load(Album)
+    album = next(a for a in albums if a.id == album_id)
+    names = {a.id: a.name for a in artists}
+    artist = next((a for a in artists if a.id == album.artist_id), None)
+    releases = store.load(ReleaseEnrichment) if store.exists(ReleaseEnrichment) else []
+    release = next((r for r in releases if r.release_id == album.release_id), None)
+    by_did = {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
+
+    # The artist's albums by year; a compilation's "Various" has no such order.
+    dated = sorted(
+        (a for a in albums if a.artist_id == album.artist_id and a.original_release_year),
+        key=lambda a: (a.original_release_year, a.title.casefold()),
+    )
+    ordered = album.original_release_year and artist is not None and not is_various(artist)
+    place = dated.index(album) if ordered else None
+
+    same_year = sorted(
+        (a for a in albums if album.original_release_year and a.original_release_year == album.original_release_year and a.id != album_id),
+        key=lambda a: (sort_name(names.get(a.artist_id, "")), a.title.casefold()),
+    )
+
+    style_names = {style.id: style.name for style in store.load(Style)}
+    per_style = Counter(i for a in albums for i in set(a.style_ids))
+    styles = sorted(
+        ((style_names[i], per_style[i]) for i in set(album.style_ids) if i in style_names),
+        key=lambda item: (-item[1], item[0].casefold()),
+    )
+
+    on_release: dict[int, list[Album]] = {}
+    for other in albums:
+        on_release.setdefault(other.release_id, []).append(other)
+
+    per_label: Counter[int] = Counter()
+    for other in releases:
+        for label_id in {label.discogs_label_id for label in other.labels or ()}:
+            per_label[label_id] += len(on_release.get(other.release_id, ()))
+    labels = {
+        label.discogs_label_id: (plain_name(label.name), per_label[label.discogs_label_id], label.catalogue_number)
+        for label in (release.labels or () if release else ())
+        if not label.name.casefold().startswith(NO_LABEL)
+    }
+
+    # Everyone on the record of any album, and an artist's own albums count for them too.
+    on_albums: dict[int, set[int]] = {}
+    for other in releases:
+        credited = {c.discogs_artist_id for c in other.credits or () if c.discogs_artist_id and on_the_record(c.role)}
+        for discogs_id in credited:
+            on_albums.setdefault(discogs_id, set()).update(a.id for a in on_release.get(other.release_id, ()))
+    discogs_id_of = {a.id: a.discogs_artist_id for a in artists if a.discogs_artist_id is not None}
+    for other in albums:
+        if other.artist_id in discogs_id_of:
+            on_albums.setdefault(discogs_id_of[other.artist_id], set()).add(other.id)
+
+    names_here: dict[int, str] = {}
+    roles: dict[int, dict[str, None]] = {}
+    for credit in release.credits or () if release else ():
+        parts = on_the_record(credit.role)
+        if not parts or not credit.discogs_artist_id or artist is None:
+            continue
+        if credit.discogs_artist_id == artist.discogs_artist_id or named_in(credit.name, artist.name):
+            continue
+        names_here.setdefault(credit.discogs_artist_id, plain_name(credit.name))
+        roles.setdefault(credit.discogs_artist_id, {}).update(dict.fromkeys(parts))
+    musicians = (
+        musicians_as_points(side_players(artists, albums, store.load(ArtistEnrichment), releases), artists)
+        if names_here and store.exists(ArtistEnrichment)
+        else set()
+    )
+    people = sorted(
+        (
+            Person(
+                name,
+                by_did[discogs_id].id if discogs_id in by_did else None,
+                tuple(roles[discogs_id]),
+                tuple(sorted(on_albums.get(discogs_id, {album_id}))),
+                -discogs_id if discogs_id in musicians else None,
+            )
+            for discogs_id, name in names_here.items()
+        ),
+        key=lambda p: (-len(p.album_ids), sort_name(p.name)),
+    )
+
+    shared: dict[int, list[str]] = {}
+    for person in people:
+        for other_id in person.album_ids:
+            if other_id != album_id:
+                shared.setdefault(other_id, []).append(person.name)
+    alike = sorted(
+        ((other_id, tuple(together)) for other_id, together in shared.items() if len(together) >= ALIKE_PEOPLE),
+        key=lambda item: (-len(item[1]), item[0]),
+    )[:ALIKE_ALBUMS]
+
+    tracks = (release.tracklist or ()) if release else ()
+    credit_names = {c.discogs_artist_id: plain_name(c.name) for c in (release.credits or () if release else ())}
+    per_writer = Counter(writer for track in tracks for writer in set(track.writers or ()))
+    writers = sorted(
+        ((credit_names[writer], count) for writer, count in per_writer.items() if writer in credit_names),
+        key=lambda item: (-item[1], sort_name(item[0])),
+    )
+    return AlbumFigures(
+        tracks=len(tracks),
+        minutes=_minutes(tracks),
+        writers=tuple(writers),
+        position=place + 1 if place is not None else None,
+        of_artist=len(dated),
+        earlier=dated[place - 1].id if place else None,
+        later=dated[place + 1].id if place is not None and place + 1 < len(dated) else None,
+        same_year=tuple(a.id for a in same_year),
+        styles=tuple(styles),
+        labels=tuple(sorted(labels.values(), key=lambda item: (-item[1], item[0].casefold()))),
+        people=tuple(people),
+        alike=tuple(alike),
+        songs_elsewhere=len(album_songs_elsewhere(store, album_id)),
     )
 
 

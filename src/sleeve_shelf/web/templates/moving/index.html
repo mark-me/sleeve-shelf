@@ -21,7 +21,7 @@
     {% if chosen %}
     <div class="ss-row">
       <div class="ss-row-text">
-        <span class="ss-row-artist">{{ chosen.name }}</span>
+        {% if chosen.kind == 'album' %}<a class="ss-row-artist" href="{{ url_for('albums.detail', album_id=chosen.id) }}">{{ chosen.name }}</a>{% else %}<span class="ss-row-artist">{{ chosen.name }}</span>{% endif %}
         <span class="ss-row-title">{{ kind_name(chosen.kind) }}{% if chosen.kind != 'album' %} &middot; {{ ngettext('%(num)d album on a shelf', '%(num)d albums on a shelf', chosen.album_ids | length) }}{% endif %}</span>
       </div>
       <a class="ss-row-place" href="{{ url_for('moving.index') }}">{{ _('Choose something else') }}</a>
@@ -110,7 +110,7 @@
     {% if plan.without_spot %}
     <div class="ss-card-body pb-0">
       <p class="ss-muted small mb-1">{{ ngettext('This album has no place it belongs to — its artist has no cluster — and stays where it is:', 'These albums have no place they belong to — their artist has no cluster — and stay where they are:', plan.without_spot | length) }}</p>
-      <p class="small mb-0">{% for album_id in plan.without_spot %}{{ titles[album_id] }}{{ ', ' if not loop.last }}{% endfor %}</p>
+      <p class="small mb-0">{% for album_id in plan.without_spot %}<a href="{{ url_for('albums.detail', album_id=album_id) }}">{{ titles[album_id] }}</a>{{ ', ' if not loop.last }}{% endfor %}</p>
     </div>
     {% endif %}
     <form class="ss-card-body" method="post" action="{{ url_for('moving.move') }}">

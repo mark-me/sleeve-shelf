@@ -11,8 +11,8 @@
   {% set place = places.get(tied.album_id) %}
   {% if place %}
   <li>
-    <a href="{% if place.shelf_id is not none %}{{ url_for('browse.browse', shelf=place.shelf_id) }}{% else %}{{ url_for('browse.unplaced') }}{% endif %}#album-{{ place.album_id }}">{{ place.title }}</a>{% if place.year %} &middot; {{ place.year }}{% endif %}
-    <span class="ss-muted">&middot; {% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
+    <a href="{{ url_for('albums.detail', album_id=place.album_id) }}">{{ place.title }}</a>{% if place.year %} &middot; {{ place.year }}{% endif %}
+    <span class="ss-muted">&middot; <a href="{% if place.shelf_id is not none %}{{ url_for('browse.browse', shelf=place.shelf_id) }}{% else %}{{ url_for('browse.unplaced') }}{% endif %}#album-{{ place.album_id }}">{% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</a></span>
     {% if tied.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ tied.songs | join(', ') }}</span>{% endif %}
     {% for entry in tied.credits %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }}</span>{% endfor %}
     {% if tied.labels %}<span class="ss-muted d-block">{{ _('Label:') }} {{ tied.labels | join(', ') }}</span>{% endif %}
@@ -165,7 +165,7 @@
       <div class="ss-way-tie">
         {% for tie in link.ties %}<span class="ss-chip me-1"><span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span> {{ tie_name(tie) }}</span>{% endfor %}
         {% if link.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ link.songs[:3] | join(', ') }}{% if link.songs | length > 3 %} {{ ngettext('and %(num)d more song', 'and %(num)d more songs', link.songs | length - 3) }}{% endif %}</span>{% endif %}
-        {% for entry in link.on_record[:3] %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }} &middot; {{ entry.album_title }}</span>{% endfor %}
+        {% for entry in link.on_record[:3] %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }} &middot; <a href="{{ url_for('albums.detail', album_id=entry.album_id) }}">{{ entry.album_title }}</a></span>{% endfor %}
         {% if link.labels %}<span class="ss-muted d-block">{{ _('Label:') }} {{ link.labels | join(', ') }}</span>{% endif %}
       </div>
       {% endif %}
