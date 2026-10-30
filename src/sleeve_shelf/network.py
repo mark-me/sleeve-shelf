@@ -1,6 +1,7 @@
 """Application service for the Connections screen: the artists of the collection and what
 ties them together — members and other names from Discogs, one name inside another,
-families, one credited on an album of the other, and the same song on albums of both."""
+families, one credited on an album of the other, the same song on albums of both, and the
+same record label."""
 
 import heapq
 import re
@@ -38,10 +39,18 @@ class Tie(StrEnum):
     CREDIT = "credit"
     # The same song on albums of both.
     SONGS = "songs"
+    # Albums of both on one record label: of the pressing, so a reissue label counts too.
+    LABEL = "label"
 
 
 # The ties that show all of the other's albums; a credit or a song shows the albums it is on.
 _ALL_ALBUMS = frozenset({Tie.NAME, Tie.MEMBER, Tie.BILLING, Tie.FAMILY})
+# Ties that say two artists share something, rather than that they know each other.
+LOOSE_TIES = frozenset({Tie.SONGS, Tie.LABEL})
+# A label with more artists than this says little about any two of them, and would tie each
+# to all the others. Discogs' own entry for what came out without a label is no label either.
+MAX_LABEL_ARTISTS = 25
+NO_LABEL = "not on label"
 
 
 # Song titles that say nothing about the song, so two albums having one ties no one.
@@ -155,6 +164,8 @@ class Link:
     songs: tuple[str, ...] = ()
     # Who of the two is credited on which album of the other; with CREDIT only.
     on_record: tuple[OnRecord, ...] = ()
+    # The record labels both have albums on; with LABEL only.
+    labels: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -250,13 +261,35 @@ def credited_on_albums(artists: list[Artist], albums: list[Album], releases: lis
     return found
 
 
+def labels_of_albums(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> dict[int, dict[int, str]]:
+    """Per album the labels that can tie artists, by Discogs id: no "Not On Label", no compilation,
+    no label with more artists than MAX_LABEL_ARTISTS."""
+    various = {artist.id for artist in artists if is_various(artist)}
+    of_release = {release.release_id: release.labels or () for release in releases}
+    on_album: dict[int, dict[int, str]] = {}
+    with_artists: dict[int, set[int]] = {}
+    for album in albums:
+        if album.artist_id in various:
+            continue
+        for label in of_release.get(album.release_id, ()):
+            if not label.name.casefold().startswith(NO_LABEL):
+                on_album.setdefault(album.id, {})[label.discogs_label_id] = label.name
+                with_artists.setdefault(label.discogs_label_id, set()).add(album.artist_id)
+    return {
+        album_id: {i: name for i, name in labels.items() if len(with_artists[i]) <= MAX_LABEL_ARTISTS}
+        for album_id, labels in on_album.items()
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class TiedAlbum:
-    """An album that shows a tie: the shared songs it has, and who of the two is credited on it."""
+    """An album that shows a tie: the shared songs it has, who of the two is credited on it, and
+    the shared labels it is on."""
 
     album_id: int
     songs: tuple[str, ...] = ()
     credits: tuple[OnRecord, ...] = ()
+    labels: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -265,10 +298,10 @@ class Tied:
 
     point: Point
     link: Link
-    # The other's albums: all of them with a band, a family or a name; with only a song or a
-    # credit between the two, those it is on.
+    # The other's albums: all of them with a band, a family or a name; with only a song, a
+    # credit or a label between the two, those it is on.
     theirs: tuple[TiedAlbum, ...]
-    # The albums of the artist in the middle with a shared song or the other's credit.
+    # The albums of the artist in the middle with a shared song or label, or the other's credit.
     mine: tuple[TiedAlbum, ...] = ()
 
 
@@ -283,6 +316,7 @@ def tied_albums(
     by_artist: dict[int, list[Album]] = {}
     for album in sorted(albums, key=lambda a: (a.original_release_year or 9999, sort_name(a.title), a.id)):
         by_artist.setdefault(album.artist_id, []).append(album)
+    album_labels = labels_of_albums(artists, albums, releases)
     # Per other artist: the songs on each album, of those shared with this artist.
     shared: dict[int, dict[int, list[str]]] = {}
     for _, heard in collection_songs(artists, albums, releases):
@@ -300,10 +334,14 @@ def tied_albums(
         on_record: dict[int, list[OnRecord]] = {}
         for entry in link.on_record:
             on_record.setdefault(entry.album_id, []).append(entry)
+
+        def shared_labels(album_id: int) -> tuple[str, ...]:
+            return tuple(name for name in album_labels.get(album_id, {}).values() if name in link.labels)
+
         return tuple(
-            TiedAlbum(album.id, tuple(songs.get(album.id, ())), tuple(on_record.get(album.id, ())))
+            TiedAlbum(album.id, tuple(songs.get(album.id, ())), tuple(on_record.get(album.id, ())), shared_labels(album.id))
             for album in by_artist.get(owner, [])
-            if every or album.id in songs or album.id in on_record
+            if every or album.id in songs or album.id in on_record or shared_labels(album.id)
         )
 
     result = []
@@ -374,6 +412,22 @@ def build(
         pair = (min(entry.album_artist_id, entry.artist_id), max(entry.album_artist_id, entry.artist_id))
         on_record.setdefault(pair, []).append(entry)
 
+    # Per label: the artists with an album on it, and its name.
+    artists_on: dict[int, set[int]] = {}
+    label_names: dict[int, str] = {}
+    owner_of = {album.id: album.artist_id for album in albums}
+    for album_id, labels in labels_of_albums(artists, albums, releases).items():
+        for label_id, name in labels.items():
+            artists_on.setdefault(label_id, set()).add(owner_of[album_id])
+            label_names[label_id] = name
+    labels_of: dict[tuple[int, int], set[str]] = {}
+    for label_id, having in artists_on.items():
+        having = sorted(having)
+        for index, one in enumerate(having):
+            for other in having[index + 1 :]:
+                tie(one, other, Tie.LABEL)
+                labels_of.setdefault((one, other), set()).add(label_names[label_id])
+
     order = list(Tie)
     links = tuple(
         Link(
@@ -382,6 +436,7 @@ def build(
             tuple(sorted(kinds, key=order.index)),
             tuple(sorted((title_of[key] for key in songs_of.get((one, other), ())), key=song_key)),
             tuple(on_record.get((one, other), ())),
+            tuple(sorted(labels_of.get((one, other), ()), key=sort_name)),
         )
         for (one, other), kinds in sorted(ties.items())
     )
@@ -394,8 +449,8 @@ def build(
     return Network(points, links, tuple((c.id, c.name) for c in in_order(clusters)))
 
 
-# What a step along a way costs: a song shared is a looser tie than a band, a family or a name,
-# so a way goes by those where it can.
+# What a step along a way costs: a song or label shared is a looser tie than a band, a family or
+# a name, so a way goes by those where it can.
 _STEP = 1
 _SONG_STEP = 3
 
@@ -404,7 +459,7 @@ def way(shown: Network, start: int, end: int, switched: set[Tie] | frozenset[Tie
     """The shortest way from one artist to another along the ties switched on, as each artist
     with the tie that leads to it (none for the first); None when there is no way.
 
-    A step by a song alone counts as three, so the way goes by closer ties where it can; of
+    A step by a song or label alone counts as three, so the way goes by closer ties where it can; of
     two ways as long, the one with fewer steps. A tie on the way names only the kinds that
     are switched on.
     """
@@ -421,8 +476,9 @@ def way(shown: Network, start: int, end: int, switched: set[Tie] | frozenset[Tie
             ties=kinds,
             songs=link.songs if Tie.SONGS in kinds else (),
             on_record=link.on_record if Tie.CREDIT in kinds else (),
+            labels=link.labels if Tie.LABEL in kinds else (),
         )
-        cost = _SONG_STEP if kinds == (Tie.SONGS,) else _STEP
+        cost = _SONG_STEP if LOOSE_TIES.issuperset(kinds) else _STEP
         next_to.setdefault(link.one, []).append((link.other, step, cost))
         next_to.setdefault(link.other, []).append((link.one, step, cost))
     came_by: dict[int, tuple[int, Link] | None] = {start: None}
@@ -480,11 +536,13 @@ def songs_elsewhere(
     ]
 
 
-def ties_of(store: JsonStore, shown: Network, artist_id: int) -> list[Tied]:
-    """The ties of one artist in the network, with the albums that show them."""
+def ties_of(store: JsonStore, shown: Network, artist_id: int, leave_out: frozenset[Tie] = frozenset()) -> list[Tied]:
+    """The ties of one artist in the network, with the albums that show them; artists tied only
+    by the kinds left out are not among them."""
     releases = store.load(ReleaseEnrichment) if store.exists(ReleaseEnrichment) else []
     albums = store.load(Album) if store.exists(Album) else []
-    return tied_albums(shown.around(artist_id), artist_id, store.load(Artist), albums, releases)
+    around = [pair for pair in shown.around(artist_id) if set(pair[1].ties) - leave_out]
+    return tied_albums(around, artist_id, store.load(Artist), albums, releases)
 
 
 def album_songs_elsewhere(store: JsonStore, album_id: int) -> list[tuple[str, tuple[int, ...]]]:

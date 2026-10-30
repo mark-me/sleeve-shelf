@@ -2,6 +2,24 @@
 {% block title %}{{ _('Statistics') }}{% endblock %}
 
 {% from "_figures.html" import bar %}
+{% from "_cover.html" import cover %}
+
+{# An album to take from the shelf: its cover, what it is and where it stands. #}
+{% macro album_row(album_id) %}
+{% set place = places.get(album_id) %}
+{% if place %}
+<div class="ss-row">
+  <a class="ss-row-link" href="{{ url_for('albums.detail', album_id=album_id) }}">
+    {{ cover(place.cover_url, true) }}
+    <div class="ss-row-text">
+      <span class="ss-row-artist">{{ place.artist }}</span>
+      <span class="ss-row-title">{{ place.title }}{% if place.year %} &middot; {{ place.year }}{% endif %}</span>
+    </div>
+    <span class="ss-row-place">{% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
+  </a>
+</div>
+{% endif %}
+{% endmacro %}
 
 {# A count that opens to its albums, each with where it stands. #}
 {% macro counted(label, note, album_ids, largest, href=none) %}
@@ -30,7 +48,34 @@
   <h1>{{ _('Statistics') }}</h1>
   <p class="ss-muted mt-1">{{ _('Who and what keeps coming back in your collection. Open a line to see the albums, with where each stands.') }}</p>
 
-  <section class="mt-4">
+  {% if pick %}
+  <section class="mt-4" id="today">
+    <h2>{{ _('From the shelf today') }}</h2>
+    <div class="ss-card mt-2">{{ album_row(pick) }}</div>
+    <p class="small mt-2 mb-0"><a href="{{ url_for('stats.index', turn=turn + 1) }}#today">{{ _('Another one') }}</a></p>
+    {% if long_ago %}
+    <h3 class="h6 mt-3">{{ _('From %(years)d years ago', years=long_ago_years) }}</h3>
+    <div class="ss-card mt-2">{% for album_id in long_ago %}{{ album_row(album_id) }}{% endfor %}</div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if figures.hubs %}
+  <section class="mt-5">
+    <h2>{{ _('Who holds your collection together') }}</h2>
+    <p class="ss-muted small mt-1">{{ _('The artists tied to the most others, by band, name, family or credit; a shared song or label does not count. Number of artists.') }}</p>
+    <div class="ss-card ss-card-body">
+      <div class="ss-bars">
+        {% for hub in figures.hubs %}{{ bar(hub.name, hub.ties, figures.hubs[0].ties, url_for('connections.index', artist=hub.artist_id)) }}{% endfor %}
+      </div>
+    </div>
+    {% if figures.longest_way %}
+    <p class="mt-3 mb-0">{{ ngettext('The longest way: %(num)d step from %(one)s to %(other)s.', 'The longest way: %(num)d steps from %(one)s to %(other)s.', figures.longest_way.steps, one=figures.longest_way.one_name, other=figures.longest_way.other_name) }} <a href="{{ url_for('connections.index', artist=figures.longest_way.one, to=figures.longest_way.other, ties=close_ties) }}">{{ _('Show the way') }}</a></p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section class="mt-5">
     <h2>{{ _('Most on your records') }}</h2>
     <p class="ss-muted small mt-1">{{ _('Musicians and singers credited on the most albums of others, whether or not they have an album of their own. Number of albums.') }}</p>
     <div class="ss-card">
@@ -65,5 +110,31 @@
       {% endfor %}
     </div>
   </section>
+
+  {% if figures.decades %}
+  <section class="mt-5">
+    <h2>{{ _('Per decade') }}</h2>
+    <p class="ss-muted small mt-1">{{ _('Number of albums, by their original year.') }}{% if figures.without_year %} {{ ngettext('%(num)d album has no year.', '%(num)d albums have no year.', figures.without_year) }}{% endif %}</p>
+    <div class="ss-card ss-card-body">
+      <div class="ss-bars">
+        {% set largest = figures.decades | map(attribute='1') | max %}
+        {% for decade, count in figures.decades %}{{ bar(decade ~ 's', count, largest) }}{% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if figures.clusters %}
+  <section class="mt-5">
+    <h2>{{ _('Per cluster') }}</h2>
+    <p class="ss-muted small mt-1">{{ _('Number of albums.') }}</p>
+    <div class="ss-card ss-card-body">
+      <div class="ss-bars">
+        {% set largest = figures.clusters | map(attribute='albums') | max %}
+        {% for cluster in figures.clusters %}{{ bar(cluster.name or _('no cluster yet'), cluster.albums, largest, url_for('artists.index', cluster=cluster.cluster_id) if cluster.cluster_id else none) }}{% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
 </div>
 {% endblock %}

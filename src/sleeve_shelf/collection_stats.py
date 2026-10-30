@@ -1,13 +1,34 @@
 """Application service for the figures on an artist's page and the Statistics screen: what the
 collection says about one artist, and who and what recurs across all of it."""
 
+import random
 import re
-from collections import Counter
+from collections import Counter, deque
 from dataclasses import dataclass
+from datetime import date
 
 from sleeve_shelf.config import load_settings
-from sleeve_shelf.domain import Album, Artist, Placement, ReleaseEnrichment, Style
-from sleeve_shelf.network import OnRecord, collection_songs, credited_on_albums, is_various, on_the_record
+from sleeve_shelf.domain import (
+    Album,
+    Artist,
+    ArtistClusterAssignment,
+    Cluster,
+    Placement,
+    ReleaseEnrichment,
+    Style,
+    in_order,
+)
+from sleeve_shelf.network import (
+    LOOSE_TIES,
+    NO_LABEL,
+    Network,
+    OnRecord,
+    collection_songs,
+    credited_on_albums,
+    is_various,
+    network,
+    on_the_record,
+)
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.sorting.families import sort_name
 
@@ -18,8 +39,11 @@ COMPANIONS = 6
 TOP = 20
 
 _PRODUCER = re.compile(r"produc", re.IGNORECASE)
-# Discogs' own entry for what came out without a label.
-_NO_LABEL = "not on label"
+# How many artists the list of the most connected holds.
+HUBS = 10
+# How many albums "from this year, long ago" shows, and how long ago that is.
+LONG_AGO_ALBUMS = 6
+LONG_AGO_YEARS = 50
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,10 +88,45 @@ class CountedLabel:
 
 
 @dataclass(frozen=True, slots=True)
+class Hub:
+    """An artist with its number of close ties: anything but a shared song or label."""
+
+    artist_id: int
+    name: str
+    ties: int
+
+
+@dataclass(frozen=True, slots=True)
+class LongestWay:
+    """The two artists furthest apart along close ties, of those a way leads between."""
+
+    one: int
+    one_name: str
+    other: int
+    other_name: str
+    steps: int
+
+
+@dataclass(frozen=True, slots=True)
+class CountedCluster:
+    # None for the albums of artists without a cluster.
+    cluster_id: int | None
+    name: str | None
+    albums: int
+
+
+@dataclass(frozen=True, slots=True)
 class CollectionFigures:
     sidemen: tuple[Person, ...]
     songs: tuple[RecordedSong, ...]
     labels: tuple[CountedLabel, ...]
+    hubs: tuple[Hub, ...]
+    longest_way: LongestWay | None
+    # Albums per decade, every decade from the first to the last, and those without a year.
+    decades: tuple[tuple[int, int], ...]
+    without_year: int
+    # Albums per cluster, the most first.
+    clusters: tuple[CountedCluster, ...]
     # Whether the fetch run has brought them yet, for all or part of the collection.
     credits_fetched: bool
     labels_fetched: bool
@@ -193,17 +252,93 @@ def collection_figures(store: JsonStore) -> CollectionFigures:
     for album in albums:
         release = by_release.get(album.release_id)
         for label in (release.labels or ()) if release else ():
-            if not label.name.casefold().startswith(_NO_LABEL):
+            if not label.name.casefold().startswith(NO_LABEL):
                 names.setdefault(label.discogs_label_id, label.name)
                 on_label.setdefault(label.discogs_label_id, set()).add(album.id)
     labels = sorted(
         (CountedLabel(names[i], tuple(sorted(found))) for i, found in on_label.items()),
         key=lambda label: (-len(label.album_ids), sort_name(label.name)),
     )
+    shown = network(store)
+    per_decade = Counter(a.original_release_year // 10 * 10 for a in albums if a.original_release_year)
+    decades = (
+        tuple((decade, per_decade[decade]) for decade in range(min(per_decade), max(per_decade) + 1, 10))
+        if per_decade
+        else ()
+    )
     return CollectionFigures(
         sidemen=tuple(_people(entries, by_did)[:TOP]),
         songs=tuple(songs[:TOP]),
         labels=tuple(labels[:TOP]),
+        hubs=_hubs(shown),
+        longest_way=_longest_way(shown),
+        decades=decades,
+        without_year=sum(not album.original_release_year for album in albums),
+        clusters=_clusters(store, albums),
         credits_fetched=any(release.credits is not None for release in releases),
         labels_fetched=any(release.labels is not None for release in releases),
     )
+
+
+def _close_ties(shown: Network) -> dict[int, set[int]]:
+    """Per artist the artists it has a close tie with: anything but a shared song or label."""
+    next_to: dict[int, set[int]] = {}
+    for link in shown.links:
+        if not LOOSE_TIES.issuperset(link.ties):
+            next_to.setdefault(link.one, set()).add(link.other)
+            next_to.setdefault(link.other, set()).add(link.one)
+    return next_to
+
+
+def _hubs(shown: Network) -> tuple[Hub, ...]:
+    """The artists with the most close ties."""
+    names = {point.artist_id: point.name for point in shown.points}
+    next_to = _close_ties(shown)
+    most = sorted(next_to, key=lambda artist_id: (-len(next_to[artist_id]), sort_name(names[artist_id])))
+    return tuple(Hub(artist_id, names[artist_id], len(next_to[artist_id])) for artist_id in most[:HUBS])
+
+
+def _longest_way(shown: Network) -> LongestWay | None:
+    """The two artists furthest apart along close ties. Songs and labels are left out: they tie
+    nearly everyone to everyone in a few steps."""
+    names = {point.artist_id: point.name for point in shown.points}
+    next_to = _close_ties(shown)
+    best: tuple[int, str, str, int, int] | None = None
+    for start in next_to:
+        steps = {start: 0}
+        queue = deque([start])
+        while queue:
+            here = queue.popleft()
+            for other in next_to[here]:
+                if other not in steps:
+                    steps[other] = steps[here] + 1
+                    queue.append(other)
+        for end, distance in steps.items():
+            one, other = sorted((start, end), key=lambda i: sort_name(names[i]))
+            found = (-distance, sort_name(names[one]), sort_name(names[other]), one, other)
+            if distance and (best is None or found < best):
+                best = found
+    if best is None:
+        return None
+    return LongestWay(best[3], names[best[3]], best[4], names[best[4]], -best[0])
+
+
+def _clusters(store: JsonStore, albums: list[Album]) -> tuple[CountedCluster, ...]:
+    cluster_of = {a.artist_id: a.cluster_id for a in store.load(ArtistClusterAssignment)}
+    names = {cluster.id: cluster.name for cluster in store.load(Cluster)}
+    counts = Counter(cluster_of.get(album.artist_id) for album in albums)
+    return tuple(
+        CountedCluster(cluster_id, names.get(cluster_id), count)
+        for cluster_id, count in sorted(counts.items(), key=lambda item: (item[0] is None, -item[1], names.get(item[0], "")))
+    )
+
+
+def from_the_shelf(store: JsonStore, day: date, turn: int = 0) -> tuple[int | None, tuple[int, ...]]:
+    """Something to pull from the shelf: an album that stands somewhere, the same all day unless
+    another is asked for (turn), and those from this year, long ago. Album ids."""
+    placed = sorted({p.album_id for p in store.load(Placement)})
+    chance = random.Random(f"{day.isoformat()}/{turn}")  # noqa: S311 - picks a record, not a secret
+    pick = chance.choice(placed) if placed else None
+    year = day.year - LONG_AGO_YEARS
+    then = sorted(album.id for album in store.load(Album) if album.original_release_year == year)
+    return pick, tuple(sorted(chance.sample(then, min(LONG_AGO_ALBUMS, len(then)))))

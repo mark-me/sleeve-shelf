@@ -1,12 +1,12 @@
 """Tests for the figures: an artist's page in two tabs, and the Statistics screen."""
 
-from datetime import datetime
+from datetime import date, datetime
 
 import pytest
 
 from sleeve_shelf import create_app
 from sleeve_shelf.access import set_password
-from sleeve_shelf.collection_stats import artist_figures, collection_figures
+from sleeve_shelf.collection_stats import artist_figures, collection_figures, from_the_shelf
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -123,6 +123,43 @@ def test_the_collections_figures(tmp_path):
     assert figures.credits_fetched and figures.labels_fetched
 
 
+def test_who_holds_the_collection_together_and_the_longest_way(tmp_path):
+    store = _collection(tmp_path)
+    store.save(Artist, store.load(Artist) + [Artist(5, "Miles Davis Quintet"), Artist(6, "Miles Davis Quintet Live")])
+
+    figures = collection_figures(store)
+
+    # Close ties only: a credit counts, So What between Miles and Coltrane alone would not.
+    # Miles: Coltrane by credit, and the two whose names hold his.
+    assert [(hub.name, hub.ties) for hub in figures.hubs][:2] == [("Miles Davis", 3), ("Miles Davis Quintet", 2)]
+    # Coltrane is two steps from each billing; Miles is between them.
+    way = figures.longest_way
+    assert way.steps == 2 and "John Coltrane" in (way.one_name, way.other_name)
+
+
+def test_albums_per_decade_and_per_cluster(tmp_path):
+    figures = collection_figures(_collection(tmp_path))
+
+    # Every decade from the first to the last; the compilation has no year.
+    assert figures.decades == ((1950, 2), (1960, 1), (1970, 1))
+    assert figures.without_year == 1
+    assert [(c.name, c.albums) for c in figures.clusters] == [("Jazz", 3), (None, 2)]
+
+
+def test_something_from_the_shelf_is_the_same_all_day_until_another_is_asked_for(tmp_path):
+    store = _collection(tmp_path)
+    store.save(Album, store.load(Album) + [Album(6, 1, "On The Corner", original_release_year=1972)])
+    day = date(2022, 5, 1)
+
+    pick, long_ago = from_the_shelf(store, day)
+
+    assert pick in (1, 2) and from_the_shelf(store, day)[0] == pick
+    # Only what stands somewhere; from this year, fifty years ago.
+    assert long_ago == (6,)
+    assert {from_the_shelf(store, day, turn)[0] for turn in range(20)} == {1, 2}
+    assert from_the_shelf(store, date(2000, 1, 1))[1] == ()
+
+
 def test_the_figures_wait_for_the_fetch_run(tmp_path):
     store = _collection(tmp_path)
     store.save(ReleaseEnrichment, [ReleaseEnrichment(1, (), None, FETCHED, tracklist=())])
@@ -200,6 +237,9 @@ def test_the_statistics_screen_opens_to_the_albums(client):
     assert "Most on your records" in page and "Paul Chambers" in page
     assert "So What" in page and "By 2 artists" in page
     assert "Blue Note" in page
+    assert "From the shelf today" in page and "?turn=1#today" in page
+    assert "Who holds your collection together" in page and 'href="/connections/?artist=1"' in page
+    assert "Per decade" in page and "1950s" in page and "Per cluster" in page and 'href="/artists/?cluster=1"' in page
     assert 'href="/albums/1">Miles Davis — Kind Of Blue</a>' in page and "Kast &middot; a" in page
     # A person who is an artist in the collection links to the page.
     assert 'href="/artists/2"' in page

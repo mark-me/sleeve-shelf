@@ -16,9 +16,11 @@
     return;
   }
   const switches = Array.from(document.querySelectorAll("input[data-tie]"));
-  const TIES = ["name", "member", "billing", "family", "credit", "songs"];
+  const TIES = ["name", "member", "billing", "family", "credit", "songs", "label"];
   const centre = box.dataset.artist ? Number(box.dataset.artist) : null;
   const steps = Number(box.dataset.steps || 1);
+  // Ties that say two artists share something, rather than that they know each other.
+  const LOOSE = ["songs", "label"];
   // The way to another artist, as the artists along it: then the network shows only that.
   const wayIds = box.dataset.way ? box.dataset.way.split(",").map(Number) : null;
   const MAX_FIT_ZOOM = 1.25;
@@ -50,13 +52,14 @@
     return count === 1 ? box.dataset.albumsOne : box.dataset.albumsMany.replace("{n}", count);
   }
 
-  // Clusters next to each other on the shelves get colours next to each other, one lighter
-  // and one darker in turn, so neighbours can still be told apart.
+  // Each cluster its own colour, whichever others stand beside it in a view. What is seen
+  // together mostly stands together on the shelves, so neighbours must differ most: each next
+  // cluster turns the hue by the golden angle, and lightness goes round in three steps.
   function colourClusters() {
-    const count = Math.max(network.clusters.length, 1);
+    const LIGHTNESS = [38, 52, 66];
     network.clusters.forEach(([id, name], index) => {
-      const lightness = index % 2 ? 40 : 62;
-      clusterColours.set(id, "hsl(" + Math.round((index / count) * 330) + ", 60%, " + lightness + "%)");
+      const hue = Math.round((index * 137.508) % 360);
+      clusterColours.set(id, "hsl(" + hue + ", 62%, " + LIGHTNESS[index % 3] + "%)");
       clusterNames.set(id, name);
     });
   }
@@ -64,23 +67,23 @@
   function elements() {
     const shown = active();
     const links = network.links
-      .map(([one, other, ties, songs, record]) => ({ one, other, ties: ties.filter((t) => shown.has(t)), songs, record }))
+      .map(([one, other, ties, songs, record, labels]) => ({ one, other, ties: ties.filter((t) => shown.has(t)), songs, record, labels }))
       .filter((link) => link.ties.length);
-    const songsOnly = (link) => link.ties.every((tie) => tie === "songs");
+    const looseOnly = (link) => link.ties.every((tie) => LOOSE.includes(tie));
     const depth = new Map();
     if (wayIds) {
       wayIds.forEach((id, index) => depth.set(id, index));
     } else if (centre !== null) {
-      // A song leads only from the artist in the middle: followed further, songs would tie
-      // in most of the collection.
+      // A song or label leads only from the artist in the middle: followed further, they
+      // would tie in most of the collection.
       const next = new Map();
       const add = (one, other, songs) => {
         if (!next.has(one)) next.set(one, []);
         next.get(one).push([other, songs]);
       };
       links.forEach((link) => {
-        add(link.one, link.other, songsOnly(link));
-        add(link.other, link.one, songsOnly(link));
+        add(link.one, link.other, looseOnly(link));
+        add(link.other, link.one, looseOnly(link));
       });
       depth.set(centre, 0);
       let edge = [centre];
@@ -104,15 +107,15 @@
       });
     }
     const stepOut = (link) => Math.abs(depth.get(link.one) - depth.get(link.other)) === 1;
-    // Reached by a closer tie than a song: such an artist stands on the inner ring of its step.
+    // Reached by a closer tie than a song or label: such an artist stands on the inner ring of its step.
     const close = new Set();
     links.forEach((link) => {
-      if (centre === null || songsOnly(link) || !depth.has(link.one) || !depth.has(link.other) || !stepOut(link)) return;
+      if (centre === null || looseOnly(link) || !depth.has(link.one) || !depth.has(link.other) || !stepOut(link)) return;
       close.add(depth.get(link.one) > depth.get(link.other) ? link.one : link.other);
     });
     const nodes = network.artists
       .filter(([id]) => depth.has(id))
-      .map(([id, name, count, cluster, picture]) => ({
+      .map(([id, name, count, cluster, picture, borrowed]) => ({
         data: {
           id: String(id),
           name: name,
@@ -122,18 +125,23 @@
           // Around one artist a picture is recognised sooner than a name; over the whole
           // collection hundreds of them would be specks.
           picture: centre !== null && picture ? picture : null,
+          borrowed: Boolean(centre !== null && picture && borrowed),
           size: Math.min((centre !== null && picture ? 34 : 14) + 6 * Math.sqrt(count), 64),
           ring: 2 * (steps + 1 - depth.get(id)) + (close.has(id) ? 1 : 0),
         },
-        classes: [id === centre ? "centre" : "", centre !== null && picture ? "picture" : ""].join(" "),
+        classes: [
+          id === centre ? "centre" : "",
+          centre !== null && picture ? "picture" : "",
+          centre !== null && picture && borrowed ? "borrowed" : "",
+        ].join(" "),
       }));
-    // Around an artist songs are drawn only from the artist in the middle, as they lead only
-    // from there; between the others they would tangle the rings.
+    // Around an artist songs and labels are drawn only from the artist in the middle, as they
+    // lead only from there; between the others they would tangle the rings.
     const onTheWay = (link) => Math.abs(wayIds.indexOf(link.one) - wayIds.indexOf(link.other)) === 1;
     const edges = links
       .filter((link) => depth.has(link.one) && depth.has(link.other))
       .filter((link) =>
-        wayIds ? onTheWay(link) : centre === null || !songsOnly(link) || link.one === centre || link.other === centre
+        wayIds ? onTheWay(link) : centre === null || !looseOnly(link) || link.one === centre || link.other === centre
       )
       .map((link) => ({
         data: {
@@ -143,7 +151,8 @@
           ties: link.ties,
           songs: link.ties.includes("songs") ? link.songs : [],
           record: link.ties.includes("credit") ? link.record : [],
-          width: link.ties[0] === "songs" ? 1 + Math.min(link.songs.length, 6) * 0.5 : 2.5,
+          labels: link.ties.includes("label") ? link.labels : [],
+          width: link.ties[0] === "songs" ? 1 + Math.min(link.songs.length, 6) * 0.5 : link.ties[0] === "label" ? 1.5 : 2.5,
         },
         classes: link.ties[0],
       }));
@@ -194,12 +203,14 @@
           "border-color": "data(colour)",
         },
       },
+      // A picture borrowed from an artist it names: the ring says so.
+      { selector: "node.borrowed", style: { "border-style": "dashed" } },
       { selector: "node.centre", style: { "border-width": 4, "border-color": colour("--ss-accent"), "font-weight": 600 } },
       { selector: "edge", style: { width: "data(width)", "curve-style": "straight", opacity: 0.85 } },
     ]
       .concat(lines)
       .concat([
-        { selector: "edge.songs", style: { opacity: 0.6 } },
+        { selector: "edge.songs, edge.label", style: { opacity: 0.6 } },
         // What is lit up stands out; the rest fades, names and all.
         { selector: "node.chosen", style: { "border-width": 4, "border-color": colour("--ss-text"), "font-weight": 600, "z-index": 10 } },
         { selector: "node.lit", style: { "min-zoomed-font-size": 0, "z-index": 9 } },
@@ -272,7 +283,9 @@
 
   function describe(node, offer) {
     const data = node.data();
-    const text = [data.name, clusterNames.get(data.cluster) || box.dataset.noCluster, albums(data.albums)].join(" · ");
+    const parts = [data.name, clusterNames.get(data.cluster) || box.dataset.noCluster, albums(data.albums)];
+    if (data.borrowed) parts.push(box.dataset.borrowed);
+    const text = parts.join(" · ");
     say(text, offer ? Number(data.id) : null);
   }
 
@@ -287,6 +300,7 @@
       text += " · " + name + ": " + roles + " (" + album + ")";
     });
     if (data.record.length > 4) text += " …";
+    if (data.labels.length) text += " · " + box.dataset.labelWord + " " + data.labels.join(", ");
     say(text);
   }
 
@@ -425,8 +439,9 @@
     input.addEventListener("change", () => {
       filterList();
       carryTies();
-      // The way goes along the ties switched on: worked out again for the new ones.
-      if (wayIds) window.location.reload();
+      // The way goes along the ties switched on: worked out again for the new ones. The list
+      // holds who shares only a label when asked for: fetched again too.
+      if (wayIds || (centre !== null && input.dataset.tie === "label")) window.location.reload();
       else if (network) draw();
     })
   );

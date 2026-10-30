@@ -1,6 +1,6 @@
 {# Bars and years, shared by an artist's page and the Statistics screen. #}
-{% macro bar(label, count, largest) %}
-<span class="ss-bar-label">{{ label }}</span>
+{% macro bar(label, count, largest, href=none) %}
+<span class="ss-bar-label">{% if href %}<a href="{{ href }}">{{ label }}</a>{% else %}{{ label }}{% endif %}</span>
 <span class="ss-bar-track"><span class="ss-bar" style="width: {{ (100 * count / largest) | round(1) }}%;"></span></span>
 <span class="ss-bar-count">{{ count }}</span>
 {% endmacro %}

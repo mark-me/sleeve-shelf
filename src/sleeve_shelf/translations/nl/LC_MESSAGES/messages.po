@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 11:46+0100\n"
+"POT-Creation-Date: 2026-10-30 12:01+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -966,6 +966,7 @@ msgstr "Artiest"
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/stats/index.html
 msgid "no cluster yet"
 msgstr "nog geen cluster"
 
@@ -1344,12 +1345,20 @@ msgid "On the record"
 msgstr "Op de plaat"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Same label"
+msgstr "Zelfde label"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Same song"
 msgstr "Zelfde nummer"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Songs"
 msgstr "Nummers"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Label:"
+msgstr "Label:"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Your way here"
@@ -1399,6 +1408,10 @@ msgstr "Alles tonen"
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Full screen"
 msgstr "Volledig scherm"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "picture of an artist it names"
+msgstr "foto van een artiest uit de naam"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Nothing to show with these ties."
@@ -3121,6 +3134,38 @@ msgid "Who and what keeps coming back in your collection. Open a line to see the
 msgstr "Wie en wat er steeds terugkomt in je collectie. Open een regel om de albums te zien, met hun plaats."
 
 #: src/sleeve_shelf/web/templates/stats/index.html
+msgid "From the shelf today"
+msgstr "Vandaag uit de kast"
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Another one"
+msgstr "Een andere"
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+#, python-format
+msgid "From %(years)d years ago"
+msgstr "Van %(years)d jaar geleden"
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Who holds your collection together"
+msgstr "Wie je collectie bij elkaar houdt"
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "The artists tied to the most others, by band, name, family or credit; a shared song or label does not count. Number of artists."
+msgstr "De artiesten met de meeste verbanden, via band, naam, familie of credit; een gedeeld nummer of label telt niet. Aantal artiesten."
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+#, python-format
+msgid "The longest way: %(num)d step from %(one)s to %(other)s."
+msgid_plural "The longest way: %(num)d steps from %(one)s to %(other)s."
+msgstr[0] "De langste weg: %(num)d stap van %(one)s naar %(other)s."
+msgstr[1] "De langste weg: %(num)d stappen van %(one)s naar %(other)s."
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Show the way"
+msgstr "Toon de weg"
+
+#: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Most on your records"
 msgstr "Het vaakst op je platen"
 
@@ -3162,6 +3207,29 @@ msgstr "Platenlabels"
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "The labels of your own pressings, so a reissue counts for the label of the reissue. Number of albums."
 msgstr "De labels van je eigen persingen, dus een heruitgave telt voor het label van de heruitgave. Aantal albums."
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Per decade"
+msgstr "Per decennium"
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Number of albums, by their original year."
+msgstr "Aantal albums, naar hun oorspronkelijke jaar."
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+#, python-format
+msgid "%(num)d album has no year."
+msgid_plural "%(num)d albums have no year."
+msgstr[0] "%(num)d album heeft geen jaar."
+msgstr[1] "%(num)d albums hebben geen jaar."
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Per cluster"
+msgstr "Per cluster"
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Number of albums."
+msgstr "Aantal albums."
 
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 msgid "Cabinet"

@@ -175,6 +175,10 @@ class DiscogsClient:
                 if error.code == 429 and attempt < MAX_ATTEMPTS:
                     self._sleep(RATE_LIMIT_PAUSE_SECONDS)
                     continue
+                # A fault on Discogs' side passes: the same request is answered moments later.
+                if error.code >= 500 and attempt < MAX_ATTEMPTS:
+                    self._sleep(5)
+                    continue
                 raise DiscogsError(f"Discogs answered with HTTP {error.code}.") from error
             except (urllib.error.URLError, TimeoutError) as error:
                 if attempt < MAX_ATTEMPTS:
@@ -200,6 +204,10 @@ class DiscogsClient:
                     raise DiscogsError("Discogs rejected the access token.") from error
                 if error.code == 429 and attempt < MAX_ATTEMPTS:
                     self._sleep(RATE_LIMIT_PAUSE_SECONDS)
+                    continue
+                # A fault on Discogs' side passes: the same request is answered moments later.
+                if error.code >= 500 and attempt < MAX_ATTEMPTS:
+                    self._sleep(5)
                     continue
                 raise DiscogsError(f"Discogs answered with HTTP {error.code}.") from error
             except (urllib.error.URLError, TimeoutError) as error:

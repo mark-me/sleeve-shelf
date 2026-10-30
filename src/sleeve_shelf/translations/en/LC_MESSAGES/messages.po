@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 11:46+0100\n"
+"POT-Creation-Date: 2026-10-30 12:01+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -968,6 +968,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/stats/index.html
 msgid "no cluster yet"
 msgstr ""
 
@@ -1344,11 +1345,19 @@ msgid "On the record"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Same label"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Same song"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Songs"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Label:"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
@@ -1403,6 +1412,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Full screen"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "picture of an artist it names"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
@@ -3121,6 +3134,38 @@ msgid "Who and what keeps coming back in your collection. Open a line to see the
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/stats/index.html
+msgid "From the shelf today"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Another one"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+#, python-format
+msgid "From %(years)d years ago"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Who holds your collection together"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "The artists tied to the most others, by band, name, family or credit; a shared song or label does not count. Number of artists."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+#, python-format
+msgid "The longest way: %(num)d step from %(one)s to %(other)s."
+msgid_plural "The longest way: %(num)d steps from %(one)s to %(other)s."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Show the way"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Most on your records"
 msgstr ""
 
@@ -3161,6 +3206,29 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "The labels of your own pressings, so a reissue counts for the label of the reissue. Number of albums."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Per decade"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Number of albums, by their original year."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+#, python-format
+msgid "%(num)d album has no year."
+msgid_plural "%(num)d albums have no year."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Per cluster"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Number of albums."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html

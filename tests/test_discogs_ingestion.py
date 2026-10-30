@@ -218,6 +218,28 @@ def test_a_release_comes_with_its_labels():
     assert labels_of({}) == ()
 
 
+def test_a_fault_on_discogs_side_is_tried_again():
+    answers = [urllib.error.HTTPError("u", 500, "fault", None, None), json.dumps({"styles": ["Bop"]}).encode()]
+    waited = []
+
+    def fetch(request):
+        answer = answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    assert DiscogsClient("t", fetch, waited.append).release(1).styles == ("Bop",)
+    assert 5 in waited
+
+
+def test_a_fault_that_stays_stops_with_its_error():
+    def fetch(request):
+        raise urllib.error.HTTPError("u", 503, "fault", None, None)
+
+    with pytest.raises(DiscogsError, match="503"):
+        DiscogsClient("t", fetch, lambda seconds: None).release(1)
+
+
 def test_a_song_comes_with_who_wrote_it():
     entries = [
         {"position": "A1", "title": "Yesterdays", "extraartists": [{"id": 11, "role": "Written-By"}, {"id": 99, "role": "Bass"}]},

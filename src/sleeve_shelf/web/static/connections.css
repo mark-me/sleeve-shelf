@@ -10,6 +10,7 @@
   --ss-tie-family: #059669;
   --ss-tie-credit: #DB2777;
   --ss-tie-songs: #A8A29E;
+  --ss-tie-label: #0E7490;
 }
 
 [data-bs-theme="dark"] {
@@ -19,6 +20,7 @@
   --ss-tie-family: #34D399;
   --ss-tie-credit: #F472B6;
   --ss-tie-songs: #78716C;
+  --ss-tie-label: #22D3EE;
 }
 
 .ss-network {
@@ -42,6 +44,7 @@
 .ss-tie-family { border-top-style: dashed; border-color: var(--ss-tie-family); }
 .ss-tie-credit { border-color: var(--ss-tie-credit); }
 .ss-tie-songs { border-top-width: 2px; border-color: var(--ss-tie-songs); }
+.ss-tie-label { border-top-width: 2px; border-color: var(--ss-tie-label); }
 .ss-chip .ss-tie-swatch { width: 14px; }
 
 /* Under a tie in the list: the albums that show it, with where each stands. */

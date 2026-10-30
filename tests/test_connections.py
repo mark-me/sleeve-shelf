@@ -19,10 +19,11 @@ from sleeve_shelf.domain import (
     Credit,
     Placement,
     ReleaseEnrichment,
+    ReleaseLabel,
     Shelf,
     Track,
 )
-from sleeve_shelf.network import Link, Network, OnRecord, Point, Tie, TiedAlbum, build, network, on_the_record, song_key, songs_elsewhere, tied_albums, ties_of, way
+from sleeve_shelf.network import MAX_LABEL_ARTISTS, Link, Network, OnRecord, Point, Tie, TiedAlbum, build, network, on_the_record, song_key, songs_elsewhere, tied_albums, ties_of, way
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web import login
 
@@ -317,7 +318,108 @@ def test_the_screen_says_who_is_on_which_record(tmp_path):
     way_page = client.get("/connections/?artist=1&to=2").get_data(as_text=True)
     assert "Bud Powell: Piano, Arranged By &middot; Massey Hall" in way_page
     data = client.get("/connections/network.json").get_json()
-    assert [1, 2, ["credit"], [], [["Bud Powell", "Piano, Arranged By", "Massey Hall"]]] in data["links"]
+    assert [1, 2, ["credit"], [], [["Bud Powell", "Piano, Arranged By", "Massey Hall"]], []] in data["links"]
+
+
+def _on_labels():
+    """Miles Davis and Art Blakey on Blue Note, Tom Waits on none, a compilation on it too."""
+    artists = [Artist(1, "Miles Davis"), Artist(2, "Art Blakey"), Artist(3, "Tom Waits"), Artist(4, "Various", discogs_artist_id=194)]
+    albums = [
+        Album(1, 1, "Volume 1", release_id=1),
+        Album(2, 1, "Kind Of Blue", release_id=2),
+        Album(3, 2, "Moanin'", release_id=3),
+        Album(4, 3, "Closing Time", release_id=4),
+        Album(5, 4, "Jazz Hits", release_id=5),
+    ]
+    blue_note, none = ReleaseLabel(50, "Blue Note"), ReleaseLabel(99, "Not On Label (Tom Waits Self-released)")
+    releases = [
+        ReleaseEnrichment(1, (), None, FETCHED, tracklist=(), labels=(blue_note,)),
+        ReleaseEnrichment(2, (), None, FETCHED, tracklist=(), labels=(ReleaseLabel(51, "Columbia"),)),
+        ReleaseEnrichment(3, (), None, FETCHED, tracklist=(), labels=(blue_note,)),
+        ReleaseEnrichment(4, (), None, FETCHED, tracklist=(), labels=(none,)),
+        ReleaseEnrichment(5, (), None, FETCHED, tracklist=(), labels=(blue_note,)),
+    ]
+    return artists, albums, releases
+
+
+def test_the_same_label_ties_two_artists_and_shows_the_albums_on_it():
+    artists, albums, releases = _on_labels()
+
+    net = build(artists, albums, [], releases, [], [])
+
+    # Neither "Not On Label" nor a compilation ties anyone.
+    assert [(link.one, link.other, link.ties, link.labels) for link in net.links] == [(1, 2, (Tie.LABEL,), ("Blue Note",))]
+    tied = tied_albums(net.around(1), 1, artists, albums, releases)[0]
+    assert tied.theirs == (TiedAlbum(3, labels=("Blue Note",)),)
+    # Kind Of Blue came out on another label, so it is no part of it.
+    assert tied.mine == (TiedAlbum(1, labels=("Blue Note",)),)
+
+
+def test_a_label_of_too_many_artists_ties_no_one():
+    count = MAX_LABEL_ARTISTS + 1
+    artists = [Artist(i, f"Artist {i}") for i in range(1, count + 1)]
+    albums = [Album(i, i, f"Album {i}", release_id=i) for i in range(1, count + 1)]
+    releases = [ReleaseEnrichment(i, (), None, FETCHED, tracklist=(), labels=(ReleaseLabel(50, "Columbia"),)) for i in range(1, count + 1)]
+
+    assert build(artists, albums, [], releases, [], []).links == ()
+    assert len(build(artists[:-1], albums[:-1], [], releases[:-1], [], []).links) > 0
+
+
+def test_a_label_is_a_loose_step_on_the_way():
+    shown = _network(
+        Link(1, 2, (Tie.LABEL,), labels=("Blue Note",)),
+        Link(1, 3, (Tie.MEMBER,)),
+        Link(2, 3, (Tie.FAMILY,)),
+    )
+
+    assert [point.artist_id for point, _ in way(shown, 1, 2, set(Tie))] == [1, 3, 2]
+    assert way(shown, 1, 2, {Tie.LABEL})[1][1].labels == ("Blue Note",)
+
+
+def test_the_same_label_starts_switched_off_and_is_listed_when_asked_for(tmp_path):
+    store = JsonStore(tmp_path / "data")
+    artists, albums, releases = _on_labels()
+    store.save(Artist, artists)
+    store.save(Album, albums)
+    store.save(ReleaseEnrichment, releases)
+    client = create_app(tmp_path / "data").test_client()
+
+    page = client.get("/connections/?artist=1").text
+    assert '<input type="checkbox" data-tie="label" >' in page and 'id="tie-2"' not in page
+    asked = client.get("/connections/?artist=1&ties=label").text
+    assert '<input type="checkbox" data-tie="label" checked>' in asked
+    assert 'id="tie-2"' in asked and "Label: Blue Note" in asked
+    assert [1, 2, ["label"], [], [], ["Blue Note"]] in client.get("/connections/network.json").get_json()["links"]
+
+
+def test_a_joint_billing_borrows_the_picture_of_an_artist_it_names(tmp_path):
+    store = JsonStore(tmp_path / "data")
+    store.save(
+        Artist,
+        [
+            Artist(1, "Duke Ellington", discogs_artist_id=101),
+            Artist(2, "John Coltrane", discogs_artist_id=102),
+            Artist(3, "Duke Ellington & John Coltrane"),
+            Artist(4, "Nobody & John Coltrane"),
+            Artist(5, "Art Blakey", discogs_artist_id=105),
+            Artist(6, "Art Blakey Quintet"),
+        ],
+    )
+    store.save(Album, [Album(1, 3, "One")])
+    # No stored picture of Ellington: the next one named lends its picture.
+    coltrane, blakey = "https://i.discogs.com/coltrane.jpg", "https://i.discogs.com/blakey.jpg"
+    store.save(ArtistEnrichment, [ArtistEnrichment(102, None, coltrane, FETCHED), ArtistEnrichment(105, None, blakey, FETCHED)])
+    folder = tmp_path / "data" / COVER_DIR / ARTIST_DIR
+    folder.mkdir(parents=True)
+    (folder / cover_name(coltrane)).write_bytes(b"jpeg")
+
+    rows = {a[0]: a[4:] for a in create_app(tmp_path / "data").test_client().get("/connections/network.json").get_json()["artists"]}
+
+    own = f"/covers/{ARTIST_DIR}/{cover_name(coltrane)}"
+    assert rows[2] == [own, False]
+    assert rows[3] == [own, True] and rows[4] == [own, True]
+    # Whom it names has no stored picture itself, so there is nothing to borrow.
+    assert rows[6] == [None, False] and rows[1] == [None, False]
 
 
 def _network(*links: Link) -> Network:
@@ -490,8 +592,8 @@ def test_the_network_comes_as_compact_lists(client):
     data = client.get("/connections/network.json").get_json()
 
     assert data["clusters"] == [[1, "Jazz"], [2, "Songwriters"]]
-    assert [1, "Miles Davis", 2, 1, None] in data["artists"]
-    assert [1, 5, ["songs"], ["'Round Midnight"], []] in data["links"]
+    assert [1, "Miles Davis", 2, 1, None, False] in data["artists"]
+    assert [1, 5, ["songs"], ["'Round Midnight"], [], []] in data["links"]
 
 
 def test_the_network_draws_only_pictures_kept_with_the_app(tmp_path):

@@ -7,7 +7,7 @@ from sleeve_shelf.artists import picture_thumb
 from sleeve_shelf.domain import Artist, ArtistEnrichment
 from sleeve_shelf.network import Tie, network, ties_of, way
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.sorting.families import sort_name
+from sleeve_shelf.sorting.families import names_inside, sort_name
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.covers import local_cover
 
@@ -45,7 +45,10 @@ def index():
         artist=points.get(artist_id),
         cluster=clusters.get(points[artist_id].cluster_id) if artist_id is not None else None,
         steps=2 if request.args.get("steps") == "2" else 1,
-        around=ties_of(store, shown, artist_id) if artist_id is not None else [],
+        # A label ties an artist to many: they are listed only when asked for.
+        around=ties_of(store, shown, artist_id, frozenset() if Tie.LABEL in switched else frozenset({Tie.LABEL}))
+        if artist_id is not None
+        else [],
         # Where each album stands, to take it from the shelf.
         places={row.album_id: row for row in BrowseQueries(store).everything()} if artist_id is not None else {},
         clusters=clusters,
@@ -74,11 +77,12 @@ def _matching(shown, text: str, leave_out: int | None = None) -> list:
 
 def _switched(around_one: bool) -> tuple[set[Tie], str | None]:
     """The kinds of tie switched on: as the link says once the user switched one, or else the
-    defaults — everything, but Same song only around one artist, as over the whole
-    collection it ties almost every jazz artist to every other."""
+    defaults — everything but Same label, which ties an artist to many, and Same song only
+    around one artist, as over the whole collection it ties almost every jazz artist to every
+    other."""
     given = request.args.get("ties")
     if given is None:
-        return {tie for tie in Tie if around_one or tie is not Tie.SONGS}, None
+        return {tie for tie in Tie if tie is not Tie.LABEL and (around_one or tie is not Tie.SONGS)}, None
     switched = {tie for tie in Tie if tie.value in given.split(",")}
     return switched, ",".join(tie.value for tie in Tie if tie in switched)
 
@@ -93,7 +97,8 @@ def data():
         {
             "clusters": [[cluster_id, name] for cluster_id, name in shown.clusters],
             "artists": [
-                [p.artist_id, p.name, p.albums, p.cluster_id, pictures.get(p.artist_id)] for p in shown.points
+                [p.artist_id, p.name, p.albums, p.cluster_id, *pictures.get(p.artist_id, (None, False))]
+                for p in shown.points
             ],
             "links": [
                 [
@@ -102,6 +107,7 @@ def data():
                     list(link.ties),
                     list(link.songs),
                     [[entry.name, ", ".join(entry.roles), entry.album_title] for entry in link.on_record],
+                    list(link.labels),
                 ]
                 for link in shown.links
             ],
@@ -109,10 +115,12 @@ def data():
     )
 
 
-def _pictures(store) -> dict[int, str]:
-    """The small picture of each artist that has one kept in the data directory: the owner's
-    own, else the one a sync stored. One still at Discogs is left out — the network draws on
-    a canvas, which takes images from the app itself only, and it works offline too."""
+def _pictures(store) -> dict[int, tuple[str, bool]]:
+    """The small picture of each artist that has one kept in the data directory, as (address,
+    borrowed): the owner's own, else the one a sync stored. One still at Discogs is left out —
+    the network draws on a canvas, which takes images from the app itself only, and it works
+    offline too. A joint billing has no page on Discogs, so no picture of its own: it borrows
+    that of the first artist it names who has one."""
     if not store.exists(Artist):
         return {}
     thumbs = {
@@ -120,12 +128,18 @@ def _pictures(store) -> dict[int, str]:
         for record in store.load(ArtistEnrichment)
         if record.thumb_url
     }
+    artists = store.load(Artist)
     found = {}
-    for artist in store.load(Artist):
+    for artist in artists:
         if artist.picture_file:
-            found[artist.id] = url_for("artists.picture", name=picture_thumb(store, artist))
+            found[artist.id] = (url_for("artists.picture", name=picture_thumb(store, artist)), False)
         elif artist.discogs_artist_id in thumbs:
             local = local_cover(thumbs[artist.discogs_artist_id])
             if local != thumbs[artist.discogs_artist_id]:
-                found[artist.id] = local
+                found[artist.id] = (local, False)
+    for artist_id, named in names_inside(artists).items():
+        if artist_id not in found:
+            lender = next((other for other in named if other in found and not found[other][1]), None)
+            if lender is not None:
+                found[artist_id] = (found[lender][0], True)
     return found

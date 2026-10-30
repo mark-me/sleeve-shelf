@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Connections') }}{% endblock %}
 
-{% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% elif tie == 'credit' %}{{ _('On the record') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
+{% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% elif tie == 'credit' %}{{ _('On the record') }}{% elif tie == 'label' %}{{ _('Same label') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
 
 {# The albums that show a tie, each with where it stands: the LP to take from the shelf. #}
 {% macro tied_albums(name, albums) %}
@@ -15,6 +15,7 @@
     <span class="ss-muted">&middot; {% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
     {% if tied.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ tied.songs | join(', ') }}</span>{% endif %}
     {% for entry in tied.credits %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }}</span>{% endfor %}
+    {% if tied.labels %}<span class="ss-muted d-block">{{ _('Label:') }} {{ tied.labels | join(', ') }}</span>{% endif %}
   </li>
   {% endif %}
   {% endfor %}
@@ -97,6 +98,8 @@
        data-albums-many="{{ ngettext('%(num)d album', '%(num)d albums', 2) | replace('2', '{n}') }}"
        data-artists-one="{{ ngettext('%(num)d artist', '%(num)d artists', 1) }}"
        data-artists-many="{{ ngettext('%(num)d artist', '%(num)d artists', 2) | replace('2', '{n}') }}"
+       data-label-word="{{ _('Label:') }}"
+       data-borrowed="{{ _('picture of an artist it names') }}"
        data-no-cluster="{{ _('no cluster yet') }}"
        data-empty="{{ _('Nothing to show with these ties.') }}"
        data-failed="{{ _('The network could not be loaded.') }}">
@@ -152,6 +155,7 @@
         {% for tie in link.ties %}<span class="ss-chip me-1"><span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span> {{ tie_name(tie) }}</span>{% endfor %}
         {% if link.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ link.songs[:3] | join(', ') }}{% if link.songs | length > 3 %} {{ ngettext('and %(num)d more song', 'and %(num)d more songs', link.songs | length - 3) }}{% endif %}</span>{% endif %}
         {% for entry in link.on_record[:3] %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }} &middot; {{ entry.album_title }}</span>{% endfor %}
+        {% if link.labels %}<span class="ss-muted d-block">{{ _('Label:') }} {{ link.labels | join(', ') }}</span>{% endif %}
       </div>
       {% endif %}
       <div class="ss-row">
