@@ -110,6 +110,11 @@
        data-empty="{{ _('Nothing to show with these ties.') }}"
        data-failed="{{ _('The network could not be loaded.') }}">
     <noscript><p class="ss-card-body ss-muted">{{ _('The network needs JavaScript; the list below shows the same ties.') }}</p></noscript>
+    {# Shown by the script, as without it nothing is coming. #}
+    <div class="ss-network-loading" data-network-loading role="status" hidden>
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      <span>{{ _('Loading the network…') }}</span>
+    </div>
   </div>
   <p id="ss-network-info" class="ss-network-info small mb-0 mt-2" aria-live="polite">
     <span data-info-text>{{ _('Tap an artist to see its ties, and again to put it in the middle; tap a line to see what ties the two. Drag to move around; pinch or scroll to zoom.') }}</span>

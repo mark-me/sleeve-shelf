@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 12:54+0100\n"
+"POT-Creation-Date: 2026-10-30 17:43+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -92,31 +92,33 @@ msgid "That is not the password."
 msgstr "Dat is niet het wachtwoord."
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Dashboard"
+msgstr "Overzicht"
+
+#: src/sleeve_shelf/web/navigation.py
 msgid "Collection"
 msgstr "Collectie"
 
 #: src/sleeve_shelf/web/navigation.py
-msgid "Shelves"
-msgstr "Opstelling"
+#: src/sleeve_shelf/web/templates/browse/results.html
+#: src/sleeve_shelf/web/templates/browse/shelf.html
+msgid "Browse / Search"
+msgstr "Bladeren / Zoeken"
 
 #: src/sleeve_shelf/web/navigation.py
-msgid "Proposal"
-msgstr "Voorstel"
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Connections"
+msgstr "Verbanden"
 
 #: src/sleeve_shelf/web/navigation.py
-msgid "Cabinets"
-msgstr "Kasten"
-
-#: src/sleeve_shelf/web/navigation.py
-msgid "Organise"
-msgstr "Ordenen"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/_rules_and_move.html
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#: src/sleeve_shelf/web/templates/moving/index.html
-msgid "Move"
-msgstr "Verplaatsen"
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Statistics"
+msgstr "Statistieken"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -130,43 +132,13 @@ msgstr "Zonder plek"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-#: src/sleeve_shelf/web/templates/stats/index.html
-msgid "Connections"
-msgstr "Verbanden"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Discogs sync"
 msgstr "Discogs-sync"
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/clusters/index.html
-msgid "Artists"
-msgstr "Artiesten"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/browse/results.html
-#: src/sleeve_shelf/web/templates/browse/shelf.html
-msgid "Browse / Search"
-msgstr "Bladeren / Zoeken"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#: src/sleeve_shelf/web/templates/clusters/index.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-msgid "Clusters"
-msgstr "Clusters"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Dashboard"
-msgstr "Overzicht"
+msgid "Shelves"
+msgstr "Opstelling"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -176,26 +148,15 @@ msgid "Layout"
 msgstr "Indeling"
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/families/index.html
-msgid "Families"
-msgstr "Families"
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Move"
+msgstr "Verplaatsen"
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/layout/index.html
-#: src/sleeve_shelf/web/templates/versions/index.html
-msgid "Versions"
-msgstr "Versies"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/proposal/index.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-msgid "Settings"
-msgstr "Instellingen"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Rules"
-msgstr "Regels"
+msgid "Proposal"
+msgstr "Voorstel"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/settings/index.html
@@ -205,9 +166,48 @@ msgid "Showcase"
 msgstr "Uitstalling"
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/stats/index.html
-msgid "Statistics"
-msgstr "Statistieken"
+#: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/versions/index.html
+msgid "Versions"
+msgstr "Versies"
+
+#: src/sleeve_shelf/web/navigation.py
+msgid "Cabinets"
+msgstr "Kasten"
+
+#: src/sleeve_shelf/web/navigation.py
+msgid "Organise"
+msgstr "Ordenen"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/clusters/index.html
+msgid "Artists"
+msgstr "Artiesten"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Families"
+msgstr "Families"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/clusters/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Clusters"
+msgstr "Clusters"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Rules"
+msgstr "Regels"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/proposal/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Settings"
+msgstr "Instellingen"
 
 #: src/sleeve_shelf/web/pwa.py
 msgid "Your vinyl collection, in the order of your shelves."
@@ -347,6 +347,16 @@ msgid "Many previews were played from here just now; try again in a few minutes"
 msgstr "Er zijn hier net veel fragmenten afgespeeld; probeer het over een paar minuten opnieuw"
 
 #: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Location rules"
+msgstr "Locatieregels"
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "(cabinet removed)"
+msgstr "(kast verwijderd)"
+
+#: src/sleeve_shelf/web/templates/_rules_and_move.html
 msgid "Rule for the cluster"
 msgstr "Regel voor het cluster"
 
@@ -387,16 +397,6 @@ msgstr "Naar een ander vak, vooraan of achteraan, of naar waar het bij hoort naa
 #: src/sleeve_shelf/web/templates/families/index.html
 msgid "Move…"
 msgstr "Verplaatsen…"
-
-#: src/sleeve_shelf/web/templates/_rules_and_move.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Location rules"
-msgstr "Locatieregels"
-
-#: src/sleeve_shelf/web/templates/_rules_and_move.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "(cabinet removed)"
-msgstr "(kast verwijderd)"
 
 #: src/sleeve_shelf/web/templates/_spot.html
 msgid "between"
@@ -508,6 +508,11 @@ msgid "Show the cover larger"
 msgstr "De hoes groter tonen"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+msgid "Moved. A version from before the move is kept under Versions."
+msgstr "Verplaatst. Een versie van vóór het verplaatsen staat onder Versies."
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "This album is no longer in your Discogs collection; you said you still have it."
 msgstr "Dit album staat niet meer in je Discogs-collectie; je zei dat je het nog hebt."
 
@@ -542,6 +547,12 @@ msgstr "Een single of EP: die blijft buiten de indeling en krijgt geen plek in e
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Where it stands"
 msgstr "Waar het staat"
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Not on a shelf"
+msgstr "Niet in een vak"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Sorted under"
@@ -592,6 +603,15 @@ msgid "Other albums in your collection with a song of this one."
 msgstr "Andere albums in je collectie met een nummer van dit album."
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/_figures.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "and %(num)d more album"
+msgid_plural "and %(num)d more albums"
+msgstr[0] "en nog %(num)d album"
+msgstr[1] "en nog %(num)d albums"
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "The tracklist comes with the next fetch from Discogs."
 msgstr "De tracklist komt mee met de volgende ophaalronde van Discogs."
 
@@ -608,8 +628,23 @@ msgid "Looking for previews…"
 msgstr "Fragmenten zoeken…"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Width"
+msgstr "Breedte"
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Measured width in cm"
 msgstr "Gemeten breedte in cm"
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/albums/widths.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/shelf_form.html
+msgid "Save"
+msgstr "Opslaan"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #, python-format
@@ -629,40 +664,10 @@ msgstr "Laat leeg om de schatting te gebruiken."
 msgid "Cover of %(title)s"
 msgstr "Hoes van %(title)s"
 
-#: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/albums/widths.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
-#: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Save"
-msgstr "Opslaan"
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/artists/_figures.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-#, python-format
-msgid "and %(num)d more album"
-msgid_plural "and %(num)d more albums"
-msgstr[0] "en nog %(num)d album"
-msgstr[1] "en nog %(num)d albums"
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Moved. A version from before the move is kept under Versions."
-msgstr "Verplaatst. Een versie van vóór het verplaatsen staat onder Versies."
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/layout/index.html
-#: src/sleeve_shelf/web/templates/moving/index.html
-msgid "Not on a shelf"
-msgstr "Niet in een vak"
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
 #: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Width"
-msgstr "Breedte"
+msgid "Album widths"
+msgstr "Albumbreedtes"
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
 #, python-format
@@ -697,11 +702,6 @@ msgstr "Maak een breedte leeg en sla op om terug te gaan naar de schatting."
 #: src/sleeve_shelf/web/templates/albums/widths.html
 msgid "Change"
 msgstr "Wijzigen"
-
-#: src/sleeve_shelf/web/templates/albums/widths.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Album widths"
-msgstr "Albumbreedtes"
 
 #: src/sleeve_shelf/web/templates/artists/_figures.html
 #, python-format
@@ -782,6 +782,13 @@ msgid "Parts of this page"
 msgstr "Delen van deze pagina"
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Artist"
+msgstr "Artiest"
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Manage"
 msgstr "Beheren"
 
@@ -811,6 +818,11 @@ msgid "Move to %(cluster)s"
 msgstr "Naar %(cluster)s verplaatsen"
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/artists/index.html
+msgid "Start year"
+msgstr "Beginjaar"
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "The year the artist began; it decides the era band."
 msgstr "Het jaar waarin de artiest begon; het bepaalt de era-band."
 
@@ -822,6 +834,14 @@ msgstr "Leeg gelaten wordt het vroegste oorspronkelijke jaar van de albums gebru
 #: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Look up on Wikipedia"
 msgstr "Opzoeken op Wikipedia"
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/clusters/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Cluster"
+msgstr "Cluster"
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "None — let the app propose one"
@@ -867,6 +887,13 @@ msgid "For an artist that deserves a cluster of its own, for example. A new clus
 msgstr "Bijvoorbeeld voor een artiest die een eigen cluster verdient. Een nieuw cluster komt achteraan in de volgorde van de clusters."
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/discogs/remove.html
+#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/shelf_form.html
+msgid "Cancel"
+msgstr "Annuleren"
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Picture"
 msgstr "Foto"
 
@@ -907,6 +934,13 @@ msgid "This artist still needs something from you for the sorting."
 msgstr "Deze artiest heeft nog iets van je nodig voor het sorteren."
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/clusters/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Albums"
+msgstr "Albums"
+
+#: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "year unknown"
 msgstr "jaar onbekend"
 
@@ -935,53 +969,29 @@ msgid "Members"
 msgstr "Leden"
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
-#, python-format
-msgid "Picture of %(name)s"
-msgstr "Foto van %(name)s"
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/artists/index.html
-msgid "Start year"
-msgstr "Beginjaar"
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/clusters/index.html
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Cluster"
-msgstr "Cluster"
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/clusters/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Albums"
-msgstr "Albums"
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Artist"
-msgstr "Artiest"
-
-#: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "no cluster yet"
 msgstr "nog geen cluster"
 
 #: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/discogs/remove.html
-#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
-#: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Cancel"
-msgstr "Annuleren"
+#, python-format
+msgid "Picture of %(name)s"
+msgstr "Foto van %(name)s"
 
 #: src/sleeve_shelf/web/templates/artists/index.html
 msgid "The cluster and start year of an artist decide where its albums are sorted."
 msgstr "Het cluster en het beginjaar van een artiest bepalen waar zijn albums worden gesorteerd."
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Search an artist"
+msgstr "Zoek een artiest"
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Search an artist…"
+msgstr "Zoek een artiest…"
 
 #: src/sleeve_shelf/web/templates/artists/index.html
 msgid "All"
@@ -1023,6 +1033,22 @@ msgid "“To check” lists sorted artists without a confirmed cluster or withou
 msgstr "“Na te kijken” toont gesorteerde artiesten zonder bevestigd cluster of zonder eigen beginjaar, en artiesten die een nieuwe aankoop naar een ander cluster wijst."
 
 #: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "%(num)d artist"
+msgid_plural "%(num)d artists"
+msgstr[0] "%(num)d artiest"
+msgstr[1] "%(num)d artiesten"
+
+#: src/sleeve_shelf/web/templates/artists/index.html
+#: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Family"
+msgstr "Familie"
+
+#: src/sleeve_shelf/web/templates/artists/index.html
 msgid "proposed"
 msgstr "voorgesteld"
 
@@ -1047,35 +1073,15 @@ msgstr "Cluster bevestigen"
 msgid "No artist matches."
 msgstr "Geen artiest gevonden."
 
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-#, python-format
-msgid "%(num)d artist"
-msgid_plural "%(num)d artists"
-msgstr[0] "%(num)d artiest"
-msgstr[1] "%(num)d artiesten"
-
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-msgid "Search an artist"
-msgstr "Zoek een artiest"
-
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-msgid "Search an artist…"
-msgstr "Zoek een artiest…"
-
-#: src/sleeve_shelf/web/templates/artists/index.html
-#: src/sleeve_shelf/web/templates/connections/index.html
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Family"
-msgstr "Familie"
-
 #: src/sleeve_shelf/web/templates/base.html
 msgid "Open menu"
 msgstr "Menu openen"
+
+#: src/sleeve_shelf/web/templates/base.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Waiting for you"
+msgstr "Wacht op jou"
 
 #: src/sleeve_shelf/web/templates/base.html
 msgid "Help"
@@ -1086,19 +1092,13 @@ msgid "Log out"
 msgstr "Uitloggen"
 
 #: src/sleeve_shelf/web/templates/base.html
-msgid "How this screen works"
-msgstr "Hoe dit scherm werkt"
-
-#: src/sleeve_shelf/web/templates/base.html
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Waiting for you"
-msgstr "Wacht op jou"
-
-#: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/login/page.html
 msgid "Log in"
 msgstr "Inloggen"
+
+#: src/sleeve_shelf/web/templates/base.html
+msgid "How this screen works"
+msgstr "Hoe dit scherm werkt"
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
 msgid "Search by artist, album or song"
@@ -1132,20 +1132,20 @@ msgid "Song"
 msgstr "Nummer"
 
 #: src/sleeve_shelf/web/templates/browse/results.html
-msgid "Choosing a result opens its shelf, with the album marked."
-msgstr "Een resultaat kiezen opent zijn vak, met het album gemarkeerd."
-
-#: src/sleeve_shelf/web/templates/browse/results.html
-msgid "No artist, album or song matches this search."
-msgstr "Geen artiest, album of nummer past bij deze zoekopdracht."
-
-#: src/sleeve_shelf/web/templates/browse/results.html
 #: src/sleeve_shelf/web/templates/connections/index.html
 #, python-format
 msgid "and %(num)d more song"
 msgid_plural "and %(num)d more songs"
 msgstr[0] "en nog %(num)d nummer"
 msgstr[1] "en nog %(num)d nummers"
+
+#: src/sleeve_shelf/web/templates/browse/results.html
+msgid "Choosing a result opens its shelf, with the album marked."
+msgstr "Een resultaat kiezen opent zijn vak, met het album gemarkeerd."
+
+#: src/sleeve_shelf/web/templates/browse/results.html
+msgid "No artist, album or song matches this search."
+msgstr "Geen artiest, album of nummer past bij deze zoekopdracht."
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 msgid "Previous shelf"
@@ -1164,6 +1164,16 @@ msgid "You are browsing the proposal, not your shelves as they are."
 msgstr "Je bladert door het voorstel, niet door je kasten zoals ze nu zijn."
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Back to the proposal"
+msgstr "Terug naar het voorstel"
+
+#: src/sleeve_shelf/web/templates/browse/shelf.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "outside the sorting"
+msgstr "buiten het sorteren"
+
+#: src/sleeve_shelf/web/templates/browse/shelf.html
 #, python-format
 msgid "reachability %(score)d"
 msgstr "bereikbaarheid %(score)d"
@@ -1171,6 +1181,11 @@ msgstr "bereikbaarheid %(score)d"
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 msgid "Jump to shelf"
 msgstr "Naar vak"
+
+#: src/sleeve_shelf/web/templates/browse/shelf.html
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Go"
+msgstr "Ga"
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 msgid "There are no shelves yet."
@@ -1184,21 +1199,6 @@ msgstr "Voeg je kasten en vakken toe"
 msgid "This shelf is empty."
 msgstr "Dit vak is leeg."
 
-#: src/sleeve_shelf/web/templates/browse/shelf.html
-#: src/sleeve_shelf/web/templates/layout/index.html
-msgid "Back to the proposal"
-msgstr "Terug naar het voorstel"
-
-#: src/sleeve_shelf/web/templates/browse/shelf.html
-#: src/sleeve_shelf/web/templates/layout/index.html
-msgid "Go"
-msgstr "Ga"
-
-#: src/sleeve_shelf/web/templates/browse/shelf.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "outside the sorting"
-msgstr "buiten het sorteren"
-
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
 msgid "Unplaced albums"
 msgstr "Albums zonder plek"
@@ -1208,22 +1208,16 @@ msgid "Albums that have no spot on a shelf yet. For an LP a spot is suggested on
 msgstr "Albums die nog geen plek in een vak hebben. Voor een LP wordt een plek voorgesteld in de vakken zoals ze nu zijn, naast waar hij bij hoort; er verplaatst niets tot je hem daar zet."
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
-msgid "Every LP has a place on a shelf."
-msgstr "Elke LP heeft een plek in een vak."
-
-#: src/sleeve_shelf/web/templates/browse/unplaced.html
-msgid "Singles and EPs"
-msgstr "Singles en EP’s"
-
-#: src/sleeve_shelf/web/templates/browse/unplaced.html
-msgid "7\", 10\" and 12\" releases are kept outside the layout; they are listed here for reference."
-msgstr "7\"-, 10\"- en 12\"-uitgaven blijven buiten de indeling; ze staan hier ter informatie."
-
-#: src/sleeve_shelf/web/templates/browse/unplaced.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
 msgid "%(title)s now stands on"
 msgstr "%(title)s staat nu in"
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "A version from before is kept under Versions."
+msgstr "Een versie van daarvoor staat onder Versies."
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1252,14 +1246,37 @@ msgid "No spot yet: the artist has no cluster."
 msgstr "Nog geen plek: de artiest heeft geen cluster."
 
 #: src/sleeve_shelf/web/templates/browse/unplaced.html
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/moving/index.html
-msgid "A version from before is kept under Versions."
-msgstr "Een versie van daarvoor staat onder Versies."
+msgid "Every LP has a place on a shelf."
+msgstr "Elke LP heeft een plek in een vak."
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+msgid "Singles and EPs"
+msgstr "Singles en EP’s"
+
+#: src/sleeve_shelf/web/templates/browse/unplaced.html
+msgid "7\", 10\" and 12\" releases are kept outside the layout; they are listed here for reference."
+msgstr "7\"-, 10\"- en 12\"-uitgaven blijven buiten de indeling; ze staan hier ter informatie."
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/shelf_form.html
+msgid "Name"
+msgstr "Naam"
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/families/index.html
+msgid "Rename"
+msgstr "Hernoemen"
 
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 msgid "The whole cluster at once, to a shelf or to where it belongs."
 msgstr "Het hele cluster in één keer, naar een vak of naar waar het bij hoort."
+
+#: src/sleeve_shelf/web/templates/clusters/edit.html
+#: src/sleeve_shelf/web/templates/clusters/index.html
+msgid "Discogs styles pointing here"
+msgstr "Discogs-stijlen die hierheen wijzen"
 
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 msgid "A new artist whose albums carry one of these styles is proposed this cluster. Point a style elsewhere if it fits another cluster better."
@@ -1277,23 +1294,6 @@ msgstr "Er wijst geen stijl naar dit cluster."
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 msgid "Remove this empty cluster"
 msgstr "Dit lege cluster verwijderen"
-
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#: src/sleeve_shelf/web/templates/clusters/index.html
-msgid "Discogs styles pointing here"
-msgstr "Discogs-stijlen die hierheen wijzen"
-
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#: src/sleeve_shelf/web/templates/families/index.html
-msgid "Rename"
-msgstr "Hernoemen"
-
-#: src/sleeve_shelf/web/templates/clusters/edit.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
-#: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Name"
-msgstr "Naam"
 
 #: src/sleeve_shelf/web/templates/clusters/index.html
 msgid "The groups of artists your collection is sorted into, in the order they follow each other across the shelves. The arrows change that order."
@@ -1387,6 +1387,11 @@ msgstr[0] "op %(num)d album"
 msgstr[1] "op %(num)d albums"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/stats/index.html
+msgid "Artist page"
+msgstr "Artiestpagina"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "The whole collection"
 msgstr "De hele collectie"
 
@@ -1441,6 +1446,10 @@ msgstr "Het netwerk kon niet geladen worden."
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "The network needs JavaScript; the list below shows the same ties."
 msgstr "Het netwerk heeft JavaScript nodig; de lijst hieronder toont dezelfde verbanden."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Loading the network…"
+msgstr "Het netwerk wordt geladen…"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Tap an artist to see its ties, and again to put it in the middle; tap a line to see what ties the two. Drag to move around; pinch or scroll to zoom."
@@ -1522,11 +1531,6 @@ msgstr "Volgens jou niet verwant, ook al staat de ene naam in de andere:"
 msgid "Undo"
 msgstr "Ongedaan maken"
 
-#: src/sleeve_shelf/web/templates/connections/index.html
-#: src/sleeve_shelf/web/templates/stats/index.html
-msgid "Artist page"
-msgstr "Artiestpagina"
-
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #, python-format
 msgid "of %(total)d"
@@ -1542,6 +1546,17 @@ msgstr[1] "albums in een vak · %(num)d zonder plek"
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "albums on a shelf"
 msgstr "albums in een vak"
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/setup/preview.html
+#: src/sleeve_shelf/web/templates/showcase/index.html
+msgid "artists"
+msgstr "artiesten"
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/setup/preview.html
+msgid "clusters"
+msgstr "clusters"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "cabinets · shelves"
@@ -1561,6 +1576,11 @@ msgstr "Door de vakken bladeren"
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "A proposal is waiting"
 msgstr "Er wacht een voorstel"
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Sorting proposal"
+msgstr "Sorteervoorstel"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "To place"
@@ -1650,6 +1670,11 @@ msgstr[1] "%(num)d LP’s zonder plek"
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Is the Discogs release the same album?"
 msgstr "Is de Discogs-release hetzelfde album?"
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Families decide which artists stand together."
+msgstr "Families bepalen welke artiesten bij elkaar staan."
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "They are sorted on a proposed cluster or a year taken from their albums."
@@ -1755,6 +1780,11 @@ msgstr[0] "%(num)d te doen"
 msgstr[1] "%(num)d te doen"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "done"
+msgstr "klaar"
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "once there are albums"
 msgstr "zodra er albums zijn"
 
@@ -1771,6 +1801,11 @@ msgid "%(num)d rule"
 msgid_plural "%(num)d rules"
 msgstr[0] "%(num)d regel"
 msgstr[1] "%(num)d regels"
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "waiting for you"
+msgstr "wacht op jou"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "not generated"
@@ -1792,37 +1827,6 @@ msgstr "De huidige indeling is opgeslagen."
 msgid "No version saved yet"
 msgstr "Nog geen versie opgeslagen"
 
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "done"
-msgstr "klaar"
-
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "waiting for you"
-msgstr "wacht op jou"
-
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Sorting proposal"
-msgstr "Sorteervoorstel"
-
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Families decide which artists stand together."
-msgstr "Families bepalen welke artiesten bij elkaar staan."
-
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/setup/preview.html
-msgid "clusters"
-msgstr "clusters"
-
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-#: src/sleeve_shelf/web/templates/setup/preview.html
-#: src/sleeve_shelf/web/templates/showcase/index.html
-msgid "artists"
-msgstr "artiesten"
-
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "running"
 msgstr "bezig"
@@ -1834,6 +1838,11 @@ msgstr "te doen"
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "One button brings your collection in from Discogs and keeps everything up to date: new purchases, styles, years, tracklists, pictures and covers. What needs your decision shows under “Waiting for you”."
 msgstr "Eén knop haalt je collectie binnen van Discogs en houdt alles bij: nieuwe aankopen, stijlen, jaren, tracklists, foto’s en hoezen. Wat jouw beslissing vraagt, staat onder “Wacht op jou”."
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/setup/preview.html
+msgid "albums"
+msgstr "albums"
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "linked to a release"
@@ -1855,6 +1864,17 @@ msgstr "ingesteld: %(token)s"
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "needed first"
 msgstr "eerst nodig"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Personal access token"
+msgstr "Persoonlijk toegangstoken"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+#, python-format
+msgid "A token is set: %(token)s. Paste a new one to replace it."
+msgstr "Er is een token ingesteld: %(token)s. Plak een nieuwe om hem te vervangen."
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "Create one on discogs.com under Settings → Developers → Generate new token."
@@ -2143,6 +2163,16 @@ msgid "Albums that are already linked are left as they are."
 msgstr "Albums die al gekoppeld zijn, blijven zoals ze zijn."
 
 #: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/setup/upload.html
+msgid "Import"
+msgstr "Importeren"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Discard"
+msgstr "Verwerpen"
+
+#: src/sleeve_shelf/web/templates/discogs/index.html
 msgid "On discogs.com, open your collection and choose Export. Upload the CSV file you receive here. Only vinyl is taken; you see what it would do before anything changes."
 msgstr "Open op discogs.com je collectie en kies Export. Upload hier het CSV-bestand dat je krijgt. Alleen vinyl wordt overgenomen; je ziet wat het zou doen voordat er iets verandert."
 
@@ -2166,32 +2196,6 @@ msgstr "Een werkmap verandert alleen waar de albums staan; alleen bij de eerste 
 msgid "Import workbook"
 msgstr "Werkmap importeren"
 
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Discard"
-msgstr "Verwerpen"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-msgid "Personal access token"
-msgstr "Persoonlijk toegangstoken"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-#, python-format
-msgid "A token is set: %(token)s. Paste a new one to replace it."
-msgstr "Er is een token ingesteld: %(token)s. Plak een nieuwe om hem te vervangen."
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/setup/preview.html
-msgid "albums"
-msgstr "albums"
-
-#: src/sleeve_shelf/web/templates/discogs/index.html
-#: src/sleeve_shelf/web/templates/setup/upload.html
-msgid "Import"
-msgstr "Importeren"
-
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 msgid "Remove album"
 msgstr "Album verwijderen"
@@ -2207,6 +2211,11 @@ msgstr "De release staat niet meer in je Discogs-collectie. Verwijderen haalt he
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 msgid "The layout as it is now is saved as a version first. If you still own the record, cancel: it stays where it is, and the question returns with the next sync."
 msgstr "De indeling zoals die nu is, wordt eerst als versie opgeslagen. Heb je de plaat nog, annuleer dan: hij blijft waar hij staat, en de vraag komt terug bij de volgende sync."
+
+#: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Artist families"
+msgstr "Artiestenfamilies"
 
 #: src/sleeve_shelf/web/templates/families/index.html
 msgid "A family keeps an artist’s other billings and side projects next to each other on the shelf, in one cluster."
@@ -2322,11 +2331,6 @@ msgstr "Een artiest toevoegen…"
 msgid "Add"
 msgstr "Toevoegen"
 
-#: src/sleeve_shelf/web/templates/families/index.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-msgid "Artist families"
-msgstr "Artiestenfamilies"
-
 #: src/sleeve_shelf/web/templates/layout/index.html
 #, python-format
 msgid "Split %(artist)s into single albums"
@@ -2398,6 +2402,11 @@ msgid "That move could not be saved. Reload the page and try again."
 msgstr "Die verplaatsing kon niet worden opgeslagen. Laad de pagina opnieuw en probeer het nog eens."
 
 #: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "This cabinet has no shelves yet."
+msgstr "Deze kast heeft nog geen vakken."
+
+#: src/sleeve_shelf/web/templates/layout/index.html
 msgid "LPs without a place. Drag one to a shelf to place it, or drop an album here to take it off its shelf."
 msgstr "LP’s zonder plek. Sleep er een naar een vak om hem te plaatsen, of zet een album hier neer om het uit zijn vak te halen."
 
@@ -2440,11 +2449,6 @@ msgstr "%(albums)s albums · %(filled)s van ≈ %(width)s cm"
 msgid "%(albums)s albums · %(filled)s cm"
 msgstr "%(albums)s albums · %(filled)s cm"
 
-#: src/sleeve_shelf/web/templates/layout/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "This cabinet has no shelves yet."
-msgstr "Deze kast heeft nog geen vakken."
-
 #: src/sleeve_shelf/web/templates/login/page.html
 msgid "Looking a record up needs no login. To change anything, log in as the owner."
 msgstr "Een plaat opzoeken kan zonder in te loggen. Om iets te veranderen log je in als eigenaar."
@@ -2456,6 +2460,11 @@ msgstr "Wachtwoord"
 #: src/sleeve_shelf/web/templates/login/page.html
 msgid "This device stays logged in until you log out."
 msgstr "Dit apparaat blijft ingelogd tot je uitlogt."
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/rules/index.html
+msgid "Album"
+msgstr "Album"
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Move an album, an artist, a family or a whole cluster: to another shelf, or to where it belongs. You see what changes before anything moves; to put albums in their exact spot, drag them in Layout."
@@ -2528,6 +2537,13 @@ msgid "(not needed for “Where it belongs”)"
 msgstr "(niet nodig bij “Waar het bij hoort”)"
 
 #: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/shelf_form.html
+msgid "Shelf"
+msgstr "Vak"
+
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Show what changes"
 msgstr "Laat zien wat er verandert"
 
@@ -2551,6 +2567,16 @@ msgid "Albums after"
 msgstr "Albums daarna"
 
 #: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Albums now"
+msgstr "Albums nu"
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Filled"
+msgstr "Gevuld"
+
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "A shelf marked holds more than its width afterwards. Nothing is left out: take albums out in Layout afterwards, or measure the shelf if its width is an estimate."
 msgstr "Een gemarkeerd vak bevat daarna meer dan zijn breedte. Er valt niets weg: haal daarna albums eruit in Indeling, of meet het vak als zijn breedte een schatting is."
 
@@ -2567,28 +2593,6 @@ msgstr "De indeling zoals die nu is, wordt eerst als versie bewaard."
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Nothing would change: it stands there already."
 msgstr "Er zou niets veranderen: het staat er al."
-
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Albums now"
-msgstr "Albums nu"
-
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/proposal/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-#: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Shelf"
-msgstr "Vak"
-
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/rules/index.html
-msgid "Album"
-msgstr "Album"
-
-#: src/sleeve_shelf/web/templates/moving/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Filled"
-msgstr "Gevuld"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you accept."
@@ -2820,17 +2824,17 @@ msgid "(no longer exists)"
 msgstr "(bestaat niet meer)"
 
 #: src/sleeve_shelf/web/templates/rules/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Remove"
+msgstr "Verwijderen"
+
+#: src/sleeve_shelf/web/templates/rules/index.html
 msgid "No rules yet: a proposal fills the cabinets in the order set under Cabinets & shelves."
 msgstr "Nog geen regels: een voorstel vult de kasten in de volgorde die onder Kasten & vakken is ingesteld."
 
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "The most specific rule wins: an album’s own rule, then its artist’s, its family’s, its cluster’s. Rules take effect the next time a proposal is generated."
 msgstr "De meest specifieke regel wint: de eigen regel van een album, dan die van zijn artiest, zijn familie, zijn cluster. Regels tellen mee bij het volgende voorstel."
-
-#: src/sleeve_shelf/web/templates/rules/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Remove"
-msgstr "Verwijderen"
 
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Saved. The album widths have been recalculated."
@@ -3035,6 +3039,11 @@ msgid "Choose another file"
 msgstr "Een ander bestand kiezen"
 
 #: src/sleeve_shelf/web/templates/setup/upload.html
+#: src/sleeve_shelf/web/templates/setup/welcome.html
+msgid "Upload your layout"
+msgstr "Je indeling uploaden"
+
+#: src/sleeve_shelf/web/templates/setup/upload.html
 msgid "An Excel workbook (.xlsx) with your cabinet layout. You get a preview before anything is loaded."
 msgstr "Een Excel-werkmap (.xlsx) met je kastindeling. Je krijgt een voorbeeld voordat er iets wordt geladen."
 
@@ -3065,11 +3074,6 @@ msgstr "Optioneel een blad “Vakoverzicht” met elk vak (Locatie, Vak, Toegank
 #: src/sleeve_shelf/web/templates/setup/upload.html
 msgid "Optionally a sheet “Nog niet geplaatst” with albums that have no spot yet (Cluster, Artiest, Titel)."
 msgstr "Optioneel een blad “Nog niet geplaatst” met albums die nog geen plek hebben (Cluster, Artiest, Titel)."
-
-#: src/sleeve_shelf/web/templates/setup/upload.html
-#: src/sleeve_shelf/web/templates/setup/welcome.html
-msgid "Upload your layout"
-msgstr "Je indeling uploaden"
 
 #: src/sleeve_shelf/web/templates/setup/welcome.html
 msgid "Welcome"
@@ -3114,6 +3118,11 @@ msgstr "Geruild. Een versie van daarvoor staat onder Versies."
 #: src/sleeve_shelf/web/templates/showcase/index.html
 msgid "No shelf is a showcase yet. Mark a top-loader as showcase under Cabinets & shelves; the albums that stand on it then become its sample."
 msgstr "Er is nog geen vak een uitstalling. Markeer een toplader als uitstalling onder Kasten & vakken; de albums die erin staan, vormen dan de greep."
+
+#: src/sleeve_shelf/web/templates/showcase/index.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Cabinets & shelves"
+msgstr "Kasten & vakken"
 
 #: src/sleeve_shelf/web/templates/showcase/index.html
 msgid "albums on display"
@@ -3164,11 +3173,6 @@ msgstr "Ruilen"
 #: src/sleeve_shelf/web/templates/showcase/index.html
 msgid "Exchanging puts each album in the other’s spot, so the top-loader and the shelf hold as many albums as before. To show more or fewer albums of an artist, or another artist, drag albums to or from a top-loader in Layout. A sorting proposal leaves a showcase as it is."
 msgstr "Ruilen zet elk album op de plek van het andere, zodat de toplader en het vak evenveel albums bevatten als ervoor. Om meer of minder albums van een artiest te tonen, of een andere artiest, sleep je in Indeling albums naar of uit een toplader. Een sorteervoorstel laat een uitstalling zoals hij is."
-
-#: src/sleeve_shelf/web/templates/showcase/index.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Cabinets & shelves"
-msgstr "Kasten & vakken"
 
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Who and what keeps coming back in your collection. Open a line to see the albums, with where each stands."
@@ -3281,6 +3285,11 @@ msgid "Edit cabinet"
 msgstr "Kast bewerken"
 
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Add cabinet"
+msgstr "Kast toevoegen"
+
+#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 msgid "Room"
 msgstr "Ruimte"
 
@@ -3295,11 +3304,6 @@ msgstr "Deze kast buiten het sorteren houden"
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 msgid "A sorting proposal then leaves it as it is: what stands here stays, and nothing is added. For a place that is not part of the sorted collection — albums set aside to give away, a case you have yet to buy, storage elsewhere."
 msgstr "Een sorteervoorstel laat hem dan zoals hij is: wat hier staat blijft, en er komt niets bij. Voor een plek die geen deel is van de gesorteerde collectie — albums die je wilt weggeven, een koffer die je nog moet kopen, opslag elders."
-
-#: src/sleeve_shelf/web/templates/storage/cabinet_form.html
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Add cabinet"
-msgstr "Kast toevoegen"
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Cabinets and shelves — width in cm determines how many records fit"
@@ -3326,28 +3330,6 @@ msgstr "Kast %(name)s omlaag"
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Edit"
 msgstr "Bewerken"
-
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Estimated, not measured yet"
-msgstr "Geschat, nog niet gemeten"
-
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "Yes"
-msgstr "Ja"
-
-#: src/sleeve_shelf/web/templates/storage/index.html
-#, python-format
-msgid "Move shelf %(name)s up"
-msgstr "Vak %(name)s omhoog"
-
-#: src/sleeve_shelf/web/templates/storage/index.html
-#, python-format
-msgid "Move shelf %(name)s down"
-msgstr "Vak %(name)s omlaag"
-
-#: src/sleeve_shelf/web/templates/storage/index.html
-msgid "The arrows set the order in which cabinets and shelves are walked — in Browse and by a sorting proposal. A width marked ≈ is an estimate, as the widths taken from the workbook are; tick “I measured this width” on the shelf once you have. A filled width above a measured width is marked in red. A shelf can be removed once it is empty, a cabinet once it has no shelves."
-msgstr "De pijlen bepalen de volgorde waarin kasten en vakken worden doorlopen — in Bladeren en door een sorteervoorstel. Een breedte met ≈ is een schatting, zoals de breedtes uit de werkmap; vink bij het vak “Ik heb deze breedte gemeten” aan als je dat hebt gedaan. Een gevulde breedte boven een gemeten breedte is rood gemarkeerd. Een vak kan worden verwijderd als het leeg is, een kast als hij geen vakken meer heeft."
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
@@ -3388,6 +3370,28 @@ msgstr "Boven"
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Bottom"
 msgstr "Onder"
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Estimated, not measured yet"
+msgstr "Geschat, nog niet gemeten"
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "Yes"
+msgstr "Ja"
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+#, python-format
+msgid "Move shelf %(name)s up"
+msgstr "Vak %(name)s omhoog"
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+#, python-format
+msgid "Move shelf %(name)s down"
+msgstr "Vak %(name)s omlaag"
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+msgid "The arrows set the order in which cabinets and shelves are walked — in Browse and by a sorting proposal. A width marked ≈ is an estimate, as the widths taken from the workbook are; tick “I measured this width” on the shelf once you have. A filled width above a measured width is marked in red. A shelf can be removed once it is empty, a cabinet once it has no shelves."
+msgstr "De pijlen bepalen de volgorde waarin kasten en vakken worden doorlopen — in Bladeren en door een sorteervoorstel. Een breedte met ≈ is een schatting, zoals de breedtes uit de werkmap; vink bij het vak “Ik heb deze breedte gemeten” aan als je dat hebt gedaan. Een gevulde breedte boven een gemeten breedte is rood gemarkeerd. Een vak kan worden verwijderd als het leeg is, een kast als hij geen vakken meer heeft."
 
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Edit shelf"

@@ -35,6 +35,10 @@
   overflow: hidden;
 }
 
+/* Above Cytoscape's canvases, and letting a finger through to them. */
+.ss-network-loading { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--ss-muted); pointer-events: none; }
+.ss-network-loading[hidden] { display: none; }
+
 .ss-tie-switch { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
 .ss-tie-switch input { width: 18px; height: 18px; }
 

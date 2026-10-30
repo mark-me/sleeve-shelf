@@ -9,12 +9,15 @@
   const centreLink = document.querySelector("[data-network-centre]");
   const albumsLink = document.querySelector("[data-network-albums]");
   const hint = infoText.textContent;
+  const loading = document.querySelector("[data-network-loading]");
   if (!window.cytoscape) {
     // The library did not load: say so, rather than an empty network with directions for it.
     infoText.textContent = box.dataset.failed;
     document.querySelectorAll("[data-network-fit], [data-network-full]").forEach((button) => (button.hidden = true));
     return;
   }
+  // Fetching the network and placing the artists takes a while over the whole collection.
+  loading.hidden = false;
   const switches = Array.from(document.querySelectorAll("input[data-tie]"));
   const TIES = ["name", "member", "billing", "family", "credit", "session", "songs", "label"];
   const centre = box.dataset.artist ? Number(box.dataset.artist) : null;
@@ -401,7 +404,32 @@
     });
   }
 
+  // Placing the artists holds up the page, so the indicator has to be painted first. Switches
+  // flicked in the meantime are all taken along by the one drawing still to come.
+  let drawing = false;
+
   function draw() {
+    loading.hidden = false;
+    if (drawing) return;
+    drawing = true;
+    requestAnimationFrame(() =>
+      setTimeout(() => {
+        drawing = false;
+        try {
+          place();
+        } catch (error) {
+          failed();
+        }
+      })
+    );
+  }
+
+  function failed() {
+    loading.hidden = true;
+    say(box.dataset.failed);
+  }
+
+  function place() {
     const items = elements();
     if (!cy) {
       cy = cytoscape({ container: box, style: style(), minZoom: 0.05, maxZoom: 4 });
@@ -434,7 +462,10 @@
     say(cy.edges().length ? hint : box.dataset.empty);
     fillLegend();
     const placing = cy.layout(layout());
-    placing.one("layoutstop", fit);
+    placing.one("layoutstop", () => {
+      fit();
+      loading.hidden = true;
+    });
     placing.run();
   }
 
@@ -601,7 +632,5 @@
       colourClusters();
       draw();
     })
-    .catch(() => {
-      say(box.dataset.failed);
-    });
+    .catch(failed);
 })();

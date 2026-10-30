@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 12:54+0100\n"
+"POT-Creation-Date: 2026-10-30 17:43+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1445,6 +1445,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "The network needs JavaScript; the list below shows the same ties."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Loading the network…"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html

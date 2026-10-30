@@ -601,6 +601,7 @@ An artist's page is reached from Layout (the name on a block) and from Browse/Se
 
 Decided by Mark on 2026-10-26: a tab next to Browse/Search, which visitors may open too. Built 2026-10-26.
 
+- **While it loads** (asked for by Mark 2026-10-30): the network says *Loading the network…* with a turning circle until the artists are placed, also when a switch has it placed again; over the whole collection that takes a while.
 - **A point is an artist**, not an album: its size follows its number of albums, its colour its cluster, an artist without a cluster is grey. **Around one artist** (decided by Mark 2026-10-26) a point shows the artist's picture, with the cluster's colour as a ring round it; over the whole collection it stays a coloured dot, as hundreds of pictures would be specks. Only pictures kept in the data directory are drawn — the owner's own, or one a sync stored — since the network draws on a canvas, which takes images from the app itself; a **joint billing** has no page on Discogs and so no picture: it borrows that of the first artist it names who has one (decided by Mark 2026-10-30), the ring around it dashed and tapping it saying so. An artist without any stays a dot
 - **A line is a tie**, of one or more kinds, each with its own colour and a switch to show or hide it:
   - **Member** — a person in a band, as Discogs lists it (either record naming the other)

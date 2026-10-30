@@ -792,3 +792,9 @@ def test_a_visitor_may_look_at_the_connections(tmp_path, monkeypatch):
     assert "/families/" not in artist
     # The family's name in its own place, not only in the heading (the artist has the same name).
     assert re.search(r"Family:\s*Chet Baker\s*&middot;", artist)
+
+
+def test_the_network_says_it_is_loading_only_once_the_script_runs(tmp_path):
+    _collection(tmp_path / "data")
+    page = create_app(tmp_path / "data").test_client().get("/connections/").get_data(as_text=True)
+    assert re.search(r"<div [^>]*data-network-loading [^>]*hidden>", page) and "Loading the network…" in page
