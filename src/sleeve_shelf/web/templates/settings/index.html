@@ -68,6 +68,13 @@
       <div class="form-text">{{ _('Someone Discogs lists in more bands of your collection than this plays along rather than leads: those bands are not suggested as their family, and only hint at a cluster.') }}</div>
     </div>
 
+    <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Connections') }}</h2></div>
+    <div class="ss-card-body">
+      <label for="labels_left_out" class="form-label fw-semibold">{{ _('Labels that tie no artists') }}</label>
+      <textarea id="labels_left_out" class="form-control" style="max-width: 420px;" name="labels_left_out" rows="8">{{ labels_left_out }}</textarea>
+      <div class="form-text">{{ _('One per line. Two artists on a label that reissues other labels\' records have nothing to do with each other, so such a label ties no one under Connections. Statistics still counts it.') }}</div>
+    </div>
+
     <div class="ss-card-head" style="border-top: 1px solid var(--ss-border);"><h2>{{ _('Discogs') }}</h2></div>
     <div class="ss-card-body d-flex flex-column gap-3">
       <div class="form-check">

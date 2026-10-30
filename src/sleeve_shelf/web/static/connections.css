@@ -1,0 +1,118 @@
+/* The Connections screen: the network and the colours of the ties. Also stands in for the
+   stylesheet Cytoscape would add itself, which the Content-Security-Policy refuses. */
+.__________cytoscape_container { position: relative; }
+
+:root,
+[data-bs-theme="light"] {
+  --ss-tie-name: #7C3AED;
+  --ss-tie-member: #2563EB;
+  --ss-tie-billing: #C2410C;
+  --ss-tie-family: #059669;
+  --ss-tie-credit: #DB2777;
+  --ss-tie-session: #65A30D;
+  --ss-tie-songs: #A8A29E;
+  --ss-tie-label: #0E7490;
+}
+
+[data-bs-theme="dark"] {
+  --ss-tie-name: #A78BFA;
+  --ss-tie-member: #60A5FA;
+  --ss-tie-billing: #FB923C;
+  --ss-tie-family: #34D399;
+  --ss-tie-credit: #F472B6;
+  --ss-tie-session: #A3E635;
+  --ss-tie-songs: #78716C;
+  --ss-tie-label: #22D3EE;
+}
+
+.ss-network {
+  position: relative;
+  height: 65vh;
+  min-height: 280px;
+  background: var(--ss-surface);
+  border: 1px solid var(--ss-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Above Cytoscape's canvases, and letting a finger through to them. */
+.ss-network-loading { position: absolute; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--ss-muted); pointer-events: none; }
+.ss-network-loading[hidden] { display: none; }
+
+.ss-tie-switch { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; cursor: pointer; }
+.ss-tie-switch input { width: 18px; height: 18px; }
+
+/* A tie as its line is drawn: colour, and dotted or dashed. */
+.ss-tie-swatch { display: inline-block; width: 22px; height: 0; vertical-align: middle; border-top: 3px solid; }
+.ss-tie-name { border-top-style: dotted; border-color: var(--ss-tie-name); }
+.ss-tie-member { border-color: var(--ss-tie-member); }
+.ss-tie-billing { border-color: var(--ss-tie-billing); }
+.ss-tie-family { border-top-style: dashed; border-color: var(--ss-tie-family); }
+.ss-tie-credit { border-color: var(--ss-tie-credit); }
+.ss-tie-session { border-top-width: 2px; border-color: var(--ss-tie-session); }
+.ss-tie-songs { border-top-width: 2px; border-color: var(--ss-tie-songs); }
+.ss-tie-label { border-top-width: 2px; border-color: var(--ss-tie-label); }
+.ss-chip .ss-tie-swatch { width: 14px; }
+
+/* Under a tie in the list: the albums that show it, with where each stands. */
+.ss-tie-albums-name { margin-top: 6px; font-size: 0.8rem; font-weight: 600; }
+.ss-tie-albums { margin: 0; padding-left: 1.1rem; font-size: 0.85rem; }
+.ss-tie-albums li { margin: 2px 0; }
+
+/* On a phone a finger on the network moves the network, not the page: it stays low enough to
+   scroll past, and Full screen gives it the whole screen. */
+@media (max-width: 991.98px) {
+  .ss-network { height: 45vh; }
+}
+
+.ss-network-bar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+.ss-network-frame.ss-network-full {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: var(--ss-bg);
+}
+.ss-network-full .ss-network { flex: 1; height: auto; min-height: 0; }
+.ss-network-full .ss-network-legend { max-height: 25vh; overflow-y: auto; }
+body.ss-no-scroll { overflow: hidden; }
+
+.ss-network-info { color: var(--ss-muted); min-height: 1.5em; }
+
+/* A cluster in the legend: its colour, and lit up while its artists are. */
+.ss-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 2px 10px;
+  border: 1px solid var(--ss-border);
+  border-radius: 999px;
+  background: var(--ss-surface);
+  color: var(--ss-text);
+  font-size: 0.8rem;
+}
+.ss-legend-item[aria-pressed="true"] { border-color: var(--ss-accent); box-shadow: 0 0 0 1px var(--ss-accent); }
+.ss-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+/* A tie's albums, folded away under their count. */
+.ss-tie-albums-box { margin-top: 4px; font-size: 0.85rem; }
+.ss-tie-albums-box > summary { cursor: pointer; color: var(--ss-muted); }
+.ss-row.ss-row-current { box-shadow: inset 4px 0 0 var(--ss-accent); background: var(--ss-chip); }
+
+/* The way here: the artists put in the middle one after another. */
+.ss-network-trail a { white-space: nowrap; }
+.ss-network-trail .ss-trail-sep { color: var(--ss-muted); margin: 0 6px; }
+
+/* What the network holds of what is being typed. */
+.ss-suggest-row { display: flex; width: 100%; justify-content: space-between; gap: 12px; padding: 10px 16px; border: 0; border-bottom: 1px solid var(--ss-border); background: none; color: var(--ss-text); text-align: left; }
+.ss-suggest-row:last-child { border-bottom: 0; }
+.ss-suggest-row:hover, .ss-suggest-row:focus { background: var(--ss-chip); }
+
+/* The way from one artist to another: each step, with the tie that leads to it above it. */
+.ss-way { list-style: none; padding: 0; }
+.ss-way li + li { border-top: 1px solid var(--ss-border); }
+.ss-way .ss-row { border-bottom: 0; }
+.ss-way-tie { padding: 8px 16px 0 32px; font-size: 0.85rem; border-left: 3px solid var(--ss-border); margin-left: 16px; }

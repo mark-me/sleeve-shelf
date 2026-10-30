@@ -26,6 +26,7 @@ from sleeve_shelf.domain import (
     EraBand,
     EraBandSource,
     FamilyDismissal,
+    UnrelatedArtists,
     FormatTokens,
     LocationRule,
     LocationRuleTarget,
@@ -40,6 +41,8 @@ from sleeve_shelf.domain import (
     ShelfLayer,
     ShelfType,
     Style,
+    Credit,
+    ReleaseLabel,
     Track,
 )
 
@@ -71,7 +74,18 @@ _FORMAT_TOKENS_TYPE = (
 )
 
 def _tracklist(value: list) -> tuple[Track, ...]:
-    return tuple(Track(**track) for track in value)
+    return tuple(
+        Track(**{**track, "writers": None if track.get("writers") is None else tuple(track["writers"])})
+        for track in value
+    )
+
+
+def _credits(value: list) -> tuple[Credit, ...]:
+    return tuple(Credit(**credit) for credit in value)
+
+
+def _labels(value: list) -> tuple[ReleaseLabel, ...]:
+    return tuple(ReleaseLabel(**label) for label in value)
 
 
 _PLACEMENT_COLUMNS = {
@@ -135,6 +149,7 @@ _TABLES: dict[type, _Table] = {
         {"target_type": LocationRuleTarget},
     ),
     FamilyDismissal: _Table("family_dismissals.json", {"anchor_artist_id": "INTEGER"}),
+    UnrelatedArtists: _Table("unrelated_artists.json", {"one": "INTEGER", "other": "INTEGER"}),
     RuleSuggestionDismissal: _Table(
         "rule_suggestion_dismissals.json",
         {"target_type": "VARCHAR", "target_id": "INTEGER", "cabinet_id": "INTEGER"},
@@ -202,9 +217,11 @@ _TABLES: dict[type, _Table] = {
             "master_id": "INTEGER",
             "fetched_at": "TIMESTAMP",
             "year": "INTEGER",
-            "tracklist": "STRUCT(position VARCHAR, title VARCHAR, duration VARCHAR)[]",
+            "tracklist": "STRUCT(position VARCHAR, title VARCHAR, duration VARCHAR, writers BIGINT[])[]",
+            "credits": "STRUCT(discogs_artist_id BIGINT, name VARCHAR, role VARCHAR, tracks VARCHAR)[]",
+            "labels": "STRUCT(discogs_label_id BIGINT, name VARCHAR, catalogue_number VARCHAR)[]",
         },
-        {"styles": tuple, "tracklist": _tracklist},
+        {"styles": tuple, "tracklist": _tracklist, "credits": _credits, "labels": _labels},
     ),
     MasterEnrichment: _Table(
         "discogs_masters.json",

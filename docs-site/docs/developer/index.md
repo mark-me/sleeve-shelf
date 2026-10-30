@@ -5,7 +5,7 @@ Sleeve & Shelf is a single-user Flask app, written in Python, that keeps its dat
 ## 🛠️ What you need to know first
 
 - **Python with [uv](https://docs.astral.sh/uv/).** Always use the module form — `uv run python -m sleeve_shelf`, `uv run python -m pytest` — not the generated console scripts; some managed machines refuse those.
-- **Flask, server-rendered.** One blueprint per screen, Jinja templates, a little vanilla JavaScript. Bootstrap and SortableJS are vendored, so the app works offline.
+- **Flask, server-rendered.** One blueprint per screen, Jinja templates, a little vanilla JavaScript. Bootstrap, SortableJS and Cytoscape.js are vendored, so the app works offline.
 - **No database server.** Every entity is one JSON file in the data directory; DuckDB reads and writes them with SQL.
 - **English in the code, the UI, and the requirements.** UI copy goes through Flask-Babel.
 

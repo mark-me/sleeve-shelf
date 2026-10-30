@@ -22,13 +22,12 @@
   {% set covers = albums | selectattr('cover_url') | list | length > 0 %}
   <div class="ss-card">
     {% for album in albums %}
-    {# The row leads to the album's shelf; the play button beside it plays its previews. #}
+    {# The title leads to the album's page, the place to its shelf with the album marked. #}
     <div class="ss-row">
-      <a class="ss-row-link" href="{% if album.shelf_id is not none %}{{ url_for('browse.browse', shelf=album.shelf_id) }}{% else %}{{ url_for('browse.unplaced') }}{% endif %}#album-{{ album.album_id }}">
-        {{ cover(album.cover_url, covers) }}
-        <div class="ss-row-text">
-          <span class="ss-row-artist">{{ album.artist }}</span>
-          <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+      {{ cover(album.cover_url, covers) }}
+      <div class="ss-row-text">
+          <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=album.artist_id) }}">{{ album.artist }}</a>
+          <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</a>
           {# Found by a song: which one, so it is clear why the album is here. #}
           {% for position, song in album.tracks[:3] %}
           <span class="ss-row-song"><span class="visually-hidden">{{ _('Song') }}: </span>&#9834; {% if position %}{{ position }} &middot; {% endif %}{{ song }}</span>
@@ -36,14 +35,13 @@
           {% if album.tracks | length > 3 %}
           <span class="ss-row-song">{{ ngettext('and %(num)d more song', 'and %(num)d more songs', album.tracks | length - 3) }}</span>
           {% endif %}
-        </div>
-        <span class="ss-row-place">{% if album.shelf_id is not none %}{{ album.cabinet }} &middot; {{ album.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
-      </a>
+      </div>
+      <a class="ss-row-place" href="{% if album.shelf_id is not none %}{{ url_for('browse.browse', shelf=album.shelf_id) }}{% else %}{{ url_for('browse.unplaced') }}{% endif %}#album-{{ album.album_id }}">{% if album.shelf_id is not none %}{{ album.cabinet }} &middot; {{ album.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</a>
       {{ play_button(album.album_id, album.title) }}
     </div>
     {% endfor %}
   </div>
-  <p class="ss-muted small mt-3 mb-0">{{ _('Choosing a result opens its shelf, with the album marked.') }}</p>
+  <p class="ss-muted small mt-3 mb-0">{{ _('The title opens the album, the place beside it its shelf with the album marked.') }}</p>
   {% else %}
   <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('No artist, album or song matches this search.') }}</div></div>
   {% endif %}

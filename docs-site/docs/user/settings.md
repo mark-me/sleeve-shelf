@@ -16,6 +16,8 @@ The **Settings** screen edits `config.yaml` in your data folder:
 | Count a bundle such as "CD + LP" as vinyl | on | Applies the next time a Discogs export is imported |
 | Discogs personal access token | — | Shown masked; paste a new one to replace it |
 
+**Labels that tie no artists** lists, one per line, the record labels that don't count for *Same label* under [Connections](browsing.md#connections): labels that reissue others' records, or are a large company's name on them. It starts with a first list for you to check. Statistics still counts them.
+
 Saving the width figures estimates every album's width again. Shelf widths are not touched — those are yours.
 
 At the top the screen shows how many centimetres your albums need, how many your shelves offer, and the difference: the quickest way to see whether the estimates add up.
@@ -26,7 +28,7 @@ Under **Cabinets → Album widths** you enter the real width of the albums the a
 
 ## 🔒 Visitors and your password
 
-Without a password the app is open: anyone who can reach it can change everything — fine on your own network. Set a password under **Settings → Owner's password**, and everyone else becomes a **visitor**: they can search and browse your collection, open an album's or artist's page, listen to previews, and read this guide. Everything else asks for your password.
+Without a password the app is open: anyone who can reach it can change everything — fine on your own network. Set a password under **Settings → Owner's password**, and everyone else becomes a **visitor**: they can search and browse your collection, look at its connections, open an album's or artist's page, listen to previews, and read this guide. Everything else asks for your password.
 
 - **Log in** at the bottom of the menu. A device stays logged in until you **Log out** there.
 - The password has at least 12 characters; make it a strong one, as the app can be reached from the internet.

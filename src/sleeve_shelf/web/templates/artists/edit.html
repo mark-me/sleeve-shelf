@@ -13,8 +13,10 @@
     <div>
       <h1>{{ artist.name }}</h1>
       <p class="ss-muted mt-1 mb-0">
-        {{ _('Era band: %(band)s', band=band) }}
-        {% if family %} &middot; {{ _('Family:') }} <a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% endif %}
+        {% if cluster_name %}{{ cluster_name }} &middot; {% endif %}{{ _('Era band: %(band)s', band=band) }}
+        {% if family %} &middot; {{ _('Family:') }} {% if is_owner %}<a href="{{ url_for('families.index') }}#family-{{ family.id }}">{{ family.label }}</a>{% else %}{{ family.label }}{% endif %}{% endif %}
+        &middot; <a href="{{ url_for('connections.index', artist=artist.id) }}">{{ _('Connections') }}</a>
+        {% if artist.discogs_artist_id %}&middot; <a href="https://www.discogs.com/artist/{{ artist.discogs_artist_id }}" target="_blank" rel="noopener">{{ _('Discogs') }}</a>{% endif %}
       </p>
     </div>
   </div>
@@ -22,6 +24,22 @@
   {% for error in errors %}
   <div class="ss-alert mt-3" role="alert">{{ error }}</div>
   {% endfor %}
+  {% if moved %}
+  <div class="ss-alert mt-3">{{ _('Moved. A version from before the move is kept under Versions.') }}</div>
+  {% endif %}
+  {% if saved %}
+  <div class="ss-alert mt-3">{{ _('Saved. Generate the proposal again to see the effect.') }}</div>
+  {% endif %}
+
+  {# What the artist is comes first; what can be changed about it is the owner's, a tab further. #}
+  {% if is_owner %}
+  <nav class="ss-tabs mt-4" aria-label="{{ _('Parts of this page') }}">
+    <a class="ss-tab{{ ' active' if tab == 'artist' }}" href="{{ url_for('artists.edit', artist_id=artist.id) }}"{% if tab == 'artist' %} aria-current="page"{% endif %}>{{ _('Artist') }}</a>
+    <a class="ss-tab{{ ' active' if tab == 'manage' }}" href="{{ url_for('artists.edit', artist_id=artist.id, tab='manage') }}"{% if tab == 'manage' %} aria-current="page"{% endif %}>{{ _('Manage') }}{% if attention %} <span class="ss-nav-count">!</span>{% endif %}</a>
+  </nav>
+  {% endif %}
+
+  {% if tab == 'manage' %}
   {% if shift and is_owner %}
   <div class="ss-alert mt-3" id="shift">
     <p class="fw-semibold mb-1">{{ _('A new purchase points to another cluster') }}</p>
@@ -36,18 +54,7 @@
     </div>
   </div>
   {% endif %}
-  {% if moved %}
-  <div class="ss-alert mt-3">{{ _('Moved. A version from before the move is kept under Versions.') }}</div>
-  {% endif %}
-  {% if saved %}
-  <div class="ss-alert mt-3">{{ _('Saved. Generate the proposal again to see the effect.') }}</div>
-  {% endif %}
-
-  {# Wide screens: what the artist holds on the left, its settings on the right. On a phone the
-     settings come first, as one column. #}
-  <div class="ss-artist-grid mt-4">
-    {% if is_owner %}
-    <div class="ss-artist-side">
+  <div class="ss-artist-manage mt-4">
       <form class="ss-card" method="post">
         <div class="ss-card-body d-flex flex-column gap-4">
           <div>
@@ -90,7 +97,7 @@
           </div>
           <div class="d-flex gap-2">
             <button class="ss-button ss-button-primary" type="submit">{{ _('Save') }}</button>
-            <a class="ss-button" href="{{ url_for('artists.index') }}">{{ _('Cancel') }}</a>
+            <a class="ss-button" href="{{ url_for('artists.edit', artist_id=artist.id) }}">{{ _('Cancel') }}</a>
           </div>
         </div>
       </form>
@@ -123,8 +130,17 @@
           <div class="form-text">{{ _('JPEG, PNG, GIF or WebP, at most 5 MB. It is kept with your data and never replaced by a sync.') }}</div>
         </div>
       </div>
+  </div>
+  {% else %}
+  {% if attention %}
+  <div class="ss-alert mt-3">{{ _('This artist still needs something from you for the sorting.') }} <a href="{{ url_for('artists.edit', artist_id=artist.id, tab='manage') }}">{{ _('Manage') }}</a></div>
+  {% endif %}
+  {# Wide screens: the albums on the left, what the collection says about the artist on the
+     right. On a phone that comes first, as one column. #}
+  <div class="ss-artist-grid mt-4">
+    <div class="ss-artist-side">
+      {% include "artists/_figures.html" %}
     </div>
-    {% endif %}
     <div class="ss-artist-main">
       <h2>{{ _('Albums') }} ({{ albums | length }})</h2>
       <div class="ss-card mt-3">
@@ -166,6 +182,7 @@
       {% endif %}
     </div>
   </div>
+  {% endif %}
 </div>
 {% if picture %}{{ zoom_dialog(picture.thumb_url, picture.image_url, _('Picture of %(name)s', name=artist.name)) }}{% endif %}
 {% endblock %}

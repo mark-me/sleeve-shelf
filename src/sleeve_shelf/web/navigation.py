@@ -37,6 +37,8 @@ SECTIONS = (
         _("Collection"),
         (
             Tab("browse.browse", _("Browse / Search"), ("browse.browse",), help="user/browsing/#browse-and-search"),
+            Tab("connections.index", _("Connections"), ("connections",), help="user/browsing/#connections"),
+            Tab("stats.index", _("Statistics"), ("stats",), help="user/browsing/#statistics"),
             Tab("browse.unplaced", _("Unplaced"), ("browse.unplaced",), "unplaced", "user/browsing/#albums-without-a-place"),
             Tab("discogs.index", _("Discogs sync"), ("discogs", "setup"), "discogs", "user/discogs/"),
         ),
@@ -107,9 +109,14 @@ def help_target(request: Request, section: Section | None, tab: Tab | None) -> s
     return (tab and tab.help) or (section and section.help) or "user/"
 
 
+# The tabs a visitor sees.
+VISITOR_TABS = ("browse.browse", "connections.index")
+
+
 def visible_sections(owner: bool) -> tuple[Section, ...]:
-    """The menu as the one looking may use it: a visitor only browses and searches."""
+    """The menu as the one looking may use it: a visitor only browses, searches and looks at
+    the connections."""
     if owner:
         return SECTIONS
     collection = next(section for section in SECTIONS if section.key == "collection")
-    return (replace(collection, tabs=tuple(tab for tab in collection.tabs if tab.endpoint == "browse.browse")),)
+    return (replace(collection, tabs=tuple(tab for tab in collection.tabs if tab.endpoint in VISITOR_TABS)),)

@@ -11,10 +11,11 @@
   {% if block.albums | length > 1 %}
   <button class="ss-block-count" type="button" data-split
           data-titles="{{ block.albums | map(attribute='title') | join('|') }}"
+          data-album-url="{{ url_for('albums.detail', album_id=0) }}"
           data-covers="{{ block.albums | map(attribute='cover_url') | map('default', '', true) | map('local_cover') | join('|') }}"
           aria-label="{{ _('Split %(artist)s into single albums', artist=block.artist) }}">{{ block.albums | length }}</button>
   {% else %}
-  <span class="ss-block-title">{{ block.albums[0].title }}</span>
+  <a class="ss-block-title" href="{{ url_for('albums.detail', album_id=block.albums[0].album_id) }}" draggable="false">{{ block.albums[0].title }}</a>
   {% endif %}
   <button class="ss-block-send" type="button" data-send aria-label="{{ _('Move %(artist)s to another shelf', artist=block.artist) }}" title="{{ _('Move to another shelf') }}">&#8942;</button>
 </li>

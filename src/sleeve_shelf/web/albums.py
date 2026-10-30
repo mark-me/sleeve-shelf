@@ -12,6 +12,7 @@ from flask import (
 )
 from flask_babel import gettext as _
 
+from sleeve_shelf.collection_stats import album_figures
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
@@ -24,11 +25,12 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.ingestion.deezer import DeezerClient
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.listening import listening, turn_down
+from sleeve_shelf.network import album_songs_elsewhere
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.spots import place_at_spot
 from sleeve_shelf.taking_part import albums_taking_part, takes_part
 from sleeve_shelf.web.context import get_store, parse_number
-from sleeve_shelf.web.login import visitor_may_listen
+from sleeve_shelf.web.login import is_owner, visitor_may_listen
 from sleeve_shelf.web.places import described_rules, described_spots
 from sleeve_shelf.widths import set_measured_width
 
@@ -52,21 +54,39 @@ def detail(album_id: int):
     release = next(
         (r for r in store.load(ReleaseEnrichment) if r.release_id == album.release_id), None
     )
+    # What the album is comes first, then what the collection says about it; what can be changed
+    # about it is the owner's, a tab further.
+    owner = is_owner()
+    error = request.args.get("error")
+    tab = request.args.get("tab")
+    if tab != "statistics":
+        tab = "manage" if owner and (error or tab == "manage") else "album"
+    # The same songs on other albums of the collection, each album with where it stands.
+    elsewhere = album_songs_elsewhere(store, album_id) if tab == "album" else []
+    rows = {r.album_id: r for r in BrowseQueries(store).everything()} if elsewhere or tab == "statistics" else {}
+    elsewhere = [(title, [rows[i] for i in others if i in rows]) for title, others in elsewhere]
+    # An album waiting for a place is the owner's to place, on Manage; a visitor reads it here.
+    is_waiting = takes_part(album, placed) and album_id not in placed
     return render_template(
         "albums/detail.html",
+        tab=tab,
+        figures=album_figures(store, album_id) if tab == "statistics" else None,
+        places=rows,
         album=album,
         artist=artist,
         row=row,
         styles=[style_names[i] for i in album.style_ids if i in style_names],
         # None while the release was not fetched with its tracklist yet.
         tracklist=release.tracklist if release else None,
+        elsewhere=elsewhere,
         takes_part=takes_part(album, placed),
         is_placed=album_id in placed,
-        spot=None if album_id in placed else described_spots(store).get(album_id),
+        attention=owner and is_waiting,
+        spot=described_spots(store).get(album_id) if album_id not in placed and tab == ("manage" if owner else "album") else None,
         placed=request.args.get("placed"),
-        rules=described_rules(store, album.artist_id, album_id),
+        rules=described_rules(store, album.artist_id, album_id) if tab == "manage" else [],
         moved=request.args.get("moved"),
-        error=request.args.get("error"),
+        error=error,
     )
 
 
@@ -156,10 +176,10 @@ def set_width(album_id: int):
     if text and (width is None or width <= 0):
         message = _("A width has to be a number of centimetres above zero.")
         if on_album:
-            return redirect(url_for("albums.detail", album_id=album_id, error=message))
+            return redirect(url_for("albums.detail", album_id=album_id, tab="manage", error=message))
         return redirect(url_for("albums.widths", error=message) + f"#album-{album_id}")
     # An empty width goes back to the estimate.
     set_measured_width(store, album_id, width)
     if on_album:
-        return redirect(url_for("albums.detail", album_id=album_id))
+        return redirect(url_for("albums.detail", album_id=album_id, tab="manage"))
     return redirect(url_for("albums.widths") + f"#album-{album_id}")

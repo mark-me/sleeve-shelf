@@ -36,6 +36,8 @@ VISITOR_PAGES = frozenset(
     {
         "index",
         "browse.browse",
+        "connections.index",
+        "connections.data",
         "albums.detail",
         "albums.listen",
         "albums.previews",

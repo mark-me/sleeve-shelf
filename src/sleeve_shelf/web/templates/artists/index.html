@@ -51,12 +51,12 @@
             <td class="fw-semibold ss-wrap">
               <div class="d-flex align-items-center gap-2">
                 {{ cover(row.picture, pictures) }}
-                <a href="{{ url_for('artists.edit', artist_id=row.artist.id) }}">{{ row.artist.name }}</a>
+                <a href="{{ url_for('artists.edit', artist_id=row.artist.id, tab='manage' if row.attention else none) }}">{{ row.artist.name }}</a>
               </div>
             </td>
             <td class="ss-wrap">
               {% if row.cluster %}{{ row.cluster }}{% if not row.cluster_confirmed %} <span class="ss-chip">{{ _('proposed') }}</span>{% endif %}
-              {% if row.shift_to %}<a class="ss-chip" href="{{ url_for('artists.edit', artist_id=row.artist.id) }}#shift">{{ _('new purchase points to %(cluster)s', cluster=row.shift_to) }}</a>{% endif %}
+              {% if row.shift_to %}<a class="ss-chip" href="{{ url_for('artists.edit', artist_id=row.artist.id, tab='manage') }}#shift">{{ _('new purchase points to %(cluster)s', cluster=row.shift_to) }}</a>{% endif %}
               {% else %}<span class="ss-muted">{% if row.sorted %}{{ _('none yet') }}{% else %}&mdash;{% endif %}</span>{% endif %}
             </td>
             <td class="text-end d-none d-md-table-cell">

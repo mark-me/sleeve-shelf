@@ -186,7 +186,7 @@ def test_browse_has_a_play_button_that_gets_the_previews_without_asking_discogs(
         text = client.get(page).text
         assert 'data-play-album="/albums/1/previews"' in text and "/static/browse-play.js" in text, page
     # A search result still leads to the album's shelf.
-    assert 'class="ss-row-link" href="/browse?shelf=1#album-1"' in client.get("/browse?q=closing").text
+    assert 'class="ss-row-place" href="/browse?shelf=1#album-1"' in client.get("/browse?q=closing").text
 
     previews = client.get("/albums/1/previews").get_json()
     # Only the tracks that have a preview; Discogs is left alone.

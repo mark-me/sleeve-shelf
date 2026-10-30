@@ -97,7 +97,7 @@
     <div class="ss-row">
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ album.artist }}</span>
-        <span class="ss-row-title">{{ album.title }}</span>
+        <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=album.album_id) }}">{{ album.title }}</a>
       </div>
       {% if album.was_placed %}<span class="ss-chip">{{ _('on a shelf now') }}</span>{% endif %}
     </div>

@@ -14,6 +14,30 @@ class Track:
     position: str
     title: str
     duration: str | None = None
+    # Who wrote it, as Discogs credits them: Discogs artist ids. Empty when Discogs names no
+    # one; None for a track fetched before writers were kept, fetched again once for them.
+    writers: tuple[int, ...] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Credit:
+    """Someone Discogs credits on a release, whatever for: all are kept, the screens choose."""
+
+    discogs_artist_id: int
+    name: str
+    # As Discogs words it: "Piano", "Producer", "Written-By, Arranged By".
+    role: str
+    # The tracks it is for, as Discogs words them ("A1 to A3"); empty for the whole release.
+    tracks: str = ""
+
+
+@dataclass(frozen=True, slots=True)
+class ReleaseLabel:
+    """A record label on a release: of this pressing, so a reissue has the label of the reissue."""
+
+    discogs_label_id: int
+    name: str
+    catalogue_number: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +55,12 @@ class ReleaseEnrichment:
     # The songs on the release. None means a record from before tracklists were kept, which
     # is fetched again once for its tracklist alone.
     tracklist: tuple[Track, ...] | None = None
+    # Who is credited on the release. None means a record from before credits were kept, which
+    # is fetched again once for them.
+    credits: tuple[Credit, ...] | None = None
+    # The labels of the release. None means a record from before labels were kept, which is
+    # fetched again once for them.
+    labels: tuple[ReleaseLabel, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)

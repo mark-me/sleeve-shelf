@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Connections') }}{% endblock %}
+
+{% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% elif tie == 'credit' %}{{ _('On the record') }}{% elif tie == 'session' %}{{ _('Musician') }}{% elif tie == 'label' %}{{ _('Same label') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
+
+{# The albums that show a tie, each with where it stands: the LP to take from the shelf. #}
+{% macro tied_albums(name, albums) %}
+<span class="ss-tie-albums-name d-block">{{ name }}</span>
+<ul class="ss-tie-albums">
+  {% for tied in albums[:6] %}
+  {% set place = places.get(tied.album_id) %}
+  {% if place %}
+  <li>
+    <a href="{{ url_for('albums.detail', album_id=place.album_id) }}">{{ place.title }}</a>{% if place.year %} &middot; {{ place.year }}{% endif %}
+    <span class="ss-muted">&middot; <a href="{% if place.shelf_id is not none %}{{ url_for('browse.browse', shelf=place.shelf_id) }}{% else %}{{ url_for('browse.unplaced') }}{% endif %}#album-{{ place.album_id }}">{% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</a></span>
+    {% if tied.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ tied.songs | join(', ') }}</span>{% endif %}
+    {% for entry in tied.credits %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }}</span>{% endfor %}
+    {% if tied.labels %}<span class="ss-muted d-block">{{ _('Label:') }} {{ tied.labels | join(', ') }}</span>{% endif %}
+  </li>
+  {% endif %}
+  {% endfor %}
+  {% if albums | length > 6 %}<li class="ss-muted">{{ ngettext('and %(num)d more album', 'and %(num)d more albums', albums | length - 6) }}</li>{% endif %}
+</ul>
+{% endmacro %}
+
+{# What is said under the name of a point: its cluster, or that it is a musician without an album. #}
+{% macro point_note(point) %}{% if point.is_musician %}{{ _('Musician without an album of their own') }}{% else %}{{ clusters.get(point.cluster_id) or _('no cluster yet') }}{% endif %}{% endmacro %}
+
+{% block head %}
+{# Cytoscape adds a stylesheet of its own unless one with this id is there; the policy would
+   refuse it, so this one stands in for it. #}
+<link rel="stylesheet" id="__________cytoscape_stylesheet" href="{{ url_for('static', filename='connections.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 1200px;">
+  {# The artists put in the middle one after another in this tab; filled by the script. #}
+  <nav class="ss-network-trail small mb-2" data-network-trail aria-label="{{ _('Your way here') }}" hidden></nav>
+  <h1>{% if artist %}{{ _('Connections of %(name)s', name=artist.name) }}{% else %}{{ _('Connections') }}{% endif %}</h1>
+  <p class="ss-muted mt-1">
+    {% if artist %}
+    {% if artist.is_musician %}{{ point_note(artist) }} &middot; {{ ngettext('on %(num)d album', 'on %(num)d albums', artist.albums) }} &middot;
+    {% else %}{{ cluster or _('no cluster yet') }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', artist.albums) }} &middot;
+    <a href="{{ url_for('artists.edit', artist_id=artist.artist_id) }}">{{ _('Artist page') }}</a> &middot;
+    {% endif %}
+    <a href="{{ url_for('connections.index', ties=ties_param) }}">{{ _('The whole collection') }}</a>
+    {% else %}
+    {{ _('How the artists in your collection are tied together: members of a band, other names, one name inside another, families, who is on whose records, and the same song on albums of both. Choose an artist to put it in the middle.') }}
+    {% endif %}
+  </p>
+
+  <form class="mt-3" method="get" action="{{ url_for('connections.index') }}" role="search">
+    <label for="search" class="visually-hidden">{{ _('Search an artist') }}</label>
+    <input id="search" class="ss-search" type="search" name="q" value="{{ search_text }}" placeholder="{{ _('Search an artist…') }}" autocomplete="off" aria-controls="ss-network-suggest">
+    {% if ties_param is not none %}<input type="hidden" name="ties" value="{{ ties_param }}">{% endif %}
+  </form>
+  {# While typing, the artists of the network: one in view is found on the map. #}
+  <div id="ss-network-suggest" class="ss-card mt-2" data-network-suggest data-not-in-view="{{ _('not in view: opens its connections') }}" hidden></div>
+
+  {% if search_text and not artist %}
+  <div class="ss-card mt-3">
+    {% for point in found %}
+    <a class="ss-row ss-row-link" href="{{ url_for('connections.index', artist=point.artist_id, ties=ties_param) }}">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ point.name }}</span>
+        <span class="ss-row-title">{{ point_note(point) }}{% if point.artist_id not in tied %} &middot; {{ _('tied to no one') }}{% endif %}</span>
+      </div>
+    </a>
+    {% else %}
+    <div class="ss-card-body ss-muted">{{ _('No artist matches this search.') }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="d-flex flex-wrap align-items-center gap-3 mt-4" role="group" aria-label="{{ _('Which ties to show') }}">
+    {% for tie in ties %}
+    {# Same song ties almost every jazz artist to every other: on the whole collection it starts off. #}
+    <label class="ss-tie-switch">
+      <input type="checkbox" data-tie="{{ tie.value }}" {% if tie in switched %}checked{% endif %}>
+      <span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span>
+      <span data-tie-label>{{ tie_name(tie) }}</span>
+    </label>
+    {% endfor %}
+    {% if artist and not to %}
+    <span class="ms-lg-auto">
+      {% if steps == 1 %}<a href="{{ url_for('connections.index', artist=artist.artist_id, steps=2, ties=ties_param) }}">{{ _('Two steps out') }}</a>{% else %}<a href="{{ url_for('connections.index', artist=artist.artist_id, ties=ties_param) }}">{{ _('One step out') }}</a>{% endif %}
+    </span>
+    {% endif %}
+  </div>
+
+  {# The network with what goes with it; on a phone it can fill the screen. #}
+  <div id="ss-network-frame" class="ss-network-frame mt-3">
+  <div class="ss-network-bar">
+    <button class="ss-button" type="button" data-network-fit>{{ _('Show everything') }}</button>
+    <button class="ss-button" type="button" data-network-full aria-pressed="false" data-open="{{ _('Full screen') }}" data-close="{{ _('Close') }}">{{ _('Full screen') }}</button>
+  </div>
+  <div id="ss-network" class="ss-network"
+       data-url="{{ url_for('connections.data') }}"
+       data-centre-url="{{ url_for('connections.index', artist=0) }}"
+       {% if artist %}data-artist="{{ artist.artist_id }}" data-artist-name="{{ artist.name }}" data-steps="{{ steps }}"{% endif %}
+       {% if the_way %}data-way="{{ the_way | map(attribute='0.artist_id') | join(',') }}"{% endif %}
+       data-albums-one="{{ ngettext('%(num)d album', '%(num)d albums', 1) }}"
+       data-albums-many="{{ ngettext('%(num)d album', '%(num)d albums', 2) | replace('2', '{n}') }}"
+       data-artists-one="{{ ngettext('%(num)d artist', '%(num)d artists', 1) }}"
+       data-artists-many="{{ ngettext('%(num)d artist', '%(num)d artists', 2) | replace('2', '{n}') }}"
+       data-musician="{{ _('Musician without an album of their own') }}"
+       data-label-word="{{ _('Label:') }}"
+       data-borrowed="{{ _('picture of an artist it names') }}"
+       data-no-cluster="{{ _('no cluster yet') }}"
+       data-empty="{{ _('Nothing to show with these ties.') }}"
+       data-failed="{{ _('The network could not be loaded.') }}">
+    <noscript><p class="ss-card-body ss-muted">{{ _('The network needs JavaScript; the list below shows the same ties.') }}</p></noscript>
+    {# Shown by the script, as without it nothing is coming. #}
+    <div class="ss-network-loading" data-network-loading role="status" hidden>
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      <span>{{ _('Loading the network…') }}</span>
+    </div>
+  </div>
+  <p id="ss-network-info" class="ss-network-info small mb-0 mt-2" aria-live="polite">
+    <span data-info-text>{{ _('Tap an artist to see its ties, and again to put it in the middle; tap a line to see what ties the two. Drag to move around; pinch or scroll to zoom.') }}</span>
+    <a class="ms-2 fw-semibold" href="#" data-network-centre hidden>{{ _('Put in the middle') }}</a>
+    <a class="ms-2" href="#" data-network-albums hidden>{{ _('Its albums in the list') }}</a>
+  </p>
+  {# The clusters in view with their colour; filled by the script. #}
+  <details class="ss-network-legend mt-2" open hidden>
+    <summary class="small ss-muted">{{ _('Clusters') }}</summary>
+    <div class="d-flex flex-wrap gap-2 mt-2" data-network-legend aria-label="{{ _('Tap a cluster to light up its artists') }}"></div>
+  </details>
+  </div>
+
+  {% if artist %}
+  {# The way to another artist: choose one, and the network shows only the way there. #}
+  <section class="ss-card mt-5" id="way">
+    <div class="ss-card-head"><h2>{{ _('The way to another artist') }}</h2></div>
+    <div class="ss-card-body">
+      <p class="ss-muted small mt-0">{{ _('How %(name)s and another artist hang together: the shortest way along the ties switched on, by bands, names and families where it can.', name=artist.name) }}</p>
+      <form method="get" action="{{ url_for('connections.index') }}#way" role="search">
+        <input type="hidden" name="artist" value="{{ artist.artist_id }}">
+        {% if ties_param is not none %}<input type="hidden" name="ties" value="{{ ties_param }}">{% endif %}
+        <label for="way-search" class="visually-hidden">{{ _('Search the other artist') }}</label>
+        <input id="way-search" class="ss-search" type="search" name="way" value="{{ way_text }}" placeholder="{{ _('Search the other artist…') }}" autocomplete="off">
+      </form>
+    </div>
+    {% for point in way_found %}
+    <a class="ss-row ss-row-link" href="{{ url_for('connections.index', artist=artist.artist_id, to=point.artist_id, ties=ties_param) }}#way">
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ point.name }}</span>
+        <span class="ss-row-title">{{ point_note(point) }}</span>
+      </div>
+    </a>
+    {% else %}
+    {% if way_text %}<div class="ss-card-body ss-muted">{{ _('No artist matches this search.') }}</div>{% endif %}
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if to %}
+  <h2 class="mt-5">{{ _('From %(one)s to %(other)s', one=artist.name, other=to.name) }}</h2>
+  {% if the_way %}
+  <p class="ss-muted mt-1">{{ ngettext('%(num)d step', '%(num)d steps', the_way | length - 1) }} &middot; <a href="{{ url_for('connections.index', artist=artist.artist_id, ties=ties_param) }}">{{ _('Back to the connections of %(name)s', name=artist.name) }}</a></p>
+  <ol class="ss-card ss-way mt-3">
+    {% for point, link in the_way %}
+    <li>
+      {% if link %}
+      <div class="ss-way-tie">
+        {% for tie in link.ties %}<span class="ss-chip me-1"><span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span> {{ tie_name(tie) }}</span>{% endfor %}
+        {% if link.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ link.songs[:3] | join(', ') }}{% if link.songs | length > 3 %} {{ ngettext('and %(num)d more song', 'and %(num)d more songs', link.songs | length - 3) }}{% endif %}</span>{% endif %}
+        {% for entry in link.on_record[:3] %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }} &middot; <a href="{{ url_for('albums.detail', album_id=entry.album_id) }}">{{ entry.album_title }}</a></span>{% endfor %}
+        {% if link.labels %}<span class="ss-muted d-block">{{ _('Label:') }} {{ link.labels | join(', ') }}</span>{% endif %}
+      </div>
+      {% endif %}
+      <div class="ss-row">
+        <div class="ss-row-text">
+          <a class="ss-row-artist" href="{{ url_for('connections.index', artist=point.artist_id, ties=ties_param) }}">{{ point.name }}</a>
+          <span class="ss-row-title">{{ point_note(point) }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', point.albums) }}</span>
+        </div>
+        {% if not point.is_musician %}<a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=point.artist_id) }}">{{ _('Artist page') }}</a>{% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('No way leads from %(one)s to %(other)s along the ties switched on.', one=artist.name, other=to.name) }} <a href="{{ url_for('connections.index', artist=artist.artist_id, ties=ties_param) }}">{{ _('Back to the connections of %(name)s', name=artist.name) }}</a></div></div>
+  {% endif %}
+  {% elif artist %}
+  <h2 class="mt-5">{{ _('Tied to %(name)s', name=artist.name) }}</h2>
+  {% if around %}
+  <div class="ss-card mt-3">
+    {% for tied in around %}
+    {% set other, link = tied.point, tied.link %}
+    <div class="ss-row align-items-start" id="tie-{{ other.artist_id }}" data-ties="{{ link.ties | join(' ') }}">
+      <div class="ss-row-text">
+        <a class="ss-row-artist" href="{{ url_for('connections.index', artist=other.artist_id, ties=ties_param) }}">{{ other.name }}</a>
+        <span class="ss-row-title">{% for tie in link.ties %}<span class="ss-chip me-1"><span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span> {{ tie_name(tie) }}</span>{% endfor %}</span>
+        {% if link.songs %}
+        <span class="ss-row-song"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ link.songs[:5] | join(', ') }}{% if link.songs | length > 5 %} {{ ngettext('and %(num)d more song', 'and %(num)d more songs', link.songs | length - 5) }}{% endif %}</span>
+        {% endif %}
+        {# The albums folded away, so the list stays short; the count says what is inside. #}
+        {% set count = tied.theirs | length + tied.mine | length %}
+        {% if count %}
+        <details class="ss-tie-albums-box" data-tie-albums>
+          <summary>{{ ngettext('%(num)d album', '%(num)d albums', count) }}</summary>
+          {% if tied.theirs %}{{ tied_albums(other.name, tied.theirs) }}{% endif %}
+          {% if tied.mine %}{{ tied_albums(artist.name, tied.mine) }}{% endif %}
+        </details>
+        {% endif %}
+      </div>
+      <div class="text-end">
+        {% if not other.is_musician %}<a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=other.artist_id) }}">{{ _('Artist page') }}</a>{% endif %}
+        {# The one tie that comes from the app's reading of the names: the owner can correct it. #}
+        {% if is_owner and 'billing' in link.ties %}
+        <form method="post" action="{{ url_for('connections.unrelated') }}">
+          <input type="hidden" name="artist" value="{{ artist.artist_id }}">
+          <input type="hidden" name="other" value="{{ other.artist_id }}">
+          {% if ties_param is not none %}<input type="hidden" name="ties" value="{{ ties_param }}">{% endif %}
+          <button class="ss-link-button small" type="submit" title="{{ _('One name stands inside the other, but they have nothing to do with each other.') }}">{{ _('Not related') }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('Nothing ties this artist to another in your collection yet.') }}</div></div>
+  {% endif %}
+  {% if unrelated and is_owner %}
+  <p class="ss-muted small mt-3 mb-1">{{ _('You said these are not related, though one name stands inside the other:') }}</p>
+  {% for other in unrelated %}
+  <form class="small" method="post" action="{{ url_for('connections.unrelated') }}">
+    <input type="hidden" name="artist" value="{{ artist.artist_id }}">
+    <input type="hidden" name="other" value="{{ other.artist_id }}">
+    <input type="hidden" name="undo" value="1">
+    {% if ties_param is not none %}<input type="hidden" name="ties" value="{{ ties_param }}">{% endif %}
+    {{ other.name }} <button class="ss-link-button" type="submit">{{ _('Undo') }}</button>
+  </form>
+  {% endfor %}
+  {% endif %}
+  {% endif %}
+</div>
+<script src="{{ url_for('static', filename='vendor/cytoscape.min.js') }}"></script>
+<script src="{{ url_for('static', filename='connections.js') }}"></script>
+{% endblock %}

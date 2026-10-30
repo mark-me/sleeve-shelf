@@ -5,12 +5,15 @@ import urllib.error
 
 import pytest
 
-from sleeve_shelf.domain import Track
+from sleeve_shelf.domain import Credit, ReleaseLabel, Track
 from sleeve_shelf.ingestion.discogs_api import (
     DiscogsClient,
     DiscogsError,
     collection_items,
+    credits_of,
     format_text,
+    labels_of,
+    tracklist,
 )
 from sleeve_shelf.ingestion.discogs_csv import read_collection
 from sleeve_shelf.ingestion.formats import parse_format
@@ -161,14 +164,107 @@ def test_a_release_comes_with_its_songs_and_no_headings():
     )
     client = api.client()
 
+    # Asked for with their writers: Discogs naming none is an empty list, not an unknown one.
     assert client.release(1).tracklist == (
-        Track("A1", "Ol' '55", "3:58"),
-        Track("B1a", "Part One"),
-        Track("B1b", "Part Two"),
-        Track("3", "Without A Type"),
+        Track("A1", "Ol' '55", "3:58", ()),
+        Track("B1a", "Part One", None, ()),
+        Track("B1b", "Part Two", None, ()),
+        Track("3", "Without A Type", None, ()),
     )
     # One that no longer exists has no songs, rather than an unknown tracklist.
     assert client.release(2).tracklist == ()
+
+
+def test_a_release_comes_with_everyone_it_credits():
+    data = {
+        "extraartists": [
+            {"id": 1, "name": "Bud Powell", "role": "Piano", "tracks": ""},
+            {"id": 2, "name": "Rudy Van Gelder", "role": "Engineer", "tracks": "A1 to A3"},
+            # No page on Discogs, so nothing to compare it with.
+            {"id": 0, "name": "Somebody", "role": "Bass", "tracks": ""},
+        ],
+        "tracklist": [
+            {"position": "A1", "title": "One", "extraartists": [{"id": 3, "name": "Max Roach", "role": "Drums"}]},
+            {
+                "type_": "index",
+                "title": "Suite",
+                "extraartists": [{"id": 4, "name": "Gil Evans", "role": "Arranged By"}],
+                "sub_tracks": [{"position": "B1a", "title": "Part", "extraartists": [{"id": 5, "name": "Art Pepper", "role": "Alto Saxophone"}]}],
+            },
+        ],
+    }
+
+    assert credits_of(data) == (
+        Credit(1, "Bud Powell", "Piano"),
+        Credit(2, "Rudy Van Gelder", "Engineer", "A1 to A3"),
+        Credit(3, "Max Roach", "Drums", "A1"),
+        Credit(4, "Gil Evans", "Arranged By", "B1a"),
+        Credit(5, "Art Pepper", "Alto Saxophone", "B1a"),
+    )
+    assert credits_of({}) == ()
+
+
+def test_a_release_comes_with_its_labels():
+    data = {
+        "labels": [
+            {"id": 1, "name": "Blue Note ", "catno": "BLP 1501"},
+            {"id": 1, "name": "Blue Note", "catno": "BST 1501"},
+            {"id": 2, "name": "Liberty"},
+            {"id": 0, "name": "No Page"},
+        ]
+    }
+
+    assert labels_of(data) == (ReleaseLabel(1, "Blue Note", "BLP 1501"), ReleaseLabel(2, "Liberty"))
+    assert labels_of({}) == ()
+
+
+def test_a_fault_on_discogs_side_is_tried_again():
+    answers = [urllib.error.HTTPError("u", 500, "fault", None, None), json.dumps({"styles": ["Bop"]}).encode()]
+    waited = []
+
+    def fetch(request):
+        answer = answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    assert DiscogsClient("t", fetch, waited.append).release(1).styles == ("Bop",)
+    assert 5 in waited
+
+
+def test_a_fault_that_stays_stops_with_its_error():
+    def fetch(request):
+        raise urllib.error.HTTPError("u", 503, "fault", None, None)
+
+    with pytest.raises(DiscogsError, match="503"):
+        DiscogsClient("t", fetch, lambda seconds: None).release(1)
+
+
+def test_a_song_comes_with_who_wrote_it():
+    entries = [
+        {"position": "A1", "title": "Yesterdays", "extraartists": [{"id": 11, "role": "Written-By"}, {"id": 99, "role": "Bass"}]},
+        {"position": "A2", "title": "Two"},
+        {"position": "A3", "title": "Three"},
+        {
+            "type_": "index",
+            "title": "Suite",
+            "extraartists": [{"id": 12, "role": "Composed By"}],
+            "sub_tracks": [{"position": "B1a", "title": "Part One"}],
+        },
+    ]
+    credits = [
+        {"id": 13, "role": "Lyrics By", "tracks": "A2 to A3"},
+        {"id": 14, "role": "Music By [Uncredited]", "tracks": "A3, B1a"},
+        {"id": 15, "role": "Producer", "tracks": ""},
+        {"id": 16, "role": "Songwriter", "tracks": ""},
+        # A name Discogs has no page for cannot be compared, so it is left out.
+        {"id": 0, "role": "Written-By", "tracks": ""},
+    ]
+
+    writers = [track.writers for track in tracklist(entries, credits)]
+
+    # The track's own credits, its suite's, and the release's for the tracks they name or all.
+    assert writers == [(11, 16), (13, 16), (13, 14, 16), (12, 14, 16)]
 
 
 def test_release_without_master_and_missing_release():

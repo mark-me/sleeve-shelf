@@ -154,7 +154,7 @@
     {% for entry in proposals %}
     <div class="ss-row">
       <div class="ss-row-text">
-        <span class="ss-row-artist">{{ entry.album_artist }} — {{ entry.album_title }}</span>
+        <span class="ss-row-artist">{{ entry.album_artist }} — <a href="{{ url_for('albums.detail', album_id=entry.proposal.album_id) }}">{{ entry.album_title }}</a></span>
         <span class="ss-row-title">{{ _('Discogs: %(artist)s — %(title)s', artist=entry.proposal.artist, title=entry.proposal.title) }} &middot; {{ _('%(score)d%% alike', score=(entry.proposal.score * 100) | round | int) }}</span>
       </div>
       <div class="d-flex gap-2 flex-shrink-0">
@@ -175,7 +175,7 @@
     <div class="ss-row">
       <div class="ss-row-text">
         <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=entry.album.artist_id) }}">{{ entry.artist }}</a>
-        <span class="ss-row-title">{{ entry.album.title }}</span>
+        <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=entry.album.id) }}">{{ entry.album.title }}</a>
       </div>
       <div class="d-flex gap-2 flex-shrink-0">
         <form method="post" action="{{ url_for('discogs.keep_gone', album_id=entry.album.id) }}">
@@ -197,7 +197,7 @@
     <div class="ss-row">
       <div class="ss-row-text">
         <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=entry.album.artist_id) }}">{{ entry.artist }}</a>
-        <span class="ss-row-title">{{ entry.album.title }}</span>
+        <a class="ss-row-title" href="{{ url_for('albums.detail', album_id=entry.album.id) }}">{{ entry.album.title }}</a>
       </div>
       <form class="flex-shrink-0" method="post" action="{{ url_for('discogs.ask_again', album_id=entry.album.id) }}">
         <button class="ss-button ss-button-small" type="submit">{{ _('Ask again') }}</button>

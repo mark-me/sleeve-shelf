@@ -13,6 +13,7 @@ from sleeve_shelf.domain import (
     EraBand,
     EraBandSource,
     FamilyDismissal,
+    UnrelatedArtists,
     MatchProposal,
     Placement,
     Shelf,
@@ -47,6 +48,7 @@ def replace_collection(
     store.save(MatchProposal, [])
     store.save(AliasGroup, [])
     store.save(FamilyDismissal, [])
+    store.save(UnrelatedArtists, [])
     ensure_cluster_order(store)
     # Earlier versions point at albums that no longer exist.
     store.clear_snapshots()

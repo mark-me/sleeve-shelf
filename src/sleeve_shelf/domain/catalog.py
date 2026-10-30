@@ -16,6 +16,15 @@ class AliasGroup:
 
 
 @dataclass(frozen=True, slots=True)
+class UnrelatedArtists:
+    """Two artists the user says are not related, though one name stands inside the other: Moondog
+    Jr. took his name from Moondog. One is the lower id."""
+
+    one: int
+    other: int
+
+
+@dataclass(frozen=True, slots=True)
 class FamilyDismissal:
     """A suggested family around this artist that the user turned down."""
 

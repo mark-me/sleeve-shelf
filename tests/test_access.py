@@ -80,6 +80,10 @@ def test_a_visitor_may_look_the_collection_up_and_nothing_more(app):
     assert "/unplaced" not in browse and "ss-nav-count" not in browse
     album = visitor.get("/albums/1").text
     assert 'id="listen"' in album and "/move/" not in album and "Measured width" not in album
+    # A visitor has the album and its statistics; Manage asked for shows the album all the same.
+    assert "tab=statistics" in album and "tab=manage" not in album
+    assert "Measured width" not in visitor.get("/albums/1?tab=manage").text
+    assert visitor.get("/albums/1?tab=statistics").status_code == 200
     artist = visitor.get("/artists/1").text
     assert "Tom Waits" in artist and 'name="start_year"' not in artist and "upload" not in artist
     assert 'href="/artists/"' not in artist

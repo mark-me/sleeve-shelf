@@ -1,6 +1,7 @@
 """Client for the Discogs API: the collection, and the release, master and artist lookups."""
 
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -11,7 +12,9 @@ from datetime import datetime
 from sleeve_shelf.domain import (
     ArtistEnrichment,
     MasterEnrichment,
+    Credit,
     ReleaseEnrichment,
+    ReleaseLabel,
     Track,
 )
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
@@ -81,7 +84,9 @@ class DiscogsClient:
             master_id=data.get("master_id") or None,
             fetched_at=datetime.now().replace(microsecond=0),
             year=data.get("year") or None,
-            tracklist=tracklist(data.get("tracklist")),
+            tracklist=tracklist(data.get("tracklist"), data.get("extraartists")),
+            credits=credits_of(data),
+            labels=labels_of(data),
         )
 
     def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
@@ -170,6 +175,10 @@ class DiscogsClient:
                 if error.code == 429 and attempt < MAX_ATTEMPTS:
                     self._sleep(RATE_LIMIT_PAUSE_SECONDS)
                     continue
+                # A fault on Discogs' side passes: the same request is answered moments later.
+                if error.code >= 500 and attempt < MAX_ATTEMPTS:
+                    self._sleep(5)
+                    continue
                 raise DiscogsError(f"Discogs answered with HTTP {error.code}.") from error
             except (urllib.error.URLError, TimeoutError) as error:
                 if attempt < MAX_ATTEMPTS:
@@ -196,6 +205,10 @@ class DiscogsClient:
                 if error.code == 429 and attempt < MAX_ATTEMPTS:
                     self._sleep(RATE_LIMIT_PAUSE_SECONDS)
                     continue
+                # A fault on Discogs' side passes: the same request is answered moments later.
+                if error.code >= 500 and attempt < MAX_ATTEMPTS:
+                    self._sleep(5)
+                    continue
                 raise DiscogsError(f"Discogs answered with HTTP {error.code}.") from error
             except (urllib.error.URLError, TimeoutError) as error:
                 if attempt < MAX_ATTEMPTS:
@@ -213,18 +226,81 @@ class DiscogsClient:
         self._last_request = self._clock()
 
 
-def tracklist(entries: list[dict] | None) -> tuple[Track, ...]:
-    """The songs of a Discogs tracklist, in order. A heading ("Side A") is no song; a medley
-    or suite listed with its parts counts by its parts."""
-    tracks: list[Track] = []
+# The credits that name who wrote a song: "Written-By", "Composed By", "Lyrics By", "Music By"…
+WRITER_ROLE = re.compile(r"writ|compos|lyrics|music by|words by|songwriter", re.IGNORECASE)
+
+
+def _writers(credits: list[dict] | None) -> set[int]:
+    return {c["id"] for c in credits or () if c.get("id") and WRITER_ROLE.search(c.get("role") or "")}
+
+
+def tracklist(entries: list[dict] | None, credits: list[dict] | None = None) -> tuple[Track, ...]:
+    """The songs of a Discogs tracklist, in order, each with who wrote it. A heading ("Side A")
+    is no song; a medley or suite listed with its parts counts by its parts.
+
+    The writers come from the track's own credits, its medley's, and the release's credits
+    for the tracks they name ("A1 to A3, B2"), or for all of them when they name none.
+    """
+    songs: list[tuple[dict, set[int]]] = []
     for entry in entries or ():
         parts = entry.get("sub_tracks") or ()
         kind = entry.get("type_") or "track"
         for track in parts if parts else ([entry] if kind in ("track", "index") else []):
-            title = (track.get("title") or "").strip()
-            if title:
-                tracks.append(Track(track.get("position") or "", title, track.get("duration") or None))
-    return tuple(tracks)
+            if (track.get("title") or "").strip():
+                own = _writers(track.get("extraartists"))
+                songs.append((track, own | (_writers(entry.get("extraartists")) if parts else set())))
+    positions = [track.get("position") or "" for track, _ in songs]
+    for credit in credits or ():
+        writers = _writers([credit])
+        if not writers:
+            continue
+        for index in _credited(credit.get("tracks") or "", positions):
+            songs[index][1].update(writers)
+    return tuple(
+        Track(track.get("position") or "", track["title"].strip(), track.get("duration") or None, tuple(sorted(writers)))
+        for track, writers in songs
+    )
+
+
+def credits_of(data: dict) -> tuple[Credit, ...]:
+    """Everyone a release credits, for the release or for a track, whatever the role. A name
+    Discogs has no page for is left out: it cannot be compared with anyone."""
+
+    def credit(entry: dict, tracks: str) -> Credit | None:
+        if not entry.get("id") or not entry.get("role"):
+            return None
+        return Credit(entry["id"], (entry.get("name") or "").strip(), entry["role"].strip(), tracks)
+
+    found = [credit(entry, (entry.get("tracks") or "").strip()) for entry in data.get("extraartists") or ()]
+    for track in data.get("tracklist") or ():
+        parts = track.get("sub_tracks") or ()
+        where = ", ".join(part.get("position") or "" for part in parts) or track.get("position") or ""
+        found += [credit(entry, where) for entry in track.get("extraartists") or ()]
+        for part in parts:
+            found += [credit(entry, part.get("position") or "") for entry in part.get("extraartists") or ()]
+    return tuple(dict.fromkeys(item for item in found if item))
+
+
+def labels_of(data: dict) -> tuple[ReleaseLabel, ...]:
+    """The record labels of a release, each once, with the catalogue number first given for it."""
+    found: dict[int, ReleaseLabel] = {}
+    for entry in data.get("labels") or ():
+        if entry.get("id") and entry.get("name"):
+            found.setdefault(entry["id"], ReleaseLabel(entry["id"], entry["name"].strip(), (entry.get("catno") or "").strip()))
+    return tuple(found.values())
+
+
+def _credited(tracks: str, positions: list[str]) -> list[int]:
+    """The tracks a release credit is for: all of them when it names none, else those it names,
+    one by one or as a range ("A1 to A3")."""
+    if not tracks.strip():
+        return list(range(len(positions)))
+    found: list[int] = []
+    for part in tracks.split(","):
+        ends = [end.strip() for end in part.split(" to ")]
+        if all(end in positions for end in ends):
+            found += range(positions.index(ends[0]), positions.index(ends[-1]) + 1)
+    return found
 
 
 def is_web_address(address: str | None) -> bool:

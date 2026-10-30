@@ -6,6 +6,7 @@ from sleeve_shelf.domain.catalog import (
     Artist,
     Cluster,
     FamilyDismissal,
+    UnrelatedArtists,
     FormatTokens,
     Style,
     WidthConstants,
@@ -18,9 +19,11 @@ from sleeve_shelf.domain.clustering import (
 from sleeve_shelf.domain.enrichment import (
     AlbumListening,
     ArtistEnrichment,
+    Credit,
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
+    ReleaseLabel,
     Track,
 )
 from sleeve_shelf.domain.lookup import find_by_id
@@ -54,6 +57,7 @@ __all__ = [
     "EraBand",
     "EraBandSource",
     "FamilyDismissal",
+    "UnrelatedArtists",
     "find_by_id",
     "FormatTokens",
     "LocationRule",
@@ -69,6 +73,8 @@ __all__ = [
     "ShelfLayer",
     "ShelfType",
     "Style",
+    "Credit",
+    "ReleaseLabel",
     "Track",
     "WidthConstants",
     "in_order",
