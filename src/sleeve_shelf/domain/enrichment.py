@@ -20,6 +20,18 @@ class Track:
 
 
 @dataclass(frozen=True, slots=True)
+class Credit:
+    """Someone Discogs credits on a release, whatever for: all are kept, the screens choose."""
+
+    discogs_artist_id: int
+    name: str
+    # As Discogs words it: "Piano", "Producer", "Written-By, Arranged By".
+    role: str
+    # The tracks it is for, as Discogs words them ("A1 to A3"); empty for the whole release.
+    tracks: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class ReleaseEnrichment:
     """Cached result of a Discogs release lookup.
 
@@ -34,6 +46,9 @@ class ReleaseEnrichment:
     # The songs on the release. None means a record from before tracklists were kept, which
     # is fetched again once for its tracklist alone.
     tracklist: tuple[Track, ...] | None = None
+    # Who is credited on the release. None means a record from before credits were kept, which
+    # is fetched again once for them.
+    credits: tuple[Credit, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)

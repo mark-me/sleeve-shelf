@@ -10,6 +10,7 @@ from sleeve_shelf.domain import (
     ArtistClusterAssignment,
     ArtistEnrichment,
     Cluster,
+    Credit,
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
@@ -267,6 +268,29 @@ def test_a_release_fetched_before_writers_were_kept_is_asked_again_for_them(tmp_
     release = store.load(ReleaseEnrichment)[0]
     # Only the tracklist is taken over, now with its writers.
     assert release.styles == ("Bop",) and release.tracklist == (Track("A1", "Yesterdays", "3:42", (11,)),)
+
+
+def test_a_release_fetched_before_credits_were_kept_is_asked_again_for_them(tmp_path):
+    class Credits(_Client):
+        def release(self, release_id):
+            fetched = super().release(release_id)
+            return ReleaseEnrichment(
+                release_id, ("Hard Bop",), fetched.master_id, NOW, 2018,
+                tracklist=(), credits=(Credit(5, "Max Roach", "Drums"),),
+            )
+
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Bud Powell")])
+    store.save(Album, [Album(1, 1, "Jazz Giant", release_id=10)])
+    store.save(ReleaseEnrichment, [ReleaseEnrichment(10, ("Bop",), None, NOW, 1956, tracklist=())])
+    client = Credits()
+
+    enrich_collection(store, client)
+    enrich_collection(store, client)
+
+    assert client.calls == [("release", 10)]
+    release = store.load(ReleaseEnrichment)[0]
+    assert release.styles == ("Bop",) and release.credits == (Credit(5, "Max Roach", "Drums"),)
 
 
 def test_a_release_without_songs_is_not_asked_for_again(tmp_path):

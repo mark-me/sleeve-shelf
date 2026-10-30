@@ -95,7 +95,16 @@ def data():
             "artists": [
                 [p.artist_id, p.name, p.albums, p.cluster_id, pictures.get(p.artist_id)] for p in shown.points
             ],
-            "links": [[link.one, link.other, list(link.ties), list(link.songs)] for link in shown.links],
+            "links": [
+                [
+                    link.one,
+                    link.other,
+                    list(link.ties),
+                    list(link.songs),
+                    [[entry.name, ", ".join(entry.roles), entry.album_title] for entry in link.on_record],
+                ]
+                for link in shown.links
+            ],
         }
     )
 

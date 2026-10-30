@@ -21,7 +21,7 @@ The documentation lives at **<https://mark-me.github.io/sleeve-shelf/>**:
 
 Phase 1 (the MVP) and Phase 2 (ongoing use) are built.
 
-- **Load and browse**: load a worked-out cabinet layout from an Excel workbook — or start without one — and browse or search the collection in physical shelf order, with album covers. Search also finds songs, once the tracklists are fetched from Discogs. **Connections** shows how the artists are tied together — band members, other names, families, shared songs — as an interactive network. Covers and artist pictures are stored with your data, so they also show offline.
+- **Load and browse**: load a worked-out cabinet layout from an Excel workbook — or start without one — and browse or search the collection in physical shelf order, with album covers. Search also finds songs, once the tracklists are fetched from Discogs. **Connections** shows how the artists are tied together — band members, other names, families, who is on whose records, shared songs — as an interactive network. Covers and artist pictures are stored with your data, so they also show offline.
 - **Discogs**: sync the collection straight from Discogs (or upload an export), and fetch styles, original release years and artist pictures. Albums that left your Discogs collection are reported; you keep or remove them yourself.
 - **Organise and sort**: manage cabinets, shelves, clusters, artist families and location rules (the app suggests families from the artist names and from Discogs' members and aliases, and rules from the layout you already have), generate a sorting proposal, adjust it by dragging, and keep versions of the layout to go back to.
 - **Move**: one screen moves an album, an artist, a family or a whole cluster — to the front or the end of a shelf, or to where it belongs next to what it goes with — and shows which shelves change before anything moves.
@@ -96,7 +96,7 @@ Run the tests with `uv run python -m pytest`.
 
 - **Phase 1 — MVP** (built): load an existing layout, browse and search it, link the collection to Discogs, configure cabinets and shelves, generate a sorting proposal (curated clusters, era bands by the decade an artist started, artist families), and adjust it by hand
 - **Phase 2 — Ongoing use** (built): syncing with Discogs, album covers and artist pictures, a suggested spot for new purchases, a notice when a purchase would shift an artist's cluster, suggested families and location rules, and the showcase
-- **Phase 3 — Refinement** (started): song-level search, a Dutch translation, one screen for moving albums and a network of connections between artists are built (credits from Discogs to follow); a calmer proposal is built and a plan to carry it out a table full at a time is described; deeper musical-kinship logic and other media formats are not started
+- **Phase 3 — Refinement** (started): song-level search, a Dutch translation, one screen for moving albums and a network of connections between artists, with who is on whose records, are built; a calmer proposal is built and a plan to carry it out a table full at a time is described; deeper musical-kinship logic and other media formats are not started
 
 Full details, data model, and UI design are in [`docs/requirements.md`](docs/requirements.md).
 

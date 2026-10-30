@@ -141,6 +141,7 @@ erDiagram
         int year
         datetime fetched_at
         list tracklist "position, title, duration, writers; null: fetched before tracklists were kept"
+        list credits "discogs_artist_id, name, role, tracks; null: fetched before credits were kept"
     }
     AlbumListening {
         int album_id PK, FK
@@ -187,7 +188,7 @@ The core of it:
 - An **Artist** has **Albums**, belongs to one **Cluster** through an **ArtistClusterAssignment** (confirmed, or proposed by the app), and optionally to an **AliasGroup** — a family.
 - A **Cabinet** has **Shelves**. A **Placement** stands an album on a shelf at a position; a **ProposedPlacement** does the same for a proposal waiting for a decision.
 - A **LocationRule** binds a cluster, family, artist or album to a cabinet.
-- **ReleaseEnrichment**, **MasterEnrichment** and **ArtistEnrichment** cache what the Discogs API returned, so it is never fetched twice. A release's **tracklist** is kept in its ReleaseEnrichment and searched from there (`BrowseQueries.search` unnests it); null marks a record from before tracklists were kept, which the fetch run asks for again for its tracklist alone. Each track carries its **writers** (Discogs artist ids; null for a track from before they were kept, which brings its release back into the fetch run the same way); Connections uses them to tell songs of the same title apart (`network._songs`).
+- **ReleaseEnrichment**, **MasterEnrichment** and **ArtistEnrichment** cache what the Discogs API returned, so it is never fetched twice. A release's **tracklist** is kept in its ReleaseEnrichment and searched from there (`BrowseQueries.search` unnests it); null marks a record from before tracklists were kept, which the fetch run asks for again for its tracklist alone. Each track carries its **writers** (Discogs artist ids; null for a track from before they were kept, which brings its release back into the fetch run the same way); Connections uses them to tell songs of the same title apart (`network._songs`). A release's **credits** keep everyone it credits, whatever the role (null for a record from before, fetched again the same way); `network.on_the_record` chooses who counts as on the record for Connections.
 
 ## 💾 Files on disk
 

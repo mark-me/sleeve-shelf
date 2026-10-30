@@ -16,7 +16,7 @@
     return;
   }
   const switches = Array.from(document.querySelectorAll("input[data-tie]"));
-  const TIES = ["name", "member", "billing", "family", "songs"];
+  const TIES = ["name", "member", "billing", "family", "credit", "songs"];
   const centre = box.dataset.artist ? Number(box.dataset.artist) : null;
   const steps = Number(box.dataset.steps || 1);
   // The way to another artist, as the artists along it: then the network shows only that.
@@ -64,7 +64,7 @@
   function elements() {
     const shown = active();
     const links = network.links
-      .map(([one, other, ties, songs]) => ({ one, other, ties: ties.filter((t) => shown.has(t)), songs }))
+      .map(([one, other, ties, songs, record]) => ({ one, other, ties: ties.filter((t) => shown.has(t)), songs, record }))
       .filter((link) => link.ties.length);
     const songsOnly = (link) => link.ties.every((tie) => tie === "songs");
     const depth = new Map();
@@ -142,6 +142,7 @@
           target: String(link.other),
           ties: link.ties,
           songs: link.ties.includes("songs") ? link.songs : [],
+          record: link.ties.includes("credit") ? link.record : [],
           width: link.ties[0] === "songs" ? 1 + Math.min(link.songs.length, 6) * 0.5 : 2.5,
         },
         classes: link.ties[0],
@@ -282,6 +283,10 @@
     if (data.songs.length) {
       text += " · ♪ " + data.songs.slice(0, 8).join(", ") + (data.songs.length > 8 ? " …" : "");
     }
+    data.record.slice(0, 4).forEach(([name, roles, album]) => {
+      text += " · " + name + ": " + roles + " (" + album + ")";
+    });
+    if (data.record.length > 4) text += " …";
     say(text);
   }
 

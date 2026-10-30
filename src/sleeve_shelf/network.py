@@ -1,6 +1,6 @@
 """Application service for the Connections screen: the artists of the collection and what
 ties them together — members and other names from Discogs, one name inside another,
-families, and the same song on albums of both."""
+families, one credited on an album of the other, and the same song on albums of both."""
 
 import heapq
 import re
@@ -18,6 +18,7 @@ from sleeve_shelf.domain import (
     ReleaseEnrichment,
     in_order,
 )
+from sleeve_shelf.ingestion.discogs_api import WRITER_ROLE
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.sorting.families import names_inside, sort_name
 
@@ -33,8 +34,14 @@ class Tie(StrEnum):
     BILLING = "billing"
     # Both in one family.
     FAMILY = "family"
+    # One credited on an album of the other: a musician, an arranger, a producer.
+    CREDIT = "credit"
     # The same song on albums of both.
     SONGS = "songs"
+
+
+# The ties that show all of the other's albums; a credit or a song shows the albums it is on.
+_ALL_ALBUMS = frozenset({Tie.NAME, Tie.MEMBER, Tie.BILLING, Tie.FAMILY})
 
 
 # Song titles that say nothing about the song, so two albums having one ties no one.
@@ -68,6 +75,35 @@ _VARIOUS_NAMES = frozenset({"various", "various artists"})
 _TRAILING_BRACKETS = re.compile(r"\s*(\([^()]*\)|\[[^\[\]]*\])\s*$")
 
 
+# Who is on the record: everyone credited but those behind it. Instruments and voices are too
+# many to name, so what does not count is named instead.
+_LOOKED_BACK = re.compile(r"executive|reissue|re-issue|compilation", re.IGNORECASE)
+_MAKES_THE_MUSIC = re.compile(r"conduct|music(al)? direct|arrang|produc", re.IGNORECASE)
+_BEHIND_THE_RECORD = re.compile(
+    r"design|photo|liner|master(ed|ing)|lacquer|engineer|\bart\b|artwork|layout|cover|\bmix|recorded"
+    r"|cut by|pressed|copyright|phonographic|manufactur|distribut|management|coordinat|illustrat"
+    r"|typograph|sleeve|graphic|transfer|a&r|compiled|booking|legal|notes|edited|editor|technician"
+    r"|tape|programm|research|supervis|lettering|painting|text by|translated|concept|^other|film"
+    r"|video|direct|published|licensed|marketed|crew|assistant|consultant|restor|sound|overdub"
+    r"|tuner|tuned|lighting|interview|dedicat|thanks|presenter|announcer",
+    re.IGNORECASE,
+)
+
+
+def on_the_record(role: str) -> tuple[str, ...]:
+    """The parts of a Discogs role that put someone on the record, without the remarks between
+    brackets: "Piano [Grand], Liner Notes" is ("Piano",). Who wrote a song is not on the record
+    for it: writing "Yesterdays" does not tie Jerome Kern to all who recorded it."""
+    found = []
+    for part in re.split(r",\s*(?![^\[]*\])", role):
+        part = re.sub(r"\s*\[[^\]]*\]", "", part).strip()
+        if not part or WRITER_ROLE.search(part) or _LOOKED_BACK.search(part):
+            continue
+        if _MAKES_THE_MUSIC.search(part) or not _BEHIND_THE_RECORD.search(part):
+            found.append(part)
+    return tuple(found)
+
+
 def is_various(artist: Artist) -> bool:
     """Whether the artist is Discogs' "Various", of compilations."""
     return artist.discogs_artist_id == _VARIOUS_DISCOGS_ID or artist.name.casefold() in _VARIOUS_NAMES
@@ -97,6 +133,18 @@ class Point:
 
 
 @dataclass(frozen=True, slots=True)
+class OnRecord:
+    """An artist of the collection credited on an album of another."""
+
+    album_id: int
+    album_title: str
+    album_artist_id: int
+    artist_id: int
+    name: str
+    roles: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class Link:
     """What ties two artists; one is the lower id."""
 
@@ -105,6 +153,8 @@ class Link:
     ties: tuple[Tie, ...]
     # The songs both have albums with, as the first of them titles it; with SONGS only.
     songs: tuple[str, ...] = ()
+    # Who of the two is credited on which album of the other; with CREDIT only.
+    on_record: tuple[OnRecord, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,12 +224,39 @@ def _songs(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnr
     return songs
 
 
+def _credited(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> list[OnRecord]:
+    """Each artist of the collection on the record of an album of another, once per album with
+    all its roles. A compilation ("Various") counts for no one."""
+    by_did = {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
+    various = {artist.id for artist in artists if is_various(artist)}
+    credits = {release.release_id: release.credits or () for release in releases}
+    found = []
+    for album in sorted(albums, key=lambda a: a.id):
+        if album.artist_id in various:
+            continue
+        roles: dict[int, dict[str, None]] = {}
+        for credit in credits.get(album.release_id, ()):
+            person = by_did.get(credit.discogs_artist_id)
+            if person is None or person.id == album.artist_id or person.id in various:
+                continue
+            parts = on_the_record(credit.role)
+            if parts:
+                roles.setdefault(person.id, {}).update(dict.fromkeys(parts))
+        names = {a.id: a.name for a in artists if a.id in roles}
+        found += [
+            OnRecord(album.id, album.title, album.artist_id, person, names[person], tuple(parts))
+            for person, parts in sorted(roles.items())
+        ]
+    return found
+
+
 @dataclass(frozen=True, slots=True)
 class TiedAlbum:
-    """An album that shows a tie: with a shared song, the songs it has of them."""
+    """An album that shows a tie: the shared songs it has, and who of the two is credited on it."""
 
     album_id: int
     songs: tuple[str, ...] = ()
+    credits: tuple[OnRecord, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -188,10 +265,10 @@ class Tied:
 
     point: Point
     link: Link
-    # The other's albums: all of them, unless a song is all that ties the two — then those
-    # that have one.
+    # The other's albums: all of them with a band, a family or a name; with only a song or a
+    # credit between the two, those it is on.
     theirs: tuple[TiedAlbum, ...]
-    # With shared songs: the albums of the artist in the middle that have one.
+    # The albums of the artist in the middle with a shared song or the other's credit.
     mine: tuple[TiedAlbum, ...] = ()
 
 
@@ -219,19 +296,21 @@ def tied_albums(
                     if h.title not in titles:
                         titles.append(h.title)
 
-    def having(owner: int, songs: dict[int, list[str]], every: bool = False) -> tuple[TiedAlbum, ...]:
+    def having(owner: int, link: Link, songs: dict[int, list[str]], every: bool = False) -> tuple[TiedAlbum, ...]:
+        on_record: dict[int, list[OnRecord]] = {}
+        for entry in link.on_record:
+            on_record.setdefault(entry.album_id, []).append(entry)
         return tuple(
-            TiedAlbum(album.id, tuple(songs.get(album.id, ())))
+            TiedAlbum(album.id, tuple(songs.get(album.id, ())), tuple(on_record.get(album.id, ())))
             for album in by_artist.get(owner, [])
-            if every or album.id in songs
+            if every or album.id in songs or album.id in on_record
         )
 
     result = []
     for point, link in around:
         songs = shared.get(point.artist_id, {}) if Tie.SONGS in link.ties else {}
-        # A band, a family, another name: all its albums, each with the shared songs it has.
-        every = link.ties != (Tie.SONGS,)
-        result.append(Tied(point, link, having(point.artist_id, songs, every), having(artist_id, songs)))
+        every = bool(_ALL_ALBUMS & set(link.ties))
+        result.append(Tied(point, link, having(point.artist_id, link, songs, every), having(artist_id, link, songs)))
     return result
 
 
@@ -289,6 +368,12 @@ def build(
                 tie(one, other, Tie.SONGS)
                 songs_of.setdefault((one, other), set()).add(key)
 
+    on_record: dict[tuple[int, int], list[OnRecord]] = {}
+    for entry in _credited(artists, albums, releases):
+        tie(entry.album_artist_id, entry.artist_id, Tie.CREDIT)
+        pair = (min(entry.album_artist_id, entry.artist_id), max(entry.album_artist_id, entry.artist_id))
+        on_record.setdefault(pair, []).append(entry)
+
     order = list(Tie)
     links = tuple(
         Link(
@@ -296,6 +381,7 @@ def build(
             other,
             tuple(sorted(kinds, key=order.index)),
             tuple(sorted((title_of[key] for key in songs_of.get((one, other), ())), key=song_key)),
+            tuple(on_record.get((one, other), ())),
         )
         for (one, other), kinds in sorted(ties.items())
     )
@@ -330,7 +416,12 @@ def way(shown: Network, start: int, end: int, switched: set[Tie] | frozenset[Tie
         kinds = tuple(tie for tie in link.ties if tie in switched)
         if not kinds:
             continue
-        step = replace(link, ties=kinds, songs=link.songs if Tie.SONGS in kinds else ())
+        step = replace(
+            link,
+            ties=kinds,
+            songs=link.songs if Tie.SONGS in kinds else (),
+            on_record=link.on_record if Tie.CREDIT in kinds else (),
+        )
         cost = _SONG_STEP if kinds == (Tie.SONGS,) else _STEP
         next_to.setdefault(link.one, []).append((link.other, step, cost))
         next_to.setdefault(link.other, []).append((link.one, step, cost))

@@ -27,14 +27,16 @@ def releases_to_fetch(
     albums: Iterable[Album], releases: dict[int, ReleaseEnrichment]
 ) -> tuple[set[int], set[int]]:
     """The releases of the albums still to be asked for: those never fetched, and those
-    fetched before tracklists, or the writers of their songs, were kept, which are asked for
-    again for their tracklist."""
+    fetched before tracklists, the writers of their songs, or credits were kept, which are
+    asked for again for those."""
     linked = {album.release_id for album in albums if album.release_id is not None}
     new = linked - releases.keys()
     without_tracks = {
         i
         for i in linked & releases.keys()
-        if releases[i].tracklist is None or any(track.writers is None for track in releases[i].tracklist)
+        if releases[i].tracklist is None
+        or releases[i].credits is None
+        or any(track.writers is None for track in releases[i].tracklist)
     }
     return new, without_tracks
 
@@ -77,17 +79,20 @@ def enrich_collection(
     try:
         for count, release_id in enumerate(release_ids, start=1):
             release = client.release(release_id)
-            # Fetched now, so asked for with its tracklist and writers: none is an empty one,
-            # never asked for again.
+            # Fetched now, so asked for with its tracklist, writers and credits: none is an empty
+            # one, never asked for again.
             release = replace(
                 release,
                 tracklist=tuple(replace(track, writers=track.writers or ()) for track in release.tracklist or ()),
+                credits=release.credits or (),
             )
             done += 1
             if release_id in tracklist_ids:
-                # Fetched before for its styles and year: only the tracklist is new. What the
-                # sorting goes by is left as it was, so nothing moves because of this.
-                releases[release_id] = replace(releases[release_id], tracklist=release.tracklist)
+                # Fetched before for its styles and year: only the tracklist and credits are new.
+                # What the sorting goes by is left as it was, so nothing moves because of this.
+                releases[release_id] = replace(
+                    releases[release_id], tracklist=release.tracklist, credits=release.credits
+                )
             else:
                 releases[release_id] = release
                 if release.master_id is None or release.master_id in masters:

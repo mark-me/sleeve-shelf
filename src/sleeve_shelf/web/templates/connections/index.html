@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Connections') }}{% endblock %}
 
-{% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
+{% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% elif tie == 'credit' %}{{ _('On the record') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
 
 {# The albums that show a tie, each with where it stands: the LP to take from the shelf. #}
 {% macro tied_albums(name, albums) %}
@@ -14,6 +14,7 @@
     <a href="{% if place.shelf_id is not none %}{{ url_for('browse.browse', shelf=place.shelf_id) }}{% else %}{{ url_for('browse.unplaced') }}{% endif %}#album-{{ place.album_id }}">{{ place.title }}</a>{% if place.year %} &middot; {{ place.year }}{% endif %}
     <span class="ss-muted">&middot; {% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
     {% if tied.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ tied.songs | join(', ') }}</span>{% endif %}
+    {% for entry in tied.credits %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }}</span>{% endfor %}
   </li>
   {% endif %}
   {% endfor %}
@@ -38,7 +39,7 @@
     <a href="{{ url_for('artists.edit', artist_id=artist.artist_id) }}">{{ _('Artist page') }}</a> &middot;
     <a href="{{ url_for('connections.index', ties=ties_param) }}">{{ _('The whole collection') }}</a>
     {% else %}
-    {{ _('How the artists in your collection are tied together: members of a band, other names, one name inside another, families, and the same song on albums of both. Choose an artist to put it in the middle.') }}
+    {{ _('How the artists in your collection are tied together: members of a band, other names, one name inside another, families, who is on whose records, and the same song on albums of both. Choose an artist to put it in the middle.') }}
     {% endif %}
   </p>
 
@@ -150,6 +151,7 @@
       <div class="ss-way-tie">
         {% for tie in link.ties %}<span class="ss-chip me-1"><span class="ss-tie-swatch ss-tie-{{ tie.value }}" aria-hidden="true"></span> {{ tie_name(tie) }}</span>{% endfor %}
         {% if link.songs %}<span class="ss-row-song d-inline"><span class="visually-hidden">{{ _('Songs') }}: </span>&#9834; {{ link.songs[:3] | join(', ') }}{% if link.songs | length > 3 %} {{ ngettext('and %(num)d more song', 'and %(num)d more songs', link.songs | length - 3) }}{% endif %}</span>{% endif %}
+        {% for entry in link.on_record[:3] %}<span class="ss-muted d-block">{{ entry.name }}: {{ entry.roles | join(', ') }} &middot; {{ entry.album_title }}</span>{% endfor %}
       </div>
       {% endif %}
       <div class="ss-row">

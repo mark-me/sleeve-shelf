@@ -18,6 +18,7 @@ from sleeve_shelf.domain.clustering import (
 from sleeve_shelf.domain.enrichment import (
     AlbumListening,
     ArtistEnrichment,
+    Credit,
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
@@ -69,6 +70,7 @@ __all__ = [
     "ShelfLayer",
     "ShelfType",
     "Style",
+    "Credit",
     "Track",
     "WidthConstants",
     "in_order",

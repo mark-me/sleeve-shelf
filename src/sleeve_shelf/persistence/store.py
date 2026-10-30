@@ -40,6 +40,7 @@ from sleeve_shelf.domain import (
     ShelfLayer,
     ShelfType,
     Style,
+    Credit,
     Track,
 )
 
@@ -75,6 +76,10 @@ def _tracklist(value: list) -> tuple[Track, ...]:
         Track(**{**track, "writers": None if track.get("writers") is None else tuple(track["writers"])})
         for track in value
     )
+
+
+def _credits(value: list) -> tuple[Credit, ...]:
+    return tuple(Credit(**credit) for credit in value)
 
 
 _PLACEMENT_COLUMNS = {
@@ -206,8 +211,9 @@ _TABLES: dict[type, _Table] = {
             "fetched_at": "TIMESTAMP",
             "year": "INTEGER",
             "tracklist": "STRUCT(position VARCHAR, title VARCHAR, duration VARCHAR, writers BIGINT[])[]",
+            "credits": "STRUCT(discogs_artist_id BIGINT, name VARCHAR, role VARCHAR, tracks VARCHAR)[]",
         },
-        {"styles": tuple, "tracklist": _tracklist},
+        {"styles": tuple, "tracklist": _tracklist, "credits": _credits},
     ),
     MasterEnrichment: _Table(
         "discogs_masters.json",

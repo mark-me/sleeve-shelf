@@ -16,12 +16,13 @@ from sleeve_shelf.domain import (
     ArtistEnrichment,
     Cabinet,
     Cluster,
+    Credit,
     Placement,
     ReleaseEnrichment,
     Shelf,
     Track,
 )
-from sleeve_shelf.network import Link, Network, Point, Tie, TiedAlbum, build, network, song_key, songs_elsewhere, tied_albums, ties_of, way
+from sleeve_shelf.network import Link, Network, OnRecord, Point, Tie, TiedAlbum, build, network, on_the_record, song_key, songs_elsewhere, tied_albums, ties_of, way
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web import login
 
@@ -220,6 +221,105 @@ def test_a_band_that_shares_a_song_shows_all_its_albums(tmp_path):
     assert quintet.mine == (TiedAlbum(12, ("So What",)),)
 
 
+@pytest.mark.parametrize(
+    ("role", "parts"),
+    [
+        ("Piano", ("Piano",)),
+        ("Tenor Saxophone [Uncredited], Liner Notes", ("Tenor Saxophone",)),
+        ("Vocals, Arranged By", ("Vocals", "Arranged By")),
+        ("Producer", ("Producer",)),
+        ("Conductor", ("Conductor",)),
+        ("Musical Director", ("Musical Director",)),
+        ("Written-By", ()),
+        ("Executive-Producer", ()),
+        ("Reissue Producer", ()),
+        ("Engineer [Recording], Mastered By", ()),
+        ("Design, Photography By", ()),
+    ],
+)
+def test_who_counts_as_on_the_record(role, parts):
+    assert on_the_record(role) == parts
+
+
+def _on_the_record():
+    """Bud Powell on Charlie Parker's record, and Jerome Kern only as its writer."""
+    artists = [
+        Artist(1, "Charlie Parker", discogs_artist_id=101),
+        Artist(2, "Bud Powell", discogs_artist_id=102),
+        Artist(3, "Jerome Kern", discogs_artist_id=103),
+        Artist(4, "Various", discogs_artist_id=194),
+    ]
+    albums = [
+        Album(1, 1, "Massey Hall", release_id=1),
+        Album(2, 2, "The Amazing", release_id=2),
+        Album(3, 4, "Jazz Hits", release_id=3),
+    ]
+    releases = [
+        ReleaseEnrichment(
+            1, (), None, FETCHED, tracklist=(),
+            credits=(
+                Credit(102, "Bud Powell", "Piano"),
+                Credit(102, "Bud Powell", "Arranged By", "A2"),
+                Credit(103, "Jerome Kern", "Written-By", "A1"),
+                Credit(999, "Charles Mingus", "Bass"),
+                Credit(101, "Charlie Parker", "Alto Saxophone"),
+            ),
+        ),
+        ReleaseEnrichment(2, (), None, FETCHED, tracklist=(), credits=()),
+        # A compilation ties no one, by its credits either.
+        ReleaseEnrichment(3, (), None, FETCHED, tracklist=(), credits=(Credit(101, "Charlie Parker", "Alto Saxophone"),)),
+    ]
+    return artists, albums, releases
+
+
+def test_a_credit_on_an_album_ties_its_artist_to_the_one_credited():
+    artists, albums, releases = _on_the_record()
+
+    links = build(artists, albums, [], releases, [], []).links
+
+    # Not the writer, not someone outside the collection, not the artist on its own record.
+    assert [(link.one, link.other, link.ties) for link in links] == [(1, 2, (Tie.CREDIT,))]
+    assert links[0].on_record == (OnRecord(1, "Massey Hall", 1, 2, "Bud Powell", ("Piano", "Arranged By")),)
+
+
+def test_a_credit_shows_the_albums_it_is_on_from_both_sides():
+    artists, albums, releases = _on_the_record()
+    net = build(artists, albums, [], releases, [], [])
+    entry = net.links[0].on_record[0]
+
+    # Bud Powell's own record is no part of it, seen from either artist.
+    from_parker = tied_albums(net.around(1), 1, artists, albums, releases)[0]
+    assert from_parker.theirs == () and from_parker.mine == (TiedAlbum(1, (), (entry,)),)
+    from_powell = tied_albums(net.around(2), 2, artists, albums, releases)[0]
+    assert from_powell.theirs == (TiedAlbum(1, (), (entry,)),) and from_powell.mine == ()
+
+
+def test_a_credit_counts_as_a_close_step_on_the_way():
+    artists, albums, releases = _on_the_record()
+    net = build(artists, albums, [], releases, [], [])
+
+    _, (point, link) = way(net, 1, 2, set(Tie))
+    assert point.artist_id == 2 and link.on_record
+    assert way(net, 1, 2, set(Tie) - {Tie.CREDIT}) is None
+
+
+def test_the_screen_says_who_is_on_which_record(tmp_path):
+    store = JsonStore(tmp_path / "data")
+    artists, albums, releases = _on_the_record()
+    store.save(Artist, artists)
+    store.save(Album, albums)
+    store.save(ReleaseEnrichment, releases)
+    client = create_app(tmp_path / "data").test_client()
+
+    page = client.get("/connections/?artist=1").get_data(as_text=True)
+    assert 'data-tie="credit" checked' in page and "On the record" in page
+    assert "Massey Hall" in page and "Bud Powell: Piano, Arranged By" in page
+    way_page = client.get("/connections/?artist=1&to=2").get_data(as_text=True)
+    assert "Bud Powell: Piano, Arranged By &middot; Massey Hall" in way_page
+    data = client.get("/connections/network.json").get_json()
+    assert [1, 2, ["credit"], [], [["Bud Powell", "Piano, Arranged By", "Massey Hall"]]] in data["links"]
+
+
 def _network(*links: Link) -> Network:
     ids = sorted({i for link in links for i in (link.one, link.other)} | {9})
     return Network(tuple(Point(i, f"Artist {i}", 1, None) for i in ids), links, ())
@@ -391,7 +491,7 @@ def test_the_network_comes_as_compact_lists(client):
 
     assert data["clusters"] == [[1, "Jazz"], [2, "Songwriters"]]
     assert [1, "Miles Davis", 2, 1, None] in data["artists"]
-    assert [1, 5, ["songs"], ["'Round Midnight"]] in data["links"]
+    assert [1, 5, ["songs"], ["'Round Midnight"], []] in data["links"]
 
 
 def test_the_network_draws_only_pictures_kept_with_the_app(tmp_path):

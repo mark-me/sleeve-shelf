@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-29 23:46+0100\n"
+"POT-Creation-Date: 2026-10-30 11:34+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -1256,6 +1256,10 @@ msgid "In the name"
 msgstr "In de naam"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "On the record"
+msgstr "Op de plaat"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Same song"
 msgstr "Zelfde nummer"
 
@@ -1281,8 +1285,8 @@ msgid "The whole collection"
 msgstr "De hele collectie"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
-msgid "How the artists in your collection are tied together: members of a band, other names, one name inside another, families, and the same song on albums of both. Choose an artist to put it in the middle."
-msgstr "Hoe de artiesten in je collectie met elkaar verbonden zijn: leden van een band, andere namen, de ene naam in de andere, families, en hetzelfde nummer op albums van allebei. Kies een artiest om die in het midden te zetten."
+msgid "How the artists in your collection are tied together: members of a band, other names, one name inside another, families, who is on whose records, and the same song on albums of both. Choose an artist to put it in the middle."
+msgstr "Hoe de artiesten in je collectie met elkaar verbonden zijn: leden van een band, andere namen, de ene naam in de andere, families, wie op wiens platen staat, en hetzelfde nummer op albums van allebei. Kies een artiest om die in het midden te zetten."
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "not in view: opens its connections"

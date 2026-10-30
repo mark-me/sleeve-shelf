@@ -5,11 +5,12 @@ import urllib.error
 
 import pytest
 
-from sleeve_shelf.domain import Track
+from sleeve_shelf.domain import Credit, Track
 from sleeve_shelf.ingestion.discogs_api import (
     DiscogsClient,
     DiscogsError,
     collection_items,
+    credits_of,
     format_text,
     tracklist,
 )
@@ -171,6 +172,35 @@ def test_a_release_comes_with_its_songs_and_no_headings():
     )
     # One that no longer exists has no songs, rather than an unknown tracklist.
     assert client.release(2).tracklist == ()
+
+
+def test_a_release_comes_with_everyone_it_credits():
+    data = {
+        "extraartists": [
+            {"id": 1, "name": "Bud Powell", "role": "Piano", "tracks": ""},
+            {"id": 2, "name": "Rudy Van Gelder", "role": "Engineer", "tracks": "A1 to A3"},
+            # No page on Discogs, so nothing to compare it with.
+            {"id": 0, "name": "Somebody", "role": "Bass", "tracks": ""},
+        ],
+        "tracklist": [
+            {"position": "A1", "title": "One", "extraartists": [{"id": 3, "name": "Max Roach", "role": "Drums"}]},
+            {
+                "type_": "index",
+                "title": "Suite",
+                "extraartists": [{"id": 4, "name": "Gil Evans", "role": "Arranged By"}],
+                "sub_tracks": [{"position": "B1a", "title": "Part", "extraartists": [{"id": 5, "name": "Art Pepper", "role": "Alto Saxophone"}]}],
+            },
+        ],
+    }
+
+    assert credits_of(data) == (
+        Credit(1, "Bud Powell", "Piano"),
+        Credit(2, "Rudy Van Gelder", "Engineer", "A1 to A3"),
+        Credit(3, "Max Roach", "Drums", "A1"),
+        Credit(4, "Gil Evans", "Arranged By", "B1a"),
+        Credit(5, "Art Pepper", "Alto Saxophone", "B1a"),
+    )
+    assert credits_of({}) == ()
 
 
 def test_a_song_comes_with_who_wrote_it():

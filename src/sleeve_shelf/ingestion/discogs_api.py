@@ -12,6 +12,7 @@ from datetime import datetime
 from sleeve_shelf.domain import (
     ArtistEnrichment,
     MasterEnrichment,
+    Credit,
     ReleaseEnrichment,
     Track,
 )
@@ -83,6 +84,7 @@ class DiscogsClient:
             fetched_at=datetime.now().replace(microsecond=0),
             year=data.get("year") or None,
             tracklist=tracklist(data.get("tracklist"), data.get("extraartists")),
+            credits=credits_of(data),
         )
 
     def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
@@ -215,11 +217,11 @@ class DiscogsClient:
 
 
 # The credits that name who wrote a song: "Written-By", "Composed By", "Lyrics By", "Music By"…
-_WRITER_ROLE = re.compile(r"writ|compos|lyrics|music by|words by|songwriter", re.IGNORECASE)
+WRITER_ROLE = re.compile(r"writ|compos|lyrics|music by|words by|songwriter", re.IGNORECASE)
 
 
 def _writers(credits: list[dict] | None) -> set[int]:
-    return {c["id"] for c in credits or () if c.get("id") and _WRITER_ROLE.search(c.get("role") or "")}
+    return {c["id"] for c in credits or () if c.get("id") and WRITER_ROLE.search(c.get("role") or "")}
 
 
 def tracklist(entries: list[dict] | None, credits: list[dict] | None = None) -> tuple[Track, ...]:
@@ -248,6 +250,25 @@ def tracklist(entries: list[dict] | None, credits: list[dict] | None = None) -> 
         Track(track.get("position") or "", track["title"].strip(), track.get("duration") or None, tuple(sorted(writers)))
         for track, writers in songs
     )
+
+
+def credits_of(data: dict) -> tuple[Credit, ...]:
+    """Everyone a release credits, for the release or for a track, whatever the role. A name
+    Discogs has no page for is left out: it cannot be compared with anyone."""
+
+    def credit(entry: dict, tracks: str) -> Credit | None:
+        if not entry.get("id") or not entry.get("role"):
+            return None
+        return Credit(entry["id"], (entry.get("name") or "").strip(), entry["role"].strip(), tracks)
+
+    found = [credit(entry, (entry.get("tracks") or "").strip()) for entry in data.get("extraartists") or ()]
+    for track in data.get("tracklist") or ():
+        parts = track.get("sub_tracks") or ()
+        where = ", ".join(part.get("position") or "" for part in parts) or track.get("position") or ""
+        found += [credit(entry, where) for entry in track.get("extraartists") or ()]
+        for part in parts:
+            found += [credit(entry, part.get("position") or "") for entry in part.get("extraartists") or ()]
+    return tuple(dict.fromkeys(item for item in found if item))
 
 
 def _credited(tracks: str, positions: list[str]) -> list[int]:
