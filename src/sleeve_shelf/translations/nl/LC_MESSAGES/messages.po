@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 12:44+0100\n"
+"POT-Creation-Date: 2026-10-30 12:54+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -1503,8 +1503,24 @@ msgid "Tied to %(name)s"
 msgstr "Verbonden met %(name)s"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "One name stands inside the other, but they have nothing to do with each other."
+msgstr "De ene naam staat in de andere, maar ze hebben niets met elkaar te maken."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Not related"
+msgstr "Niet verwant"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Nothing ties this artist to another in your collection yet."
 msgstr "Nog niets verbindt deze artiest met een andere in je collectie."
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "You said these are not related, though one name stands inside the other:"
+msgstr "Volgens jou niet verwant, ook al staat de ene naam in de andere:"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Undo"
+msgstr "Ongedaan maken"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/stats/index.html

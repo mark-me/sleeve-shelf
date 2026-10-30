@@ -8,6 +8,7 @@ from sleeve_shelf.domain import (
     ArtistClusterAssignment,
     ArtistEnrichment,
     FamilyDismissal,
+    UnrelatedArtists,
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.sorting.connections import ClusterHint, clusters_by_connection
@@ -24,6 +25,7 @@ def family_suggestions(store: JsonStore) -> list[FamilySuggestion]:
         store.load(ArtistEnrichment),
         album_counts,
         load_settings(store.data_dir).sideman_bands,
+        {(pair.one, pair.other) for pair in store.load(UnrelatedArtists)},
     )
 
 

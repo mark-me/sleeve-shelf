@@ -200,12 +200,35 @@
         </details>
         {% endif %}
       </div>
-      {% if not other.is_musician %}<a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=other.artist_id) }}">{{ _('Artist page') }}</a>{% endif %}
+      <div class="text-end">
+        {% if not other.is_musician %}<a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=other.artist_id) }}">{{ _('Artist page') }}</a>{% endif %}
+        {# The one tie that comes from the app's reading of the names: the owner can correct it. #}
+        {% if is_owner and 'billing' in link.ties %}
+        <form method="post" action="{{ url_for('connections.unrelated') }}">
+          <input type="hidden" name="artist" value="{{ artist.artist_id }}">
+          <input type="hidden" name="other" value="{{ other.artist_id }}">
+          {% if ties_param is not none %}<input type="hidden" name="ties" value="{{ ties_param }}">{% endif %}
+          <button class="ss-link-button small" type="submit" title="{{ _('One name stands inside the other, but they have nothing to do with each other.') }}">{{ _('Not related') }}</button>
+        </form>
+        {% endif %}
+      </div>
     </div>
     {% endfor %}
   </div>
   {% else %}
   <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('Nothing ties this artist to another in your collection yet.') }}</div></div>
+  {% endif %}
+  {% if unrelated and is_owner %}
+  <p class="ss-muted small mt-3 mb-1">{{ _('You said these are not related, though one name stands inside the other:') }}</p>
+  {% for other in unrelated %}
+  <form class="small" method="post" action="{{ url_for('connections.unrelated') }}">
+    <input type="hidden" name="artist" value="{{ artist.artist_id }}">
+    <input type="hidden" name="other" value="{{ other.artist_id }}">
+    <input type="hidden" name="undo" value="1">
+    {% if ties_param is not none %}<input type="hidden" name="ties" value="{{ ties_param }}">{% endif %}
+    {{ other.name }} <button class="ss-link-button" type="submit">{{ _('Undo') }}</button>
+  </form>
+  {% endfor %}
   {% endif %}
   {% endif %}
 </div>

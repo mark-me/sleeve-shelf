@@ -18,7 +18,7 @@ Every word you type has to be in the artist and title, or in the artist, title a
 | --- | --- |
 | **Member** | a person in a band, as Discogs lists it |
 | **Other name** | another name of the same artist, as Discogs lists it |
-| **In the name** | one name inside the other: *Chet Baker Quartet* and *Chet Baker*, *Duke Ellington & John Coltrane* and both |
+| **In the name** | one name inside the other: *Chet Baker Quartet* and *Chet Baker*, *Duke Ellington & John Coltrane* and both. If that misleads — Moondog Jr. only took his name from Moondog — press **Not related** at that artist in the list; **Undo** below the list takes it back |
 | **Family** | both are in one [artist family](sorting.md#artist-families) |
 | **On the record** | one is credited on an album of the other as musician, singer, arranger, conductor or producer: Bud Powell on Charlie Parker's *Massey Hall* |
 | **Musician** | a musician or singer without an album of their own, on five or more of your albums: a diamond, with a line to the artist of each. Band members on their own band's albums and producers don't count |

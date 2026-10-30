@@ -35,10 +35,13 @@ def sort_name(name: str) -> str:
     return " ".join(re.sub(r"\(\d+\)", "", name).casefold().split())
 
 
-def names_inside(artists: list[Artist]) -> dict[int, list[int]]:
+def names_inside(
+    artists: list[Artist], unrelated: frozenset[tuple[int, int]] | set[tuple[int, int]] = frozenset()
+) -> dict[int, list[int]]:
     """For each artist whose name holds the names of others, as whole words: those others,
     in the order they are named, the longer name first where two start at one place
-    ("The Miles Davis Quintet" holds "Miles Davis"; "Duke Ellington & John Coltrane" both)."""
+    ("The Miles Davis Quintet" holds "Miles Davis"; "Duke Ellington & John Coltrane" both).
+    Pairs the user says are not related (lower id first) are left out."""
     names = {artist.id: sort_name(artist.name) for artist in artists}
     patterns = {
         artist_id: re.compile(r"(?<!\w)" + re.escape(name) + r"(?!\w)")
@@ -50,7 +53,9 @@ def names_inside(artists: list[Artist]) -> dict[int, list[int]]:
         found = sorted(
             (match.start(), -len(names[other_id]), other_id)
             for other_id, pattern in patterns.items()
-            if names[other_id] != name and (match := pattern.search(name))
+            if names[other_id] != name
+            and (min(artist_id, other_id), max(artist_id, other_id)) not in unrelated
+            and (match := pattern.search(name))
         )
         if found:
             named[artist_id] = [other_id for _, _, other_id in found]
@@ -63,6 +68,7 @@ def suggest_families(
     enrichments: list[ArtistEnrichment] | None = None,
     album_counts: dict[int, int] | None = None,
     max_bands: int = MAX_BANDS,
+    unrelated: frozenset[tuple[int, int]] | set[tuple[int, int]] = frozenset(),
 ) -> list[FamilySuggestion]:
     """Suggest families from the artist names and from who Discogs says belongs together.
 
@@ -75,14 +81,17 @@ def suggest_families(
     would be named after, an addition to an existing family by the artist to add. A person
     in more than max_bands bands of the collection is a sideman, who draws no band in.
     """
-    by_name = _families_from_names(artists, dismissed_ids, album_counts or {})
+    by_name = _families_from_names(artists, dismissed_ids, album_counts or {}, unrelated)
     return by_name + _families_from_discogs(
         artists, dismissed_ids, enrichments or [], by_name, album_counts or {}, max_bands
     )
 
 
 def _families_from_names(
-    artists: list[Artist], dismissed_ids: frozenset[int] | set[int], album_counts: dict[int, int]
+    artists: list[Artist],
+    dismissed_ids: frozenset[int] | set[int],
+    album_counts: dict[int, int],
+    unrelated: frozenset[tuple[int, int]] | set[tuple[int, int]] = frozenset(),
 ) -> list[FamilySuggestion]:
     """Families that the artist names reveal: one name inside the other.
 
@@ -93,7 +102,7 @@ def _families_from_names(
     """
     names = {artist.id: sort_name(artist.name) for artist in artists}
     family_of = {a.id: a.alias_group_id for a in artists if a.alias_group_id is not None}
-    named = names_inside(artists)
+    named = names_inside(artists, unrelated)
 
     def root(artist_id: int) -> int:
         # Follow the name named first: "The Miles Davis Quintet Together With ..." up to

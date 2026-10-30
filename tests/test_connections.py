@@ -6,6 +6,7 @@ from datetime import datetime
 import pytest
 
 from sleeve_shelf import create_app
+from sleeve_shelf.alias_groups import family_suggestions
 from sleeve_shelf.access import set_password
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.covers import ARTIST_DIR, COVER_DIR, cover_name
@@ -23,6 +24,7 @@ from sleeve_shelf.domain import (
     ReleaseLabel,
     Shelf,
     Track,
+    UnrelatedArtists,
 )
 from sleeve_shelf.network import MUSICIAN_ALBUMS, Link, Network, OnRecord, Point, Tie, TiedAlbum, build, network, on_the_record, song_key, songs_elsewhere, tied_albums, ties_of, way
 from sleeve_shelf.persistence import JsonStore
@@ -499,6 +501,77 @@ def test_a_joint_billing_borrows_the_picture_of_an_artist_it_names(tmp_path):
     assert rows[3] == [own, True] and rows[4] == [own, True]
     # Whom it names has no stored picture itself, so there is nothing to borrow.
     assert rows[6] == [None, False] and rows[1] == [None, False]
+
+
+def _moondog(tmp_path):
+    """Moondog and Moondog Jr., one name inside the other but not related; Jr. without a picture,
+    Moondog with one; and both on one label, which is no matter of their names."""
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Moondog (2)", discogs_artist_id=101), Artist(2, "Moondog Jr.")])
+    store.save(Album, [Album(1, 1, "Moondog", release_id=1), Album(2, 2, "Songs", release_id=2)])
+    label = (ReleaseLabel(50, "Prestige"),)
+    store.save(
+        ReleaseEnrichment,
+        [
+            ReleaseEnrichment(1, (), None, FETCHED, tracklist=(), credits=(), labels=label),
+            ReleaseEnrichment(2, (), None, FETCHED, tracklist=(), credits=(), labels=label),
+        ],
+    )
+    picture = "https://i.discogs.com/moondog.jpg"
+    store.save(ArtistEnrichment, [ArtistEnrichment(101, None, picture, FETCHED)])
+    folder = tmp_path / COVER_DIR / ARTIST_DIR
+    folder.mkdir(parents=True)
+    (folder / cover_name(picture)).write_bytes(b"jpeg")
+    return store
+
+
+def test_the_owner_can_say_two_names_are_not_related(tmp_path):
+    store = _moondog(tmp_path)
+    client = create_app(tmp_path).test_client()
+    assert network(store).links[0].ties == (Tie.BILLING, Tie.LABEL)
+    assert [s.member_ids for s in family_suggestions(store)] == [(2,)]
+    page = client.get("/connections/?artist=1").text
+    assert ">Not related</button>" in page
+    assert client.get("/connections/network.json").get_json()["artists"][1][4:] != [None, False]
+
+    answer = client.post("/connections/unrelated", data={"artist": "1", "other": "2", "ties": "billing,label"})
+
+    assert answer.headers["Location"] == "/connections/?artist=1&ties=billing,label"
+    assert store.load(UnrelatedArtists) == [UnrelatedArtists(1, 2)]
+    # Only what came from the name goes: no tie by it, no family, no borrowed picture.
+    assert network(store).links[0].ties == (Tie.LABEL,)
+    assert family_suggestions(store) == []
+    assert client.get("/connections/network.json").get_json()["artists"][1][4:] == [None, False]
+    page = client.get("/connections/?artist=1").text
+    assert ">Not related</button>" not in page and "You said these are not related" in page and "Moondog Jr." in page
+
+    # Said from either side, it is one pair; and it can be taken back.
+    client.post("/connections/unrelated", data={"artist": "2", "other": "1"})
+    assert store.load(UnrelatedArtists) == [UnrelatedArtists(1, 2)]
+    client.post("/connections/unrelated", data={"artist": "2", "other": "1", "undo": "1"})
+    assert store.load(UnrelatedArtists) == []
+    assert network(store).links[0].ties == (Tie.BILLING, Tie.LABEL)
+
+
+def test_only_the_owner_says_two_names_are_not_related(tmp_path, monkeypatch):
+    monkeypatch.setenv("SLEEVE_SHELF_HTTP_LOGIN", "1")
+    login._pages.clear()
+    store = _moondog(tmp_path)
+    app = create_app(tmp_path)
+    set_password(app.config["DATA_DIR"], "a long and strong one")
+    visitor = app.test_client()
+
+    assert "Not related" not in visitor.get("/connections/?artist=1").text
+    assert visitor.post("/connections/unrelated", data={"artist": "1", "other": "2"}).status_code != 302 or not store.exists(UnrelatedArtists)
+    assert store.load(UnrelatedArtists) == []
+
+
+def test_saying_two_names_are_not_related_needs_two_artists(tmp_path):
+    _moondog(tmp_path)
+    client = create_app(tmp_path).test_client()
+
+    assert client.post("/connections/unrelated", data={"artist": "1", "other": "99"}).status_code == 400
+    assert client.post("/connections/unrelated", data={"artist": "1", "other": "1"}).status_code == 400
 
 
 def _network(*links: Link) -> Network:

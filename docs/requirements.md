@@ -228,6 +228,7 @@ erDiagram
     Album ||--o| MatchProposal : "proposed for"
     Album ||--o| AlbumListening : "listened to via"
     Artist ||--o| FamilyDismissal : "turned down as anchor"
+    Artist ||--o{ UnrelatedArtists : "not related by name"
 
     Artist {
         int id PK
@@ -361,6 +362,10 @@ erDiagram
     FamilyDismissal {
         int anchor_artist_id PK, FK
     }
+    UnrelatedArtists {
+        int one PK, FK
+        int other PK, FK
+    }
     MasterEnrichment {
         int master_id PK
         int original_release_year
@@ -382,6 +387,7 @@ erDiagram
 - **Artist**: id, name, alias_group_id (nullable), `start_year` (nullable — the year the artist began, which decides its era band; see Sorting logic §2), `discogs_artist_id` (nullable — the artist on Discogs, set by a sync: the artist most of its linked releases are credited to, counting only releases credited to a single artist), `picture_file` (nullable — the file name of a picture the user added, kept in `artist_pictures/` in the data directory; it is shown instead of the picture from Discogs)
 - **AliasGroup**: id, label — an artist family: the Artists pointing at it stand together as one unit (see Sorting logic §1)
 - **FamilyDismissal**: anchor artist id — a suggestion the user turned down, so it is not made again: for a new family the artist it would be named after, for an addition to an existing family each artist that would be added
+- **UnrelatedArtists**: two artist ids, the lower first — artists the owner says are not related, though one name stands inside the other (added 2026-10-30). The name then makes no tie, suggests no family and lends no picture. What Discogs lists is not touched. Cleared with a new layout workbook, as the artist ids change
 - **Album**: id, artist_id, title, Discogs `release_id` (from CSV; nullable — an album seeded by the initial load has only artist and title until it is matched to Discogs in Phase 1b, and the same holds for its `format_tokens` and computed width), Discogs `master_id` (fetched), original release year (fetched via master), `format_tokens` (parsed from the CSV `Format` field — disc count, 180-gram, gatefold, compound/`Box` flag, and other qualifiers), computed width (cm, derived from `format_tokens` for simple formats — see Sorting logic §3), `manual_width_cm` (nullable — set by hand for compound/box formats, overrides the computed value when present), `width_confirmed` (bool — false for compound formats until manually set), list of styles (fetched via release), `era_band_id` (nullable — the EraBand this album falls in, see Sorting/clustering below; empty until a proposal is generated or an initial load is done), `cover_url` (the address of the release's small cover image at Discogs, set by a sync; empty until the first sync), `cover_image_url` (the address of the same cover as a large image, set by the same sync; only used to enlarge the cover on the album's page), `original_year_confirmed` (bool — true when the year is known to be the original rather than a pressing's, so enrichment leaves it alone; see Sorting logic §2), `left_discogs` (bool — true when the last sync or import no longer found the album's release in the Discogs collection; set again at every sync or import), `kept_after_discogs` (bool — true when the user said they still have an album that left Discogs, so it is not asked about again; cleared when the release is back in the collection), `new_purchase` (bool — true for an album a sync or import added to an artist whose cluster was already confirmed, until a decision on that artist's cluster is taken; it is what a cluster shift is worked out from, see Sorting logic §4), `added_on` (date, nullable — the day a sync or import added the album; empty for an album that came with the workbook, and for every album added before 2026-10-12, when this was first kept)
 - **Style**: id, name (from Discogs), `cluster_id` — the Cluster this Style points to; set the first time the Style is seen, user-remappable afterward (see Sorting logic §1)
 - **Cluster**: id, name — a user-curated group of artists, decoupled from Discogs' own style taxonomy (see Sorting logic §1); seeded by the initial load, can be renamed or merged via the Clusters screen (see UI). `position` is its place in the curated sequence of clusters
@@ -599,7 +605,7 @@ Decided by Mark on 2026-10-26: a tab next to Browse/Search, which visitors may o
 - **A line is a tie**, of one or more kinds, each with its own colour and a switch to show or hide it:
   - **Member** — a person in a band, as Discogs lists it (either record naming the other)
   - **Other name** — another name of the same artist, as Discogs lists it
-  - **In the name** — one artist's name inside the other's: *Chet Baker Quartet* and *Chet Baker*, *Duke Ellington & John Coltrane* and both
+  - **In the name** — one artist's name inside the other's: *Chet Baker Quartet* and *Chet Baker*, *Duke Ellington & John Coltrane* and both. A name can mislead: Moondog Jr. only took his name from Moondog, and *Rex* is in *T. Rex* (found by Mark 2026-10-30). No rule tells those from *Hank Williams III*, so the owner has **Not related** on such a tie in the list, with **Undo** below the list. It also ends the family suggestion and borrowed picture that came from that name, and leaves any other tie between the two
   - **Family** — the artists of one family
   - **On the record** (2026-10-30) — an artist of the collection credited on an album of another: Bud Powell on Charlie Parker's *Massey Hall*. Musicians, voices, arrangers, conductors and producers count, in one kind of line with the role named (Mark's choice of three, over leaving producers out or giving them their own line); those behind the record — engineering, design, photography, notes, mastering — and whoever only wrote a song do not. A compilation ties no one by its credits
   - **Musician** (decided by Mark 2026-10-30) — a musician or singer without an album in the collection, on five or more albums of it: a point of their own, a diamond, and a line to the artist of each such album, so artists that nothing else ties find each other through Paul Chambers. Not a producer, not anyone named on the record itself, and no member Discogs lists of the album's band on that band's albums. Of 5,356 people credited without an album of their own that leaves 80. Tapping one puts it in the middle like an artist, saying which albums it is on; it has no artist page

@@ -35,6 +35,7 @@ erDiagram
     Album ||--o| MatchProposal : "proposed for"
     Album ||--o| AlbumListening : "listened to via"
     Artist ||--o| FamilyDismissal : "turned down as anchor"
+    Artist ||--o{ UnrelatedArtists : "not related by name"
 
     Artist {
         int id PK
@@ -167,6 +168,10 @@ erDiagram
     }
     FamilyDismissal {
         int anchor_artist_id PK, FK
+    }
+    UnrelatedArtists {
+        int one PK, FK
+        int other PK, FK
     }
     MasterEnrichment {
         int master_id PK

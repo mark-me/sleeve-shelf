@@ -19,6 +19,7 @@ from sleeve_shelf.domain import (
     ArtistEnrichment,
     Cluster,
     ReleaseEnrichment,
+    UnrelatedArtists,
     in_order,
 )
 from sleeve_shelf.ingestion.discogs_api import WRITER_ROLE
@@ -434,6 +435,7 @@ def build(
     assignments: list[ArtistClusterAssignment],
     clusters: list[Cluster],
     labels_left_out: Iterable[str] = (),
+    unrelated: frozenset[tuple[int, int]] | set[tuple[int, int]] = frozenset(),
 ) -> Network:
     """The network of the collection's artists, from what the app knows of them.
 
@@ -458,7 +460,7 @@ def build(
             for other in (by_did[d] for d in discogs_ids or () if d in by_did):
                 tie(artist_id, other, kind)
 
-    for artist_id, others in names_inside(artists).items():
+    for artist_id, others in names_inside(artists, unrelated).items():
         for other in others:
             tie(artist_id, other, Tie.BILLING)
 
@@ -660,4 +662,17 @@ def network(store: JsonStore) -> Network:
         load(ArtistClusterAssignment),
         load(Cluster),
         load_settings(store.data_dir).labels_left_out,
+        unrelated_pairs(store),
     )
+
+
+def unrelated_pairs(store: JsonStore) -> set[tuple[int, int]]:
+    """The artists the user says are not related, each pair with the lower id first."""
+    return {(pair.one, pair.other) for pair in store.load(UnrelatedArtists)}
+
+
+def set_unrelated(store: JsonStore, one: int, other: int, unrelated: bool) -> None:
+    """Say that a name inside another does not make two artists related, or take that back."""
+    pair = UnrelatedArtists(min(one, other), max(one, other))
+    pairs = [existing for existing in store.load(UnrelatedArtists) if existing != pair]
+    store.save(UnrelatedArtists, [*pairs, pair] if unrelated else pairs)

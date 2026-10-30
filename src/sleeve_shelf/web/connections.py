@@ -1,11 +1,11 @@
 """Connections: how the artists of the collection are tied together, as a network around one
 artist or over the whole collection. Visitors may look too."""
 
-from flask import Blueprint, abort, jsonify, render_template, request, url_for
+from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
 from sleeve_shelf.artists import picture_thumb
 from sleeve_shelf.domain import Artist, ArtistEnrichment
-from sleeve_shelf.network import Tie, network, ties_of, way
+from sleeve_shelf.network import Tie, network, set_unrelated, ties_of, unrelated_pairs, way
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.sorting.families import names_inside, sort_name
 from sleeve_shelf.web.context import get_store
@@ -59,7 +59,27 @@ def index():
         way_text=way_text,
         way_found=way_found,
         tied={point for link in shown.links for point in (link.one, link.other)},
+        # Those the owner said are not related to this artist, to take that back.
+        unrelated=[
+            points[one if other == artist_id else other]
+            for one, other in sorted(unrelated_pairs(store))
+            if artist_id in (one, other) and one in points and other in points
+        ],
     )
+
+
+@blueprint.post("/unrelated")
+def unrelated():
+    """A name inside another does not make these two related, or does after all (undo); back to
+    the artist it was said on. Nothing but the name's tie goes: what Discogs lists stays."""
+    store = get_store()
+    artist_id = request.form.get("artist", type=int)
+    other_id = request.form.get("other", type=int)
+    known = {artist.id for artist in store.load(Artist)}
+    if artist_id not in known or other_id not in known or artist_id == other_id:
+        abort(400)
+    set_unrelated(store, artist_id, other_id, "undo" not in request.form)
+    return redirect(url_for("connections.index", artist=artist_id, ties=request.form.get("ties") or None))
 
 
 def _matching(shown, text: str, leave_out: int | None = None) -> list:
@@ -137,7 +157,7 @@ def _pictures(store) -> dict[int, tuple[str, bool]]:
             local = local_cover(thumbs[artist.discogs_artist_id])
             if local != thumbs[artist.discogs_artist_id]:
                 found[artist.id] = (local, False)
-    for artist_id, named in names_inside(artists).items():
+    for artist_id, named in names_inside(artists, unrelated_pairs(store)).items():
         if artist_id not in found:
             lender = next((other for other in named if other in found and not found[other][1]), None)
             if lender is not None:
