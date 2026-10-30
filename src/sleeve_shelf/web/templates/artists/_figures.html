@@ -36,7 +36,7 @@
   {% for person in figures.companions %}
   <div class="ss-row">
     <div class="ss-row-text">
-      {% if person.artist_id %}<a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=person.artist_id) }}">{{ person.name }}</a>{% else %}<span class="ss-row-artist">{{ person.name }}</span>{% endif %}
+      {% if person.artist_id %}<a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=person.artist_id) }}">{{ person.name }}</a>{% elif person.point_id %}<a class="ss-row-artist" href="{{ url_for('connections.index', artist=person.point_id) }}">{{ person.name }}</a>{% else %}<span class="ss-row-artist">{{ person.name }}</span>{% endif %}
       <span class="ss-row-title">{{ person.roles | join(', ') }}</span>
     </div>
     <span class="ss-row-place">{{ ngettext('%(num)d album', '%(num)d albums', person.album_ids | length) }}</span>

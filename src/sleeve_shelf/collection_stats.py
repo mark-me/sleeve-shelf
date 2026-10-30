@@ -12,6 +12,7 @@ from sleeve_shelf.domain import (
     Album,
     Artist,
     ArtistClusterAssignment,
+    ArtistEnrichment,
     Cluster,
     Placement,
     ReleaseEnrichment,
@@ -26,8 +27,12 @@ from sleeve_shelf.network import (
     collection_songs,
     credited_on_albums,
     is_various,
+    musicians_as_points,
+    named_in,
     network,
     on_the_record,
+    plain_name,
+    side_players,
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.sorting.families import sort_name
@@ -38,7 +43,6 @@ COMPANIONS = 6
 # How many a list on the Statistics screen holds.
 TOP = 20
 
-_PRODUCER = re.compile(r"produc", re.IGNORECASE)
 # How many artists the list of the most connected holds.
 HUBS = 10
 # How many albums "from this year, long ago" shows, and how long ago that is.
@@ -48,12 +52,14 @@ LONG_AGO_YEARS = 50
 
 @dataclass(frozen=True, slots=True)
 class Person:
-    """Someone credited across albums; artist_id when the person is an artist in the collection."""
+    """Someone credited across albums; artist_id when the person is an artist in the collection,
+    point_id when a musician with a point of their own in the network."""
 
     name: str
     artist_id: int | None
     roles: tuple[str, ...]
     album_ids: tuple[int, ...]
+    point_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,24 +138,15 @@ class CollectionFigures:
     labels_fetched: bool
 
 
-def _named_in(name: str, album_artist: str) -> bool:
-    """Whether the credited person is named on the record itself: Nick Cave on an album of
-    Nick Cave & The Bad Seeds is no sideman."""
-    found, billed = sort_name(name), sort_name(album_artist)
-    # Only for a name that occurs at all is a pattern made: there are thousands of credits.
-    return bool(found) and found in billed and re.search(r"(?<!\w)" + re.escape(found) + r"(?!\w)", billed) is not None
-
-
 def _people(
-    entries: list[tuple[int, int, str, tuple[str, ...]]], by_did: dict[int, Artist]
+    entries: list[tuple[int, int, str, tuple[str, ...]]], by_did: dict[int, Artist], musicians: set[int]
 ) -> list[Person]:
     """People from (album, Discogs id, name, roles), those on the most albums first."""
     names: dict[int, str] = {}
     albums: dict[int, set[int]] = {}
     roles: dict[int, Counter[str]] = {}
     for album_id, discogs_id, name, parts in entries:
-        # Without Discogs' "(3)", which tells apart people of one name on Discogs only.
-        names.setdefault(discogs_id, re.sub(r"\s*\(\d+\)$", "", name))
+        names.setdefault(discogs_id, plain_name(name))
         albums.setdefault(discogs_id, set()).add(album_id)
         roles.setdefault(discogs_id, Counter()).update(parts)
     people = [
@@ -158,6 +155,7 @@ def _people(
             by_did[discogs_id].id if discogs_id in by_did else None,
             tuple(role for role, _ in roles[discogs_id].most_common(3)),
             tuple(sorted(albums[discogs_id])),
+            -discogs_id if discogs_id in musicians else None,
         )
         for discogs_id in names
     ]
@@ -197,11 +195,13 @@ def artist_figures(store: JsonStore, artist_id: int) -> ArtistFigures:
         for album in own
         if artist_id not in various
         for credit in credits.get(album.release_id, ())
-        if credit.discogs_artist_id != artist.discogs_artist_id and not _named_in(credit.name, artist.name)
+        if credit.discogs_artist_id != artist.discogs_artist_id and not named_in(credit.name, artist.name)
         for parts in [on_the_record(credit.role)]
         if parts
     ]
-    companions = [p for p in _people(entries, by_did) if len(p.album_ids) >= COMPANION_ALBUMS][:COMPANIONS]
+    records = store.load(ArtistEnrichment)
+    musicians = musicians_as_points(side_players(artists, albums, records, releases), artists)
+    companions = [p for p in _people(entries, by_did, musicians) if len(p.album_ids) >= COMPANION_ALBUMS][:COMPANIONS]
     return ArtistFigures(
         albums=mine,
         rank=rank,
@@ -226,19 +226,9 @@ def collection_figures(store: JsonStore) -> CollectionFigures:
     by_did = {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
     by_release = {release.release_id: release for release in releases}
 
-    entries = []
-    for album in albums:
-        release = by_release.get(album.release_id)
-        owner = by_id.get(album.artist_id)
-        if release is None or owner is None or is_various(owner):
-            continue
-        for credit in release.credits or ():
-            if credit.discogs_artist_id == owner.discogs_artist_id or _named_in(credit.name, owner.name):
-                continue
-            # Who plays and sings on the records: a producer is not at the instrument.
-            parts = tuple(part for part in on_the_record(credit.role) if not _PRODUCER.search(part))
-            if parts:
-                entries.append((album.id, credit.discogs_artist_id, credit.name, parts))
+    players = side_players(artists, albums, store.load(ArtistEnrichment), releases)
+    musicians = musicians_as_points(players, artists)
+    entries = [(p.album_id, p.discogs_id, p.name, p.roles) for p in players]
 
     songs = []
     for _, heard in collection_songs(artists, albums, releases):
@@ -268,7 +258,7 @@ def collection_figures(store: JsonStore) -> CollectionFigures:
         else ()
     )
     return CollectionFigures(
-        sidemen=tuple(_people(entries, by_did)[:TOP]),
+        sidemen=tuple(_people(entries, by_did, musicians)[:TOP]),
         songs=tuple(songs[:TOP]),
         labels=tuple(labels[:TOP]),
         hubs=_hubs(shown),
@@ -282,10 +272,12 @@ def collection_figures(store: JsonStore) -> CollectionFigures:
 
 
 def _close_ties(shown: Network) -> dict[int, set[int]]:
-    """Per artist the artists it has a close tie with: anything but a shared song or label."""
+    """Per artist the artists it has a close tie with: anything but a shared song or label, and
+    no musician without an album."""
     next_to: dict[int, set[int]] = {}
     for link in shown.links:
-        if not LOOSE_TIES.issuperset(link.ties):
+        # Among artists: a musician without an album is not one of those holding things together.
+        if link.one > 0 and not LOOSE_TIES.issuperset(link.ties):
             next_to.setdefault(link.one, set()).add(link.other)
             next_to.setdefault(link.other, set()).add(link.one)
     return next_to

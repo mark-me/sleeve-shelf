@@ -68,6 +68,10 @@ def index():
                 settings.shelf_room_percent = int(room_text)
             if table_text:
                 settings.table_records = int(table_text)
+            if "labels_left_out" in request.form:
+                settings.labels_left_out = [
+                    line.strip() for line in request.form["labels_left_out"].splitlines() if line.strip()
+                ]
             for name in WIDTH_FIELDS:
                 setattr(settings, name, numbers[name])
             settings.count_bonus_discs_as_vinyl = "count_bonus_discs_as_vinyl" in request.form
@@ -101,6 +105,7 @@ def index():
             sideman_bands=request.form.get("sideman_bands", settings.sideman_bands),
             shelf_room_percent=request.form.get("shelf_room_percent", settings.shelf_room_percent),
             table_records=request.form.get("table_records", settings.table_records),
+            labels_left_out=request.form.get("labels_left_out", "\n".join(settings.labels_left_out)),
             masked_token=f"••••{token[-4:]}" if token else None,
             errors=errors,
             saved=request.args.get("saved") and not errors,

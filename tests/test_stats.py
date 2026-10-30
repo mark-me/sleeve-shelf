@@ -11,6 +11,7 @@ from sleeve_shelf.domain import (
     Album,
     Artist,
     ArtistClusterAssignment,
+    ArtistEnrichment,
     Cabinet,
     Cluster,
     Credit,
@@ -158,6 +159,31 @@ def test_something_from_the_shelf_is_the_same_all_day_until_another_is_asked_for
     assert long_ago == (6,)
     assert {from_the_shelf(store, day, turn)[0] for turn in range(20)} == {1, 2}
     assert from_the_shelf(store, date(2000, 1, 1))[1] == ()
+
+
+def test_a_member_of_the_band_is_no_sideman_on_its_albums(tmp_path):
+    store = _collection(tmp_path)
+    # Discogs lists the bassist as a member of Miles' band; he still counts on Coltrane's record.
+    store.save(ArtistEnrichment, [ArtistEnrichment(101, None, None, FETCHED, member_ids=(900,))])
+
+    sidemen = collection_figures(store).sidemen
+
+    assert [(p.name, p.album_ids) for p in sidemen] == [("John Coltrane", (1,)), ("Paul Chambers", (4,))]
+
+
+def test_a_sideman_with_a_point_of_his_own_leads_to_it(tmp_path):
+    store = _collection(tmp_path)
+    albums = store.load(Album)
+    releases = store.load(ReleaseEnrichment)
+    # Two more albums make five, and with that he is a point in the network.
+    extra = [Album(i, 2, f"More {i}", release_id=i) for i in (7, 8)]
+    store.save(Album, albums + extra)
+    store.save(ReleaseEnrichment, releases + [_release(i, [Credit(900, "Paul Chambers (3)", "Bass")]) for i in (7, 8)])
+    client = create_app(tmp_path).test_client()
+
+    assert collection_figures(store).sidemen[0].point_id == -900
+    assert 'href="/connections/?artist=-900"' in client.get("/statistics/").text
+    assert 'href="/connections/?artist=-900"' in client.get("/artists/1").text
 
 
 def test_the_figures_wait_for_the_fetch_run(tmp_path):

@@ -7,9 +7,11 @@ import heapq
 import re
 import unicodedata
 from collections import Counter
+from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from enum import StrEnum
 
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -37,6 +39,8 @@ class Tie(StrEnum):
     FAMILY = "family"
     # One credited on an album of the other: a musician, an arranger, a producer.
     CREDIT = "credit"
+    # A musician without an album in the collection, on albums of an artist.
+    SESSION = "session"
     # The same song on albums of both.
     SONGS = "songs"
     # Albums of both on one record label: of the pressing, so a reissue label counts too.
@@ -47,10 +51,11 @@ class Tie(StrEnum):
 _ALL_ALBUMS = frozenset({Tie.NAME, Tie.MEMBER, Tie.BILLING, Tie.FAMILY})
 # Ties that say two artists share something, rather than that they know each other.
 LOOSE_TIES = frozenset({Tie.SONGS, Tie.LABEL})
-# A label with more artists than this says little about any two of them, and would tie each
-# to all the others. Discogs' own entry for what came out without a label is no label either.
-MAX_LABEL_ARTISTS = 25
+# Discogs' own entry for what came out without a label.
 NO_LABEL = "not on label"
+# A musician without an album of their own is a point in the network from this many albums.
+MUSICIAN_ALBUMS = 5
+_PRODUCER = re.compile(r"produc", re.IGNORECASE)
 
 
 # Song titles that say nothing about the song, so two albums having one ties no one.
@@ -113,6 +118,19 @@ def on_the_record(role: str) -> tuple[str, ...]:
     return tuple(found)
 
 
+def named_in(name: str, album_artist: str) -> bool:
+    """Whether the credited person is named on the record itself: Nick Cave on an album of
+    Nick Cave & The Bad Seeds is no sideman."""
+    found, billed = sort_name(name), sort_name(album_artist)
+    # Only for a name that occurs at all is a pattern made: there are thousands of credits.
+    return bool(found) and found in billed and re.search(r"(?<!\w)" + re.escape(found) + r"(?!\w)", billed) is not None
+
+
+def plain_name(name: str) -> str:
+    """A name without Discogs' "(3)", which tells apart people of one name on Discogs only."""
+    return re.sub(r"\s*\(\d+\)$", "", name)
+
+
 def is_various(artist: Artist) -> bool:
     """Whether the artist is Discogs' "Various", of compilations."""
     return artist.discogs_artist_id == _VARIOUS_DISCOGS_ID or artist.name.casefold() in _VARIOUS_NAMES
@@ -139,6 +157,11 @@ class Point:
     name: str
     albums: int
     cluster_id: int | None
+
+    @property
+    def is_musician(self) -> bool:
+        """A musician without an album in the collection: no artist, so its id is below zero."""
+        return self.artist_id < 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -261,24 +284,74 @@ def credited_on_albums(artists: list[Artist], albums: list[Album], releases: lis
     return found
 
 
-def labels_of_albums(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> dict[int, dict[int, str]]:
+@dataclass(frozen=True, slots=True)
+class SidePlayer:
+    """Someone who plays or sings on an album without it being theirs, once per album."""
+
+    album_id: int
+    album_title: str
+    album_artist_id: int
+    discogs_id: int
+    name: str
+    roles: tuple[str, ...]
+
+
+def side_players(
+    artists: list[Artist], albums: list[Album], artist_records: list[ArtistEnrichment], releases: list[ReleaseEnrichment]
+) -> list[SidePlayer]:
+    """Who plays or sings on the albums of others. Not a producer, who is not at the instrument;
+    not anyone named on the record itself, nor a member Discogs lists of the album's band, nor
+    anyone on a compilation."""
+    by_id = {artist.id: artist for artist in artists}
+    members = {record.discogs_artist_id: set(record.member_ids or ()) for record in artist_records}
+    credits = {release.release_id: release.credits or () for release in releases}
+    found = []
+    for album in sorted(albums, key=lambda a: a.id):
+        owner = by_id.get(album.artist_id)
+        if owner is None or is_various(owner):
+            continue
+        band = members.get(owner.discogs_artist_id, ())
+        roles: dict[int, dict[str, None]] = {}
+        names: dict[int, str] = {}
+        for credit in credits.get(album.release_id, ()):
+            person = credit.discogs_artist_id
+            if person == owner.discogs_artist_id or person in band or named_in(credit.name, owner.name):
+                continue
+            parts = [part for part in on_the_record(credit.role) if not _PRODUCER.search(part)]
+            if parts:
+                roles.setdefault(person, {}).update(dict.fromkeys(parts))
+                names[person] = plain_name(credit.name)
+        found += [
+            SidePlayer(album.id, album.title, album.artist_id, person, names[person], tuple(parts))
+            for person, parts in sorted(roles.items())
+        ]
+    return found
+
+
+def musicians_as_points(players: list[SidePlayer], artists: list[Artist]) -> set[int]:
+    """The Discogs ids of those on enough albums to be a point of their own, without being an
+    artist in the collection."""
+    known = {artist.discogs_artist_id for artist in artists}
+    on_albums = Counter(player.discogs_id for player in players if player.discogs_id not in known)
+    return {person for person, count in on_albums.items() if count >= MUSICIAN_ALBUMS}
+
+
+def labels_of_albums(
+    artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment], left_out: Iterable[str] = ()
+) -> dict[int, dict[int, str]]:
     """Per album the labels that can tie artists, by Discogs id: no "Not On Label", no compilation,
-    no label with more artists than MAX_LABEL_ARTISTS."""
+    and none of those left out, whichever way Discogs spells it ("Sam Records (8)")."""
     various = {artist.id for artist in artists if is_various(artist)}
     of_release = {release.release_id: release.labels or () for release in releases}
+    without = {sort_name(name) for name in left_out}
     on_album: dict[int, dict[int, str]] = {}
-    with_artists: dict[int, set[int]] = {}
     for album in albums:
         if album.artist_id in various:
             continue
         for label in of_release.get(album.release_id, ()):
-            if not label.name.casefold().startswith(NO_LABEL):
+            if not label.name.casefold().startswith(NO_LABEL) and sort_name(label.name) not in without:
                 on_album.setdefault(album.id, {})[label.discogs_label_id] = label.name
-                with_artists.setdefault(label.discogs_label_id, set()).add(album.artist_id)
-    return {
-        album_id: {i: name for i, name in labels.items() if len(with_artists[i]) <= MAX_LABEL_ARTISTS}
-        for album_id, labels in on_album.items()
-    }
+    return on_album
 
 
 @dataclass(frozen=True, slots=True)
@@ -311,12 +384,13 @@ def tied_albums(
     artists: list[Artist],
     albums: list[Album],
     releases: list[ReleaseEnrichment],
+    labels_left_out: Iterable[str] = (),
 ) -> list[Tied]:
     """The ties of an artist with the albums that show them, oldest first."""
     by_artist: dict[int, list[Album]] = {}
     for album in sorted(albums, key=lambda a: (a.original_release_year or 9999, sort_name(a.title), a.id)):
         by_artist.setdefault(album.artist_id, []).append(album)
-    album_labels = labels_of_albums(artists, albums, releases)
+    album_labels = labels_of_albums(artists, albums, releases, labels_left_out)
     # Per other artist: the songs on each album, of those shared with this artist.
     shared: dict[int, dict[int, list[str]]] = {}
     for _, heard in collection_songs(artists, albums, releases):
@@ -359,12 +433,13 @@ def build(
     releases: list[ReleaseEnrichment],
     assignments: list[ArtistClusterAssignment],
     clusters: list[Cluster],
+    labels_left_out: Iterable[str] = (),
 ) -> Network:
     """The network of the collection's artists, from what the app knows of them.
 
     Discogs ties are read from both records: a band is a tie whether the person's record
-    names it or the band's record names the person. Only artists in the collection are
-    points; a song ties two artists when albums of both have it (see collection_songs), a compilation ("Various")
+    names it or the band's record names the person. The artists in the collection are
+    points, and musicians on enough of their albums (see musicians_as_points); a song ties two artists when albums of both have it (see collection_songs), a compilation ("Various")
     tying no one.
     """
     ties: dict[tuple[int, int], set[Tie]] = {}
@@ -412,11 +487,26 @@ def build(
         pair = (min(entry.album_artist_id, entry.artist_id), max(entry.album_artist_id, entry.artist_id))
         on_record.setdefault(pair, []).append(entry)
 
+    # A musician without an album in the collection: an id of its own, below those of artists.
+    players = side_players(artists, albums, artist_records, releases)
+    musicians = musicians_as_points(players, artists)
+    musician_names: dict[int, str] = {}
+    musician_albums: Counter[int] = Counter()
+    for player in players:
+        if player.discogs_id in musicians:
+            point = -player.discogs_id
+            tie(point, player.album_artist_id, Tie.SESSION)
+            on_record.setdefault((point, player.album_artist_id), []).append(
+                OnRecord(player.album_id, player.album_title, player.album_artist_id, point, player.name, player.roles)
+            )
+            musician_names[point] = player.name
+            musician_albums[point] += 1
+
     # Per label: the artists with an album on it, and its name.
     artists_on: dict[int, set[int]] = {}
     label_names: dict[int, str] = {}
     owner_of = {album.id: album.artist_id for album in albums}
-    for album_id, labels in labels_of_albums(artists, albums, releases).items():
+    for album_id, labels in labels_of_albums(artists, albums, releases, labels_left_out).items():
         for label_id, name in labels.items():
             artists_on.setdefault(label_id, set()).add(owner_of[album_id])
             label_names[label_id] = name
@@ -446,6 +536,7 @@ def build(
         Point(artist.id, artist.name, counts[artist.id], cluster_of.get(artist.id))
         for artist in sorted(artists, key=lambda a: a.id)
     )
+    points += tuple(Point(point, name, musician_albums[point], None) for point, name in sorted(musician_names.items()))
     return Network(points, links, tuple((c.id, c.name) for c in in_order(clusters)))
 
 
@@ -475,7 +566,7 @@ def way(shown: Network, start: int, end: int, switched: set[Tie] | frozenset[Tie
             link,
             ties=kinds,
             songs=link.songs if Tie.SONGS in kinds else (),
-            on_record=link.on_record if Tie.CREDIT in kinds else (),
+            on_record=link.on_record if Tie.CREDIT in kinds or Tie.SESSION in kinds else (),
             labels=link.labels if Tie.LABEL in kinds else (),
         )
         cost = _SONG_STEP if LOOSE_TIES.issuperset(kinds) else _STEP
@@ -542,7 +633,8 @@ def ties_of(store: JsonStore, shown: Network, artist_id: int, leave_out: frozens
     releases = store.load(ReleaseEnrichment) if store.exists(ReleaseEnrichment) else []
     albums = store.load(Album) if store.exists(Album) else []
     around = [pair for pair in shown.around(artist_id) if set(pair[1].ties) - leave_out]
-    return tied_albums(around, artist_id, store.load(Artist), albums, releases)
+    left_out = load_settings(store.data_dir).labels_left_out
+    return tied_albums(around, artist_id, store.load(Artist), albums, releases, left_out)
 
 
 def album_songs_elsewhere(store: JsonStore, album_id: int) -> list[tuple[str, tuple[int, ...]]]:
@@ -567,4 +659,5 @@ def network(store: JsonStore) -> Network:
         load(ReleaseEnrichment),
         load(ArtistClusterAssignment),
         load(Cluster),
+        load_settings(store.data_dir).labels_left_out,
     )

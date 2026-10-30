@@ -22,13 +22,13 @@
 {% endmacro %}
 
 {# A count that opens to its albums, each with where it stands. #}
-{% macro counted(label, note, album_ids, largest, href=none) %}
+{% macro counted(label, note, album_ids, largest, href=none, link_text=none) %}
 <details class="ss-stat-row">
   <summary class="ss-bars">
     {{ bar(label, album_ids | length, largest) }}
   </summary>
   {% if note %}<p class="ss-muted small mt-2 mb-1">{{ note }}</p>{% endif %}
-  {% if href %}<p class="small mt-2 mb-1"><a href="{{ href }}">{{ _('Artist page') }}</a></p>{% endif %}
+  {% if href %}<p class="small mt-2 mb-1"><a href="{{ href }}">{{ link_text }}</a></p>{% endif %}
   <ul class="ss-album-list mt-1">
     {% for album_id in album_ids %}
     {% set place = places.get(album_id) %}
@@ -77,10 +77,10 @@
 
   <section class="mt-5">
     <h2>{{ _('Most on your records') }}</h2>
-    <p class="ss-muted small mt-1">{{ _('Musicians and singers credited on the most albums of others, whether or not they have an album of their own. Number of albums.') }}</p>
+    <p class="ss-muted small mt-1">{{ _('Musicians and singers credited on the most albums of others, whether or not they have an album of their own, and no member of the band itself. Number of albums.') }}</p>
     <div class="ss-card">
       {% for person in figures.sidemen %}
-      {{ counted(person.name, person.roles | join(', '), person.album_ids, figures.sidemen[0].album_ids | length, url_for('artists.edit', artist_id=person.artist_id) if person.artist_id else none) }}
+      {{ counted(person.name, person.roles | join(', '), person.album_ids, figures.sidemen[0].album_ids | length, url_for('artists.edit', artist_id=person.artist_id) if person.artist_id else (url_for('connections.index', artist=person.point_id) if person.point_id else none), _('Artist page') if person.artist_id else _('Connections')) }}
       {% else %}
       <div class="ss-card-body ss-muted">{% if figures.credits_fetched %}{{ _('Nobody is credited on several albums yet.') }}{% else %}{{ _('This comes with the next Discogs sync.') }}{% endif %}</div>
       {% endfor %}

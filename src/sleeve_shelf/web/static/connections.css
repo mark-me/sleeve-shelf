@@ -9,6 +9,7 @@
   --ss-tie-billing: #C2410C;
   --ss-tie-family: #059669;
   --ss-tie-credit: #DB2777;
+  --ss-tie-session: #65A30D;
   --ss-tie-songs: #A8A29E;
   --ss-tie-label: #0E7490;
 }
@@ -19,6 +20,7 @@
   --ss-tie-billing: #FB923C;
   --ss-tie-family: #34D399;
   --ss-tie-credit: #F472B6;
+  --ss-tie-session: #A3E635;
   --ss-tie-songs: #78716C;
   --ss-tie-label: #22D3EE;
 }
@@ -43,6 +45,7 @@
 .ss-tie-billing { border-color: var(--ss-tie-billing); }
 .ss-tie-family { border-top-style: dashed; border-color: var(--ss-tie-family); }
 .ss-tie-credit { border-color: var(--ss-tie-credit); }
+.ss-tie-session { border-top-width: 2px; border-color: var(--ss-tie-session); }
 .ss-tie-songs { border-top-width: 2px; border-color: var(--ss-tie-songs); }
 .ss-tie-label { border-top-width: 2px; border-color: var(--ss-tie-label); }
 .ss-chip .ss-tie-swatch { width: 14px; }

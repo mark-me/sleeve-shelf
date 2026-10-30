@@ -7,6 +7,7 @@ import pytest
 
 from sleeve_shelf import create_app
 from sleeve_shelf.access import set_password
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.covers import ARTIST_DIR, COVER_DIR, cover_name
 from sleeve_shelf.domain import (
     Album,
@@ -23,7 +24,7 @@ from sleeve_shelf.domain import (
     Shelf,
     Track,
 )
-from sleeve_shelf.network import MAX_LABEL_ARTISTS, Link, Network, OnRecord, Point, Tie, TiedAlbum, build, network, on_the_record, song_key, songs_elsewhere, tied_albums, ties_of, way
+from sleeve_shelf.network import MUSICIAN_ALBUMS, Link, Network, OnRecord, Point, Tie, TiedAlbum, build, network, on_the_record, song_key, songs_elsewhere, tied_albums, ties_of, way
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web import login
 
@@ -355,14 +356,92 @@ def test_the_same_label_ties_two_artists_and_shows_the_albums_on_it():
     assert tied.mine == (TiedAlbum(1, labels=("Blue Note",)),)
 
 
-def test_a_label_of_too_many_artists_ties_no_one():
-    count = MAX_LABEL_ARTISTS + 1
-    artists = [Artist(i, f"Artist {i}") for i in range(1, count + 1)]
-    albums = [Album(i, i, f"Album {i}", release_id=i) for i in range(1, count + 1)]
-    releases = [ReleaseEnrichment(i, (), None, FETCHED, tracklist=(), labels=(ReleaseLabel(50, "Columbia"),)) for i in range(1, count + 1)]
+def test_a_label_left_out_ties_no_one_however_discogs_spells_it():
+    artists, albums, releases = _on_labels()
+    assert build(artists, albums, [], releases, [], []).links
 
-    assert build(artists, albums, [], releases, [], []).links == ()
-    assert len(build(artists[:-1], albums[:-1], [], releases[:-1], [], []).links) > 0
+    # Discogs tells labels of one name apart with a number.
+    releases = [
+        ReleaseEnrichment(r.release_id, (), None, FETCHED, tracklist=(), labels=tuple(ReleaseLabel(l.discogs_label_id, l.name + " (8)") for l in r.labels))
+        for r in releases
+    ]
+    assert build(artists, albums, [], releases, [], [], ["Blue Note"]).links == ()
+
+
+def _session_collection(tmp_path, albums_on=MUSICIAN_ALBUMS):
+    """A bassist without an album on enough records of two artists to be a point; a member of the
+    band and a producer on as many, who are not; Coltrane's page, and Miles' band."""
+    store = JsonStore(tmp_path)
+    store.save(Artist, [Artist(1, "Miles Davis", discogs_artist_id=101), Artist(2, "John Coltrane", discogs_artist_id=102)])
+    store.save(ArtistEnrichment, [ArtistEnrichment(101, None, None, FETCHED, member_ids=(500,))])
+    albums = [Album(i, 1 if i % 2 else 2, f"Album {i}", release_id=i) for i in range(1, albums_on + 1)]
+    store.save(Album, albums)
+    store.save(
+        ReleaseEnrichment,
+        [
+            ReleaseEnrichment(
+                album.id, (), None, FETCHED, tracklist=(), labels=(),
+                credits=(Credit(900, "Paul Chambers (3)", "Bass"), Credit(500, "Band Member", "Drums"), Credit(800, "Teo Macero", "Producer")),
+            )
+            for album in albums
+        ],
+    )
+    return store
+
+
+def test_a_musician_on_enough_albums_is_a_point(tmp_path):
+    shown = network(_session_collection(tmp_path))
+
+    musicians = [point for point in shown.points if point.is_musician]
+    assert [(p.artist_id, p.name, p.albums) for p in musicians] == [(-900, "Paul Chambers", MUSICIAN_ALBUMS)]
+    # Not the member of the band, on his own band's albums, nor the producer.
+    ties = {(link.one, link.other): link.ties for link in shown.links}
+    assert ties[(-900, 1)] == (Tie.SESSION,) and ties[(-900, 2)] == (Tie.SESSION,)
+    # So the two artists have a way between them through the musician.
+    found = way(shown, 1, 2, set(Tie))
+    assert [point.artist_id for point, _ in found] == [1, -900, 2]
+
+
+def test_a_musician_on_too_few_albums_is_no_point(tmp_path):
+    shown = network(_session_collection(tmp_path, MUSICIAN_ALBUMS - 1))
+
+    assert not [point for point in shown.points if point.is_musician]
+
+
+def test_the_connections_of_a_musician_have_no_artist_page(tmp_path):
+    _session_collection(tmp_path / "data")
+    client = create_app(tmp_path / "data").test_client()
+
+    page = client.get("/connections/?artist=-900")
+    assert page.status_code == 200
+    assert "Connections of Paul Chambers" in page.text and "Musician without an album of their own" in page.text
+    assert "on 5 albums" in page.text
+    assert "/artists/-900" not in page.text
+    # The albums he is on, under the artist they are by.
+    assert re.search(r"Album 1</a>", page.text) and "Paul Chambers: Bass" in page.text
+    # Around an artist: tied to him, without a page either; and the way through him.
+    around = client.get("/connections/?artist=1").text
+    assert 'href="/connections/?artist=-900"' in around and 'data-ties="session"' in around
+    assert client.get("/connections/?artist=1&to=-900").status_code == 200
+    assert "Paul Chambers" in client.get("/connections/?q=chambers").text
+
+
+def test_the_labels_that_tie_no_artists_are_a_setting(tmp_path):
+    store = JsonStore(tmp_path / "data")
+    artists, albums, releases = _on_labels()
+    store.save(Artist, artists)
+    store.save(Album, albums)
+    store.save(ReleaseEnrichment, releases)
+    client = create_app(tmp_path / "data").test_client()
+    assert network(store).links
+
+    page = client.get("/settings/").text
+    assert 'name="labels_left_out"' in page and "Music On Vinyl" in page
+    form = {"base_width_cm": "0.5", "surcharge_180_gram_cm": "0.15", "surcharge_gatefold_cm": "0.2", "labels_left_out": "Blue Note\n\n  UMe  \n"}
+    client.post("/settings/", data=form)
+
+    assert load_settings(tmp_path / "data").labels_left_out == ["Blue Note", "UMe"]
+    assert not network(store).links
 
 
 def test_a_label_is_a_loose_step_on_the_way():

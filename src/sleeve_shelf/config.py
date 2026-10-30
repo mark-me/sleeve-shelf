@@ -1,7 +1,7 @@
 """Application settings, kept in config.yaml inside the data directory."""
 
 import os
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 
 import yaml
@@ -9,6 +9,30 @@ import yaml
 from sleeve_shelf.domain import WidthConstants
 
 CONFIG_FILE = "config.yaml"
+
+
+# Labels that reissue others' records, or are a large company's name on them: that two artists
+# are on one says nothing about the two. A first list, to be changed under Settings.
+REISSUE_LABELS = (
+    "BMG",
+    "Craft Recordings",
+    "DOL",
+    "Jazz Images",
+    "Legacy",
+    "Light In The Attic",
+    "Music On Vinyl",
+    "Not Now Music",
+    "Original Jazz Classics",
+    "Sam Records",
+    "Sony Music",
+    "UMC",
+    "UMe",
+    "Universal Music Group",
+    "Universal Music Group International",
+    "Vinyl Passion",
+    "WaxTime",
+    "WaxTime In Color",
+)
 
 
 @dataclass(slots=True)
@@ -30,6 +54,8 @@ class Settings:
     # A person in more bands of the collection than this is a sideman: their bands are not
     # suggested as their family, and connect to them only loosely.
     sideman_bands: int = 4
+    # Labels that tie no artists on the Connections screen.
+    labels_left_out: list[str] = field(default_factory=lambda: list(REISSUE_LABELS))
     # The owner's password, hashed; without one the app is open and everyone is the owner.
     owner_password_hash: str | None = None
     # What a logged-in device keeps in its session: random, made anew with every password,

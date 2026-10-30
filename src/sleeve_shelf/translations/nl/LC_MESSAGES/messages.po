@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 12:01+0100\n"
+"POT-Creation-Date: 2026-10-30 12:44+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -132,6 +132,8 @@ msgstr "Zonder plek"
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+#: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Connections"
 msgstr "Verbanden"
 
@@ -1345,6 +1347,10 @@ msgid "On the record"
 msgstr "Op de plaat"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Musician"
+msgstr "Muzikant"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Same label"
 msgstr "Zelfde label"
 
@@ -1361,6 +1367,10 @@ msgid "Label:"
 msgstr "Label:"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Musician without an album of their own"
+msgstr "Muzikant zonder eigen album"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Your way here"
 msgstr "Je weg hierheen"
 
@@ -1368,6 +1378,13 @@ msgstr "Je weg hierheen"
 #, python-format
 msgid "Connections of %(name)s"
 msgstr "Verbanden van %(name)s"
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "on %(num)d album"
+msgid_plural "on %(num)d albums"
+msgstr[0] "op %(num)d album"
+msgstr[1] "op %(num)d albums"
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 msgid "The whole collection"
@@ -2880,6 +2897,14 @@ msgid "Someone Discogs lists in more bands of your collection than this plays al
 msgstr "Wie volgens Discogs in meer bands van je collectie zit dan dit, speelt mee in plaats van leidt: die bands worden niet als zijn familie voorgesteld, en geven alleen een aanwijzing voor een cluster."
 
 #: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Labels that tie no artists"
+msgstr "Labels die geen artiesten verbinden"
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "One per line. Two artists on a label that reissues other labels' records have nothing to do with each other, so such a label ties no one under Connections. Statistics still counts it."
+msgstr "Eén per regel. Twee artiesten op een label dat platen van andere labels heruitgeeft hebben niets met elkaar te maken, dus zo'n label verbindt niemand onder Verbanden. Statistieken telt het nog wel."
+
+#: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Discogs"
 msgstr "Discogs"
 
@@ -3170,8 +3195,8 @@ msgid "Most on your records"
 msgstr "Het vaakst op je platen"
 
 #: src/sleeve_shelf/web/templates/stats/index.html
-msgid "Musicians and singers credited on the most albums of others, whether or not they have an album of their own. Number of albums."
-msgstr "Muzikanten en zangers die op de meeste albums van anderen genoemd worden, met of zonder eigen album. Aantal albums."
+msgid "Musicians and singers credited on the most albums of others, whether or not they have an album of their own, and no member of the band itself. Number of albums."
+msgstr "Muzikanten en zangers die op de meeste albums van anderen genoemd worden, met of zonder eigen album, en geen leden van de band zelf. Aantal albums."
 
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Nobody is credited on several albums yet."

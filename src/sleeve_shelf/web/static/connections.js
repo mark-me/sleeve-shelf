@@ -16,7 +16,7 @@
     return;
   }
   const switches = Array.from(document.querySelectorAll("input[data-tie]"));
-  const TIES = ["name", "member", "billing", "family", "credit", "songs", "label"];
+  const TIES = ["name", "member", "billing", "family", "credit", "session", "songs", "label"];
   const centre = box.dataset.artist ? Number(box.dataset.artist) : null;
   const steps = Number(box.dataset.steps || 1);
   // Ties that say two artists share something, rather than that they know each other.
@@ -133,6 +133,7 @@
           id === centre ? "centre" : "",
           centre !== null && picture ? "picture" : "",
           centre !== null && picture && borrowed ? "borrowed" : "",
+          id < 0 ? "musician" : "",
         ].join(" "),
       }));
     // Around an artist songs and labels are drawn only from the artist in the middle, as they
@@ -150,9 +151,9 @@
           target: String(link.other),
           ties: link.ties,
           songs: link.ties.includes("songs") ? link.songs : [],
-          record: link.ties.includes("credit") ? link.record : [],
+          record: link.ties.includes("credit") || link.ties.includes("session") ? link.record : [],
           labels: link.ties.includes("label") ? link.labels : [],
-          width: link.ties[0] === "songs" ? 1 + Math.min(link.songs.length, 6) * 0.5 : link.ties[0] === "label" ? 1.5 : 2.5,
+          width: link.ties[0] === "songs" ? 1 + Math.min(link.songs.length, 6) * 0.5 : link.ties[0] === "label" ? 1.5 : link.ties[0] === "session" ? 2 : 2.5,
         },
         classes: link.ties[0],
       }));
@@ -203,6 +204,8 @@
           "border-color": "data(colour)",
         },
       },
+      // A musician without an album of their own is no artist: another shape, as no cluster.
+      { selector: "node.musician", style: { shape: "diamond" } },
       // A picture borrowed from an artist it names: the ring says so.
       { selector: "node.borrowed", style: { "border-style": "dashed" } },
       { selector: "node.centre", style: { "border-width": 4, "border-color": colour("--ss-accent"), "font-weight": 600 } },
@@ -283,7 +286,7 @@
 
   function describe(node, offer) {
     const data = node.data();
-    const parts = [data.name, clusterNames.get(data.cluster) || box.dataset.noCluster, albums(data.albums)];
+    const parts = [data.name, Number(data.id) < 0 ? box.dataset.musician : clusterNames.get(data.cluster) || box.dataset.noCluster, albums(data.albums)];
     if (data.borrowed) parts.push(box.dataset.borrowed);
     const text = parts.join(" · ");
     say(text, offer ? Number(data.id) : null);

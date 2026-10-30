@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 12:01+0100\n"
+"POT-Creation-Date: 2026-10-30 12:44+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -110,6 +110,8 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+#: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Connections"
 msgstr ""
 
@@ -1345,6 +1347,10 @@ msgid "On the record"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Musician"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Same label"
 msgstr ""
 
@@ -1361,6 +1367,10 @@ msgid "Label:"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
+msgid "Musician without an album of their own"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
 msgid "Your way here"
 msgstr ""
 
@@ -1368,6 +1378,13 @@ msgstr ""
 #, python-format
 msgid "Connections of %(name)s"
 msgstr ""
+
+#: src/sleeve_shelf/web/templates/connections/index.html
+#, python-format
+msgid "on %(num)d album"
+msgid_plural "on %(num)d albums"
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/stats/index.html
@@ -2880,6 +2897,14 @@ msgid "Someone Discogs lists in more bands of your collection than this plays al
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Labels that tie no artists"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "One per line. Two artists on a label that reissues other labels' records have nothing to do with each other, so such a label ties no one under Connections. Statistics still counts it."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Discogs"
 msgstr ""
 
@@ -3170,7 +3195,7 @@ msgid "Most on your records"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/stats/index.html
-msgid "Musicians and singers credited on the most albums of others, whether or not they have an album of their own. Number of albums."
+msgid "Musicians and singers credited on the most albums of others, whether or not they have an album of their own, and no member of the band itself. Number of albums."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/stats/index.html

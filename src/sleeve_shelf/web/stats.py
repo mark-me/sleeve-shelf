@@ -11,8 +11,8 @@ from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("stats", __name__, url_prefix="/statistics")
 
-# The ties a way goes along here: the close ones, as the longest way is worked out by those.
-CLOSE_TIES = ",".join(tie.value for tie in Tie if tie not in (Tie.SONGS, Tie.LABEL))
+# The ties a way goes along here: those the longest way is worked out by.
+CLOSE_TIES = ",".join(tie.value for tie in Tie if tie not in (Tie.SONGS, Tie.LABEL, Tie.SESSION))
 
 
 @blueprint.get("/")

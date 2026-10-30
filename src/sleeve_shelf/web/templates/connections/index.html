@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Connections') }}{% endblock %}
 
-{% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% elif tie == 'credit' %}{{ _('On the record') }}{% elif tie == 'label' %}{{ _('Same label') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
+{% macro tie_name(tie) %}{% if tie == 'name' %}{{ _('Other name') }}{% elif tie == 'member' %}{{ _('Member') }}{% elif tie == 'billing' %}{{ _('In the name') }}{% elif tie == 'family' %}{{ _('Family') }}{% elif tie == 'credit' %}{{ _('On the record') }}{% elif tie == 'session' %}{{ _('Musician') }}{% elif tie == 'label' %}{{ _('Same label') }}{% else %}{{ _('Same song') }}{% endif %}{% endmacro %}
 
 {# The albums that show a tie, each with where it stands: the LP to take from the shelf. #}
 {% macro tied_albums(name, albums) %}
@@ -23,6 +23,9 @@
 </ul>
 {% endmacro %}
 
+{# What is said under the name of a point: its cluster, or that it is a musician without an album. #}
+{% macro point_note(point) %}{% if point.is_musician %}{{ _('Musician without an album of their own') }}{% else %}{{ clusters.get(point.cluster_id) or _('no cluster yet') }}{% endif %}{% endmacro %}
+
 {% block head %}
 {# Cytoscape adds a stylesheet of its own unless one with this id is there; the policy would
    refuse it, so this one stands in for it. #}
@@ -36,8 +39,10 @@
   <h1>{% if artist %}{{ _('Connections of %(name)s', name=artist.name) }}{% else %}{{ _('Connections') }}{% endif %}</h1>
   <p class="ss-muted mt-1">
     {% if artist %}
-    {{ cluster or _('no cluster yet') }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', artist.albums) }} &middot;
+    {% if artist.is_musician %}{{ point_note(artist) }} &middot; {{ ngettext('on %(num)d album', 'on %(num)d albums', artist.albums) }} &middot;
+    {% else %}{{ cluster or _('no cluster yet') }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', artist.albums) }} &middot;
     <a href="{{ url_for('artists.edit', artist_id=artist.artist_id) }}">{{ _('Artist page') }}</a> &middot;
+    {% endif %}
     <a href="{{ url_for('connections.index', ties=ties_param) }}">{{ _('The whole collection') }}</a>
     {% else %}
     {{ _('How the artists in your collection are tied together: members of a band, other names, one name inside another, families, who is on whose records, and the same song on albums of both. Choose an artist to put it in the middle.') }}
@@ -58,7 +63,7 @@
     <a class="ss-row ss-row-link" href="{{ url_for('connections.index', artist=point.artist_id, ties=ties_param) }}">
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ point.name }}</span>
-        <span class="ss-row-title">{{ clusters.get(point.cluster_id) or _('no cluster yet') }}{% if point.artist_id not in tied %} &middot; {{ _('tied to no one') }}{% endif %}</span>
+        <span class="ss-row-title">{{ point_note(point) }}{% if point.artist_id not in tied %} &middot; {{ _('tied to no one') }}{% endif %}</span>
       </div>
     </a>
     {% else %}
@@ -98,6 +103,7 @@
        data-albums-many="{{ ngettext('%(num)d album', '%(num)d albums', 2) | replace('2', '{n}') }}"
        data-artists-one="{{ ngettext('%(num)d artist', '%(num)d artists', 1) }}"
        data-artists-many="{{ ngettext('%(num)d artist', '%(num)d artists', 2) | replace('2', '{n}') }}"
+       data-musician="{{ _('Musician without an album of their own') }}"
        data-label-word="{{ _('Label:') }}"
        data-borrowed="{{ _('picture of an artist it names') }}"
        data-no-cluster="{{ _('no cluster yet') }}"
@@ -134,7 +140,7 @@
     <a class="ss-row ss-row-link" href="{{ url_for('connections.index', artist=artist.artist_id, to=point.artist_id, ties=ties_param) }}#way">
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ point.name }}</span>
-        <span class="ss-row-title">{{ clusters.get(point.cluster_id) or _('no cluster yet') }}</span>
+        <span class="ss-row-title">{{ point_note(point) }}</span>
       </div>
     </a>
     {% else %}
@@ -161,9 +167,9 @@
       <div class="ss-row">
         <div class="ss-row-text">
           <a class="ss-row-artist" href="{{ url_for('connections.index', artist=point.artist_id, ties=ties_param) }}">{{ point.name }}</a>
-          <span class="ss-row-title">{{ clusters.get(point.cluster_id) or _('no cluster yet') }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', point.albums) }}</span>
+          <span class="ss-row-title">{{ point_note(point) }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', point.albums) }}</span>
         </div>
-        <a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=point.artist_id) }}">{{ _('Artist page') }}</a>
+        {% if not point.is_musician %}<a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=point.artist_id) }}">{{ _('Artist page') }}</a>{% endif %}
       </div>
     </li>
     {% endfor %}
@@ -194,7 +200,7 @@
         </details>
         {% endif %}
       </div>
-      <a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=other.artist_id) }}">{{ _('Artist page') }}</a>
+      {% if not other.is_musician %}<a class="ss-row-place" href="{{ url_for('artists.edit', artist_id=other.artist_id) }}">{{ _('Artist page') }}</a>{% endif %}
     </div>
     {% endfor %}
   </div>
