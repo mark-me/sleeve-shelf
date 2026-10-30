@@ -356,3 +356,18 @@ def test_an_album_page_has_three_tabs_with_editing_apart(tmp_path):
 
     empty = client.get("/albums/5?tab=statistics").text
     assert "Nothing to tell about this album yet" in empty
+
+
+def test_an_album_and_an_artist_link_to_discogs_when_linked(tmp_path):
+    store = _album_figures_collection(tmp_path / "data")
+    client = create_app(tmp_path / "data").test_client()
+
+    for tab in ("", "?tab=statistics", "?tab=manage"):
+        assert '<a href="https://www.discogs.com/release/2" target="_blank" rel="noopener">Discogs</a>' in client.get(f"/albums/2{tab}").text
+    assert '<a href="https://www.discogs.com/artist/101" target="_blank" rel="noopener">Discogs</a>' in client.get("/artists/1").text
+
+    store.save(Artist, [Artist(1, "Miles Davis"), Artist(2, "John Coltrane", discogs_artist_id=102)])
+    albums = [Album(a.id, a.artist_id, a.title, original_release_year=a.original_release_year) for a in store.load(Album)]
+    store.save(Album, albums)
+    assert "discogs.com/artist" not in client.get("/artists/1").text
+    assert "discogs.com/release" not in client.get("/albums/2").text

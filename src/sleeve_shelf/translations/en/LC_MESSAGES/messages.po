@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 23:23+0100\n"
+"POT-Creation-Date: 2026-10-30 23:36+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -618,6 +618,12 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Show the cover larger"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Discogs"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -3026,10 +3032,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "One per line. Two artists on a label that reissues other labels' records have nothing to do with each other, so such a label ties no one under Connections. Statistics still counts it."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/settings/index.html
-msgid "Discogs"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/settings/index.html

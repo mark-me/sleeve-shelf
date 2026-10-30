@@ -807,6 +807,7 @@ Besides that the page holds: cluster with its confirmation status and the action
 
 - **Location rules**: the rules that bear on the artist or album are listed, the deciding one first and marked — an album's own rule, then the artist's, the family's, the cluster's — the others marked as overruled. Without any, the page says so. Rules are changed on the Location rules screen
 - **Connections** (2026-10-26; on the album's page too since 2026-10-29): opens the Connections screen around the artist; visitors see it too
+- **Discogs** (asked for by Mark 2026-10-30): beside Connections, on every tab, a link to the artist's or the release's page on Discogs, in a new tab; visitors see it too. An artist or album not linked to Discogs has none
 - **Move…** (2026-10-18; before, a form of its own that put the album, or all of the artist's albums, at the end of a shelf): opens the Move screen with the album or artist chosen
 - **Suggested spot** (2026-10-12): the page of an LP that stands on no shelf shows its suggested spot — the shelf (linking to it in Browse/Search), the two albums it would stand between, what the spot goes by (the artist's own albums, its era band, its cluster, the order of the clusters, or a location rule), and how much room the shelf has left — with a button to put it there. Moving it to any shelf by hand remains possible below
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-30 23:23+0100\n"
+"POT-Creation-Date: 2026-10-30 23:36+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -619,6 +619,12 @@ msgstr "Deezer of Discogs was niet bereikbaar, dus er is later misschien meer te
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Show the cover larger"
 msgstr "De hoes groter tonen"
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Discogs"
+msgstr "Discogs"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
@@ -3027,10 +3033,6 @@ msgstr "Labels die geen artiesten verbinden"
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "One per line. Two artists on a label that reissues other labels' records have nothing to do with each other, so such a label ties no one under Connections. Statistics still counts it."
 msgstr "Eén per regel. Twee artiesten op een label dat platen van andere labels heruitgeeft hebben niets met elkaar te maken, dus zo'n label verbindt niemand onder Verbanden. Statistieken telt het nog wel."
-
-#: src/sleeve_shelf/web/templates/settings/index.html
-msgid "Discogs"
-msgstr "Discogs"
 
 #: src/sleeve_shelf/web/templates/settings/index.html
 msgid "Count a bundle such as “CD + LP” as vinyl"

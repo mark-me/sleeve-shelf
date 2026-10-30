@@ -12,7 +12,7 @@
     {{ zoomable(album.cover_url, album.cover_image_url, _('Show the cover larger')) }}
     <div>
       <h1>{{ album.title }}</h1>
-      <p class="ss-muted mb-0 mt-1">{{ artist.name if artist }}{% if album.original_release_year %} &middot; {{ album.original_release_year }}{% endif %}{% if artist %} &middot; <a href="{{ url_for('connections.index', artist=artist.id) }}">{{ _('Connections') }}</a>{% endif %}</p>
+      <p class="ss-muted mb-0 mt-1">{{ artist.name if artist }}{% if album.original_release_year %} &middot; {{ album.original_release_year }}{% endif %}{% if artist %} &middot; <a href="{{ url_for('connections.index', artist=artist.id) }}">{{ _('Connections') }}</a>{% endif %}{% if album.release_id %} &middot; <a href="https://www.discogs.com/release/{{ album.release_id }}" target="_blank" rel="noopener">{{ _('Discogs') }}</a>{% endif %}</p>
     </div>
   </div>
 

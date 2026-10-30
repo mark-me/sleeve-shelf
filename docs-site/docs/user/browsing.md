@@ -63,7 +63,7 @@ Open an album by its title, wherever one is listed: a search result, a shelf, it
 - its format, Discogs styles and Discogs release
 - its **tracklist**: the songs with their place on the record and their length
 - **the same songs elsewhere**: the other albums in your collection with one of its songs, and where each stands — another version to pull from the shelf
-- **Connections**, beside the artist's name: the artist in the middle of its [connections](#connections)
+- **Connections**, beside the artist's name: the artist in the middle of its [connections](#connections); next to it **Discogs** opens the release on Discogs (an artist's page has the same link to the artist)
 
 **Statistics** shows what your collection says about the album: how many songs and minutes it has, its place among the artist's albums by year with those before and after it, who is on it and on how many of your albums, other albums with several of the same people, who wrote the songs, how many of your albums share its styles and label, and what else you have from its year.
 
