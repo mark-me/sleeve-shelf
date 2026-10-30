@@ -135,8 +135,9 @@ class CollectionFigures:
 def _named_in(name: str, album_artist: str) -> bool:
     """Whether the credited person is named on the record itself: Nick Cave on an album of
     Nick Cave & The Bad Seeds is no sideman."""
-    found = sort_name(name)
-    return bool(found) and re.search(r"(?<!\w)" + re.escape(found) + r"(?!\w)", sort_name(album_artist)) is not None
+    found, billed = sort_name(name), sort_name(album_artist)
+    # Only for a name that occurs at all is a pattern made: there are thousands of credits.
+    return bool(found) and found in billed and re.search(r"(?<!\w)" + re.escape(found) + r"(?!\w)", billed) is not None
 
 
 def _people(
@@ -302,6 +303,7 @@ def _longest_way(shown: Network) -> LongestWay | None:
     """The two artists furthest apart along close ties. Songs and labels are left out: they tie
     nearly everyone to everyone in a few steps."""
     names = {point.artist_id: point.name for point in shown.points}
+    sorted_as = {artist_id: sort_name(name) for artist_id, name in names.items()}
     next_to = _close_ties(shown)
     best: tuple[int, str, str, int, int] | None = None
     for start in next_to:
@@ -314,8 +316,8 @@ def _longest_way(shown: Network) -> LongestWay | None:
                     steps[other] = steps[here] + 1
                     queue.append(other)
         for end, distance in steps.items():
-            one, other = sorted((start, end), key=lambda i: sort_name(names[i]))
-            found = (-distance, sort_name(names[one]), sort_name(names[other]), one, other)
+            one, other = sorted((start, end), key=sorted_as.__getitem__)
+            found = (-distance, sorted_as[one], sorted_as[other], one, other)
             if distance and (best is None or found < best):
                 best = found
     if best is None:
