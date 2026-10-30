@@ -14,6 +14,7 @@ from sleeve_shelf.domain import (
     MasterEnrichment,
     Credit,
     ReleaseEnrichment,
+    ReleaseLabel,
     Track,
 )
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
@@ -85,6 +86,7 @@ class DiscogsClient:
             year=data.get("year") or None,
             tracklist=tracklist(data.get("tracklist"), data.get("extraartists")),
             credits=credits_of(data),
+            labels=labels_of(data),
         )
 
     def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
@@ -269,6 +271,15 @@ def credits_of(data: dict) -> tuple[Credit, ...]:
         for part in parts:
             found += [credit(entry, part.get("position") or "") for entry in part.get("extraartists") or ()]
     return tuple(dict.fromkeys(item for item in found if item))
+
+
+def labels_of(data: dict) -> tuple[ReleaseLabel, ...]:
+    """The record labels of a release, each once, with the catalogue number first given for it."""
+    found: dict[int, ReleaseLabel] = {}
+    for entry in data.get("labels") or ():
+        if entry.get("id") and entry.get("name"):
+            found.setdefault(entry["id"], ReleaseLabel(entry["id"], entry["name"].strip(), (entry.get("catno") or "").strip()))
+    return tuple(found.values())
 
 
 def _credited(tracks: str, positions: list[str]) -> list[int]:

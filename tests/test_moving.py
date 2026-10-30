@@ -170,7 +170,7 @@ def test_the_pages_of_an_album_artist_family_and_cluster_lead_to_the_move_screen
     client = create_app(tmp_path).test_client()
 
     assert 'href="/move/?kind=album&amp;id=11"' in client.get("/albums/11").text
-    assert 'href="/move/?kind=artist&amp;id=2"' in client.get("/artists/2").text
+    assert 'href="/move/?kind=artist&amp;id=2"' in client.get("/artists/2?tab=manage").text
     assert 'href="/move/?kind=family&amp;id=1"' in client.get("/families/").text
     assert 'href="/move/?kind=cluster&amp;id=1"' in client.get("/clusters/1").text
 

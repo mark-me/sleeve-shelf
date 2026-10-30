@@ -1,0 +1,63 @@
+{# What the collection says about the artist. Expects `figures` and `places`. #}
+{% from "_figures.html" import bar, years %}
+<section class="ss-card">
+  <div class="ss-card-body">
+    <p class="mb-0">
+      {{ ngettext('%(num)d album', '%(num)d albums', figures.albums) }}{% if figures.rank %} &middot; {% if figures.rank_shared %}{{ _('shared number %(rank)d in your collection', rank=figures.rank) }}{% else %}{{ _('number %(rank)d in your collection', rank=figures.rank) }}{% endif %}{% endif %}
+    </p>
+    {% if figures.shelves %}
+    <p class="ss-muted small mt-1 mb-0">{{ _('About %(width)s cm of shelf', width=figures.width_cm | decimal(0)) }}, {{ ngettext('on %(num)d shelf', 'on %(num)d shelves', figures.shelves) }}</p>
+    {% endif %}
+  </div>
+</section>
+
+{% if figures.styles %}
+<h2 class="mt-4">{{ _('Styles') }}</h2>
+{% if figures.albums >= 3 %}
+<p class="ss-muted small mt-1 mb-2">{{ _('Albums per Discogs style; an album can have several.') }}</p>
+<div class="ss-bars">
+  {% for name, count in figures.styles[:6] %}{{ bar(name, count, figures.styles[0][1]) }}{% endfor %}
+</div>
+{% if figures.styles | length > 6 %}<p class="ss-muted small mt-2 mb-0">{{ ngettext('and %(num)d more style', 'and %(num)d more styles', figures.styles | length - 6) }}</p>{% endif %}
+{% else %}
+<p class="mt-2 mb-0">{% for name, _count in figures.styles %}<span class="ss-chip me-1 mb-1 d-inline-block">{{ name }}</span>{% endfor %}</p>
+{% endif %}
+{% endif %}
+
+{% if figures.albums >= 3 and figures.years | length > 1 %}
+<h2 class="mt-4">{{ _('Through the years') }}</h2>
+<div class="mt-2">{{ years(figures.years) }}</div>
+{% endif %}
+
+{% if figures.companions %}
+<h2 class="mt-4">{{ _('Recurring on the records') }}</h2>
+<p class="ss-muted small mt-1 mb-2">{{ _('Who is credited on several of these albums.') }}</p>
+<div class="ss-card">
+  {% for person in figures.companions %}
+  <div class="ss-row">
+    <div class="ss-row-text">
+      {% if person.artist_id %}<a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=person.artist_id) }}">{{ person.name }}</a>{% else %}<span class="ss-row-artist">{{ person.name }}</span>{% endif %}
+      <span class="ss-row-title">{{ person.roles | join(', ') }}</span>
+    </div>
+    <span class="ss-row-place">{{ ngettext('%(num)d album', '%(num)d albums', person.album_ids | length) }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if figures.appears_on %}
+<h2 class="mt-4">{{ _('Also on') }}</h2>
+<p class="ss-muted small mt-1 mb-2">{{ _('Albums of others in your collection this artist is credited on.') }}</p>
+<div class="ss-card">
+  {% for entry in figures.appears_on[:8] %}
+  {% set place = places.get(entry.album_id) %}
+  <div class="ss-row">
+    <div class="ss-row-text">
+      <a class="ss-row-artist" href="{{ url_for('albums.detail', album_id=entry.album_id) }}">{{ entry.album_title }}</a>
+      <span class="ss-row-title">{% if place %}{{ place.artist }} &middot; {% endif %}{{ entry.roles | join(', ') }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% if figures.appears_on | length > 8 %}<p class="ss-muted small mt-2 mb-0">{{ ngettext('and %(num)d more album', 'and %(num)d more albums', figures.appears_on | length - 8) }}</p>{% endif %}
+{% endif %}

@@ -140,7 +140,7 @@ def test_a_shift_waits_on_the_dashboard_and_the_artist_until_decided(app, client
     assert "1 artist a new purchase points to another cluster" in dashboard
     to_check = client.get("/artists/?show=attention").text
     assert "Low" in to_check and "new purchase points to Post-Punk" in to_check
-    page = client.get("/artists/1").text
+    page = client.get("/artists/1?tab=manage").text
     assert "A new purchase points to another cluster" in page
     assert "Hey What, Double Negative" in page and "Keep in Slowcore" in page
     # Nothing moved by itself.
@@ -151,7 +151,7 @@ def test_a_shift_waits_on_the_dashboard_and_the_artist_until_decided(app, client
     store = _store(app)
     assert store.load(ArtistClusterAssignment)[0].cluster_id == 1
     assert cluster_shifts(store) == []
-    assert "A new purchase points to another cluster" not in client.get("/artists/1").text
+    assert "A new purchase points to another cluster" not in client.get("/artists/1?tab=manage").text
     assert "new purchase points" not in client.get("/dashboard/").text
 
 

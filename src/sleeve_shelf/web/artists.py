@@ -18,6 +18,7 @@ from flask_babel import gettext as _
 
 from sleeve_shelf import artists as artist_service
 from sleeve_shelf.alias_groups import cluster_hints
+from sleeve_shelf.collection_stats import artist_figures
 from sleeve_shelf.artists import (
     PICTURE_DIR,
     albums_per_artist,
@@ -43,7 +44,7 @@ from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
 from sleeve_shelf.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store
-from sleeve_shelf.web.login import redirect_within
+from sleeve_shelf.web.login import is_owner, redirect_within
 from sleeve_shelf.web.places import described_rules
 
 blueprint = Blueprint("artists", __name__, url_prefix="/artists")
@@ -166,7 +167,7 @@ def edit(artist_id: int):
         if not errors:
             artist_service.set_start_year(store, artist_id, year)
             artist_service.set_cluster(store, artist_id, cluster_id, new_cluster)
-            return redirect(url_for("artists.edit", artist_id=artist_id, saved=1))
+            return redirect(url_for("artists.edit", artist_id=artist_id, tab="manage", saved=1))
 
     albums = [album for album in store.load(Album) if album.artist_id == artist_id]
     sorted_albums = _albums_taking_part(store).get(artist_id, [])
@@ -198,9 +199,22 @@ def edit(artist_id: int):
     derived_year = _earliest_year(sorted_albums)
     shift = next((s for s in cluster_shifts(store) if s.artist_id == artist_id), None)
     cluster_names = {cluster.id: cluster.name for cluster in clusters}
+    # What the artist is comes first; what can be changed about it is the owner's, a tab further.
+    owner = is_owner()
+    tab = "manage" if owner and (errors or request.args.get("tab") == "manage") else "artist"
     return (
         render_template(
             "artists/edit.html",
+            tab=tab,
+            # What waits for the owner here, said on the first tab too.
+            attention=owner
+            and (
+                shift is not None
+                or bool(sorted_albums) and (assignment is None or not assignment.confirmed or artist.start_year is None)
+            ),
+            cluster_name=cluster_names.get(assignment.cluster_id) if assignment else None,
+            figures=artist_figures(store, artist_id) if tab == "artist" else None,
+            places={row.album_id: row for row in BrowseQueries(store).everything()} if tab == "artist" else {},
             artist=artist,
             picture=_picture(store, artist),
             picture_error=request.args.get("picture_error"),
@@ -260,7 +274,7 @@ def decide_shift(artist_id: int, choice: str):
         artist_service.set_cluster(store, artist_id, shift.proposed_cluster_id)
     elif shift is not None:
         keep_cluster(store, artist_id)
-    return redirect_within(request.form.get("next"), url_for("artists.edit", artist_id=artist_id))
+    return redirect_within(request.form.get("next"), url_for("artists.edit", artist_id=artist_id, tab="manage"))
 
 
 def _picture(store, artist: Artist):
@@ -301,10 +315,10 @@ def upload_picture(artist_id: int):
         error = _("Choose an image to upload.")
     elif not set_picture(get_store(), artist_id, data):
         error = _("That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB.")
-    return redirect(url_for("artists.edit", artist_id=artist_id, picture_error=error))
+    return redirect(url_for("artists.edit", artist_id=artist_id, tab="manage", picture_error=error))
 
 
 @blueprint.post("/<int:artist_id>/picture/remove")
 def delete_picture(artist_id: int):
     remove_picture(get_store(), artist_id)
-    return redirect(url_for("artists.edit", artist_id=artist_id))
+    return redirect(url_for("artists.edit", artist_id=artist_id, tab="manage"))

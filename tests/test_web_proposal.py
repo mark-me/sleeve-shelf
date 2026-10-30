@@ -141,7 +141,7 @@ def test_artists_to_check_are_those_without_cluster_or_start_year(client):
 
 def test_start_year_and_cluster_can_be_set_for_an_artist(client):
     _add_new_artist(client)
-    page = client.get("/artists/4").text
+    page = client.get("/artists/4?tab=manage").text
     assert "wikipedia.org" in page and "search=new%20band" in page
     assert "Era band: unknown" in page
 
@@ -150,7 +150,7 @@ def test_start_year_and_cluster_can_be_set_for_an_artist(client):
 
     client.post("/artists/4", data={"start_year": "1968", "cluster_id": "2", "new_cluster": ""})
 
-    page = client.get("/artists/4").text
+    page = client.get("/artists/4?tab=manage").text
     assert "Era band: 1960s" in page and 'value="1968"' in page
     assert "New Band" not in client.get("/artists/?show=attention").text
     # The new band now sorts into Rock, in the 1960s band, after The Stooges? No: before, by name.
@@ -162,7 +162,7 @@ def test_start_year_and_cluster_can_be_set_for_an_artist(client):
 def test_an_artist_can_get_a_cluster_of_its_own(client):
     client.post("/artists/1", data={"start_year": "1949", "cluster_id": "1", "new_cluster": "Chet Baker"})
 
-    page = client.get("/artists/1").text
+    page = client.get("/artists/1?tab=manage").text
     assert '<option value="3" selected>Chet Baker</option>' in page
     assert "Chet Baker" in client.get("/artists/?q=chet").text
 
@@ -501,7 +501,7 @@ def test_the_rules_that_apply_are_shown_with_the_one_that_decides(client):
     client.post("/rules/new", data={"target_type": "artist", "target": "Chet Baker", "cabinet_id": "2",
                                     "note": "other room"})
 
-    artist = client.get("/artists/1").text
+    artist = client.get("/artists/1?tab=manage").text
     assert "Chet Baker &rarr; Extern" in artist and "Jazz &rarr; Kast" in artist
     assert artist.index("Rule for the artist") < artist.index("Rule for the cluster")
     assert artist.count(">decides<") == 1 and "overruled" in artist
@@ -510,7 +510,7 @@ def test_the_rules_that_apply_are_shown_with_the_one_that_decides(client):
     album = client.get("/albums/2").text
     assert album.index("Rule for this album") < album.index("Rule for the artist")
     # Another artist in the cluster only has the cluster's rule.
-    blakey = client.get("/artists/2").text
+    blakey = client.get("/artists/2?tab=manage").text
     assert "Rule for the cluster" in blakey and "Rule for the artist" not in blakey
 
 
@@ -732,7 +732,7 @@ def test_a_new_artist_is_proposed_the_cluster_of_whom_discogs_connects_it_to(cli
     store = _connect_new_band(client, (300,))
 
     assert "New Band" in client.get("/families/").text
-    page = client.get("/artists/4").text
+    page = client.get("/artists/4?tab=manage").text
     assert "Going by whom Discogs connects this artist to: Rock, the cluster of" in page
     assert '<a href="/artists/3">The Stooges</a>.' in page
     assert "A sorting proposal goes by that, before the styles." in page
@@ -752,13 +752,14 @@ def test_a_band_shared_by_two_artists_is_an_indication_and_the_styles_decide(cli
     # Art Blakey (Jazz, one album) and The Stooges (Rock, two) are both in New Band.
     store = _connect_new_band(client, (200, 300))
 
-    page = client.get("/artists/4").text
+    page = client.get("/artists/4?tab=manage").text
     assert "Discogs loosely connects this artist to Rock, the cluster of" in page
     assert "a sorting proposal goes by the styles" in page
     # The members are listed with a link, whether or not they decide anything; and each of
     # them lists the band in turn, though its own cluster is long confirmed.
-    assert "Related artists" in page and "Members" in page
-    assert '<a class="ss-row-artist" href="/artists/2">Art Blakey</a>' in page
+    artist = client.get("/artists/4").text
+    assert "Related artists" in artist and "Members" in artist
+    assert '<a class="ss-row-artist" href="/artists/2">Art Blakey</a>' in artist
     stooges = client.get("/artists/3").text
     assert "Member of" in stooges and 'href="/artists/4">New Band</a>' in stooges
     assert "no cluster yet" in stooges

@@ -661,3 +661,21 @@ a.ss-row-title { text-decoration: none; }
 /* Other albums under a song on an album's page: a short list with where each stands. */
 .ss-album-list { margin: 0; padding-left: 1.1rem; font-size: 0.85rem; }
 .ss-album-list li { margin: 2px 0; }
+
+/* Figures: bars of one colour with their number beside them, and albums per year. */
+:root, [data-bs-theme="light"] { --ss-bar: #C77D1E; }
+[data-bs-theme="dark"] { --ss-bar: #B87A1E; }
+.ss-bars { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto; align-items: center; gap: 6px 10px; font-size: 0.85rem; }
+.ss-bar-track { display: block; }
+.ss-bar { display: block; height: 8px; min-width: 4px; border-radius: 0 4px 4px 0; background: var(--ss-bar); }
+.ss-bar-count { font-variant-numeric: tabular-nums; color: var(--ss-muted); text-align: right; }
+.ss-bar-label { overflow-wrap: anywhere; }
+.ss-stat-row { padding: 10px 16px; border-bottom: 1px solid var(--ss-border); }
+.ss-stat-row:last-child { border-bottom: 0; }
+.ss-stat-row > summary { cursor: pointer; list-style: none; }
+.ss-stat-row > summary::-webkit-details-marker { display: none; }
+.ss-years { display: flex; align-items: flex-end; gap: 1px; height: 64px; border-bottom: 1px solid var(--ss-border); }
+.ss-year { display: flex; flex: 1 1 0; min-width: 0; height: 100%; align-items: flex-end; }
+.ss-year-bar { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--ss-bar); }
+.ss-years-axis { display: flex; justify-content: space-between; margin-top: 4px; color: var(--ss-muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.ss-artist-manage { max-width: 760px; }

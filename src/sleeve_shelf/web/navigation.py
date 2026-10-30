@@ -38,6 +38,7 @@ SECTIONS = (
         (
             Tab("browse.browse", _("Browse / Search"), ("browse.browse",), help="user/browsing/#browse-and-search"),
             Tab("connections.index", _("Connections"), ("connections",), help="user/browsing/#connections"),
+            Tab("stats.index", _("Statistics"), ("stats",), help="user/browsing/#statistics"),
             Tab("browse.unplaced", _("Unplaced"), ("browse.unplaced",), "unplaced", "user/browsing/#albums-without-a-place"),
             Tab("discogs.index", _("Discogs sync"), ("discogs", "setup"), "discogs", "user/discogs/"),
         ),

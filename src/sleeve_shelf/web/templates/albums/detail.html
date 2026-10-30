@@ -41,7 +41,7 @@
   {% if row and row.cluster %}
   <div class="ss-alert mt-3">{{ _('No spot can be suggested: nothing stands on the shelves it could go to.') }}</div>
   {% else %}
-  <div class="ss-alert mt-3">{{ _('No spot can be suggested yet: the artist has no cluster.') }} {% if artist %}<a href="{{ url_for('artists.edit', artist_id=artist.id) }}">{{ _('Give the artist a cluster') }}</a>{% endif %}</div>
+  <div class="ss-alert mt-3">{{ _('No spot can be suggested yet: the artist has no cluster.') }} {% if artist %}<a href="{{ url_for('artists.edit', artist_id=artist.id, tab='manage') }}">{{ _('Give the artist a cluster') }}</a>{% endif %}</div>
   {% endif %}
   {% endif %}
   {% if not takes_part %}

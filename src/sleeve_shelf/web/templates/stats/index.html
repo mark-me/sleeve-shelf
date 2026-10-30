@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Statistics') }}{% endblock %}
+
+{% from "_figures.html" import bar %}
+
+{# A count that opens to its albums, each with where it stands. #}
+{% macro counted(label, note, album_ids, largest, href=none) %}
+<details class="ss-stat-row">
+  <summary class="ss-bars">
+    {{ bar(label, album_ids | length, largest) }}
+  </summary>
+  {% if note %}<p class="ss-muted small mt-2 mb-1">{{ note }}</p>{% endif %}
+  {% if href %}<p class="small mt-2 mb-1"><a href="{{ href }}">{{ _('Artist page') }}</a></p>{% endif %}
+  <ul class="ss-album-list mt-1">
+    {% for album_id in album_ids %}
+    {% set place = places.get(album_id) %}
+    {% if place %}
+    <li>
+      <a href="{{ url_for('albums.detail', album_id=album_id) }}">{{ place.artist }} — {{ place.title }}</a>{% if place.year %} &middot; {{ place.year }}{% endif %}
+      <span class="ss-muted">&middot; {% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
+    </li>
+    {% endif %}
+    {% endfor %}
+  </ul>
+</details>
+{% endmacro %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 860px;">
+  <h1>{{ _('Statistics') }}</h1>
+  <p class="ss-muted mt-1">{{ _('Who and what keeps coming back in your collection. Open a line to see the albums, with where each stands.') }}</p>
+
+  <section class="mt-4">
+    <h2>{{ _('Most on your records') }}</h2>
+    <p class="ss-muted small mt-1">{{ _('Musicians and singers credited on the most albums of others, whether or not they have an album of their own. Number of albums.') }}</p>
+    <div class="ss-card">
+      {% for person in figures.sidemen %}
+      {{ counted(person.name, person.roles | join(', '), person.album_ids, figures.sidemen[0].album_ids | length, url_for('artists.edit', artist_id=person.artist_id) if person.artist_id else none) }}
+      {% else %}
+      <div class="ss-card-body ss-muted">{% if figures.credits_fetched %}{{ _('Nobody is credited on several albums yet.') }}{% else %}{{ _('This comes with the next Discogs sync.') }}{% endif %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="mt-5">
+    <h2>{{ _('Most recorded songs') }}</h2>
+    <p class="ss-muted small mt-1">{{ _('Songs on albums of the most artists, told apart by who wrote them where Discogs says so. Number of albums.') }}</p>
+    <div class="ss-card">
+      {% for song in figures.songs %}
+      {{ counted(song.title, ngettext('By %(num)d artist', 'By %(num)d artists', song.artists), song.album_ids, figures.songs | map(attribute='album_ids') | map('length') | max) }}
+      {% else %}
+      <div class="ss-card-body ss-muted">{{ _('No song is on albums of several artists yet.') }}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="mt-5">
+    <h2>{{ _('Record labels') }}</h2>
+    <p class="ss-muted small mt-1">{{ _('The labels of your own pressings, so a reissue counts for the label of the reissue. Number of albums.') }}</p>
+    <div class="ss-card">
+      {% for label in figures.labels %}
+      {{ counted(label.name, none, label.album_ids, figures.labels[0].album_ids | length) }}
+      {% else %}
+      <div class="ss-card-body ss-muted">{{ _('This comes with the next Discogs sync.') }}</div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

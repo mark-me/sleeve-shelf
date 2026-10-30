@@ -1,0 +1,17 @@
+{# Bars and years, shared by an artist's page and the Statistics screen. #}
+{% macro bar(label, count, largest) %}
+<span class="ss-bar-label">{{ label }}</span>
+<span class="ss-bar-track"><span class="ss-bar" style="width: {{ (100 * count / largest) | round(1) }}%;"></span></span>
+<span class="ss-bar-count">{{ count }}</span>
+{% endmacro %}
+
+{# Albums per year: a column for every year, so gaps show as gaps. #}
+{% macro years(per_year) %}
+{% set peak = per_year | map(attribute='1') | max %}
+<div class="ss-years" role="img" aria-label="{{ _('Albums per year, from %(first)s to %(last)s', first=per_year[0][0], last=per_year[-1][0]) }}">
+  {% for year, count in per_year %}
+  <span class="ss-year" title="{{ year }}: {{ ngettext('%(num)d album', '%(num)d albums', count) }}"><span class="ss-year-bar" style="height: {{ (100 * count / peak) | round(1) if count else 0 }}%;"></span></span>
+  {% endfor %}
+</div>
+<div class="ss-years-axis"><span>{{ per_year[0][0] }}</span>{% if per_year | length > 1 %}<span>{{ per_year[-1][0] }}</span>{% endif %}</div>
+{% endmacro %}

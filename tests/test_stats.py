@@ -1,0 +1,205 @@
+"""Tests for the figures: an artist's page in two tabs, and the Statistics screen."""
+
+from datetime import datetime
+
+import pytest
+
+from sleeve_shelf import create_app
+from sleeve_shelf.access import set_password
+from sleeve_shelf.collection_stats import artist_figures, collection_figures
+from sleeve_shelf.domain import (
+    Album,
+    Artist,
+    ArtistClusterAssignment,
+    Cabinet,
+    Cluster,
+    Credit,
+    Placement,
+    ReleaseEnrichment,
+    ReleaseLabel,
+    Shelf,
+    Style,
+    Track,
+)
+from sleeve_shelf.persistence import JsonStore
+from sleeve_shelf.web import login
+
+FETCHED = datetime(2026, 10, 30)
+
+
+def _release(release_id, credits=(), labels=(), songs=()):
+    return ReleaseEnrichment(
+        release_id, (), None, FETCHED,
+        tracklist=tuple(Track(f"A{i}", title, None, ()) for i, title in enumerate(songs, 1)),
+        credits=tuple(credits), labels=tuple(labels),
+    )
+
+
+def _collection(tmp_path) -> JsonStore:
+    """Miles Davis with three albums, a bassist without an album of his own on all of them and
+    on Coltrane's; Coltrane also on one of Miles'; a compilation that counts for no one."""
+    store = JsonStore(tmp_path)
+    store.save(Cluster, [Cluster(1, "Jazz", 0)])
+    store.save(
+        Artist,
+        [
+            Artist(1, "Miles Davis", discogs_artist_id=101, start_year=1945),
+            Artist(2, "John Coltrane", discogs_artist_id=102),
+            Artist(3, "Various", discogs_artist_id=194),
+            Artist(4, "Tom Waits"),
+        ],
+    )
+    store.save(ArtistClusterAssignment, [ArtistClusterAssignment(1, 1, True)])
+    store.save(Style, [Style(1, "Modal", 1), Style(2, "Hard Bop", 1), Style(3, "Cool Jazz", 1)])
+    store.save(
+        Album,
+        [
+            Album(1, 1, "Kind Of Blue", release_id=1, original_release_year=1959, style_ids=[1, 2], manual_width_cm=1.0),
+            Album(2, 1, "Milestones", release_id=2, original_release_year=1958, style_ids=[2], manual_width_cm=2.0),
+            Album(3, 1, "Bitches Brew", release_id=3, original_release_year=1970, style_ids=[3]),
+            Album(4, 2, "Giant Steps", release_id=4, original_release_year=1960, style_ids=[2]),
+            Album(5, 3, "Jazz Hits", release_id=5),
+        ],
+    )
+    chambers = Credit(900, "Paul Chambers (3)", "Bass")
+    blue_note = ReleaseLabel(50, "Blue Note", "BLP 1")
+    store.save(
+        ReleaseEnrichment,
+        [
+            _release(1, [chambers, Credit(102, "John Coltrane", "Tenor Saxophone"), Credit(101, "Miles Davis", "Trumpet"), Credit(800, "Teo Macero", "Producer")], [blue_note], ["So What"]),
+            _release(2, [chambers, Credit(800, "Teo Macero", "Producer")], [ReleaseLabel(51, "Columbia", "CL 1"), ReleaseLabel(52, "Not On Label (Miles Davis Self-released)")], ["Two Bass Hit"]),
+            _release(3, [chambers, Credit(777, "Cover Man", "Design")]),
+            _release(4, [chambers], [blue_note], ["So What"]),
+            _release(5, [chambers], [blue_note], ["So What"]),
+        ],
+    )
+    store.save(Cabinet, [Cabinet(1, "Kast")])
+    store.save(Shelf, [Shelf(1, 1, "a"), Shelf(2, 1, "b")])
+    store.save(Placement, [Placement(1, 1, 0), Placement(2, 2, 0)])
+    return store
+
+
+def test_an_artists_figures(tmp_path):
+    figures = artist_figures(_collection(tmp_path), 1)
+
+    assert figures.albums == 3 and figures.rank == 1 and not figures.rank_shared
+    # What stands on a shelf only.
+    assert figures.width_cm == 3.0 and figures.shelves == 2
+    # An album counts for each of its styles, the most first.
+    assert figures.styles == (("Hard Bop", 2), ("Cool Jazz", 1), ("Modal", 1))
+    # Every year from the first to the last, so gaps show.
+    assert figures.years[0] == (1958, 1) and figures.years[1] == (1959, 1) and figures.years[2] == (1960, 0)
+    assert figures.years[-1] == (1970, 1)
+    # On several albums, himself and those on one album left out; the producer counts here.
+    assert [(p.name, len(p.album_ids), p.roles) for p in figures.companions] == [
+        ("Paul Chambers", 3, ("Bass",)),
+        ("Teo Macero", 2, ("Producer",)),
+    ]
+    assert figures.appears_on == ()
+
+
+def test_an_artist_on_the_albums_of_others(tmp_path):
+    figures = artist_figures(_collection(tmp_path), 2)
+
+    assert [(entry.album_title, entry.roles) for entry in figures.appears_on] == [("Kind Of Blue", ("Tenor Saxophone",))]
+    assert figures.rank == 2 and figures.shelves == 0
+
+
+def test_the_collections_figures(tmp_path):
+    figures = collection_figures(_collection(tmp_path))
+
+    # No producer, no designer, no one on their own record, no compilation.
+    assert [(p.name, p.artist_id, p.album_ids) for p in figures.sidemen] == [
+        ("Paul Chambers", None, (1, 2, 3, 4)),
+        ("John Coltrane", 2, (1,)),
+    ]
+    # On albums of two artists; a song of one artist, or from a compilation, is not listed.
+    assert [(s.title, s.artists, s.album_ids) for s in figures.songs] == [("So What", 2, (1, 4))]
+    # "Not On Label" is no label; a compilation has a label too.
+    assert [(label.name, label.album_ids) for label in figures.labels] == [
+        ("Blue Note", (1, 4, 5)),
+        ("Columbia", (2,)),
+    ]
+    assert figures.credits_fetched and figures.labels_fetched
+
+
+def test_the_figures_wait_for_the_fetch_run(tmp_path):
+    store = _collection(tmp_path)
+    store.save(ReleaseEnrichment, [ReleaseEnrichment(1, (), None, FETCHED, tracklist=())])
+    client = create_app(tmp_path).test_client()
+
+    assert not collection_figures(store).credits_fetched
+    assert client.get("/statistics/").text.count("This comes with the next Discogs sync.") == 2
+
+
+@pytest.fixture
+def client(tmp_path):
+    _collection(tmp_path / "data")
+    return create_app(tmp_path / "data").test_client()
+
+
+def test_the_page_of_an_artist_starts_with_what_it_is(client):
+    page = client.get("/artists/1").text
+
+    assert 'class="ss-tab active" href="/artists/1"' in page
+    assert "Kind Of Blue" in page and "number 1 in your collection" in page
+    assert "Hard Bop" in page and "ss-bar" in page and "Through the years" in page
+    assert "Paul Chambers" in page
+    # What can be changed is a tab further.
+    assert 'name="start_year"' not in page and 'href="/artists/1?tab=manage"' in page
+
+
+def test_managing_an_artist_is_a_tab_of_its_own(client):
+    page = client.get("/artists/1?tab=manage").text
+
+    assert 'name="start_year"' in page and "Location rules" in page and "Add picture" in page
+    assert "Through the years" not in page
+    # After saving, or an error, it stays there.
+    saved = client.post("/artists/1", data={"start_year": "1945", "cluster_id": "1", "new_cluster": ""})
+    assert saved.headers["Location"] == "/artists/1?tab=manage&saved=1"
+    assert 'name="start_year"' in client.post("/artists/1", data={"start_year": "long ago", "cluster_id": ""}).text
+
+
+def test_an_artist_with_few_albums_has_its_styles_as_labels(client):
+    page = client.get("/artists/2").text
+
+    assert "ss-bar-label" not in page and "Through the years" not in page
+    assert '<span class="ss-chip me-1 mb-1 d-inline-block">Hard Bop</span>' in page
+    assert "Also on" in page
+
+
+def test_what_waits_for_the_owner_is_said_on_the_first_tab(client):
+    # Coltrane has an album that is sorted and no cluster yet.
+    page = client.get("/artists/2").text
+    assert "This artist still needs something from you" in page
+    assert "This artist still needs something from you" not in client.get("/artists/1").text
+    # The list of artists leads straight to what needs doing.
+    assert 'href="/artists/2?tab=manage"' in client.get("/artists/?q=coltrane").text
+
+
+def test_a_visitor_sees_the_artist_and_no_tabs(tmp_path, monkeypatch):
+    monkeypatch.setenv("SLEEVE_SHELF_HTTP_LOGIN", "1")
+    login._pages.clear()
+    _collection(tmp_path / "data")
+    app = create_app(tmp_path / "data")
+    set_password(app.config["DATA_DIR"], "a long and strong one")
+    visitor = app.test_client()
+
+    for address in ("/artists/1", "/artists/1?tab=manage"):
+        page = visitor.get(address).text
+        assert "Kind Of Blue" in page and "ss-tabs" not in page and 'name="start_year"' not in page
+    assert "still needs something" not in visitor.get("/artists/2").text
+    # The Statistics screen is the owner's.
+    assert visitor.get("/statistics/").status_code != 200
+    assert "/statistics/" not in visitor.get("/browse").text
+
+
+def test_the_statistics_screen_opens_to_the_albums(client):
+    page = client.get("/statistics/").text
+
+    assert "Most on your records" in page and "Paul Chambers" in page
+    assert "So What" in page and "By 2 artists" in page
+    assert "Blue Note" in page
+    assert 'href="/albums/1">Miles Davis — Kind Of Blue</a>' in page and "Kast &middot; a" in page
+    # A person who is an artist in the collection links to the page.
+    assert 'href="/artists/2"' in page

@@ -199,7 +199,7 @@ def test_user_can_add_a_picture_of_an_artist_that_goes_before_discogs(app, clien
 
     from PIL import Image
 
-    page = client.get("/artists/1").text
+    page = client.get("/artists/1?tab=manage").text
     assert "This picture comes from Discogs." in page and f'src="{PICTURE}"' in page
 
     client.post("/artists/1/picture", data={"picture": (io.BytesIO(PNG), "low.png")})
@@ -207,7 +207,7 @@ def test_user_can_add_a_picture_of_an_artist_that_goes_before_discogs(app, clien
     artist = _store(app).load(Artist)[0]
     assert artist.picture_file.startswith("1-") and artist.picture_file.endswith(".png")
     own = f"/artists/pictures/{artist.picture_file}"
-    page = client.get("/artists/1").text
+    page = client.get("/artists/1?tab=manage").text
     # A small copy was made at once; the list and the page show that, the pop-up the full one.
     small = own.replace(".png", ".thumb.jpg")
     assert f'src="{small}"' in page and f'data-src="{own}"' in page and PICTURE not in page
@@ -228,7 +228,7 @@ def test_user_can_add_a_picture_of_an_artist_that_goes_before_discogs(app, clien
     client.post("/artists/1/picture/remove")
     assert _store(app).load(Artist)[0].picture_file is None
     assert not list((_store(app).data_dir / "artist_pictures").iterdir())
-    assert f'src="{PICTURE}"' in client.get("/artists/1").text
+    assert f'src="{PICTURE}"' in client.get("/artists/1?tab=manage").text
 
 
 def test_a_file_that_is_no_image_is_refused_as_a_picture(app, client):

@@ -32,6 +32,15 @@ class Credit:
 
 
 @dataclass(frozen=True, slots=True)
+class ReleaseLabel:
+    """A record label on a release: of this pressing, so a reissue has the label of the reissue."""
+
+    discogs_label_id: int
+    name: str
+    catalogue_number: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class ReleaseEnrichment:
     """Cached result of a Discogs release lookup.
 
@@ -49,6 +58,9 @@ class ReleaseEnrichment:
     # Who is credited on the release. None means a record from before credits were kept, which
     # is fetched again once for them.
     credits: tuple[Credit, ...] | None = None
+    # The labels of the release. None means a record from before labels were kept, which is
+    # fetched again once for them.
+    labels: tuple[ReleaseLabel, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)

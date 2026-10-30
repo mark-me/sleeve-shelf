@@ -22,6 +22,7 @@ from sleeve_shelf.domain.enrichment import (
     MasterEnrichment,
     MatchProposal,
     ReleaseEnrichment,
+    ReleaseLabel,
     Track,
 )
 from sleeve_shelf.domain.lookup import find_by_id
@@ -71,6 +72,7 @@ __all__ = [
     "ShelfType",
     "Style",
     "Credit",
+    "ReleaseLabel",
     "Track",
     "WidthConstants",
     "in_order",

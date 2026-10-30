@@ -5,13 +5,14 @@ import urllib.error
 
 import pytest
 
-from sleeve_shelf.domain import Credit, Track
+from sleeve_shelf.domain import Credit, ReleaseLabel, Track
 from sleeve_shelf.ingestion.discogs_api import (
     DiscogsClient,
     DiscogsError,
     collection_items,
     credits_of,
     format_text,
+    labels_of,
     tracklist,
 )
 from sleeve_shelf.ingestion.discogs_csv import read_collection
@@ -201,6 +202,20 @@ def test_a_release_comes_with_everyone_it_credits():
         Credit(5, "Art Pepper", "Alto Saxophone", "B1a"),
     )
     assert credits_of({}) == ()
+
+
+def test_a_release_comes_with_its_labels():
+    data = {
+        "labels": [
+            {"id": 1, "name": "Blue Note ", "catno": "BLP 1501"},
+            {"id": 1, "name": "Blue Note", "catno": "BST 1501"},
+            {"id": 2, "name": "Liberty"},
+            {"id": 0, "name": "No Page"},
+        ]
+    }
+
+    assert labels_of(data) == (ReleaseLabel(1, "Blue Note", "BLP 1501"), ReleaseLabel(2, "Liberty"))
+    assert labels_of({}) == ()
 
 
 def test_a_song_comes_with_who_wrote_it():

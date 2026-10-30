@@ -37,6 +37,16 @@ While you type an artist in the search field, the artists of the network are off
 
 **The way to another artist**: around one artist, search a second one under *The way to another artist*. The network then shows only the artists between the two — the shortest way along the ties switched on, through bands, names, families and credits where it can, through shared songs where it must — and the list the steps one by one. *Tom Waits › Nina Simone › Chet Baker*: who would have thought. Visitors can look at the connections too.
 
+## 📊 Statistics
+
+**Statistics** shows who and what keeps coming back in your collection. Open a line to see its albums and where each stands.
+
+- **Most on your records**: musicians and singers credited on the most albums of others — also those without an album of their own, the bassist on ten of your records. Producers don't count, nor does anyone named on the record itself.
+- **Most recorded songs**: the songs on albums of the most artists, told apart by who wrote them where Discogs says so.
+- **Record labels**: the labels with the most albums. These are the labels of your own pressings, so a reissue counts for the label of the reissue.
+
+Credits and labels come with the fetch run; until it has run, those parts say so.
+
 ## 💿 An album's page
 
 Open an album from a search result, a shelf, or its artist's page. It shows:
@@ -60,11 +70,19 @@ Listening needs an internet connection; about three in four albums are found at 
 
 ## 🎤 An artist's page
 
-An artist's page has the artist's albums and where each one stands, the artists Discogs connects it to, and on the side the things that decide its place: **start year** (which sets the era band — with a link to look it up), **cluster**, location rules, and moving all its albums to another shelf at once. You can also add your own picture of the artist; it is kept with your data and never replaced by a sync.
+An artist's page opens on **Artist**: the artist's albums and where each one stands, the artists Discogs connects it to, and what your collection says about it:
+
+- how many albums, its place in your collection, and how many centimetres of shelf they take
+- its **styles**: from three albums a bar per Discogs style, otherwise labels. An album can have several styles, so the bars add up to more than the albums
+- **through the years**: its albums per year, so gaps show
+- **recurring on the records**: who is credited on several of its albums
+- **also on**: albums of others it is credited on
 
 **Connections**, under its name, shows the artist in the middle of its [connections](#connections).
 
-On a wide screen the albums are on the left and the settings on the right; on a phone the settings come first.
+**Manage**, the second tab, holds what can be changed: **start year** (which sets the era band — with a link to look it up), **cluster**, location rules, moving all its albums to another shelf at once, and your own picture of the artist, which is kept with your data and never replaced by a sync. When the artist still needs something from you for the sorting, the first tab says so, and the Artists list takes you straight to Manage. Visitors see only the first part, without tabs.
+
+On a wide screen the albums are on the left and the figures on the right; on a phone the figures come first.
 
 ## 📦 Albums without a place
 

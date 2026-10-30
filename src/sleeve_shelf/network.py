@@ -181,7 +181,7 @@ class Network:
 
 
 @dataclass(frozen=True, slots=True)
-class _Heard:
+class Heard:
     """A song on an album."""
 
     album_id: int
@@ -190,7 +190,7 @@ class _Heard:
     writers: frozenset[int]
 
 
-def _songs(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> list[tuple[str, list[_Heard]]]:
+def collection_songs(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> list[tuple[str, list[Heard]]]:
     """The songs of the collection, each as its key and the albums it is on.
 
     One title can be several songs: two tracks of the same title are one song when Discogs
@@ -200,19 +200,19 @@ def _songs(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnr
     """
     various = {artist.id for artist in artists if is_various(artist)}
     tracklists = {release.release_id: release.tracklist or () for release in releases}
-    by_key: dict[str, list[_Heard]] = {}
+    by_key: dict[str, list[Heard]] = {}
     for album in sorted(albums, key=lambda a: a.id):
         if album.artist_id in various:
             continue
         for track in tracklists.get(album.release_id, ()):
             key = song_key(track.title)
             if key not in _NO_SONG:
-                heard = _Heard(album.id, album.artist_id, track.title, frozenset(track.writers or ()))
+                heard = Heard(album.id, album.artist_id, track.title, frozenset(track.writers or ()))
                 by_key.setdefault(key, []).append(heard)
     songs = []
     for key, heard in by_key.items():
         # Tracks sharing a writer, directly or through another track, are one song.
-        groups: list[list[_Heard]] = []
+        groups: list[list[Heard]] = []
         for one in (h for h in heard if h.writers):
             joined = [group for group in groups if any(one.writers & other.writers for other in group)]
             groups = [group for group in groups if not any(group is j for j in joined)]
@@ -224,7 +224,7 @@ def _songs(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnr
     return songs
 
 
-def _credited(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> list[OnRecord]:
+def credited_on_albums(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> list[OnRecord]:
     """Each artist of the collection on the record of an album of another, once per album with
     all its roles. A compilation ("Various") counts for no one."""
     by_did = {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
@@ -285,7 +285,7 @@ def tied_albums(
         by_artist.setdefault(album.artist_id, []).append(album)
     # Per other artist: the songs on each album, of those shared with this artist.
     shared: dict[int, dict[int, list[str]]] = {}
-    for _, heard in _songs(artists, albums, releases):
+    for _, heard in collection_songs(artists, albums, releases):
         having = {h.artist_id for h in heard}
         if artist_id not in having:
             continue
@@ -326,7 +326,7 @@ def build(
 
     Discogs ties are read from both records: a band is a tie whether the person's record
     names it or the band's record names the person. Only artists in the collection are
-    points; a song ties two artists when albums of both have it (see _songs), a compilation ("Various")
+    points; a song ties two artists when albums of both have it (see collection_songs), a compilation ("Various")
     tying no one.
     """
     ties: dict[tuple[int, int], set[Tie]] = {}
@@ -360,7 +360,7 @@ def build(
 
     # Per song: its title as first found, and the artists with an album that has it.
     title_of: dict[str, str] = {}
-    for key, heard in _songs(artists, albums, releases):
+    for key, heard in collection_songs(artists, albums, releases):
         title_of.setdefault(key, heard[0].title)
         having = sorted({h.artist_id for h in heard})
         for index, one in enumerate(having):
@@ -369,7 +369,7 @@ def build(
                 songs_of.setdefault((one, other), set()).add(key)
 
     on_record: dict[tuple[int, int], list[OnRecord]] = {}
-    for entry in _credited(artists, albums, releases):
+    for entry in credited_on_albums(artists, albums, releases):
         tie(entry.album_artist_id, entry.artist_id, Tie.CREDIT)
         pair = (min(entry.album_artist_id, entry.artist_id), max(entry.album_artist_id, entry.artist_id))
         on_record.setdefault(pair, []).append(entry)
@@ -460,7 +460,7 @@ def songs_elsewhere(
     one included (a live record, a compilation of its own)."""
     others: dict[str, list[int]] = {}
     title_here: dict[str, str] = {}
-    for key, heard in _songs(artists, albums, releases):
+    for key, heard in collection_songs(artists, albums, releases):
         here = [h for h in heard if h.album_id == album_id]
         if not here:
             continue
