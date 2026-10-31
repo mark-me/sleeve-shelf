@@ -12,10 +12,10 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.proposal import Sorted, mandatory_cabinets, sort_collection
+from sleeve_shelf.shelving.proposal import Sorted, mandatory_cabinets, sort_collection
 from sleeve_shelf.sorting.spots import EMPTY, SuggestedSpot, suggest_spots
-from sleeve_shelf.taking_part import kept_shelf_ids
-from sleeve_shelf.versions import keep_restore_point
+from sleeve_shelf.library.taking_part import kept_shelf_ids
+from sleeve_shelf.library.versions import keep_restore_point
 
 
 @dataclass(frozen=True, slots=True)

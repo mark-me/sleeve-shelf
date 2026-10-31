@@ -547,7 +547,7 @@ def test_a_joint_billing_in_a_family_is_suggested_to_move_to_a_family_with_more_
 def test_a_name_is_compared_without_its_discogs_number_and_in_time_whatever_its_length():
     import time
 
-    from sleeve_shelf.sorting.families import sort_name
+    from sleeve_shelf.domain import sort_name
 
     assert sort_name("Melanie (2)") == "melanie"
     assert sort_name("Them (3) Featuring: Van Morrison") == "them featuring: van morrison"

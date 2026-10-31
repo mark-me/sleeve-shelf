@@ -4,8 +4,8 @@ from datetime import date
 
 from flask import Blueprint, render_template, request
 
-from sleeve_shelf.collection_stats import LONG_AGO_YEARS, collection_figures, from_the_shelf
-from sleeve_shelf.network import Tie
+from sleeve_shelf.insights.collection_stats import LONG_AGO_YEARS, collection_figures, from_the_shelf
+from sleeve_shelf.insights.ties import Tie
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.web.context import get_store
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -56,7 +56,7 @@ def _store(app):
 def stored(app):
     """The fixture's collection standing on shelves: Low in Kast, Codeine in a second cabinet."""
     from sleeve_shelf.domain import LocationRule, LocationRuleTarget
-    from sleeve_shelf.rule_suggestions import rule_suggestions
+    from sleeve_shelf.shelving.rule_suggestions import rule_suggestions
 
     store = _store(app)
     store.save(Cabinet, [Cabinet(1, "Kast"), Cabinet(2, "Externe kast"), Cabinet(3, "Koffer")])

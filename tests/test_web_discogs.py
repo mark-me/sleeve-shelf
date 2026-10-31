@@ -5,9 +5,9 @@ from datetime import datetime
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.config import load_settings
-from sleeve_shelf.covers import cover_name
+from sleeve_shelf.fetching.covers import cover_name
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -25,7 +25,7 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.ingestion.discogs_api import DiscogsError
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.versions import list_versions
+from sleeve_shelf.library.versions import list_versions
 
 EXPORT = (
     "Catalog#,Artist,Title,Label,Format,Rating,Released,release_id\n"

@@ -70,6 +70,11 @@ class Settings:
         )
 
 
+def data_directory(given: str | Path | None = None) -> Path:
+    """The data directory: as given, else as the environment says, else `data`."""
+    return Path(given or os.environ.get("SLEEVE_SHELF_DATA_DIR", "data")).resolve()
+
+
 def load_settings(data_dir: str | Path) -> Settings:
     """Read config.yaml; anything missing keeps its default."""
     path = Path(data_dir) / CONFIG_FILE

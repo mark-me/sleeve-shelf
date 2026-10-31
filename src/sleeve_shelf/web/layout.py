@@ -6,8 +6,8 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 
 from sleeve_shelf.domain import Cabinet, Placement, ProposedPlacement, Shelf, in_order
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries
-from sleeve_shelf.placing import ShelvesChanged, move_albums, rearrange_shelves
-from sleeve_shelf.proposal import has_proposal
+from sleeve_shelf.shelving.placing import ShelvesChanged, move_albums, rearrange_shelves
+from sleeve_shelf.shelving.proposal import has_proposal
 from sleeve_shelf.web.context import get_store, shelf_fill
 
 blueprint = Blueprint("layout", __name__, url_prefix="/layout")

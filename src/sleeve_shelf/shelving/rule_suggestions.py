@@ -19,10 +19,10 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.placing import set_rule
-from sleeve_shelf.proposal import sort_collection
+from sleeve_shelf.shelving.placing import set_rule
+from sleeve_shelf.shelving.proposal import sort_collection
 from sleeve_shelf.sorting.placement import place
-from sleeve_shelf.taking_part import kept_shelf_ids, takes_part, usable_shelves
+from sleeve_shelf.library.taking_part import kept_shelf_ids, takes_part, usable_shelves
 
 # A cluster or artist is only read as "kept apart" from this many albums on.
 MIN_ALBUMS = 2

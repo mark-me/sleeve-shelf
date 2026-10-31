@@ -3,11 +3,13 @@ artist or over the whole collection. Visitors may look too."""
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
-from sleeve_shelf.artists import picture_thumb
-from sleeve_shelf.domain import Artist, ArtistEnrichment
-from sleeve_shelf.network import Tie, network, set_unrelated, ties_of, unrelated_pairs, way
+from sleeve_shelf.library.artists import picture_thumb
+from sleeve_shelf.domain import Artist, ArtistEnrichment, sort_name
+from sleeve_shelf.insights.connections import network, set_unrelated, ties_of, unrelated_pairs
+from sleeve_shelf.insights.network import way
+from sleeve_shelf.insights.ties import Tie
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.sorting.families import names_inside, sort_name
+from sleeve_shelf.sorting.families import names_inside
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.covers import local_cover
 

@@ -13,7 +13,7 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.storage import (
+from sleeve_shelf.shelving.storage import (
     StillInUse,
     move_cabinet,
     move_shelf,

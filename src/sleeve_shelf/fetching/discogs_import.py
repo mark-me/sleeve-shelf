@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from difflib import SequenceMatcher
 
-from sleeve_shelf.collection import album_key
+from sleeve_shelf.library.collection import album_key
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -20,8 +20,8 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.versions import save_if_unsaved
-from sleeve_shelf.widths import estimate_widths
+from sleeve_shelf.library.versions import save_if_unsaved
+from sleeve_shelf.library.widths import estimate_widths
 
 # Below this similarity a loaded album and a Discogs release are not even proposed as a match.
 PROPOSAL_THRESHOLD = 0.6

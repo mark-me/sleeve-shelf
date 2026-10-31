@@ -1,9 +1,13 @@
 """Discogs enrichment cache records, and proposed links between albums and releases."""
 
+import re
 from dataclasses import dataclass
 from datetime import datetime
 
 from sleeve_shelf.domain.catalog import FormatTokens
+
+# The credits that name who wrote a song: "Written-By", "Composed By", "Lyrics By", "Music By"…
+WRITER_ROLE = re.compile(r"writ|compos|lyrics|music by|words by|songwriter", re.IGNORECASE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,3 +127,8 @@ class AlbumListening:
     # The videos Discogs lists for the album's release; None until they were asked for.
     video_titles: tuple[str, ...] | None = None
     video_urls: tuple[str, ...] | None = None
+
+
+def credits_by_release(releases: list[ReleaseEnrichment]) -> dict[int, tuple[Credit, ...]]:
+    """Who is credited on each release; none for one fetched before credits were kept."""
+    return {release.release_id: release.credits or () for release in releases}

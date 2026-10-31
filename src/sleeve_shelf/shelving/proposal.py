@@ -2,8 +2,8 @@
 
 from dataclasses import dataclass
 
-from sleeve_shelf.alias_groups import cluster_hints
-from sleeve_shelf.collection import ensure_cluster_order
+from sleeve_shelf.library.alias_groups import cluster_hints
+from sleeve_shelf.library.collection import ensure_cluster_order
 from sleeve_shelf.domain import (
     Album,
     AliasGroup,
@@ -26,8 +26,8 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.sorting.order import OrderedAlbum, Unit, build_units, order_albums
 from sleeve_shelf.sorting.placement import place
-from sleeve_shelf.taking_part import kept_shelf_ids, takes_part, usable_shelves
-from sleeve_shelf.versions import save_if_unsaved, save_version
+from sleeve_shelf.library.taking_part import kept_shelf_ids, takes_part, usable_shelves
+from sleeve_shelf.library.versions import save_if_unsaved, save_version
 
 
 @dataclass(frozen=True, slots=True)

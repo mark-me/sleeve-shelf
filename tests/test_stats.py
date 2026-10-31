@@ -4,9 +4,9 @@ from datetime import date, datetime
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.access import set_password
-from sleeve_shelf.collection_stats import album_figures, artist_figures, collection_figures, from_the_shelf
+from sleeve_shelf.insights.collection_stats import album_figures, artist_figures, collection_figures, from_the_shelf
 from sleeve_shelf.domain import (
     Album,
     Artist,

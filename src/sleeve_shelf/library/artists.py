@@ -7,7 +7,7 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
-from sleeve_shelf.collection import ensure_cluster_order
+from sleeve_shelf.library.collection import ensure_cluster_order
 from sleeve_shelf.domain import (
     Album,
     Artist,

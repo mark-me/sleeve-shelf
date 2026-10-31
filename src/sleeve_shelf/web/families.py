@@ -3,8 +3,8 @@
 from flask import Blueprint, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf import alias_groups
-from sleeve_shelf.artists import albums_per_artist
+from sleeve_shelf.library import alias_groups
+from sleeve_shelf.library.artists import albums_per_artist
 from sleeve_shelf.domain import (
     AliasGroup,
     Artist,

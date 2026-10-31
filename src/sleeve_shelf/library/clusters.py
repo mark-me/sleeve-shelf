@@ -9,15 +9,10 @@ from sleeve_shelf.domain import (
     LocationRule,
     LocationRuleTarget,
     Style,
+    clusters_in_order,
     move,
 )
 from sleeve_shelf.persistence import JsonStore
-
-
-def clusters_in_order(clusters: list[Cluster]) -> list[Cluster]:
-    return sorted(
-        clusters, key=lambda c: (c.position if c.position is not None else 10**6, c.id)
-    )
 
 
 def rename_cluster(store: JsonStore, cluster_id: int, name: str) -> None:

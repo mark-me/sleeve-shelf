@@ -2,7 +2,7 @@
 
 from flask import Blueprint, abort, current_app, g, send_from_directory, url_for
 
-from sleeve_shelf.covers import (
+from sleeve_shelf.fetching.covers import (
     ALBUM_DIR,
     ARTIST_DIR,
     COVER_DIR,

@@ -12,7 +12,7 @@ from flask import (
 )
 from flask_babel import gettext as _
 
-from sleeve_shelf.collection_stats import album_figures
+from sleeve_shelf.insights.collection_stats import album_figures
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
@@ -24,15 +24,15 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.ingestion.deezer import DeezerClient
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
-from sleeve_shelf.listening import listening, turn_down
-from sleeve_shelf.network import album_songs_elsewhere
+from sleeve_shelf.fetching.listening import listening, turn_down
+from sleeve_shelf.insights.connections import album_songs_elsewhere
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.spots import place_at_spot
-from sleeve_shelf.taking_part import albums_taking_part, takes_part
+from sleeve_shelf.shelving.spots import place_at_spot
+from sleeve_shelf.library.taking_part import albums_taking_part, takes_part
 from sleeve_shelf.web.context import get_store, parse_number
 from sleeve_shelf.web.login import is_owner, visitor_may_listen
 from sleeve_shelf.web.places import described_rules, described_spots
-from sleeve_shelf.widths import set_measured_width
+from sleeve_shelf.library.widths import set_measured_width
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
 

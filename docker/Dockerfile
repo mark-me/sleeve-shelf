@@ -74,7 +74,7 @@ COPY --from=docs /app/docs-site/site /app/help
 
 # The build fails here, not the container at its start, when the environment does not fit
 # this Python.
-RUN python -c "import sleeve_shelf, waitress"
+RUN python -c "import sleeve_shelf.web.app, waitress"
 
 USER sleeve
 
@@ -85,4 +85,4 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
     CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/setup/', timeout=3)"]
 
-CMD ["waitress-serve", "--host=0.0.0.0", "--port=5000", "--call", "sleeve_shelf:create_app"]
+CMD ["waitress-serve", "--host=0.0.0.0", "--port=5000", "--call", "sleeve_shelf.web.app:create_app"]

@@ -47,7 +47,7 @@ def test_dutch_catalogue_translates_everything_and_keeps_the_placeholders():
 
 
 def test_the_browser_s_language_is_followed_unless_one_is_chosen_for_this_device(tmp_path):
-    from sleeve_shelf import create_app
+    from sleeve_shelf.web.app import create_app
 
     client = create_app(tmp_path / "data").test_client()
     dutch = {"Accept-Language": "nl-NL,nl;q=0.9,en;q=0.8"}
@@ -69,7 +69,7 @@ def test_the_browser_s_language_is_followed_unless_one_is_chosen_for_this_device
 
 
 def test_numbers_are_written_as_the_language_writes_them(tmp_path):
-    from sleeve_shelf import create_app
+    from sleeve_shelf.web.app import create_app
 
     client = create_app(tmp_path / "data").test_client()
     client.post("/storage/cabinets/new", data={"name": "Kast"})
@@ -84,7 +84,7 @@ def test_numbers_are_written_as_the_language_writes_them(tmp_path):
 
 
 def test_a_visitor_may_choose_the_language_and_the_menu_marks_its_links(tmp_path, monkeypatch):
-    from sleeve_shelf import create_app
+    from sleeve_shelf.web.app import create_app
     from sleeve_shelf.access import set_password
 
     monkeypatch.setenv("SLEEVE_SHELF_HTTP_LOGIN", "1")

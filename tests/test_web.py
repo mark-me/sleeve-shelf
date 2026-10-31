@@ -5,7 +5,9 @@ import io
 import pytest
 from openpyxl import Workbook
 
-from sleeve_shelf import create_app, main
+from sleeve_shelf.cli import main
+
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.domain import Album, Shelf
 from sleeve_shelf.persistence import JsonStore
 

@@ -10,9 +10,10 @@ from sleeve_shelf.domain import (
     ArtistClusterAssignment,
     Cluster,
     Style,
+    clusters_in_order,
+    sort_name,
 )
 from sleeve_shelf.sorting.eras import band_index, band_of
-from sleeve_shelf.sorting.families import sort_name
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,10 +141,7 @@ def order_albums(
     after it. Without standing, everything goes by the rule.
     """
     standing = standing or {}
-    position = {
-        cluster.id: (cluster.position if cluster.position is not None else len(clusters), cluster.id)
-        for cluster in clusters
-    }
+    position = {cluster.id: (index, cluster.id) for index, cluster in enumerate(clusters_in_order(clusters))}
     last = (len(clusters) + 1, 0)
     unit_of = {artist_id: unit for unit in units for artist_id in unit.artist_ids}
     placed = [album for album in albums if album.artist_id in unit_of]

@@ -10,8 +10,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 from sleeve_shelf.config import load_settings
-from sleeve_shelf.discogs_import import import_discogs_collection
-from sleeve_shelf.enrichment import enrich_collection
+from sleeve_shelf.fetching.discogs_import import import_discogs_collection
+from sleeve_shelf.fetching.enrichment import enrich_collection
 from sleeve_shelf.ingestion.discogs_api import (
     SECONDS_BETWEEN_IMAGES,
     SECONDS_BETWEEN_REQUESTS,

@@ -17,15 +17,15 @@ from sleeve_shelf.domain import (
     WidthConstants,
     find_by_id,
     in_order,
+    sort_name,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.placing import ShelvesChanged
-from sleeve_shelf.proposal import sort_collection
-from sleeve_shelf.sorting.families import sort_name
+from sleeve_shelf.shelving.placing import ShelvesChanged
+from sleeve_shelf.shelving.proposal import sort_collection
 from sleeve_shelf.sorting.placement import TOLERANCE_CM, fill_shelves
-from sleeve_shelf.spots import belonging
-from sleeve_shelf.taking_part import kept_shelf_ids, usable_shelves
-from sleeve_shelf.versions import save_if_unsaved
+from sleeve_shelf.shelving.spots import belonging
+from sleeve_shelf.library.taking_part import kept_shelf_ids, usable_shelves
+from sleeve_shelf.library.versions import save_if_unsaved
 
 # The target that takes albums off their shelf.
 OFF_SHELF = 0

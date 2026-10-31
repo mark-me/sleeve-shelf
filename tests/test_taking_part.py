@@ -9,7 +9,7 @@ from sleeve_shelf.domain import (
     ShelfType,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
+from sleeve_shelf.library.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
 
 LP = FormatTokens(qualifiers=("LP", "Album"))
 SINGLE = FormatTokens(qualifiers=('7"', "Single"))

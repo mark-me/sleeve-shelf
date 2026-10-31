@@ -14,14 +14,14 @@ from sleeve_shelf.domain import (
     Shelf,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.placing import (
+from sleeve_shelf.shelving.placing import (
     ShelvesChanged,
     move_albums,
     rearrange_shelves,
     remove_rule,
     set_rule,
 )
-from sleeve_shelf.versions import list_versions
+from sleeve_shelf.library.versions import list_versions
 
 
 @pytest.fixture

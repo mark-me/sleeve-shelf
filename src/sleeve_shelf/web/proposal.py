@@ -4,8 +4,8 @@ from math import ceil
 
 from flask import Blueprint, current_app, redirect, render_template, url_for
 
-from sleeve_shelf import proposal
-from sleeve_shelf.alias_groups import family_suggestions
+from sleeve_shelf.shelving import proposal
+from sleeve_shelf.library.alias_groups import family_suggestions
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Artist,
@@ -15,7 +15,7 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
+from sleeve_shelf.library.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("proposal", __name__, url_prefix="/proposal")

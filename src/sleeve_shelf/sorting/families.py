@@ -3,7 +3,7 @@
 import re
 from dataclasses import dataclass
 
-from sleeve_shelf.domain import Artist, ArtistEnrichment
+from sleeve_shelf.domain import Artist, ArtistEnrichment, artists_by_discogs_id, sort_name
 
 # A person in more bands of the collection than this is a sideman: those bands do not
 # belong together because of that one person. A setting (sideman_bands); this is its default.
@@ -25,14 +25,6 @@ class FamilySuggestion:
     # Joint billings that name other artists too, as (member, the artists it could go with
     # instead): the user may put it there rather than here.
     others: tuple[tuple[int, tuple[int, ...]], ...] = ()
-
-
-def sort_name(name: str) -> str:
-    """A name as it is compared and sorted: without Discogs' "(2)" suffix, case-insensitive,
-    and with any run of spaces as one. The suffix goes first and the spaces after, rather
-    than in one pattern with a leading \\s*, which takes quadratic time on a long run of
-    spaces — and a search text typed by a user passes through here."""
-    return " ".join(re.sub(r"\(\d+\)", "", name).casefold().split())
 
 
 def names_inside(
@@ -191,7 +183,7 @@ def _families_from_discogs(
     artist is in. A band of two artists in the collection belongs to neither, and a
     sideman draws no band in.
     """
-    by_did = {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
+    by_did = artists_by_discogs_id(artists)
     records = [e for e in enrichments if e.discogs_artist_id in by_did]
     name_of = {a.id: sort_name(a.name) for a in artists}
 

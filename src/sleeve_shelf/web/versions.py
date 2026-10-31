@@ -4,7 +4,7 @@ from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 from flask_babel import ngettext
 
-from sleeve_shelf.versions import list_versions, restore_version, save_version
+from sleeve_shelf.library.versions import list_versions, restore_version, save_version
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("versions", __name__, url_prefix="/versions")

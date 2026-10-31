@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-sleeve-shelf = "sleeve_shelf:main"
+sleeve-shelf = "sleeve_shelf.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.12.15,<0.14.0"]
@@ -26,6 +26,11 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "ruff>=0.9",
     "pytest>=9.1.1",
     "zensical>=0.0.63",
 ]
+
+[tool.ruff.lint]
+# Unused and undefined names. Complexity (C901) is not checked yet: some functions are still too long.
+select = ["F"]

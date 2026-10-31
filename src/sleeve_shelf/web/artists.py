@@ -16,10 +16,10 @@ from flask import (
 )
 from flask_babel import gettext as _
 
-from sleeve_shelf import artists as artist_service
-from sleeve_shelf.alias_groups import cluster_hints
-from sleeve_shelf.collection_stats import artist_figures
-from sleeve_shelf.artists import (
+from sleeve_shelf.library import artists as artist_service
+from sleeve_shelf.library.alias_groups import cluster_hints
+from sleeve_shelf.insights.collection_stats import artist_figures
+from sleeve_shelf.library.artists import (
     PICTURE_DIR,
     albums_per_artist,
     picture_thumb,
@@ -34,15 +34,16 @@ from sleeve_shelf.domain import (
     ArtistEnrichment,
     Cluster,
     Style,
+    clusters_in_order,
     find_by_id,
+    sort_name,
 )
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.shifts import cluster_shifts, keep_cluster
+from sleeve_shelf.shelving.shifts import cluster_shifts, keep_cluster
 from sleeve_shelf.sorting.connections import connections_of
 from sleeve_shelf.sorting.eras import band_of
-from sleeve_shelf.sorting.families import sort_name
 from sleeve_shelf.sorting.order import propose_cluster
-from sleeve_shelf.taking_part import albums_taking_part
+from sleeve_shelf.library.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.login import is_owner, redirect_within
 from sleeve_shelf.web.places import described_rules
@@ -171,9 +172,7 @@ def edit(artist_id: int):
 
     albums = [album for album in store.load(Album) if album.artist_id == artist_id]
     sorted_albums = _albums_taking_part(store).get(artist_id, [])
-    clusters = sorted(
-        store.load(Cluster), key=lambda c: (c.position if c.position is not None else 10**6, c.id)
-    )
+    clusters = clusters_in_order(store.load(Cluster))
     assignment = next(
         (a for a in store.load(ArtistClusterAssignment) if a.artist_id == artist_id), None
     )

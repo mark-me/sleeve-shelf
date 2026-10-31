@@ -5,9 +5,8 @@ from collections import Counter
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
-from sleeve_shelf.clusters import (
+from sleeve_shelf.library.clusters import (
     album_counts,
-    clusters_in_order,
     delete_empty_cluster,
     merge_clusters,
     move_cluster,
@@ -18,6 +17,7 @@ from sleeve_shelf.domain import (
     ArtistClusterAssignment,
     Cluster,
     Style,
+    clusters_in_order,
     find_by_id,
 )
 from sleeve_shelf.web.context import get_store

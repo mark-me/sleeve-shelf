@@ -2,7 +2,6 @@
 collection says about one artist, and who and what recurs across all of it."""
 
 import random
-import re
 from collections import Counter, deque
 from dataclasses import dataclass
 from datetime import date
@@ -17,26 +16,26 @@ from sleeve_shelf.domain import (
     Placement,
     ReleaseEnrichment,
     Style,
-    in_order,
+    artists_by_discogs_id,
+    credits_by_release,
+    plain_name,
+    sort_name,
 )
-from sleeve_shelf.network import (
+from sleeve_shelf.insights.connections import album_songs_elsewhere, network
+from sleeve_shelf.insights.network import Network
+from sleeve_shelf.insights.ties import (
     LOOSE_TIES,
     NO_LABEL,
-    Network,
     OnRecord,
-    album_songs_elsewhere,
     collection_songs,
     credited_on_albums,
     is_various,
     musicians_as_points,
     named_in,
-    network,
     on_the_record,
-    plain_name,
     side_players,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.sorting.families import sort_name
 
 # Someone on at least this many of an artist's albums is one it keeps recording with.
 COMPANION_ALBUMS = 2
@@ -198,7 +197,7 @@ def artist_figures(store: JsonStore, artist_id: int) -> ArtistFigures:
     artist = next(a for a in artists if a.id == artist_id)
     own = [album for album in albums if album.artist_id == artist_id]
     releases = store.load(ReleaseEnrichment)
-    by_did = {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
+    by_did = artists_by_discogs_id(artists)
 
     counts = Counter(album.artist_id for album in albums)
     various = {a.id for a in artists if is_various(a)}
@@ -218,7 +217,7 @@ def artist_figures(store: JsonStore, artist_id: int) -> ArtistFigures:
         tuple((year, per_year[year]) for year in range(min(per_year), max(per_year) + 1)) if per_year else ()
     )
 
-    credits = {release.release_id: release.credits or () for release in releases}
+    credits = credits_by_release(releases)
     entries = [
         (album.id, credit.discogs_artist_id, credit.name, parts)
         for album in own
@@ -264,9 +263,9 @@ def album_figures(store: JsonStore, album_id: int) -> AlbumFigures:
     album = next(a for a in albums if a.id == album_id)
     names = {a.id: a.name for a in artists}
     artist = next((a for a in artists if a.id == album.artist_id), None)
-    releases = store.load(ReleaseEnrichment) if store.exists(ReleaseEnrichment) else []
+    releases = store.load(ReleaseEnrichment)
     release = next((r for r in releases if r.release_id == album.release_id), None)
-    by_did = {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
+    by_did = artists_by_discogs_id(artists)
 
     # The artist's albums by year; a compilation's "Various" has no such order.
     dated = sorted(
@@ -381,8 +380,7 @@ def collection_figures(store: JsonStore) -> CollectionFigures:
     artists = store.load(Artist)
     albums = store.load(Album)
     releases = store.load(ReleaseEnrichment)
-    by_id = {a.id: a for a in artists}
-    by_did = {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
+    by_did = artists_by_discogs_id(artists)
     by_release = {release.release_id: release for release in releases}
 
     players = side_players(artists, albums, store.load(ArtistEnrichment), releases)

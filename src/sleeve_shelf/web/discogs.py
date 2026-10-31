@@ -15,8 +15,8 @@ from flask import (
 from flask_babel import gettext as _
 
 from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.covers import image_paths, missing_images, stored_names
-from sleeve_shelf.discogs_import import (
+from sleeve_shelf.fetching.covers import image_paths, missing_images, stored_names
+from sleeve_shelf.fetching.discogs_import import (
     confirm_match,
     import_discogs_collection,
     keep_departed_album,
@@ -34,7 +34,7 @@ from sleeve_shelf.domain import (
     Shelf,
     find_by_id,
 )
-from sleeve_shelf.enrichment import releases_to_fetch
+from sleeve_shelf.fetching.enrichment import releases_to_fetch
 from sleeve_shelf.ingestion.discogs_api import (
     SECONDS_BETWEEN_IMAGES,
     SECONDS_BETWEEN_REQUESTS,

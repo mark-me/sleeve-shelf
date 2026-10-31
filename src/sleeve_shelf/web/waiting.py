@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from sleeve_shelf.alias_groups import family_suggestions
+from sleeve_shelf.library.alias_groups import family_suggestions
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -15,9 +15,9 @@ from sleeve_shelf.domain import (
     Shelf,
 )
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
-from sleeve_shelf.rule_suggestions import rule_suggestions
-from sleeve_shelf.shifts import cluster_shifts
-from sleeve_shelf.taking_part import albums_taking_part
+from sleeve_shelf.shelving.rule_suggestions import rule_suggestions
+from sleeve_shelf.shelving.shifts import cluster_shifts
+from sleeve_shelf.library.taking_part import albums_taking_part
 
 # The shelf fill is a query over all of these; it fails while one is missing.
 _LAYOUT_ENTITIES = (Album, Artist, ArtistClusterAssignment, Cabinet, Cluster, EraBand, Placement, Shelf)

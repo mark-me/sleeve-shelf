@@ -3,7 +3,7 @@
 from collections import Counter
 from dataclasses import dataclass
 
-from sleeve_shelf.domain import Artist, ArtistClusterAssignment, ArtistEnrichment
+from sleeve_shelf.domain import Artist, artist_ids_by_discogs_id, ArtistClusterAssignment, ArtistEnrichment
 from sleeve_shelf.sorting.families import MAX_BANDS
 
 
@@ -38,7 +38,7 @@ def connections_of(
     Read from both records: a band is listed when the artist's record names it or
     the band's record names the artist. Only artists in the collection are known.
     """
-    by_did = {a.discogs_artist_id: a.id for a in artists if a.discogs_artist_id is not None}
+    by_did = artist_ids_by_discogs_id(artists)
     names: set[int] = set()
     bands: set[int] = set()
     members: set[int] = set()
@@ -88,7 +88,7 @@ def clusters_by_connection(
     With connections in several clusters, the cluster holding most of their albums wins,
     and on a tie the one of the connection with the most albums.
     """
-    by_did = {a.discogs_artist_id: a.id for a in artists if a.discogs_artist_id is not None}
+    by_did = artist_ids_by_discogs_id(artists)
 
     # Other names of one artist count as that one artist: same_as leads to one of them.
     same_as = {artist_id: artist_id for artist_id in by_did.values()}

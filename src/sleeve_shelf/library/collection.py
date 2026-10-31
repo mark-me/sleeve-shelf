@@ -13,19 +13,19 @@ from sleeve_shelf.domain import (
     EraBand,
     EraBandSource,
     FamilyDismissal,
-    UnrelatedArtists,
     MatchProposal,
     Placement,
     Shelf,
     Style,
+    UnrelatedArtists,
     WidthConstants,
     settle_order,
 )
 from sleeve_shelf.ingestion.initial_load import InitialLoad
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
 from sleeve_shelf.sorting.order import cluster_order_from_layout
-from sleeve_shelf.versions import save_if_unsaved, save_version
-from sleeve_shelf.widths import estimate_widths
+from sleeve_shelf.library.versions import save_if_unsaved, save_version
+from sleeve_shelf.library.widths import estimate_widths
 
 
 def replace_collection(

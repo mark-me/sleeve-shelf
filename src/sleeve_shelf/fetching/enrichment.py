@@ -5,8 +5,8 @@ from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable
 from dataclasses import replace
 
-from sleeve_shelf.collection import ensure_cluster_order
-from sleeve_shelf.covers import download_images, image_urls, missing_images
+from sleeve_shelf.library.collection import ensure_cluster_order
+from sleeve_shelf.fetching.covers import download_images, image_urls, missing_images
 from sleeve_shelf.domain import (
     Album,
     Artist,

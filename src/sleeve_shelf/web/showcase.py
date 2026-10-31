@@ -6,7 +6,7 @@ from flask_babel import gettext as _
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Cabinet, Shelf, in_order
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.showcase import samples, swap
+from sleeve_shelf.shelving.showcase import samples, swap
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("showcase", __name__, url_prefix="/showcase")

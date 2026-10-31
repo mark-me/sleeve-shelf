@@ -20,12 +20,12 @@ from sleeve_shelf.access import (
 )
 from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import Placement
-from sleeve_shelf.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
+from sleeve_shelf.library.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
 from sleeve_shelf.web.context import get_store, has_collection, parse_number
 from sleeve_shelf.web.language import COOKIE as LANGUAGE_COOKIE
 from sleeve_shelf.web.language import LANGUAGES, editable
 from sleeve_shelf.web.login import remember_owner
-from sleeve_shelf.widths import apply_width_constants
+from sleeve_shelf.library.widths import apply_width_constants
 
 blueprint = Blueprint("settings", __name__, url_prefix="/settings")
 

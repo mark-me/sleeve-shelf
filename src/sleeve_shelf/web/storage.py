@@ -12,17 +12,17 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.storage import (
+from sleeve_shelf.shelving.storage import (
     StillInUse,
     remove_cabinet,
     remove_shelf,
     save_cabinet,
     save_shelf,
 )
-from sleeve_shelf.storage import (
+from sleeve_shelf.shelving.storage import (
     move_cabinet as move_cabinet_in_order,
 )
-from sleeve_shelf.storage import (
+from sleeve_shelf.shelving.storage import (
     move_shelf as move_shelf_in_order,
 )
 from sleeve_shelf.web.context import get_store, has_collection, parse_number, shelf_fill

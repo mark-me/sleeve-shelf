@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.web.help import ONLINE
 from sleeve_shelf.web.navigation import PAGE_HELP, SECTIONS
 

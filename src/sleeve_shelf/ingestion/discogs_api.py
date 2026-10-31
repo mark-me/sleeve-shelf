@@ -1,7 +1,6 @@
 """Client for the Discogs API: the collection, and the release, master and artist lookups."""
 
 import json
-import re
 import time
 import urllib.error
 import urllib.parse
@@ -11,11 +10,12 @@ from datetime import datetime
 
 from sleeve_shelf.domain import (
     ArtistEnrichment,
-    MasterEnrichment,
     Credit,
+    MasterEnrichment,
     ReleaseEnrichment,
     ReleaseLabel,
     Track,
+    WRITER_ROLE,
 )
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
 from sleeve_shelf.ingestion.formats import parse_format
@@ -224,10 +224,6 @@ class DiscogsClient:
             if wait > 0:
                 self._sleep(wait)
         self._last_request = self._clock()
-
-
-# The credits that name who wrote a song: "Written-By", "Composed By", "Lyrics By", "Music By"…
-WRITER_ROLE = re.compile(r"writ|compos|lyrics|music by|words by|songwriter", re.IGNORECASE)
 
 
 def _writers(credits: list[dict] | None) -> set[int]:

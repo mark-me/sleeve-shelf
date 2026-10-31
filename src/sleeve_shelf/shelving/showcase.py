@@ -8,10 +8,9 @@ way round.
 
 from dataclasses import dataclass, field
 
-from sleeve_shelf.domain import AliasGroup, Artist, Placement, Shelf
+from sleeve_shelf.domain import AliasGroup, Artist, Placement, Shelf, sort_name
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries, JsonStore
-from sleeve_shelf.sorting.families import sort_name
-from sleeve_shelf.versions import keep_restore_point
+from sleeve_shelf.library.versions import keep_restore_point
 
 
 @dataclass(slots=True)

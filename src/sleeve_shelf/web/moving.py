@@ -5,8 +5,8 @@ from flask import Blueprint, abort, redirect, render_template, request, url_for
 
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Album
-from sleeve_shelf.moving import OFF_SHELF, How, Kind, carry_out, find, plan, selection
-from sleeve_shelf.placing import ShelvesChanged
+from sleeve_shelf.shelving.moving import OFF_SHELF, How, Kind, carry_out, find, plan, selection
+from sleeve_shelf.shelving.placing import ShelvesChanged
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.places import shelf_options
 

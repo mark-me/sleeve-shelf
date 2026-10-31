@@ -13,7 +13,7 @@ from sleeve_shelf.domain import (
     find_by_id,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.versions import keep_restore_point
+from sleeve_shelf.library.versions import keep_restore_point
 
 
 class ShelvesChanged(ValueError):

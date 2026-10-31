@@ -141,3 +141,18 @@ class Album:
         if self.manual_width_cm is not None:
             return self.manual_width_cm
         return self.computed_width_cm
+
+
+def clusters_in_order(clusters: list[Cluster]) -> list[Cluster]:
+    """The clusters in their curated order; those without a position come after, by id."""
+    return sorted(clusters, key=lambda c: (c.position is None, c.position or 0, c.id))
+
+
+def artists_by_discogs_id(artists: list[Artist]) -> dict[int, Artist]:
+    """The artists Discogs knows, by their Discogs id."""
+    return {a.discogs_artist_id: a for a in artists if a.discogs_artist_id is not None}
+
+
+def artist_ids_by_discogs_id(artists: list[Artist]) -> dict[int, int]:
+    """The ids of the artists Discogs knows, by their Discogs id."""
+    return {a.discogs_artist_id: a.id for a in artists if a.discogs_artist_id is not None}

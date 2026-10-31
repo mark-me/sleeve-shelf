@@ -5,11 +5,11 @@ from datetime import datetime
 
 import pytest
 
-from sleeve_shelf import create_app
-from sleeve_shelf.alias_groups import family_suggestions
+from sleeve_shelf.web.app import create_app
+from sleeve_shelf.library.alias_groups import family_suggestions
 from sleeve_shelf.access import set_password
 from sleeve_shelf.config import load_settings
-from sleeve_shelf.covers import ARTIST_DIR, COVER_DIR, cover_name
+from sleeve_shelf.fetching.covers import ARTIST_DIR, COVER_DIR, cover_name
 from sleeve_shelf.domain import (
     Album,
     AliasGroup,
@@ -26,7 +26,18 @@ from sleeve_shelf.domain import (
     Track,
     UnrelatedArtists,
 )
-from sleeve_shelf.network import MUSICIAN_ALBUMS, Link, Network, OnRecord, Point, Tie, TiedAlbum, build, network, on_the_record, song_key, songs_elsewhere, tied_albums, ties_of, way
+from sleeve_shelf.insights.connections import network, ties_of
+from sleeve_shelf.insights.network import (
+    Link,
+    Network,
+    Point,
+    TiedAlbum,
+    build,
+    songs_elsewhere,
+    tied_albums,
+    way,
+)
+from sleeve_shelf.insights.ties import MUSICIAN_ALBUMS, OnRecord, Tie, on_the_record, song_key
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web import login
 

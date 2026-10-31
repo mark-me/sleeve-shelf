@@ -4,7 +4,7 @@ import re
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 
 
 @pytest.fixture

@@ -12,8 +12,8 @@ from sleeve_shelf.domain import (
     in_order,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.placing import applicable_rules
-from sleeve_shelf.spots import suggested_spots
+from sleeve_shelf.shelving.placing import applicable_rules
+from sleeve_shelf.shelving.spots import suggested_spots
 
 
 def shelf_options(store: JsonStore) -> list[dict]:

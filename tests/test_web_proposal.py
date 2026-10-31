@@ -6,7 +6,7 @@ import re
 import pytest
 from openpyxl import Workbook
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.config import load_settings, save_settings
 from sleeve_shelf.domain import Album
 from sleeve_shelf.persistence import JsonStore

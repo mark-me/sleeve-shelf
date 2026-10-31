@@ -13,8 +13,8 @@ from sleeve_shelf.domain import (
     LocationRuleTarget,
     in_order,
 )
-from sleeve_shelf.placing import remove_rule, set_rule
-from sleeve_shelf.rule_suggestions import (
+from sleeve_shelf.shelving.placing import remove_rule, set_rule
+from sleeve_shelf.shelving.rule_suggestions import (
     accept_suggestions,
     dismiss_suggestions,
     rule_suggestions,

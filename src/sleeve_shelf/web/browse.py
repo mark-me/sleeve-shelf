@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, request
 
 from sleeve_shelf.domain import ProposedPlacement
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.proposal import has_proposal
+from sleeve_shelf.shelving.proposal import has_proposal
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.login import is_owner
 from sleeve_shelf.web.places import described_spots

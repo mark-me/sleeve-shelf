@@ -12,9 +12,9 @@ from sleeve_shelf.domain import (
     Shelf,
 )
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.proposal import has_proposal
-from sleeve_shelf.taking_part import albums_taking_part
-from sleeve_shelf.versions import list_versions
+from sleeve_shelf.shelving.proposal import has_proposal
+from sleeve_shelf.library.taking_part import albums_taking_part
+from sleeve_shelf.library.versions import list_versions
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.places import described_spots
 from sleeve_shelf.web.waiting import waiting_counts

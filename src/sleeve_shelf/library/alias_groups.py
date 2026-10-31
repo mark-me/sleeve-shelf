@@ -1,6 +1,6 @@
 """Application services for artist families (alias groups)."""
 
-from sleeve_shelf.artists import albums_per_artist
+from sleeve_shelf.library.artists import albums_per_artist
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     AliasGroup,
