@@ -102,9 +102,10 @@ def save_shelf(
         shelf_id: The shelf; None adds one.
         name: Its name.
         width_cm: Its width.
-        type: How records stand on it.
-        layer: Whether it is an upper or a lower one.
-        reachability_score: How easily it is reached.
+        type: Top-loader or front-loader.
+        layer: The row it is in: top or bottom.
+        reachability_score: The reachability score: a whole number, from the workbook or entered by hand; it does
+            not steer the sorting.
         is_showcase: Whether it holds a sample of an artist's albums.
         width_measured: Whether the width was measured.
 

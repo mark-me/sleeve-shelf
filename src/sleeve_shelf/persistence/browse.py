@@ -25,7 +25,8 @@ class ShelfSummary:
         shelf_id: The shelf.
         cabinet: The name of its cabinet.
         shelf: Its name.
-        reachability_score: How easily it is reached.
+        reachability_score: The reachability score: a whole number, from the workbook or entered by hand; it does
+            not steer the sorting.
         album_count: How many albums it holds.
         outside_sorting: The cabinet is kept outside the sorting: not part of the sorted collection.
     """

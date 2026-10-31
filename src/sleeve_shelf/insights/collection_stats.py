@@ -63,7 +63,7 @@ class Person:
     Attributes:
         name: The name, without Discogs' "(2)".
         artist_id: Set when the person is an artist in the collection.
-        roles: What they do, the most frequent first.
+        roles: What they do; over several albums the most frequent first.
         album_ids: The albums they are on.
         point_id: Set when a musician with a point of their own in the network.
     """

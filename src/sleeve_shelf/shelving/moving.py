@@ -186,7 +186,7 @@ def find(store: JsonStore, text: str, limit: int = 8) -> list[tuple[Kind, int, s
     Args:
         store: The store of the collection.
         text: What was typed.
-        limit: How many at most.
+        limit: How many at most of each kind.
 
     Returns:
         The matches as (kind, id, name, number of albums that would move), the broadest first.

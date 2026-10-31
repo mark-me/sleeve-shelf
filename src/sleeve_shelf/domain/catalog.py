@@ -54,7 +54,7 @@ class Artist:
         id: The artist's id.
         name: The name as it stands on the shelf or on Discogs.
         alias_group_id: The family the artist belongs to, if any.
-        start_year: The year the artist's era bands count from, if known.
+        start_year: The year the artist began, if known; it decides the era band.
         discogs_artist_id: The artist on Discogs, as a sync found it on the artist's releases.
         picture_file: The file of a picture the user added, in the data directory; it goes before
             Discogs' own.

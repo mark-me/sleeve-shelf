@@ -5,14 +5,14 @@ from enum import StrEnum
 
 
 class ShelfType(StrEnum):
-    """How records stand on a shelf: flipped through from the top or from the front."""
+    """The kind of shelf: a top-loader or a front-loader."""
 
     TOP_LOADER = "top_loader"
     FRONT_LOADER = "front_loader"
 
 
 class ShelfLayer(StrEnum):
-    """Whether a shelf is an upper or a lower one."""
+    """The row of a cabinet a shelf is in: the top or the bottom."""
 
     TOP = "top"
     BOTTOM = "bottom"
@@ -74,9 +74,10 @@ class Shelf:
         cabinet_id: The cabinet it is in.
         name: The shelf's name.
         width_cm: Its width, if known.
-        type: How records stand on it.
-        layer: Whether it is an upper or a lower one.
-        reachability_score: How easily it is reached.
+        type: Top-loader or front-loader.
+        layer: The row it is in: top or bottom.
+        reachability_score: The reachability score: a whole number, from the workbook or entered by hand; it does
+            not steer the sorting.
         is_showcase: Whether it holds a sample of an artist's albums; only a top-loader can.
         position: Place among the shelves of its cabinet; see in_order().
         width_measured: Whether the width was measured; otherwise it is an estimate, as from the

@@ -44,7 +44,8 @@ def set_cluster(
         store: The store of the collection.
         artist_id: The artist.
         cluster_id: An existing cluster.
-        new_cluster_name: The name of a new cluster, which goes first.
+        new_cluster_name: The name of a cluster, made when there is none of that name; it goes
+            before cluster_id.
     """
     assignments = [a for a in store.load(ArtistClusterAssignment) if a.artist_id != artist_id]
     if new_cluster_name:
