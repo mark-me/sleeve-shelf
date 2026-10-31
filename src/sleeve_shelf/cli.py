@@ -19,12 +19,7 @@ from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web.app import create_app
 
 
-def main(arguments: list[str] | None = None) -> None:
-    """Run the app with Flask's built-in server, or carry out a command given on the command line.
-
-    Args:
-        arguments: The command line; None takes the one the program was started with.
-    """
+def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="sleeve-shelf")
     commands = parser.add_subparsers(dest="command")
     load = commands.add_parser(
@@ -45,73 +40,86 @@ def main(arguments: list[str] | None = None) -> None:
         "set-password", help="set the owner's password (also when it was forgotten); visitors may then only look"
     )
     password_command.add_argument("--remove", action="store_true", help="open the app again: no password")
+    return parser
+
+
+def _load(options, parser, data_dir, settings, store) -> None:
+    # Same effect as the upload in the wizard, for when a browser can't upload.
+    result = load_initial_layout(options.workbook, settings.base_width_cm)
+    load_layout(store, result, settings.width_constants)
+    print(f"Loaded {len(result.albums)} albums on {len(result.shelves)} shelves into {data_dir}")
+
+
+def _import_discogs(options, parser, data_dir, settings, store) -> None:
+    items = read_collection(options.export, settings.count_bonus_discs_as_vinyl)
+    outcome = import_discogs_collection(store, items, settings.width_constants)
+    print(
+        f"{outcome.vinyl_count} vinyl releases ({outcome.skipped_non_vinyl} other skipped):"
+        f" {outcome.matched} linked to loaded albums, {outcome.proposed} proposed for"
+        f" confirmation, {outcome.added} added as new albums;"
+        f" {outcome.unmatched_albums} loaded albums have no release."
+    )
+
+
+def _set_picture(options, parser, data_dir, settings, store) -> None:
+    name = options.artist.casefold()
+    artist = next((a for a in store.load(Artist) if a.name.casefold() == name), None)
+    if artist is None:
+        parser.exit(1, f"No artist is called {options.artist!r}\n")
+    if not set_picture(store, artist.id, options.image.read_bytes()):
+        parser.exit(1, "That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB\n")
+    print(f"Picture of {artist.name} set")
+
+
+def _set_password(options, parser, data_dir, settings, store) -> None:
+    if options.remove:
+        remove_password(data_dir)
+        print("Password removed: the app is open, everyone can change everything.")
+        return
+    password = getpass.getpass("New password: ")
+    if password != getpass.getpass("Again: "):
+        parser.exit(1, "The two passwords differ\n")
+    try:
+        set_password(data_dir, password)
+    except ValueError as error:
+        parser.exit(1, f"{error}\n")
+    print("Password set: visitors may look the collection up; changing it needs the login.")
+
+
+def _enrich(options, parser, data_dir, settings, store) -> None:
+    if not settings.discogs_token:
+        parser.exit(1, f"No Discogs token in {data_dir / 'config.yaml'}\n")
+
+    def show(done: int, total: int) -> None:
+        if done % 20 < 2 or done >= total:
+            print(f"{done} of about {total} lookups", flush=True)
+
+    try:
+        lookups = enrich_collection(store, DiscogsClient(settings.discogs_token), show)
+    except DiscogsError as error:
+        parser.exit(1, f"Stopped: {error} Run it again to continue.\n")
+    print(f"Enrichment complete after {lookups} lookups.")
+
+
+def main(arguments: list[str] | None = None) -> None:
+    """Run the app with Flask's built-in server, or carry out a command given on the command line.
+
+    Args:
+        arguments: The command line; None takes the one the program was started with.
+    """
+    parser = _parser()
     options = parser.parse_args(arguments)
-
     data_dir = data_directory()
-    settings = load_settings(data_dir)
-    store = JsonStore(data_dir)
-
-    if options.command == "load":
-        # Same effect as the upload in the wizard, for when a browser can't upload.
-        result = load_initial_layout(options.workbook, settings.base_width_cm)
-        load_layout(store, result, settings.width_constants)
-        print(
-            f"Loaded {len(result.albums)} albums on {len(result.shelves)} shelves"
-            f" into {data_dir}"
-        )
+    command = {
+        "load": _load,
+        "import-discogs": _import_discogs,
+        "set-picture": _set_picture,
+        "set-password": _set_password,
+        "enrich": _enrich,
+    }.get(options.command)
+    if command is not None:
+        command(options, parser, data_dir, load_settings(data_dir), JsonStore(data_dir))
         return
-
-    if options.command == "import-discogs":
-        items = read_collection(options.export, settings.count_bonus_discs_as_vinyl)
-        outcome = import_discogs_collection(store, items, settings.width_constants)
-        print(
-            f"{outcome.vinyl_count} vinyl releases ({outcome.skipped_non_vinyl} other skipped):"
-            f" {outcome.matched} linked to loaded albums, {outcome.proposed} proposed for"
-            f" confirmation, {outcome.added} added as new albums;"
-            f" {outcome.unmatched_albums} loaded albums have no release."
-        )
-        return
-
-    if options.command == "set-picture":
-        name = options.artist.casefold()
-        artist = next((a for a in store.load(Artist) if a.name.casefold() == name), None)
-        if artist is None:
-            parser.exit(1, f"No artist is called {options.artist!r}\n")
-        if not set_picture(store, artist.id, options.image.read_bytes()):
-            parser.exit(1, "That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB\n")
-        print(f"Picture of {artist.name} set")
-        return
-
-    if options.command == "set-password":
-        if options.remove:
-            remove_password(data_dir)
-            print("Password removed: the app is open, everyone can change everything.")
-            return
-        password = getpass.getpass("New password: ")
-        if password != getpass.getpass("Again: "):
-            parser.exit(1, "The two passwords differ\n")
-        try:
-            set_password(data_dir, password)
-        except ValueError as error:
-            parser.exit(1, f"{error}\n")
-        print("Password set: visitors may look the collection up; changing it needs the login.")
-        return
-
-    if options.command == "enrich":
-        if not settings.discogs_token:
-            parser.exit(1, f"No Discogs token in {data_dir / 'config.yaml'}\n")
-
-        def show(done: int, total: int) -> None:
-            if done % 20 < 2 or done >= total:
-                print(f"{done} of about {total} lookups", flush=True)
-
-        try:
-            lookups = enrich_collection(store, DiscogsClient(settings.discogs_token), show)
-        except DiscogsError as error:
-            parser.exit(1, f"Stopped: {error} Run it again to continue.\n")
-        print(f"Enrichment complete after {lookups} lookups.")
-        return
-
     create_app().run(
         host=os.environ.get("SLEEVE_SHELF_HOST", "127.0.0.1"),
         port=int(os.environ.get("SLEEVE_SHELF_PORT", "5000")),

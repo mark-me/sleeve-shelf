@@ -82,6 +82,65 @@ def connections_of(
     )
 
 
+def _root(same_as: dict[int, int], artist_id: int) -> int:
+    while same_as[artist_id] != artist_id:
+        artist_id = same_as[artist_id]
+    return artist_id
+
+
+def _read_records(
+    artists: list[Artist], enrichments: list[ArtistEnrichment]
+) -> tuple[set[tuple[int, int]], dict[int, set[int]], dict[int, int]]:
+    """The other names and each person's bands, as Discogs lists them.
+
+    Other names of one artist count as that one artist: same_as, the third, leads to one of them.
+    """
+    by_did = artist_ids_by_discogs_id(artists)
+    same_as = {artist_id: artist_id for artist_id in by_did.values()}
+    aliases: set[tuple[int, int]] = set()
+    bands_of: dict[int, set[int]] = {artist_id: set() for artist_id in by_did.values()}
+    for record in enrichments:
+        artist_id = by_did.get(record.discogs_artist_id)
+        if artist_id is None:
+            continue
+        for other in (by_did[d] for d in record.alias_ids or () if d in by_did):
+            if other != artist_id:
+                aliases.add((artist_id, other))
+                same_as[_root(same_as, other)] = _root(same_as, artist_id)
+        for band in (by_did[d] for d in record.group_ids or () if d in by_did):
+            if band != artist_id:
+                bands_of[artist_id].add(band)
+        for member in (by_did[d] for d in record.member_ids or () if d in by_did):
+            if member != artist_id:
+                bands_of[member].add(artist_id)
+    return aliases, bands_of, same_as
+
+
+def _connect(kind: dict[int, set[int]], one: int, other: int) -> None:
+    kind.setdefault(one, set()).add(other)
+    kind.setdefault(other, set()).add(one)
+
+
+def _hint(
+    others: set[int], decisive: bool, curated: dict[int, int], album_counts: dict[int, int]
+) -> ClusterHint | None:
+    # A connection counts by its albums; one without any still counts once.
+    weight = {other: max(album_counts.get(other, 0), 1) for other in others if other in curated}
+    if not weight:
+        return None
+    votes: Counter[int] = Counter()
+    largest: dict[int, int] = {}
+    for other, albums in weight.items():
+        votes[curated[other]] += albums
+        largest[curated[other]] = max(largest.get(curated[other], 0), albums)
+    cluster_id = min(votes, key=lambda c: (-votes[c], -largest[c], c))
+    via = sorted(
+        (other for other in weight if curated[other] == cluster_id),
+        key=lambda other: (-weight[other], other),
+    )
+    return ClusterHint(cluster_id, tuple(via), decisive)
+
+
 def clusters_by_connection(
     artists: list[Artist],
     assignments: list[ArtistClusterAssignment],
@@ -115,78 +174,32 @@ def clusters_by_connection(
     Returns:
         The hints by artist id.
     """
-    by_did = artist_ids_by_discogs_id(artists)
-
-    # Other names of one artist count as that one artist: same_as leads to one of them.
-    same_as = {artist_id: artist_id for artist_id in by_did.values()}
-
-    def root(artist_id: int) -> int:
-        while same_as[artist_id] != artist_id:
-            artist_id = same_as[artist_id]
-        return artist_id
-
-    aliases: set[tuple[int, int]] = set()
-    bands_of: dict[int, set[int]] = {artist_id: set() for artist_id in by_did.values()}
-    for record in enrichments:
-        artist_id = by_did.get(record.discogs_artist_id)
-        if artist_id is None:
-            continue
-        for other in (by_did[d] for d in record.alias_ids or () if d in by_did):
-            if other != artist_id:
-                aliases.add((artist_id, other))
-                same_as[root(other)] = root(artist_id)
-        for band in (by_did[d] for d in record.group_ids or () if d in by_did):
-            if band != artist_id:
-                bands_of[artist_id].add(band)
-        for member in (by_did[d] for d in record.member_ids or () if d in by_did):
-            if member != artist_id:
-                bands_of[member].add(artist_id)
+    aliases, bands_of, same_as = _read_records(artists, enrichments)
 
     # Who a band belongs to: the artists in it that are no sidemen, each under one name.
     owners: dict[int, set[int]] = {}
     for person, bands in bands_of.items():
         if len(bands) <= max_bands:
             for band in bands:
-                owners.setdefault(band, set()).add(root(person))
+                owners.setdefault(band, set()).add(_root(same_as, person))
 
     close: dict[int, set[int]] = {}
     loose: dict[int, set[int]] = {}
-
-    def connect(kind: dict[int, set[int]], one: int, other: int) -> None:
-        kind.setdefault(one, set()).add(other)
-        kind.setdefault(other, set()).add(one)
-
     for one, other in aliases:
-        connect(close, one, other)
+        _connect(close, one, other)
     for person, bands in bands_of.items():
         for band in bands:
-            own = len(bands) <= max_bands and owners.get(band) == {root(person)}
-            connect(close if own else loose, person, band)
+            own = len(bands) <= max_bands and owners.get(band) == {_root(same_as, person)}
+            _connect(close if own else loose, person, band)
 
     curated = {a.artist_id: a.cluster_id for a in assignments if a.confirmed}
-
-    def hint(others: set[int], decisive: bool) -> ClusterHint | None:
-        # A connection counts by its albums; one without any still counts once.
-        weight = {other: max(album_counts.get(other, 0), 1) for other in others if other in curated}
-        if not weight:
-            return None
-        votes: Counter[int] = Counter()
-        largest: dict[int, int] = {}
-        for other, albums in weight.items():
-            votes[curated[other]] += albums
-            largest[curated[other]] = max(largest.get(curated[other], 0), albums)
-        cluster_id = min(votes, key=lambda c: (-votes[c], -largest[c], c))
-        via = sorted(
-            (other for other in weight if curated[other] == cluster_id),
-            key=lambda other: (-weight[other], other),
-        )
-        return ClusterHint(cluster_id, tuple(via), decisive)
-
     hints: dict[int, ClusterHint] = {}
     for artist_id in sorted(close.keys() | loose.keys()):
         if artist_id in curated:
             continue
-        found = hint(close.get(artist_id, set()), True) or hint(loose.get(artist_id, set()), False)
+        found = _hint(close.get(artist_id, set()), True, curated, album_counts) or _hint(
+            loose.get(artist_id, set()), False, curated, album_counts
+        )
         if found is not None:
             hints[artist_id] = found
     return hints

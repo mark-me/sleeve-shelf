@@ -163,23 +163,10 @@ def _save_cache(store: JsonStore, releases: dict, masters: dict, pictures: dict)
     store.save(ArtistEnrichment, pictures.values())
 
 
-def apply_enrichment(store: JsonStore) -> None:
-    """Carry the cached Discogs data over to the albums: master, original year and styles.
-
-    Args:
-        store: The store of the collection.
-    """
-    albums = store.load(Album)
+def _take_over_releases(store: JsonStore, albums: list[Album]) -> dict[int, tuple[str, ...]]:
+    """Give the albums the master and year of their release; returns the styles of each album."""
     releases = {release.release_id: release for release in store.load(ReleaseEnrichment)}
     masters = {master.master_id: master for master in store.load(MasterEnrichment)}
-    clusters = store.load(Cluster)
-    styles = {style.name: style for style in store.load(Style)}
-    artist_cluster = {
-        assignment.artist_id: assignment.cluster_id
-        for assignment in store.load(ArtistClusterAssignment)
-        if assignment.cluster_id is not None
-    }
-
     album_styles: dict[int, tuple[str, ...]] = {}
     for album in albums:
         release = releases.get(album.release_id)
@@ -193,9 +180,23 @@ def apply_enrichment(store: JsonStore) -> None:
             year = master.original_release_year if master else release.year
             if release.master_id is None or master is not None:
                 album.original_release_year = year or album.original_release_year
+    return album_styles
 
-    # A style seen for the first time joins the cluster most of its albums' artists are
-    # already in; with no such cluster it gets one of its own, named after it.
+
+def _with_new_styles(
+    store: JsonStore, albums: list[Album], album_styles: dict[int, tuple[str, ...]], clusters: list[Cluster]
+) -> dict[str, Style]:
+    """All styles by name, with those seen for the first time.
+
+    Such a style joins the cluster most of its albums' artists are already in; with no such
+    cluster it gets one of its own, named after it.
+    """
+    styles = {style.name: style for style in store.load(Style)}
+    artist_cluster = {
+        assignment.artist_id: assignment.cluster_id
+        for assignment in store.load(ArtistClusterAssignment)
+        if assignment.cluster_id is not None
+    }
     votes: dict[str, Counter[int]] = defaultdict(Counter)
     for album in albums:
         for name in album_styles.get(album.id, ()):
@@ -214,7 +215,19 @@ def apply_enrichment(store: JsonStore) -> None:
                 clusters.append(Cluster(cluster_id, name))
                 cluster_ids[name] = cluster_id
         styles[name] = Style(store.next_id(Style, styles.values()), name, cluster_id)
+    return styles
 
+
+def apply_enrichment(store: JsonStore) -> None:
+    """Carry the cached Discogs data over to the albums: master, original year and styles.
+
+    Args:
+        store: The store of the collection.
+    """
+    albums = store.load(Album)
+    album_styles = _take_over_releases(store, albums)
+    clusters = store.load(Cluster)
+    styles = _with_new_styles(store, albums, album_styles, clusters)
     for album in albums:
         if album.id in album_styles:
             album.style_ids = [styles[name].id for name in album_styles[album.id]]

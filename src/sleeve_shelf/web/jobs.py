@@ -106,49 +106,14 @@ class EnrichmentJob:
         return {**state, "running": self.running, "seconds_left": round(seconds)}
 
     def _run(self, data_dir: Path, token: str, client_factory: Callable, sync: bool) -> None:
-        def progress(done: int, total: int) -> None:
-            self._state.update(done=done, total=total)
-            if self._stop.is_set():
-                raise _Stopped
-
-        def part(name: str, done: int, total: int) -> None:
-            self._state.update({"part": name, name: [done, total]})
-
-        def page(fetched: int, pages: int, releases: int) -> None:
-            self._state.update(part="collection", collection=[fetched, pages], releases=releases)
-            if self._stop.is_set():
-                raise _Stopped
-
         try:
             # A store of its own: a DuckDB connection is not shared between threads.
             store = JsonStore(data_dir)
             client = client_factory(token)
-            if sync:
-                self._state.update(part="collection", collection=[0, 0])
-                releases = client.collection(page)
-                if not releases:
-                    self._state["outcome"] = "empty"
-                    return
-                # Taking it over never removes or moves anything: new albums stand on no
-                # shelf, albums gone from Discogs are only marked, and matches it is not sure
-                # of wait for the user. So it is taken over without asking first.
-                self._state.update(part="import")
-                settings = load_settings(data_dir)
-                result = import_discogs_collection(
-                    store,
-                    collection_items(releases, settings.count_bonus_discs_as_vinyl),
-                    settings.width_constants,
-                    refresh_formats=True,
-                )
-                self._state["synced"] = {
-                    "vinyl": result.vinyl_count,
-                    "added": result.added,
-                    "matched": result.matched,
-                    "proposed": result.proposed,
-                    "refreshed": result.refreshed,
-                    "gone": len(result.gone),
-                }
-            enrich_collection(store, client, progress, part)
+            if sync and not self._take_over_collection(store, client, data_dir):
+                self._state["outcome"] = "empty"
+                return
+            enrich_collection(store, client, self._progress, self._part)
             self._state["outcome"] = "finished"
         except _Stopped:
             self._state["outcome"] = "stopped"
@@ -156,3 +121,43 @@ class EnrichmentJob:
             self._state.update(outcome="failed", error=str(error))
         except Exception as error:  # noqa: BLE001 - the job must always report how it ended
             self._state.update(outcome="failed", error=f"{type(error).__name__}: {error}")
+
+    def _take_over_collection(self, store: JsonStore, client, data_dir: Path) -> bool:
+        """Fetch the collection and take it over; False when Discogs gave nothing."""
+        self._state.update(part="collection", collection=[0, 0])
+        releases = client.collection(self._page)
+        if not releases:
+            return False
+        # Taking it over never removes or moves anything: new albums stand on no
+        # shelf, albums gone from Discogs are only marked, and matches it is not sure
+        # of wait for the user. So it is taken over without asking first.
+        self._state.update(part="import")
+        settings = load_settings(data_dir)
+        result = import_discogs_collection(
+            store,
+            collection_items(releases, settings.count_bonus_discs_as_vinyl),
+            settings.width_constants,
+            refresh_formats=True,
+        )
+        self._state["synced"] = {
+            "vinyl": result.vinyl_count,
+            "added": result.added,
+            "matched": result.matched,
+            "proposed": result.proposed,
+            "refreshed": result.refreshed,
+            "gone": len(result.gone),
+        }
+        return True
+
+    def _progress(self, done: int, total: int) -> None:
+        self._state.update(done=done, total=total)
+        if self._stop.is_set():
+            raise _Stopped
+
+    def _part(self, name: str, done: int, total: int) -> None:
+        self._state.update({"part": name, name: [done, total]})
+
+    def _page(self, fetched: int, pages: int, releases: int) -> None:
+        self._state.update(part="collection", collection=[fetched, pages], releases=releases)
+        if self._stop.is_set():
+            raise _Stopped

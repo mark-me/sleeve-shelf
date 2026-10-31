@@ -49,6 +49,103 @@ class RuleSuggestion:
     proposed_cabinet_id: int | None
 
 
+def _groups(store: JsonStore, albums: list[Album], current: dict[int, int]) -> tuple[dict[int, list[int]], tuple]:
+    """The albums standing on a shelf per artist, and per kind of target the albums of each."""
+    assignments = {a.artist_id: a.cluster_id for a in store.load(ArtistClusterAssignment)}
+    family_of = {artist.id: artist.alias_group_id for artist in store.load(Artist)}
+    artist_of = {album.id: album.artist_id for album in albums}
+    by_artist: dict[int, list[int]] = defaultdict(list)
+    by_cluster: dict[int, list[int]] = defaultdict(list)
+    by_family: dict[int, list[int]] = defaultdict(list)
+    for album_id in current:
+        artist_id = artist_of[album_id]
+        by_artist[artist_id].append(album_id)
+        if artist_id in assignments and assignments[artist_id] is not None:
+            by_cluster[assignments[artist_id]].append(album_id)
+        if family_of.get(artist_id) is not None:
+            by_family[family_of[artist_id]].append(album_id)
+    return by_artist, (
+        (LocationRuleTarget.CLUSTER, by_cluster),
+        (LocationRuleTarget.ALIAS_GROUP, by_family),
+        (LocationRuleTarget.ARTIST, by_artist),
+    )
+
+
+class _Reading:
+    """Reading the layout against the proposal, the most general targets first."""
+
+    def __init__(self, store: JsonStore, current: dict[int, int], proposed: dict[int, int | None]) -> None:
+        self.current = current
+        self.proposed = proposed
+        self.walk = {cabinet.id: index for index, cabinet in enumerate(in_order(store.load(Cabinet)))}
+        self.existing = {
+            (rule.target_type, rule.target_id): rule.cabinet_id for rule in store.load(LocationRule)
+        }
+        self.dismissed = {
+            (d.target_type, d.target_id, d.cabinet_id) for d in store.load(RuleSuggestionDismissal)
+        }
+        self.album_rules = {
+            target_id: cabinet_id
+            for (kind, target_id), cabinet_id in self.existing.items()
+            if kind is LocationRuleTarget.ALBUM
+        }
+        self.suggestions: list[RuleSuggestion] = []
+        # album id -> the cabinet a rule, or a more general suggestion or dismissal, already
+        # accounts for; an album standing there needs nothing more specific.
+        self.covered: dict[int, int] = {}
+
+    def _far(self, a: int | None, b: int | None) -> bool:
+        return a is not None and b is not None and a != b and abs(self.walk[a] - self.walk[b]) > 1
+
+    def _all_in(self, ids: list[int]) -> int | None:
+        cabinet, count = Counter(self.current[i] for i in ids).most_common(1)[0]
+        return cabinet if count == len(ids) else None
+
+    def cover_by_rules(self, groups_by_kind: tuple) -> None:
+        for kind, groups in groups_by_kind:
+            for target_id, ids in groups.items():
+                if (kind, target_id) in self.existing:
+                    for album_id in ids:
+                        self.covered[album_id] = self.existing[(kind, target_id)]
+
+    def consider(self, kind: LocationRuleTarget, target_id: int, ids: list[int]) -> None:
+        if len(ids) < MIN_ALBUMS or (kind, target_id) in self.existing:
+            return
+        cabinet = self._all_in(ids)
+        if cabinet is None or all(self.covered.get(i) == cabinet for i in ids):
+            return
+        # Where the albums would go as things stand: the cabinet a rule or a more general
+        # choice gives them, else where the proposal puts them.
+        expected = Counter(self.covered.get(i, self.proposed.get(i)) for i in ids).most_common(1)[0][0]
+        if not self._far(cabinet, expected):
+            return
+        # Turned down: what it contains is not suggested one level lower either.
+        if (kind, target_id, cabinet) not in self.dismissed:
+            self.suggestions.append(RuleSuggestion(kind, target_id, cabinet, len(ids), expected))
+        for album_id in ids:
+            self.covered[album_id] = cabinet
+
+    def consider_albums_apart(self, ids: list[int]) -> None:
+        if len(ids) < ALBUM_MIN_ARTIST:
+            return
+        majority, count = Counter(self.current[i] for i in ids).most_common(1)[0]
+        if count / len(ids) < ALBUM_MAJORITY:
+            return
+        for album_id in ids:
+            cabinet = self.current[album_id]
+            if cabinet == majority or self.covered.get(album_id) == cabinet or album_id in self.album_rules:
+                continue
+            expected = self.covered.get(album_id, self.proposed.get(album_id))
+            if (
+                self._far(cabinet, expected)
+                and self._far(cabinet, majority)
+                and (LocationRuleTarget.ALBUM, album_id, cabinet) not in self.dismissed
+            ):
+                self.suggestions.append(
+                    RuleSuggestion(LocationRuleTarget.ALBUM, album_id, cabinet, 1, self.proposed.get(album_id))
+                )
+
+
 def rule_suggestions(store: JsonStore) -> list[RuleSuggestion]:
     """The rules the current layout hints at; none is ever made without the user accepting it.
 
@@ -70,116 +167,26 @@ def rule_suggestions(store: JsonStore) -> list[RuleSuggestion]:
     if not albums or not placed:
         return []
     shelves = {shelf.id: shelf for shelf in store.load(Shelf)}
-    cabinets = in_order(store.load(Cabinet))
-    walk = {cabinet.id: index for index, cabinet in enumerate(cabinets)}
     placed_ids = set(placed)
     current = {
         album.id: shelves[placed[album.id].shelf_id].cabinet_id
         for album in albums
         if album.id in placed and takes_part(album, placed_ids)
     }
-
     proposed = _proposed_cabinets(store)
     if proposed is None:
         return []
 
-    def far(a: int | None, b: int | None) -> bool:
-        return a is not None and b is not None and a != b and abs(walk[a] - walk[b]) > 1
-
-    def all_in(ids: list[int]) -> int | None:
-        cabinet, count = Counter(current[i] for i in ids).most_common(1)[0]
-        return cabinet if count == len(ids) else None
-
-    assignments = {a.artist_id: a.cluster_id for a in store.load(ArtistClusterAssignment)}
-    family_of = {artist.id: artist.alias_group_id for artist in store.load(Artist)}
-    existing = {
-        (rule.target_type, rule.target_id): rule.cabinet_id for rule in store.load(LocationRule)
-    }
-    dismissed = {
-        (d.target_type, d.target_id, d.cabinet_id) for d in store.load(RuleSuggestionDismissal)
-    }
-
-    by_artist: dict[int, list[int]] = defaultdict(list)
-    for album_id in current:
-        by_artist[next(a.artist_id for a in albums if a.id == album_id)].append(album_id)
-    artist_of = {album.id: album.artist_id for album in albums}
-    by_cluster: dict[int, list[int]] = defaultdict(list)
-    by_family: dict[int, list[int]] = defaultdict(list)
-    for album_id in current:
-        artist_id = artist_of[album_id]
-        if artist_id in assignments and assignments[artist_id] is not None:
-            by_cluster[assignments[artist_id]].append(album_id)
-        if family_of.get(artist_id) is not None:
-            by_family[family_of[artist_id]].append(album_id)
-
-    suggestions: list[RuleSuggestion] = []
-    # album id -> the cabinet a rule, or a more general suggestion or dismissal, already
-    # accounts for; an album standing there needs nothing more specific.
-    covered: dict[int, int] = {}
-    groups_by_kind = (
-        (LocationRuleTarget.CLUSTER, by_cluster),
-        (LocationRuleTarget.ALIAS_GROUP, by_family),
-        (LocationRuleTarget.ARTIST, by_artist),
-    )
+    reading = _Reading(store, current, proposed)
+    by_artist, groups_by_kind = _groups(store, albums, current)
+    reading.cover_by_rules(groups_by_kind)
     for kind, groups in groups_by_kind:
         for target_id, ids in groups.items():
-            if (kind, target_id) in existing:
-                for album_id in ids:
-                    covered[album_id] = existing[(kind, target_id)]
-    album_rules = {
-        target_id: cabinet_id
-        for (kind, target_id), cabinet_id in existing.items()
-        if kind is LocationRuleTarget.ALBUM
-    }
-
-    def consider(kind: LocationRuleTarget, target_id: int, ids: list[int]) -> None:
-        if len(ids) < MIN_ALBUMS or (kind, target_id) in existing:
-            return
-        cabinet = all_in(ids)
-        if cabinet is None or all(covered.get(i) == cabinet for i in ids):
-            return
-        # Where the albums would go as things stand: the cabinet a rule or a more general
-        # choice gives them, else where the proposal puts them.
-        expected = Counter(covered.get(i, proposed.get(i)) for i in ids).most_common(1)[0][0]
-        if not far(cabinet, expected):
-            return
-        if (kind, target_id, cabinet) in dismissed:
-            # Turned down: what it contains is not suggested one level lower either.
-            for album_id in ids:
-                covered[album_id] = cabinet
-            return
-        suggestions.append(RuleSuggestion(kind, target_id, cabinet, len(ids), expected))
-        for album_id in ids:
-            covered[album_id] = cabinet
-
-    for kind, groups in groups_by_kind:
-        for target_id, ids in groups.items():
-            consider(kind, target_id, ids)
-
+            reading.consider(kind, target_id, ids)
     # One album kept apart from the rest of its artist: a box set in external storage.
-    for artist_id, ids in by_artist.items():
-        if len(ids) < ALBUM_MIN_ARTIST:
-            continue
-        majority, count = Counter(current[i] for i in ids).most_common(1)[0]
-        if count / len(ids) < ALBUM_MAJORITY:
-            continue
-        for album_id in ids:
-            cabinet = current[album_id]
-            if cabinet == majority or (LocationRuleTarget.ALBUM, album_id) in existing:
-                continue
-            if covered.get(album_id) == cabinet:
-                continue
-            if album_id in album_rules:
-                continue
-            expected = covered.get(album_id, proposed.get(album_id))
-            if far(cabinet, expected) and far(cabinet, majority):
-                if (LocationRuleTarget.ALBUM, album_id, cabinet) not in dismissed:
-                    suggestions.append(
-                        RuleSuggestion(
-                            LocationRuleTarget.ALBUM, album_id, cabinet, 1, proposed.get(album_id)
-                        )
-                    )
-    return suggestions
+    for ids in by_artist.values():
+        reading.consider_albums_apart(ids)
+    return reading.suggestions
 
 
 def accept_suggestions(store: JsonStore, cabinet_id: int, note: str) -> int:

@@ -55,6 +55,139 @@ class ImportResult:
     refreshed: int = 0
 
 
+def _mark_departed(
+    albums: list[Album], in_collection: set[int], artist_names: dict[int, str]
+) -> list[tuple[str, str]]:
+    """Mark the albums whose release left the collection; returns artist and title of those to ask about."""
+    gone = []
+    for album in albums:
+        album.left_discogs = album.release_id is not None and album.release_id not in in_collection
+        if not album.left_discogs:
+            # Back in the collection: should it leave again, the question is asked anew.
+            album.kept_after_discogs = False
+        elif not album.kept_after_discogs:
+            gone.append((artist_names[album.artist_id], album.title))
+    return gone
+
+
+def _refresh_formats(albums: list[Album], vinyl: list[CollectionItem]) -> int:
+    """Give the linked albums the format of their release; returns how many changed."""
+    refreshed = 0
+    formats = {item.release_id: item.format_tokens for item in vinyl}
+    for album in albums:
+        current = formats.get(album.release_id)
+        if current is not None and album.format_tokens != current:
+            album.format_tokens = current
+            refreshed += 1
+    return refreshed
+
+
+def _link_by_name(
+    albums: list[Album], by_key: dict[tuple[str, str], list[CollectionItem]], artist_names: dict[int, str]
+) -> tuple[int, list[Album]]:
+    """Link albums to the release of the same artist and title; returns how many, and the rest."""
+    matched = 0
+    unmatched: list[Album] = []
+    for album in albums:
+        if album.release_id is not None:
+            continue
+        candidates = by_key[album_key(artist_names[album.artist_id], album.title)]
+        if not candidates:
+            unmatched.append(album)
+            continue
+        # Two pressings of one title are told apart by their format.
+        qualifiers = album.format_tokens.qualifiers if album.format_tokens else None
+        item = next((c for c in candidates if c.format_tokens.qualifiers == qualifiers), candidates[0])
+        candidates.remove(item)
+        album.release_id = item.release_id
+        if album.format_tokens is None:
+            album.format_tokens = item.format_tokens
+        matched += 1
+    return matched, unmatched
+
+
+def _propose_matches(
+    unmatched: list[Album], remaining: list[CollectionItem], artist_names: dict[int, str]
+) -> list[MatchProposal]:
+    """For each album left, the release most like it, if alike enough; taken out of remaining."""
+    proposals: list[MatchProposal] = []
+    for album in unmatched:
+        text = f"{artist_names[album.artist_id]} {album.title}".casefold()
+        scored = [
+            (SequenceMatcher(None, text, f"{item.artist} {item.title}".casefold()).ratio(), item)
+            for item in remaining
+        ]
+        score, item = max(scored, key=lambda pair: pair[0], default=(0.0, None))
+        if item is not None and score >= PROPOSAL_THRESHOLD:
+            remaining.remove(item)
+            proposals.append(
+                MatchProposal(
+                    album.id,
+                    item.release_id,
+                    item.artist,
+                    item.title,
+                    round(score, 3),
+                    item.format_tokens,
+                    item.cover_url,
+                    item.cover_image_url,
+                )
+            )
+    return proposals
+
+
+def _add_new_albums(
+    store: JsonStore, remaining: list[CollectionItem], albums: list[Album], artists: list[Artist]
+) -> None:
+    """Add the releases no album accounts for, with their artists when those are new."""
+    artist_ids = {artist.name: artist.id for artist in artists}
+    # A new album of an artist whose cluster is settled is a purchase to weigh against it.
+    settled = {a.artist_id for a in store.load(ArtistClusterAssignment) if a.confirmed}
+    for item in remaining:
+        artist_id = artist_ids.get(item.artist)
+        if artist_id is None:
+            artist_id = store.next_id(Artist, artists)
+            artists.append(Artist(artist_id, item.artist))
+            artist_ids[item.artist] = artist_id
+        albums.append(
+            Album(
+                id=store.next_id(Album, albums),
+                artist_id=artist_id,
+                title=item.title,
+                release_id=item.release_id,
+                format_tokens=item.format_tokens,
+                new_purchase=artist_id in settled,
+                added_on=date.today(),
+            )
+        )
+
+
+def _take_covers(albums: list[Album], vinyl: list[CollectionItem]) -> None:
+    """A cover only comes with a sync; an export leaves the covers as they are."""
+    covers = {item.release_id: item.cover_url for item in vinyl if item.cover_url}
+    large_covers = {item.release_id: item.cover_image_url for item in vinyl if item.cover_image_url}
+    for album in albums:
+        if album.release_id in covers:
+            album.cover_url = covers[album.release_id]
+        if album.release_id in large_covers:
+            album.cover_image_url = large_covers[album.release_id]
+
+
+def _name_artists_on_discogs(artists: list[Artist], albums: list[Album], vinyl: list[CollectionItem]) -> None:
+    """Name the artists on Discogs, which only a sync can.
+
+    An artist is the one most of its releases are credited to; releases shared with other artists
+    say nothing.
+    """
+    credited = {item.release_id: item.artist_discogs_id for item in vinyl if item.artist_discogs_id}
+    votes: dict[int, Counter] = defaultdict(Counter)
+    for album in albums:
+        if album.release_id in credited:
+            votes[album.artist_id][credited[album.release_id]] += 1
+    for artist in artists:
+        if artist.id in votes:
+            artist.discogs_artist_id = votes[artist.id].most_common(1)[0][0]
+
+
 def import_discogs_collection(
     store: JsonStore,
     items: list[CollectionItem],
@@ -86,118 +219,20 @@ def import_discogs_collection(
     vinyl = [item for item in items if item.is_vinyl]
 
     known_releases = {album.release_id for album in albums if album.release_id is not None}
-    in_collection = {item.release_id for item in items}
-    gone = []
-    for album in albums:
-        album.left_discogs = (
-            album.release_id is not None and album.release_id not in in_collection
-        )
-        if not album.left_discogs:
-            # Back in the collection: should it leave again, the question is asked anew.
-            album.kept_after_discogs = False
-        elif not album.kept_after_discogs:
-            gone.append((artist_names[album.artist_id], album.title))
+    gone = _mark_departed(albums, {item.release_id for item in items}, artist_names)
+    refreshed = _refresh_formats(albums, vinyl) if refresh_formats else 0
 
-    # A cover only comes with a sync; an export leaves the covers as they are.
-    covers = {item.release_id: item.cover_url for item in vinyl if item.cover_url}
-    large_covers = {
-        item.release_id: item.cover_image_url for item in vinyl if item.cover_image_url
-    }
-
-    refreshed = 0
-    if refresh_formats:
-        formats = {item.release_id: item.format_tokens for item in vinyl}
-        for album in albums:
-            current = formats.get(album.release_id)
-            if current is not None and album.format_tokens != current:
-                album.format_tokens = current
-                refreshed += 1
-    available = [item for item in vinyl if item.release_id not in known_releases]
     by_key: dict[tuple[str, str], list[CollectionItem]] = defaultdict(list)
-    for item in available:
-        by_key[album_key(item.artist, item.title)].append(item)
-
-    matched = 0
-    unmatched: list[Album] = []
-    for album in albums:
-        if album.release_id is not None:
-            continue
-        candidates = by_key[album_key(artist_names[album.artist_id], album.title)]
-        if not candidates:
-            unmatched.append(album)
-            continue
-        # Two pressings of one title are told apart by their format.
-        qualifiers = album.format_tokens.qualifiers if album.format_tokens else None
-        item = next(
-            (c for c in candidates if c.format_tokens.qualifiers == qualifiers), candidates[0]
-        )
-        candidates.remove(item)
-        album.release_id = item.release_id
-        if album.format_tokens is None:
-            album.format_tokens = item.format_tokens
-        matched += 1
+    for item in vinyl:
+        if item.release_id not in known_releases:
+            by_key[album_key(item.artist, item.title)].append(item)
+    matched, unmatched = _link_by_name(albums, by_key, artist_names)
 
     remaining = [item for candidates in by_key.values() for item in candidates]
-    proposals: list[MatchProposal] = []
-    for album in unmatched:
-        text = f"{artist_names[album.artist_id]} {album.title}".casefold()
-        scored = [
-            (SequenceMatcher(None, text, f"{item.artist} {item.title}".casefold()).ratio(), item)
-            for item in remaining
-        ]
-        score, item = max(scored, key=lambda pair: pair[0], default=(0.0, None))
-        if item is not None and score >= PROPOSAL_THRESHOLD:
-            remaining.remove(item)
-            proposals.append(
-                MatchProposal(
-                    album.id,
-                    item.release_id,
-                    item.artist,
-                    item.title,
-                    round(score, 3),
-                    item.format_tokens,
-                    item.cover_url,
-                    item.cover_image_url,
-                )
-            )
-
-    artist_ids = {artist.name: artist.id for artist in artists}
-    # A new album of an artist whose cluster is settled is a purchase to weigh against it.
-    settled = {a.artist_id for a in store.load(ArtistClusterAssignment) if a.confirmed}
-    for item in remaining:
-        artist_id = artist_ids.get(item.artist)
-        if artist_id is None:
-            artist_id = store.next_id(Artist, artists)
-            artists.append(Artist(artist_id, item.artist))
-            artist_ids[item.artist] = artist_id
-        albums.append(
-            Album(
-                id=store.next_id(Album, albums),
-                artist_id=artist_id,
-                title=item.title,
-                release_id=item.release_id,
-                format_tokens=item.format_tokens,
-                new_purchase=artist_id in settled,
-                added_on=date.today(),
-            )
-        )
-
-    for album in albums:
-        if album.release_id in covers:
-            album.cover_url = covers[album.release_id]
-        if album.release_id in large_covers:
-            album.cover_image_url = large_covers[album.release_id]
-
-    # Only a sync names the artist on Discogs. An artist is the one most of its releases
-    # are credited to; releases shared with other artists say nothing.
-    credited = {item.release_id: item.artist_discogs_id for item in vinyl if item.artist_discogs_id}
-    votes: dict[int, Counter] = defaultdict(Counter)
-    for album in albums:
-        if album.release_id in credited:
-            votes[album.artist_id][credited[album.release_id]] += 1
-    for artist in artists:
-        if artist.id in votes:
-            artist.discogs_artist_id = votes[artist.id].most_common(1)[0][0]
+    proposals = _propose_matches(unmatched, remaining, artist_names)
+    _add_new_albums(store, remaining, albums, artists)
+    _take_covers(albums, vinyl)
+    _name_artists_on_discogs(artists, albums, vinyl)
 
     if not dry_run:
         estimate_widths(albums, constants)

@@ -19,7 +19,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 ```sh
 uv run python -m sleeve_shelf                      # run the app on http://127.0.0.1:5000
 uv run python -m pytest                            # run the tests
-uv run python -m ruff check src tests              # unused and undefined names, and docstrings
+uv run python -m ruff check src tests              # unused and undefined names, docstrings, and complexity
 uv run python -m sleeve_shelf load <workbook.xlsx> # load a layout workbook
 uv run python -m sleeve_shelf import-discogs <collection.csv>
 uv run python -m sleeve_shelf enrich               # fetch styles and original years from Discogs

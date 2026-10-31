@@ -4,6 +4,7 @@ To a shelf or to where it belongs, worked out as a plan to look at before it is 
 """
 
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -25,6 +26,7 @@ from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.shelving.placing import ShelvesChanged
 from sleeve_shelf.shelving.proposal import sort_collection
 from sleeve_shelf.sorting.placement import TOLERANCE_CM, fill_shelves
+from sleeve_shelf.sorting.spots import SuggestedSpot
 from sleeve_shelf.shelving.spots import belonging
 from sleeve_shelf.library.taking_part import kept_shelf_ids, usable_shelves
 from sleeve_shelf.library.versions import save_if_unsaved
@@ -221,6 +223,59 @@ def find(store: JsonStore, text: str, limit: int = 8) -> list[tuple[Kind, int, s
     return found
 
 
+def _stand_where_they_belong(
+    new_rows: dict[int, list[int]], moving: list[int], spots: dict[int, SuggestedSpot], leaving: set[int]
+) -> None:
+    """Albums that go to the same place stand there together, in sorting order."""
+    for album_id in moving:
+        spot = spots[album_id]
+        row = new_rows.setdefault(spot.shelf_id, [])
+        if spot.after_album_id is not None and spot.after_album_id in row:
+            index = row.index(spot.after_album_id) + 1
+            while index < len(row) and row[index] in leaving and _placed_before(row[index], album_id, moving):
+                index += 1
+        elif spot.before_album_id is not None and spot.before_album_id in row:
+            index = row.index(spot.before_album_id)
+        else:
+            index = len(row)
+        row.insert(index, album_id)
+
+
+def _stand_in_front(
+    store: JsonStore,
+    start: Shelf,
+    moving: list[int],
+    rows: dict[int, list[int]],
+    new_rows: dict[int, list[int]],
+    width: Callable[[int], float],
+) -> None:
+    """Put the albums at the start of a shelf, what stood there moving up behind them."""
+    usable = usable_shelves(store)[0]
+    if start not in usable:
+        new_rows[start.id] = moving + new_rows.get(start.id, [])
+        return
+    in_cabinet = [shelf for shelf in usable if shelf.cabinet_id == start.cabinet_id]
+    chain = in_cabinet[in_cabinet.index(start):]
+    row = moving + [a for shelf in chain for a in new_rows.get(shelf.id, [])]
+    # A shelf holds at least what stands on it now, whatever its width says: a width
+    # from the workbook is an estimate that comes out too narrow, and filling by it
+    # alone would pile what no longer "fits" onto the cabinet's last shelf.
+    room = {
+        shelf.id: max(shelf.width_cm, sum(width(a) for a in rows.get(shelf.id, [])))
+        for shelf in chain
+    }
+    filled, left_out = fill_shelves(
+        [(album_id, width(album_id)) for album_id in row],
+        [(shelf.id, room[shelf.id]) for shelf in chain],
+    )
+    for shelf in chain:
+        new_rows[shelf.id] = []
+    for spot in sorted(filled, key=lambda s: s.position):
+        new_rows[spot.shelf_id].append(spot.album_id)
+    # Nothing drops off: what no longer fits stays at the end of the cabinet.
+    new_rows[chain[-1].id].extend(left_out)
+
+
 def plan(
     store: JsonStore, chosen: Selection, how: How, shelf_id: int | None, constants: WidthConstants
 ) -> Plan:
@@ -256,6 +311,7 @@ def plan(
         rows.setdefault(p.shelf_id, []).append(p.album_id)
     moving = list(chosen.album_ids)
     without_spot: list[int] = []
+    spots: dict[int, SuggestedSpot] = {}
     if how is How.BELONGS:
         others = [p for p in placements if p.album_id not in set(moving)]
         # Where they stand now is what is being changed, so it says nothing about their order.
@@ -271,49 +327,13 @@ def plan(
         return (album.width_cm if album else None) or constants.base_per_disc
 
     if how is How.BELONGS:
-        # Albums that go to the same place stand there together, in sorting order.
-        for album_id in moving:
-            spot = spots[album_id]
-            row = new_rows.setdefault(spot.shelf_id, [])
-            if spot.after_album_id is not None and spot.after_album_id in row:
-                index = row.index(spot.after_album_id) + 1
-                while index < len(row) and row[index] in leaving and _placed_before(row[index], album_id, moving):
-                    index += 1
-            elif spot.before_album_id is not None and spot.before_album_id in row:
-                index = row.index(spot.before_album_id)
-            else:
-                index = len(row)
-            row.insert(index, album_id)
+        _stand_where_they_belong(new_rows, moving, spots, leaving)
     elif shelf_id == OFF_SHELF:
         pass
     elif how is How.END:
         new_rows.setdefault(shelf_id, []).extend(moving)
     else:
-        usable = usable_shelves(store)[0]
-        start = by_id[shelf_id]
-        if start in usable:
-            in_cabinet = [shelf for shelf in usable if shelf.cabinet_id == start.cabinet_id]
-            chain = in_cabinet[in_cabinet.index(start):]
-            row = moving + [a for shelf in chain for a in new_rows.get(shelf.id, [])]
-            # A shelf holds at least what stands on it now, whatever its width says: a width
-            # from the workbook is an estimate that comes out too narrow, and filling by it
-            # alone would pile what no longer "fits" onto the cabinet's last shelf.
-            room = {
-                shelf.id: max(shelf.width_cm, sum(width(a) for a in rows.get(shelf.id, [])))
-                for shelf in chain
-            }
-            spots, left_out = fill_shelves(
-                [(album_id, width(album_id)) for album_id in row],
-                [(shelf.id, room[shelf.id]) for shelf in chain],
-            )
-            for shelf in chain:
-                new_rows[shelf.id] = []
-            for spot in sorted(spots, key=lambda s: s.position):
-                new_rows[spot.shelf_id].append(spot.album_id)
-            # Nothing drops off: what no longer fits stays at the end of the cabinet.
-            new_rows[chain[-1].id].extend(left_out)
-        else:
-            new_rows[shelf_id] = moving + new_rows.get(shelf_id, [])
+        _stand_in_front(store, by_id[shelf_id], moving, rows, new_rows, width)
 
     return _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, placements, width)
 

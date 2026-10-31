@@ -33,10 +33,13 @@ dev = [
 ]
 
 [tool.ruff.lint]
-# Unused and undefined names, and docstrings. Complexity (C901) is not checked yet: some functions are still too long.
-select = ["F", "D"]
+# Unused and undefined names, docstrings, and how complex a function may be.
+select = ["F", "D", "C901"]
 # A class says what its __init__ takes, as the Google style has it.
 ignore = ["D105", "D107"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

@@ -102,6 +102,46 @@ def fill_shelves(
     return spots, left_out
 
 
+_IMPOSSIBLE = -1
+
+
+def _most_kept(
+    row: list[tuple[int, float]], shelf_widths: list[tuple[int, float]], standing: dict[int, int]
+) -> tuple[list[list[int]], list[list[int]]]:
+    """best[j][i]: the most albums kept in place with the first i albums on the first j shelves.
+
+    cut[j][i] says where shelf j starts for that.
+    """
+    n, m = len(row), len(shelf_widths)
+    prefix = [0.0]
+    for _, width in row:
+        prefix.append(prefix[-1] + width)
+    # stays[j][i]: how many of the first i albums stand on shelf j now.
+    stays = []
+    for shelf_id, _ in shelf_widths:
+        counts = [0]
+        for album_id, _ in row:
+            counts.append(counts[-1] + (standing.get(album_id) == shelf_id))
+        stays.append(counts)
+
+    best = [[_IMPOSSIBLE] * (n + 1) for _ in range(m + 1)]
+    cut = [[0] * (n + 1) for _ in range(m + 1)]
+    best[0][0] = 0
+    for j in range(1, m + 1):
+        room = shelf_widths[j - 1][1] + TOLERANCE_CM
+        kept = stays[j - 1]
+        for i in range(n + 1):
+            # The shelf takes albums k+1..i; walk k down while they fit.
+            k = i
+            while k >= 0 and prefix[i] - prefix[k] <= room:
+                if best[j - 1][k] != _IMPOSSIBLE:
+                    value = best[j - 1][k] + kept[i] - kept[k]
+                    if value > best[j][i]:
+                        best[j][i], cut[j][i] = value, k
+                k -= 1
+    return best, cut
+
+
 def fill_shelves_keeping(
     album_widths: list[tuple[int, float]],
     shelf_widths: list[tuple[int, float]],
@@ -122,44 +162,16 @@ def fill_shelves_keeping(
     Returns:
         The spots, and the ids of the albums that did not fit.
     """
-    _greedy, left_out = fill_shelves(album_widths, shelf_widths)
+    greedy, left_out = fill_shelves(album_widths, shelf_widths)
     leaving = set(left_out)
     row = [(album_id, width) for album_id, width in album_widths if album_id not in leaving]
-    n, m = len(row), len(shelf_widths)
-    prefix = [0.0]
-    for _, width in row:
-        prefix.append(prefix[-1] + width)
-    # stays[j][i]: how many of the first i albums stand on shelf j now.
-    stays = []
-    for shelf_id, _ in shelf_widths:
-        counts = [0]
-        for album_id, _ in row:
-            counts.append(counts[-1] + (standing.get(album_id) == shelf_id))
-        stays.append(counts)
-
-    impossible = -1
-    # best[j][i]: the most albums kept in place with the first i albums on the first j shelves.
-    best = [[impossible] * (n + 1) for _ in range(m + 1)]
-    cut = [[0] * (n + 1) for _ in range(m + 1)]
-    best[0][0] = 0
-    for j in range(1, m + 1):
-        room = shelf_widths[j - 1][1] + TOLERANCE_CM
-        kept = stays[j - 1]
-        for i in range(n + 1):
-            # The shelf takes albums k+1..i; walk k down while they fit.
-            k = i
-            while k >= 0 and prefix[i] - prefix[k] <= room:
-                if best[j - 1][k] != impossible:
-                    value = best[j - 1][k] + kept[i] - kept[k]
-                    if value > best[j][i]:
-                        best[j][i], cut[j][i] = value, k
-                k -= 1
-    if best[m][n] == impossible:
+    best, cut = _most_kept(row, shelf_widths, standing)
+    if best[len(shelf_widths)][len(row)] == _IMPOSSIBLE:
         # Cannot happen when fill_shelves placed them all; keep its answer to be safe.
-        return _greedy, left_out
+        return greedy, left_out
     spots: list[Spot] = []
-    i = n
-    for j in range(m, 0, -1):
+    i = len(row)
+    for j in range(len(shelf_widths), 0, -1):
         k = cut[j][i]
         shelf_id = shelf_widths[j - 1][0]
         spots[:0] = [Spot(row[index][0], shelf_id, index - k) for index in range(k, i)]

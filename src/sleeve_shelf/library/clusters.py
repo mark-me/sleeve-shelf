@@ -61,6 +61,33 @@ def album_counts(store: JsonStore) -> Counter[int]:
     )
 
 
+def _point_at_survivor(store: JsonStore, gone: set[int], survivor_id: int) -> None:
+    """Make the artists, styles and location rules of the merged clusters point at the survivor."""
+    assignments = store.load(ArtistClusterAssignment)
+    for assignment in assignments:
+        if assignment.cluster_id in gone:
+            assignment.cluster_id = survivor_id
+    styles = store.load(Style)
+    for style in styles:
+        if style.cluster_id in gone:
+            style.cluster_id = survivor_id
+    rules = store.load(LocationRule)
+    for rule in rules:
+        if rule.target_type is LocationRuleTarget.CLUSTER and rule.target_id in gone:
+            rule.target_id = survivor_id
+    # Two merged clusters may each have had a rule; the survivor keeps its own, or the first.
+    seen: set[tuple] = set()
+    kept_rules = []
+    for rule in sorted(rules, key=lambda rule: (rule.target_id != survivor_id, rule.id)):
+        key = (rule.target_type, rule.target_id)
+        if key not in seen:
+            seen.add(key)
+            kept_rules.append(rule)
+    store.save(ArtistClusterAssignment, assignments)
+    store.save(Style, styles)
+    store.save(LocationRule, sorted(kept_rules, key=lambda rule: rule.id))
+
+
 def merge_clusters(store: JsonStore, cluster_ids: list[int], name: str = "") -> int | None:
     """Merge clusters into the one holding the most albums.
 
@@ -84,34 +111,10 @@ def merge_clusters(store: JsonStore, cluster_ids: list[int], name: str = "") -> 
     gone = {cluster.id for cluster in chosen} - {survivor.id}
     if name:
         survivor.name = name
-
-    assignments = store.load(ArtistClusterAssignment)
-    for assignment in assignments:
-        if assignment.cluster_id in gone:
-            assignment.cluster_id = survivor.id
-    styles = store.load(Style)
-    for style in styles:
-        if style.cluster_id in gone:
-            style.cluster_id = survivor.id
-    rules = store.load(LocationRule)
-    for rule in rules:
-        if rule.target_type is LocationRuleTarget.CLUSTER and rule.target_id in gone:
-            rule.target_id = survivor.id
-    # Two merged clusters may each have had a rule; the survivor keeps its own, or the first.
-    seen: set[tuple] = set()
-    kept_rules = []
-    for rule in sorted(rules, key=lambda rule: (rule.target_id != survivor.id, rule.id)):
-        key = (rule.target_type, rule.target_id)
-        if key not in seen:
-            seen.add(key)
-            kept_rules.append(rule)
-
+    _point_at_survivor(store, gone, survivor.id)
     remaining = clusters_in_order([cluster for cluster in clusters if cluster.id not in gone])
     for position, cluster in enumerate(remaining):
         cluster.position = position
-    store.save(ArtistClusterAssignment, assignments)
-    store.save(Style, styles)
-    store.save(LocationRule, sorted(kept_rules, key=lambda rule: rule.id))
     store.save(Cluster, remaining)
     return survivor.id
 

@@ -77,6 +77,121 @@ def load_layout(
         replace_collection(store, load, constants)
 
 
+class _Merged:
+    """The stored collection with a workbook taken in: recognised by name, added when new."""
+
+    def __init__(self, store: JsonStore, load: InitialLoad, albums: list[Album]) -> None:
+        self.store = store
+        self.load = load
+        self.albums = albums
+        self.artists = store.load(Artist)
+        self.clusters = store.load(Cluster)
+        self.assignments = store.load(ArtistClusterAssignment)
+        self.era_bands = store.load(EraBand)
+        self.cabinets = store.load(Cabinet)
+        self.shelves = store.load(Shelf)
+        self.loaded_artist = {artist.id: artist for artist in load.artists}
+        self.loaded_cluster = {cluster.id: cluster.name for cluster in load.clusters}
+        self.loaded_assignment = {a.artist_id: a.cluster_id for a in load.assignments}
+        self.loaded_band = {band.id: band for band in load.era_bands}
+        artist_names = {artist.id: artist.name for artist in self.artists}
+        self.candidates: dict[tuple[str, str], list[Album]] = defaultdict(list)
+        for album in albums:
+            self.candidates[album_key(artist_names[album.artist_id], album.title)].append(album)
+        self.artist_ids = {artist.name: artist.id for artist in self.artists}
+        self.cluster_ids = {cluster.name: cluster.id for cluster in self.clusters}
+        self.band_ids = {(band.artist_id, band.label): band.id for band in self.era_bands}
+
+    def shelves_of_load(self) -> dict[int, int]:
+        """The stored shelf of each loaded one.
+
+        Cabinets and shelves are recognised by name and keep what was filled in for them.
+        """
+        loaded_cabinet = {cabinet.id: cabinet for cabinet in self.load.cabinets}
+        cabinet_ids = {cabinet.name: cabinet.id for cabinet in self.cabinets}
+        shelf_ids = {(shelf.cabinet_id, shelf.name): shelf.id for shelf in self.shelves}
+        shelf_of: dict[int, int] = {}
+        for shelf in self.load.shelves:
+            cabinet_name = loaded_cabinet[shelf.cabinet_id].name
+            if cabinet_name not in cabinet_ids:
+                cabinet_ids[cabinet_name] = self.store.next_id(Cabinet, self.cabinets)
+                self.cabinets.append(Cabinet(cabinet_ids[cabinet_name], cabinet_name))
+            key = (cabinet_ids[cabinet_name], shelf.name)
+            if key not in shelf_ids:
+                shelf_ids[key] = self.store.next_id(Shelf, self.shelves)
+                self.shelves.append(
+                    Shelf(
+                        shelf_ids[key],
+                        key[0],
+                        shelf.name,
+                        width_cm=shelf.width_cm,
+                        reachability_score=shelf.reachability_score,
+                    )
+                )
+            shelf_of[shelf.id] = shelf_ids[key]
+        return shelf_of
+
+    def stored(self, loaded: Album) -> Album:
+        """The stored album a workbook row stands for, added when it is new."""
+        artist = self.loaded_artist[loaded.artist_id]
+        matches = self.candidates[album_key(artist.name, loaded.title)]
+        if matches:
+            qualifiers = loaded.format_tokens.qualifiers if loaded.format_tokens else None
+            album = next(
+                (m for m in matches if m.format_tokens and m.format_tokens.qualifiers == qualifiers),
+                matches[0],
+            )
+            matches.remove(album)
+            return album
+        if artist.name not in self.artist_ids:
+            self._add_artist(artist)
+        artist_id = self.artist_ids[artist.name]
+        album = replace(
+            loaded,
+            id=self.store.next_id(Album, self.albums),
+            artist_id=artist_id,
+            era_band_id=self._era_band(artist_id, loaded.era_band_id),
+        )
+        self.albums.append(album)
+        return album
+
+    def _add_artist(self, artist: Artist) -> None:
+        self.artist_ids[artist.name] = self.store.next_id(Artist, self.artists)
+        self.artists.append(Artist(self.artist_ids[artist.name], artist.name, start_year=artist.start_year))
+        cluster_name = self.loaded_cluster.get(self.loaded_assignment.get(artist.id))
+        if cluster_name is None:
+            return
+        if cluster_name not in self.cluster_ids:
+            self.cluster_ids[cluster_name] = self.store.next_id(Cluster, self.clusters)
+            self.clusters.append(Cluster(self.cluster_ids[cluster_name], cluster_name))
+        self.assignments.append(
+            ArtistClusterAssignment(self.artist_ids[artist.name], self.cluster_ids[cluster_name], True)
+        )
+
+    def _era_band(self, artist_id: int, loaded_band_id: int | None) -> int | None:
+        if loaded_band_id is None:
+            return None
+        label = self.loaded_band[loaded_band_id].label
+        if (artist_id, label) not in self.band_ids:
+            self.band_ids[artist_id, label] = max((b.id for b in self.era_bands), default=0) + 1
+            position = sum(1 for band in self.era_bands if band.artist_id == artist_id)
+            self.era_bands.append(
+                EraBand(self.band_ids[artist_id, label], artist_id, label, position, EraBandSource.INITIAL_LOAD)
+            )
+        return self.band_ids[artist_id, label]
+
+    def save(self) -> None:
+        # New cabinets and shelves come after the ones already there.
+        settle_order(self.cabinets, self.shelves)
+        self.store.save(Cabinet, self.cabinets)
+        self.store.save(Shelf, self.shelves)
+        self.store.save(Cluster, self.clusters)
+        self.store.save(Artist, self.artists)
+        self.store.save(ArtistClusterAssignment, self.assignments)
+        self.store.save(EraBand, self.era_bands)
+        self.store.save(Album, self.albums)
+
+
 def update_layout(
     store: JsonStore, load: InitialLoad, constants: WidthConstants | None = None
 ) -> None:
@@ -91,115 +206,22 @@ def update_layout(
         load: What the workbook holds.
         constants: The width figures, to estimate the widths of new albums.
     """
-    artists = store.load(Artist)
-    albums = store.load(Album)
-    clusters = store.load(Cluster)
-    assignments = store.load(ArtistClusterAssignment)
-    era_bands = store.load(EraBand)
-    cabinets = store.load(Cabinet)
-    shelves = store.load(Shelf)
+    merged = _Merged(store, load, store.load(Album))
     # Changes made by hand since the last version must not be lost to the new workbook.
     save_if_unsaved(store, "before loading")
 
-    loaded_artist = {artist.id: artist for artist in load.artists}
-    loaded_cluster = {cluster.id: cluster.name for cluster in load.clusters}
-    loaded_assignment = {a.artist_id: a.cluster_id for a in load.assignments}
-    loaded_band = {band.id: band for band in load.era_bands}
-    loaded_cabinet = {cabinet.id: cabinet for cabinet in load.cabinets}
-
-    # Cabinets and shelves are recognised by name and keep what was filled in for them.
-    cabinet_ids = {cabinet.name: cabinet.id for cabinet in cabinets}
-    shelf_ids = {(shelf.cabinet_id, shelf.name): shelf.id for shelf in shelves}
-    shelf_of: dict[int, int] = {}
-    for shelf in load.shelves:
-        cabinet_name = loaded_cabinet[shelf.cabinet_id].name
-        if cabinet_name not in cabinet_ids:
-            cabinet_ids[cabinet_name] = store.next_id(Cabinet, cabinets)
-            cabinets.append(Cabinet(cabinet_ids[cabinet_name], cabinet_name))
-        key = (cabinet_ids[cabinet_name], shelf.name)
-        if key not in shelf_ids:
-            shelf_ids[key] = store.next_id(Shelf, shelves)
-            shelves.append(
-                Shelf(
-                    shelf_ids[key],
-                    key[0],
-                    shelf.name,
-                    width_cm=shelf.width_cm,
-                    reachability_score=shelf.reachability_score,
-                )
-            )
-        shelf_of[shelf.id] = shelf_ids[key]
-
-    artist_names = {artist.id: artist.name for artist in artists}
-    candidates: dict[tuple[str, str], list[Album]] = defaultdict(list)
-    for album in albums:
-        candidates[album_key(artist_names[album.artist_id], album.title)].append(album)
-    artist_ids = {artist.name: artist.id for artist in artists}
-    cluster_ids = {cluster.name: cluster.id for cluster in clusters}
-    band_ids = {(band.artist_id, band.label): band.id for band in era_bands}
-
-    def stored(loaded: Album) -> Album:
-        """The stored album a workbook row stands for, added when it is new."""
-        artist = loaded_artist[loaded.artist_id]
-        matches = candidates[album_key(artist.name, loaded.title)]
-        if matches:
-            qualifiers = loaded.format_tokens.qualifiers if loaded.format_tokens else None
-            album = next(
-                (m for m in matches if m.format_tokens and m.format_tokens.qualifiers == qualifiers),
-                matches[0],
-            )
-            matches.remove(album)
-            return album
-        if artist.name not in artist_ids:
-            artist_ids[artist.name] = store.next_id(Artist, artists)
-            artists.append(Artist(artist_ids[artist.name], artist.name, start_year=artist.start_year))
-            cluster_name = loaded_cluster.get(loaded_assignment.get(artist.id))
-            if cluster_name is not None:
-                if cluster_name not in cluster_ids:
-                    cluster_ids[cluster_name] = store.next_id(Cluster, clusters)
-                    clusters.append(Cluster(cluster_ids[cluster_name], cluster_name))
-                assignments.append(
-                    ArtistClusterAssignment(artist_ids[artist.name], cluster_ids[cluster_name], True)
-                )
-        artist_id = artist_ids[artist.name]
-        era_band_id = None
-        if loaded.era_band_id is not None:
-            label = loaded_band[loaded.era_band_id].label
-            if (artist_id, label) not in band_ids:
-                band_ids[artist_id, label] = max((b.id for b in era_bands), default=0) + 1
-                position = sum(1 for band in era_bands if band.artist_id == artist_id)
-                era_bands.append(
-                    EraBand(band_ids[artist_id, label], artist_id, label, position, EraBandSource.INITIAL_LOAD)
-                )
-            era_band_id = band_ids[artist_id, label]
-        album = replace(
-            loaded,
-            id=store.next_id(Album, albums),
-            artist_id=artist_id,
-            era_band_id=era_band_id,
-        )
-        albums.append(album)
-        return album
-
+    shelf_of = merged.shelves_of_load()
     placement_of = {placement.album_id: placement for placement in load.placements}
     placements = []
     for loaded in load.albums:
-        album = stored(loaded)
+        album = merged.stored(loaded)
         placement = placement_of.get(loaded.id)
         if placement is not None:
             placements.append(replace(placement, album_id=album.id, shelf_id=shelf_of[placement.shelf_id]))
 
     if constants:
-        estimate_widths([album for album in albums if album.computed_width_cm is None], constants)
-    # New cabinets and shelves come after the ones already there.
-    settle_order(cabinets, shelves)
-    store.save(Cabinet, cabinets)
-    store.save(Shelf, shelves)
-    store.save(Cluster, clusters)
-    store.save(Artist, artists)
-    store.save(ArtistClusterAssignment, assignments)
-    store.save(EraBand, era_bands)
-    store.save(Album, albums)
+        estimate_widths([album for album in merged.albums if album.computed_width_cm is None], constants)
+    merged.save()
     store.save(Placement, placements)
     ensure_cluster_order(store)
     save_version(store, "loaded")
