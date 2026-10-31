@@ -17,7 +17,14 @@ from sleeve_shelf.shelving.spots import suggested_spots
 
 
 def shelf_options(store: JsonStore) -> list[dict]:
-    """Every shelf in walking order, to choose from when moving something."""
+    """Every shelf in walking order, to choose from when moving something.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        One entry per shelf, with its cabinet's name.
+    """
     shelves = store.load(Shelf)
     return [
         {"id": shelf.id, "cabinet": cabinet.name, "shelf": shelf.name}
@@ -27,7 +34,16 @@ def shelf_options(store: JsonStore) -> list[dict]:
 
 
 def described_rules(store: JsonStore, artist_id: int, album_id: int | None = None) -> list[dict]:
-    """The location rules bearing on an artist or album, named, the deciding one first."""
+    """The location rules bearing on an artist or album, named, the deciding one first.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+        album_id: The album, when it is about one.
+
+    Returns:
+        One entry per rule, for a template.
+    """
     rules = applicable_rules(store, artist_id, album_id)
     if not rules:
         return []
@@ -51,7 +67,14 @@ def described_rules(store: JsonStore, artist_id: int, album_id: int | None = Non
 
 
 def described_spots(store: JsonStore) -> dict[int, dict]:
-    """Per album that waits for a place: its suggested spot, with the albums it would stand between."""
+    """Per album that waits for a place: its suggested spot, with the albums it would stand between.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The spots by album id, for a template.
+    """
     spots = suggested_spots(store, load_settings(store.data_dir).width_constants)
     if not spots:
         return {}

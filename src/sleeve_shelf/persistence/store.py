@@ -320,7 +320,11 @@ def _swap_in(temporary: Path, target: Path) -> None:
 
 
 class JsonStore:
-    """Reads and writes each entity's JSON file in a data directory."""
+    """Reads and writes each entity's JSON file in a data directory.
+
+    Args:
+        data_dir: The data directory.
+    """
 
     def __init__(self, data_dir: str | Path) -> None:
         self.data_dir = Path(data_dir)
@@ -328,7 +332,12 @@ class JsonStore:
         self._id_marks: dict[str, int] | None = None
 
     def save[T](self, entity: type[T], items: Iterable[T]) -> None:
-        """Overwrite the entity's file with exactly these items."""
+        """Overwrite the entity's file with exactly these items.
+
+        Args:
+            entity: The kind of item.
+            items: All items of that kind.
+        """
         table = _TABLES[entity]
         rows = [{name: _encode(getattr(item, name)) for name in table.columns} for item in items]
         if "id" in table.columns:
@@ -355,9 +364,16 @@ class JsonStore:
     def next_id(self, entity: type, items: Iterable) -> int:
         """An id for a new item, given the items there are now: one that was never used before.
 
-        An id is never handed out twice, not even after the item that had it is
-        removed — a saved version, a location rule or a link may still name it,
-        and would otherwise end up pointing at something else.
+        An id is never handed out twice, not even after the item that had it is removed — a saved
+        version, a location rule or a link may still name it, and would otherwise end up pointing at
+        something else.
+
+        Args:
+            entity: The kind of item.
+            items: The items of that kind there are now.
+
+        Returns:
+            The id.
         """
         marked = self._marks().get(_TABLES[entity].filename, 0)
         return max(marked, max((item.id for item in items), default=0)) + 1
@@ -382,7 +398,14 @@ class JsonStore:
             self.save(_IdMark, [_IdMark(name, last_id) for name, last_id in sorted(marks.items())])
 
     def load[T](self, entity: type[T]) -> list[T]:
-        """Read all items of the entity; a file that doesn't exist yet yields none."""
+        """Read all items of the entity; a file that doesn't exist yet yields none.
+
+        Args:
+            entity: The kind of item.
+
+        Returns:
+            The items.
+        """
         table = _TABLES[entity]
         if not self.exists(entity):
             return []
@@ -390,15 +413,33 @@ class JsonStore:
         return [self._decode(entity, table, row) for row in rows]
 
     def exists(self, entity: type) -> bool:
-        """Whether the entity's file has been written."""
+        """Whether the entity's file has been written.
+
+        Args:
+            entity: The kind of item.
+
+        Returns:
+            True when it has.
+        """
         return (self.data_dir / _TABLES[entity].filename).exists()
 
     def remove(self, entity: type) -> None:
-        """Delete the entity's file, if it was written."""
+        """Delete the entity's file, if it was written.
+
+        Args:
+            entity: The kind of item.
+        """
         (self.data_dir / _TABLES[entity].filename).unlink(missing_ok=True)
 
     def relation(self, entity: type) -> str:
-        """The SQL table expression that reads the entity's file, for use in queries."""
+        """The SQL table expression that reads the entity's file, for use in queries.
+
+        Args:
+            entity: The kind of item.
+
+        Returns:
+            The expression.
+        """
         table = _TABLES[entity]
         path = self.data_dir / table.filename
         if not path.exists():
@@ -426,13 +467,23 @@ class JsonStore:
         return f"(SELECT {selected} FROM {file})"
 
     def query(self, sql: str, parameters: list | None = None) -> list[tuple]:
-        """Run a read query; refer to entities through relation()."""
+        """Run a read query; refer to entities through relation().
+
+        Args:
+            sql: The query.
+            parameters: Its parameters.
+
+        Returns:
+            The rows.
+        """
         return self._connection.execute(sql, parameters or []).fetchall()
 
     def _snapshot_path(self, name: str) -> Path:
-        """The file of a saved version. Its name is a plain file name — letters, digits, "-"
-        and "_" — and the path stays inside the folder of versions; anything else is refused,
-        as a name can come from a request."""
+        """The file of a saved version.
+
+        Its name is a plain file name — letters, digits, "-" and "_" — and the path stays inside the
+        folder of versions; anything else is refused, as a name can come from a request.
+        """
         if not _SNAPSHOT_NAME.fullmatch(name):
             raise ValueError(f"Not a name of a saved version: {name!r}")
         folder = os.path.normpath(self.data_dir / SNAPSHOT_DIR)
@@ -442,18 +493,36 @@ class JsonStore:
         return Path(path)
 
     def save_snapshot(self, name: str) -> Path:
-        """Keep a copy of the current placement as a saved layout version."""
+        """Keep a copy of the current placement as a saved layout version.
+
+        Args:
+            name: The version's name.
+
+        Returns:
+            Its file.
+        """
         target = self._snapshot_path(name)
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(self.data_dir / _TABLES[Placement].filename, target)
         return target
 
     def snapshots(self) -> list[str]:
-        """The names of the saved layout versions, oldest first."""
+        """The names of the saved layout versions, oldest first.
+
+        Returns:
+            The names.
+        """
         return sorted(path.stem for path in (self.data_dir / SNAPSHOT_DIR).glob("*.json"))
 
     def load_snapshot(self, name: str) -> list[Placement]:
-        """The placements of a saved layout version."""
+        """The placements of a saved layout version.
+
+        Args:
+            name: The version's name.
+
+        Returns:
+            The placements.
+        """
         table = _TABLES[Placement]
         path = self._snapshot_path(name)
         rows = self._connection.execute(
@@ -462,7 +531,14 @@ class JsonStore:
         return [self._decode(Placement, table, row) for row in rows]
 
     def snapshot_is_current(self, name: str) -> bool:
-        """Whether a saved version is exactly the current layout."""
+        """Whether a saved version is exactly the current layout.
+
+        Args:
+            name: The version's name.
+
+        Returns:
+            True when it is.
+        """
         current = self.data_dir / _TABLES[Placement].filename
         saved = self._snapshot_path(name)
         if not (current.exists() and saved.exists()):

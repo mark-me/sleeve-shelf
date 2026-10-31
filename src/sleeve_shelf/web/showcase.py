@@ -14,6 +14,7 @@ blueprint = Blueprint("showcase", __name__, url_prefix="/showcase")
 
 @blueprint.get("/")
 def index():
+    """The Showcase screen: each showcase shelf with the artists on it."""
     store = get_store()
     settings = load_settings(current_app.config["DATA_DIR"])
     fill = BrowseQueries(store).shelf_fill()
@@ -55,6 +56,7 @@ def index():
 
 @blueprint.post("/swap")
 def exchange():
+    """Exchange an album on a showcase shelf with one of the same artist elsewhere."""
     shown = request.form.get("shown", type=int)
     shelved = request.form.get("shelved", type=int)
     anchor = request.form.get("anchor", "")

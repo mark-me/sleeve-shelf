@@ -10,21 +10,33 @@ from sleeve_shelf.sorting.order import propose_cluster
 
 @dataclass(frozen=True, slots=True)
 class ClusterShift:
-    """An artist with a confirmed cluster whose new purchases make the styles point to another."""
+    """An artist with a confirmed cluster whose new purchases make the styles point to another.
+
+    Attributes:
+        artist_id: The artist.
+        cluster_id: Its cluster now.
+        proposed_cluster_id: The cluster the styles point to.
+        album_ids: The purchases behind it: the new albums that have their styles.
+    """
 
     artist_id: int
     cluster_id: int
     proposed_cluster_id: int
-    # The purchases behind it: the new albums that have their styles.
     album_ids: tuple[int, ...]
 
 
 def cluster_shifts(store: JsonStore) -> list[ClusterShift]:
     """The shifts waiting for a decision; nothing is ever moved to another cluster by itself.
 
-    Only a purchase can cause one: the cluster the styles point to with the new
-    albums is compared with the one they pointed to without them, so an artist
-    whose curated cluster never agreed with its styles is not reported.
+    Only a purchase can cause one: the cluster the styles point to with the new albums is compared
+    with the one they pointed to without them, so an artist whose curated cluster never agreed with
+    its styles is not reported.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The shifts.
     """
     albums = store.load(Album)
     if not any(album.new_purchase for album in albums):
@@ -54,12 +66,22 @@ def cluster_shifts(store: JsonStore) -> list[ClusterShift]:
 
 
 def keep_cluster(store: JsonStore, artist_id: int) -> None:
-    """The artist stays where it is: its purchases have been weighed and are not asked about again."""
+    """The artist stays where it is: its purchases have been weighed and are not asked about again.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+    """
     clear_purchases(store, artist_id)
 
 
 def clear_purchases(store: JsonStore, artist_id: int) -> None:
-    """Forget which albums of the artist are new purchases; a decision on its cluster was taken."""
+    """Forget which albums of the artist are new purchases; a decision on its cluster was taken.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+    """
     albums = store.load(Album)
     marked = [a for a in albums if a.artist_id == artist_id and a.new_purchase]
     if not marked:

@@ -14,6 +14,16 @@ RESTORE_POINT_EVERY = timedelta(hours=1)
 
 @dataclass(frozen=True, slots=True)
 class Version:
+    """A saved layout.
+
+    Attributes:
+        name: The name of its file.
+        saved_at: When it was saved.
+        label: A short label, if given.
+        album_count: How many albums it places.
+        is_current: Whether it is exactly the current layout.
+    """
+
     name: str
     saved_at: datetime
     label: str
@@ -22,7 +32,14 @@ class Version:
 
 
 def list_versions(store: JsonStore) -> list[Version]:
-    """The saved versions, newest first."""
+    """The saved versions, newest first.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The versions.
+    """
     versions = []
     for name in store.snapshots():
         stamp, _, slug = name.partition("--")
@@ -43,7 +60,15 @@ def list_versions(store: JsonStore) -> list[Version]:
 
 
 def save_version(store: JsonStore, label: str = "") -> str:
-    """Save the current layout as a version, optionally under a short label."""
+    """Save the current layout as a version, optionally under a short label.
+
+    Args:
+        store: The store of the collection.
+        label: The label.
+
+    Returns:
+        The version's name.
+    """
     slug = re.sub(r"[^a-z0-9]+", "-", label.casefold()).strip("-")
     base = datetime.now().strftime(STAMP)
     taken = set(store.snapshots())
@@ -60,7 +85,12 @@ def _latest(store: JsonStore) -> Version | None:
 
 
 def save_if_unsaved(store: JsonStore, label: str) -> None:
-    """Keep the current layout as a version unless the newest version already is it."""
+    """Keep the current layout as a version unless the newest version already is it.
+
+    Args:
+        store: The store of the collection.
+        label: The label to save it under.
+    """
     if not store.exists(Placement):
         return
     latest = _latest(store)
@@ -71,9 +101,12 @@ def save_if_unsaved(store: JsonStore, label: str) -> None:
 def keep_restore_point(store: JsonStore) -> None:
     """Called before a change by hand: make sure there is a recent version to go back to.
 
-    A layout that is saved already needs nothing. One with unsaved changes is
-    saved when the newest version is older than an hour, so an editing session
-    always starts from a restore point without filling the list with every move.
+    A layout that is saved already needs nothing. One with unsaved changes is saved when the newest
+    version is older than an hour, so an editing session always starts from a restore point without
+    filling the list with every move.
+
+    Args:
+        store: The store of the collection.
     """
     latest = _latest(store)
     if latest is None or (
@@ -83,10 +116,17 @@ def keep_restore_point(store: JsonStore) -> None:
 
 
 def restore_version(store: JsonStore, name: str) -> int:
-    """Make a saved version the current layout; returns how many of its albums could not return.
+    """Make a saved version the current layout.
 
-    The layout as it is now is saved first when it wasn't, so restoring can be undone.
-    Albums and shelves that no longer exist are left out.
+    The layout as it is now is saved first when it wasn't, so restoring can be undone. Albums and
+    shelves that no longer exist are left out.
+
+    Args:
+        store: The store of the collection.
+        name: The version.
+
+    Returns:
+        How many of its albums could not return.
     """
     if name not in store.snapshots():
         return 0

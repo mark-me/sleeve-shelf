@@ -1,5 +1,8 @@
-"""What ties artists together, read from what Discogs lists: the kinds of tie, who is on the
-record of an album, when two songs are one, and which labels count. No storage in here."""
+"""What ties artists together, read from what Discogs lists.
+
+The kinds of tie, who is on the record of an album, when two songs are one, and which labels count.
+No storage in here.
+"""
 
 import re
 import unicodedata
@@ -55,9 +58,18 @@ MUSICIAN_ALBUMS = 5
 
 
 def on_the_record(role: str) -> tuple[str, ...]:
-    """The parts of a Discogs role that put someone on the record, without the remarks between
-    brackets: "Piano [Grand], Liner Notes" is ("Piano",). Who wrote a song is not on the record
-    for it: writing "Yesterdays" does not tie Jerome Kern to all who recorded it."""
+    """The parts of a Discogs role that put someone on the record.
+
+    Remarks between brackets are left out: "Piano [Grand], Liner Notes" is ("Piano",). Who wrote a
+    song is not on the record for it: writing "Yesterdays" does not tie Jerome Kern to all who
+    recorded it.
+
+    Args:
+        role: The role as Discogs words it.
+
+    Returns:
+        The parts that count.
+    """
     found = []
     for part in re.split(r",\s*(?![^\[]*\])", role):
         part = re.sub(r"\s*\[[^\]]*\]", "", part).strip()
@@ -69,23 +81,47 @@ def on_the_record(role: str) -> tuple[str, ...]:
 
 
 def named_in(name: str, album_artist: str) -> bool:
-    """Whether the credited person is named on the record itself: Nick Cave on an album of
-    Nick Cave & The Bad Seeds is no sideman."""
+    """Whether the credited person is named on the record itself.
+
+    Nick Cave on an album of Nick Cave & The Bad Seeds is no sideman.
+
+    Args:
+        name: The name as credited.
+        album_artist: The artist of the album.
+
+    Returns:
+        True when the one name stands in the other, as whole words.
+    """
     found, billed = sort_name(name), sort_name(album_artist)
     # Only for a name that occurs at all is a pattern made: there are thousands of credits.
     return bool(found) and found in billed and re.search(r"(?<!\w)" + re.escape(found) + r"(?!\w)", billed) is not None
 
 
 def is_various(artist: Artist) -> bool:
-    """Whether the artist is Discogs' "Various", of compilations."""
+    """Whether the artist is Discogs' "Various", of compilations.
+
+    Args:
+        artist: The artist.
+
+    Returns:
+        True for "Various".
+    """
     return artist.discogs_artist_id == _VARIOUS_DISCOGS_ID or artist.name.casefold() in _VARIOUS_NAMES
 
 
 def song_key(title: str) -> str:
-    """A song title as songs are compared: without what stands between brackets at its end,
-    accents, punctuation, case, and a leading "The" — "'Round Midnight (Take 2)" is "round
-    midnight". Brackets at the start belong to the title: "(Dance With The) Guitar Man" is
-    another song than "Guitar Man"."""
+    """A song title as songs are compared.
+
+    Without what stands between brackets at its end, accents, punctuation, case, and a leading
+    "The": "'Round Midnight (Take 2)" is "round midnight". Brackets at the start belong to the
+    title: "(Dance With The) Guitar Man" is another song than "Guitar Man".
+
+    Args:
+        title: The title.
+
+    Returns:
+        The title as compared.
+    """
     # A title that is all brackets ("(Nice Dream)") keeps them.
     while (shorter := _TRAILING_BRACKETS.sub("", title)) != title and shorter.strip():
         title = shorter
@@ -96,7 +132,16 @@ def song_key(title: str) -> str:
 
 @dataclass(frozen=True, slots=True)
 class OnRecord:
-    """An artist of the collection credited on an album of another."""
+    """An artist of the collection credited on an album of another.
+
+    Attributes:
+        album_id: The album.
+        album_title: Its title.
+        album_artist_id: The artist the album is of.
+        artist_id: The artist credited on it.
+        name: The name of the artist credited.
+        roles: What for.
+    """
 
     album_id: int
     album_title: str
@@ -108,7 +153,14 @@ class OnRecord:
 
 @dataclass(frozen=True, slots=True)
 class Heard:
-    """A song on an album."""
+    """A song on an album.
+
+    Attributes:
+        album_id: The album.
+        artist_id: The artist of the album.
+        title: The title on this album.
+        writers: Who wrote it, as Discogs ids.
+    """
 
     album_id: int
     artist_id: int
@@ -119,10 +171,18 @@ class Heard:
 def collection_songs(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> list[tuple[str, list[Heard]]]:
     """The songs of the collection, each as its key and the albums it is on.
 
-    One title can be several songs: two tracks of the same title are one song when Discogs
-    names a writer of both (Kern's "Yesterdays" is not Guns N' Roses'). A track without a
-    writer belongs to its title's song only when the tracks with one are all one song; with
-    none known at all, the title alone decides. A compilation ("Various") counts for no one.
+    One title can be several songs: two tracks of the same title are one song when Discogs names a
+    writer of both (Kern's "Yesterdays" is not Guns N' Roses'). A track without a writer belongs to
+    its title's song only when the tracks with one are all one song; with none known at all, the
+    title alone decides. A compilation ("Various") counts for no one.
+
+    Args:
+        artists: All artists.
+        albums: All albums.
+        releases: The cached releases.
+
+    Returns:
+        Per song its key and where it is heard.
     """
     various = {artist.id for artist in artists if is_various(artist)}
     tracklists = {release.release_id: release.tracklist or () for release in releases}
@@ -151,8 +211,18 @@ def collection_songs(artists: list[Artist], albums: list[Album], releases: list[
 
 
 def credited_on_albums(artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]) -> list[OnRecord]:
-    """Each artist of the collection on the record of an album of another, once per album with
-    all its roles. A compilation ("Various") counts for no one."""
+    """Each artist of the collection on the record of an album of another.
+
+    Once per album with all its roles. A compilation ("Various") counts for no one.
+
+    Args:
+        artists: All artists.
+        albums: All albums.
+        releases: The cached releases.
+
+    Returns:
+        One entry per artist and album.
+    """
     by_did = artists_by_discogs_id(artists)
     various = {artist.id for artist in artists if is_various(artist)}
     credits = credits_by_release(releases)
@@ -178,7 +248,16 @@ def credited_on_albums(artists: list[Artist], albums: list[Album], releases: lis
 
 @dataclass(frozen=True, slots=True)
 class SidePlayer:
-    """Someone who plays or sings on an album without it being theirs, once per album."""
+    """Someone who plays or sings on an album without it being theirs, once per album.
+
+    Attributes:
+        album_id: The album.
+        album_title: Its title.
+        album_artist_id: The artist the album is of.
+        discogs_id: The person on Discogs.
+        name: The name as credited.
+        roles: What for.
+    """
 
     album_id: int
     album_title: str
@@ -191,9 +270,20 @@ class SidePlayer:
 def side_players(
     artists: list[Artist], albums: list[Album], artist_records: list[ArtistEnrichment], releases: list[ReleaseEnrichment]
 ) -> list[SidePlayer]:
-    """Who plays or sings on the albums of others. Not a producer, who is not at the instrument;
-    not anyone named on the record itself, nor a member Discogs lists of the album's band, nor
-    anyone on a compilation."""
+    """Who plays or sings on the albums of others.
+
+    Not a producer, who is not at the instrument; not anyone named on the record itself, nor a
+    member Discogs lists of the album's band, nor anyone on a compilation.
+
+    Args:
+        artists: All artists.
+        albums: All albums.
+        artist_records: The cached artist records.
+        releases: The cached releases.
+
+    Returns:
+        One entry per person and album.
+    """
     by_id = {artist.id: artist for artist in artists}
     members = {record.discogs_artist_id: set(record.member_ids or ()) for record in artist_records}
     credits = credits_by_release(releases)
@@ -221,8 +311,15 @@ def side_players(
 
 
 def musicians_as_points(players: list[SidePlayer], artists: list[Artist]) -> set[int]:
-    """The Discogs ids of those on enough albums to be a point of their own, without being an
-    artist in the collection."""
+    """Those on enough albums to be a point of their own, without being an artist in the collection.
+
+    Args:
+        players: Who plays on which album.
+        artists: All artists.
+
+    Returns:
+        Their Discogs ids.
+    """
     known = {artist.discogs_artist_id for artist in artists}
     on_albums = Counter(player.discogs_id for player in players if player.discogs_id not in known)
     return {person for person, count in on_albums.items() if count >= MUSICIAN_ALBUMS}
@@ -231,8 +328,20 @@ def musicians_as_points(players: list[SidePlayer], artists: list[Artist]) -> set
 def labels_of_albums(
     artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment], left_out: Iterable[str] = ()
 ) -> dict[int, dict[int, str]]:
-    """Per album the labels that can tie artists, by Discogs id: no "Not On Label", no compilation,
-    and none of those left out, whichever way Discogs spells it ("Sam Records (8)")."""
+    """Per album the labels that can tie artists.
+
+    No "Not On Label", no compilation, and none of those left out, whichever way Discogs spells it
+    ("Sam Records (8)").
+
+    Args:
+        artists: All artists.
+        albums: All albums.
+        releases: The cached releases.
+        left_out: Labels that tie no one.
+
+    Returns:
+        Per album id its labels' names, by Discogs id.
+    """
     various = {artist.id for artist in artists if is_various(artist)}
     of_release = {release.release_id: release.labels or () for release in releases}
     without = {sort_name(name) for name in left_out}

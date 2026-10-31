@@ -1,6 +1,8 @@
-"""The network of the artists of the collection and what ties them together — members and
-other names from Discogs, one name inside another, families, one credited on an album of the
-other, the same song on albums of both, and the same record label. No storage in here."""
+"""The network of the artists of the collection and what ties them together.
+
+Members and other names from Discogs, one name inside another, families, one credited on an album of
+the other, the same song on albums of both, and the same record label. No storage in here.
+"""
 
 import heapq
 from collections import Counter
@@ -38,7 +40,14 @@ _ALL_ALBUMS = frozenset({Tie.NAME, Tie.MEMBER, Tie.BILLING, Tie.FAMILY})
 
 @dataclass(frozen=True, slots=True)
 class Point:
-    """An artist in the network."""
+    """An artist in the network.
+
+    Attributes:
+        artist_id: The artist; below zero for a musician without an album.
+        name: The name.
+        albums: How many albums it has, or is on for a musician.
+        cluster_id: Its cluster, if any.
+    """
 
     artist_id: int
     name: str
@@ -53,29 +62,48 @@ class Point:
 
 @dataclass(frozen=True, slots=True)
 class Link:
-    """What ties two artists; one is the lower id."""
+    """What ties two artists.
+
+    Attributes:
+        one: The lower id of the two.
+        other: The higher id.
+        ties: The kinds of tie, the closest first.
+        songs: The songs both have albums with, as the first of them titles it; with SONGS only.
+        on_record: Who of the two is credited on which album of the other; with CREDIT only.
+        labels: The record labels both have albums on; with LABEL only.
+    """
 
     one: int
     other: int
     ties: tuple[Tie, ...]
-    # The songs both have albums with, as the first of them titles it; with SONGS only.
     songs: tuple[str, ...] = ()
-    # Who of the two is credited on which album of the other; with CREDIT only.
     on_record: tuple[OnRecord, ...] = ()
-    # The record labels both have albums on; with LABEL only.
     labels: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
 class Network:
+    """The artists of the collection and what ties them.
+
+    Attributes:
+        points: The artists.
+        links: What ties them.
+        clusters: The clusters in their order on the shelves, as (id, name).
+    """
+
     points: tuple[Point, ...]
     links: tuple[Link, ...]
-    # The clusters in their order on the shelves, as (id, name).
     clusters: tuple[tuple[int, str], ...]
 
     def around(self, artist_id: int) -> list[tuple[Point, Link]]:
-        """The artists tied to this one, with what ties them: the closest tie first, then the
-        most songs, then by name."""
+        """The artists tied to this one, with what ties them.
+
+        Args:
+            artist_id: The artist.
+
+        Returns:
+            The artists and their links: the closest tie first, then the most songs, then by name.
+        """
         points = {point.artist_id: point for point in self.points}
         found = [
             (points[link.other if link.one == artist_id else link.one], link)
@@ -91,8 +119,14 @@ class Network:
 
 @dataclass(frozen=True, slots=True)
 class TiedAlbum:
-    """An album that shows a tie: the shared songs it has, who of the two is credited on it, and
-    the shared labels it is on."""
+    """An album that shows a tie.
+
+    Attributes:
+        album_id: The album.
+        songs: The shared songs it has.
+        credits: Who of the two is credited on it.
+        labels: The shared labels it is on.
+    """
 
     album_id: int
     songs: tuple[str, ...] = ()
@@ -102,14 +136,20 @@ class TiedAlbum:
 
 @dataclass(frozen=True, slots=True)
 class Tied:
-    """An artist tied to the one in the middle, with the albums to take from the shelf."""
+    """An artist tied to the one in the middle, with the albums to take from the shelf.
+
+    Attributes:
+        point: The other artist.
+        link: What ties the two.
+        theirs: The other's albums: all of them with a band, a family or a name; with only a song, a
+            credit or a label between the two, those it is on.
+        mine: The albums of the artist in the middle with a shared song or label, or the other's
+            credit.
+    """
 
     point: Point
     link: Link
-    # The other's albums: all of them with a band, a family or a name; with only a song, a
-    # credit or a label between the two, those it is on.
     theirs: tuple[TiedAlbum, ...]
-    # The albums of the artist in the middle with a shared song or label, or the other's credit.
     mine: tuple[TiedAlbum, ...] = ()
 
 
@@ -121,7 +161,19 @@ def tied_albums(
     releases: list[ReleaseEnrichment],
     labels_left_out: Iterable[str] = (),
 ) -> list[Tied]:
-    """The ties of an artist with the albums that show them, oldest first."""
+    """The ties of an artist with the albums that show them, oldest first.
+
+    Args:
+        around: The artists tied to it, with their links.
+        artist_id: The artist in the middle.
+        artists: All artists.
+        albums: All albums.
+        releases: The cached releases.
+        labels_left_out: Labels that tie no one.
+
+    Returns:
+        One entry per tie.
+    """
     by_artist: dict[int, list[Album]] = {}
     for album in sorted(albums, key=lambda a: (a.original_release_year or 9999, sort_name(a.title), a.id)):
         by_artist.setdefault(album.artist_id, []).append(album)
@@ -173,10 +225,23 @@ def build(
 ) -> Network:
     """The network of the collection's artists, from what the app knows of them.
 
-    Discogs ties are read from both records: a band is a tie whether the person's record
-    names it or the band's record names the person. The artists in the collection are
-    points, and musicians on enough of their albums (see musicians_as_points); a song ties two artists when albums of both have it (see collection_songs), a compilation ("Various")
-    tying no one.
+    Discogs ties are read from both records: a band is a tie whether the person's record names it or
+    the band's record names the person. The artists in the collection are points, and musicians on
+    enough of their albums (see musicians_as_points); a song ties two artists when albums of both
+    have it (see collection_songs), a compilation ("Various") tying no one.
+
+    Args:
+        artists: All artists.
+        albums: All albums.
+        artist_records: The cached artist records.
+        releases: The cached releases.
+        assignments: Each artist's cluster.
+        clusters: All clusters.
+        labels_left_out: Labels that tie no one.
+        unrelated: Pairs the user says are not related, the lower id first.
+
+    Returns:
+        The network.
     """
     ties: dict[tuple[int, int], set[Tie]] = {}
     songs_of: dict[tuple[int, int], set[str]] = {}
@@ -285,12 +350,21 @@ _SONG_STEP = 3
 
 
 def way(shown: Network, start: int, end: int, switched: set[Tie] | frozenset[Tie]) -> list[tuple[Point, Link | None]] | None:
-    """The shortest way from one artist to another along the ties switched on, as each artist
-    with the tie that leads to it (none for the first); None when there is no way.
+    """The shortest way from one artist to another along the ties switched on.
 
     A step by a song or label alone counts as three, so the way goes by closer ties where it can; of
-    two ways as long, the one with fewer steps. A tie on the way names only the kinds that
-    are switched on.
+    two ways as long, the one with fewer steps. A tie on the way names only the kinds that are
+    switched on.
+
+    Args:
+        shown: The network.
+        start: The artist to start from.
+        end: The artist to reach.
+        switched: The kinds of tie to go along.
+
+    Returns:
+        Each artist with the tie that leads to it (none for the first), or None when there is no
+        way.
     """
     points = {point.artist_id: point for point in shown.points}
     if start not in points or end not in points:
@@ -340,9 +414,20 @@ def way(shown: Network, start: int, end: int, switched: set[Tie] | frozenset[Tie
 def songs_elsewhere(
     album_id: int, artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]
 ) -> list[tuple[str, tuple[int, ...]]]:
-    """The songs of an album that other albums of the collection have too, in the album's
-    order, each as its title on this album and those other albums — of any artist, the same
-    one included (a live record, a compilation of its own)."""
+    """The songs of an album that other albums of the collection have too, in the album's order.
+
+    The other albums can be of any artist, the same one included (a live record, a compilation of
+    its own).
+
+    Args:
+        album_id: The album.
+        artists: All artists.
+        albums: All albums.
+        releases: The cached releases.
+
+    Returns:
+        Each song as its title on this album, with those other albums.
+    """
     others: dict[str, list[int]] = {}
     title_here: dict[str, str] = {}
     for key, heard in collection_songs(artists, albums, releases):

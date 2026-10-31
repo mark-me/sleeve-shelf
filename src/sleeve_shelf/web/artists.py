@@ -45,7 +45,14 @@ LETTERS = ("#", *"ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 
 def initial(name: str) -> str:
-    """The letter a name is listed under: its first letter as sorted, accents left off."""
+    """The letter a name is listed under: its first letter as sorted, accents left off.
+
+    Args:
+        name: The name.
+
+    Returns:
+        The letter, or "#" for anything else.
+    """
     for char in unicodedata.normalize("NFKD", sort_name(name)):
         if char.isalpha():
             return char.upper() if "A" <= char.upper() <= "Z" else "#"
@@ -56,6 +63,7 @@ def initial(name: str) -> str:
 
 @blueprint.get("/")
 def index():
+    """The Artists list: one letter at a time, or searched or filtered through everyone."""
     store = get_store()
     search = request.args.get("q", "").strip().casefold()
     only_attention = request.args.get("show") == "attention"
@@ -101,6 +109,11 @@ def index():
 
 @blueprint.route("/<int:artist_id>", methods=["GET", "POST"])
 def edit(artist_id: int):
+    """An artist's page, on the tab asked for, and saving its start year and cluster.
+
+    Args:
+        artist_id: The artist.
+    """
     store = get_store()
     artist = find_by_id(store.load(Artist), artist_id)
     if artist is None:
@@ -147,13 +160,23 @@ def edit(artist_id: int):
 
 @blueprint.post("/<int:artist_id>/confirm")
 def confirm(artist_id: int):
+    """Confirm the cluster proposed for an artist.
+
+    Args:
+        artist_id: The artist.
+    """
     artist_service.confirm_cluster(get_store(), artist_id)
     return redirect_within(request.form.get("next"), url_for("artists.index"))
 
 
 @blueprint.post("/<int:artist_id>/shift/<any(accept, keep):choice>")
 def decide_shift(artist_id: int, choice: str):
-    """A new purchase points the artist to another cluster: move it there, or keep it where it is."""
+    """A new purchase points the artist to another cluster: move it there, or keep it where it is.
+
+    Args:
+        artist_id: The artist.
+        choice: "accept" or "keep".
+    """
     store = get_store()
     shift = next((s for s in cluster_shifts(store) if s.artist_id == artist_id), None)
     if shift is not None and choice == "accept":
@@ -186,7 +209,11 @@ def _picture(store, artist: Artist):
 
 @blueprint.get("/pictures/<name>")
 def picture(name: str):
-    """A picture the user added; its name changes with its contents, so it can be cached for long."""
+    """A picture the user added; its name changes with its contents, so it can be cached for long.
+
+    Args:
+        name: The file.
+    """
     return send_from_directory(
         current_app.config["DATA_DIR"] / PICTURE_DIR, name, max_age=365 * 24 * 60 * 60
     )
@@ -194,6 +221,11 @@ def picture(name: str):
 
 @blueprint.post("/<int:artist_id>/picture")
 def upload_picture(artist_id: int):
+    """Keep a picture the user uploaded of an artist.
+
+    Args:
+        artist_id: The artist.
+    """
     file = request.files.get("picture")
     data = file.read() if file is not None and file.filename else b""
     error = None
@@ -206,5 +238,10 @@ def upload_picture(artist_id: int):
 
 @blueprint.post("/<int:artist_id>/picture/remove")
 def delete_picture(artist_id: int):
+    """Take the user's own picture of an artist away.
+
+    Args:
+        artist_id: The artist.
+    """
     remove_picture(get_store(), artist_id)
     return redirect(url_for("artists.edit", artist_id=artist_id, tab="manage"))

@@ -17,7 +17,14 @@ from sleeve_shelf.sorting.families import FamilySuggestion, suggest_families
 
 
 def family_suggestions(store: JsonStore) -> list[FamilySuggestion]:
-    """Families suggested from the artist names and from Discogs, minus the ones turned down."""
+    """Families suggested from the artist names and from Discogs, minus the ones turned down.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The suggestions.
+    """
     dismissed = {dismissal.anchor_artist_id for dismissal in store.load(FamilyDismissal)}
     album_counts = albums_per_artist(store)
     return suggest_families(
@@ -33,8 +40,14 @@ def family_suggestions(store: JsonStore) -> list[FamilySuggestion]:
 def cluster_hints(store: JsonStore) -> dict[int, ClusterHint]:
     """Per artist without a confirmed cluster: the cluster of whom Discogs connects it to.
 
-    Also for an artist a family is suggested for: the cluster is proposed whether or not
-    the family is accepted.
+    Also for an artist a family is suggested for: the cluster is proposed whether or not the family
+    is accepted.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The hints by artist id.
     """
     album_counts = albums_per_artist(store)
     return clusters_by_connection(
@@ -47,7 +60,16 @@ def cluster_hints(store: JsonStore) -> dict[int, ClusterHint]:
 
 
 def create_family(store: JsonStore, label: str, artist_ids: list[int] | None = None) -> AliasGroup:
-    """Add a family, optionally with its first members."""
+    """Add a family, optionally with its first members.
+
+    Args:
+        store: The store of the collection.
+        label: Its name.
+        artist_ids: Its first members.
+
+    Returns:
+        The family.
+    """
     groups = store.load(AliasGroup)
     group = AliasGroup(store.next_id(AliasGroup, groups), label)
     groups.append(group)
@@ -62,8 +84,11 @@ def create_family(store: JsonStore, label: str, artist_ids: list[int] | None = N
 
 
 def _suggestion(store: JsonStore, anchor_id: int, source: str | None) -> FamilySuggestion | None:
-    """The suggestion with this anchor and, when given, from this source: from the names and
-    from Discogs a family can be offered additions at once, under the same artist."""
+    """The suggestion with this anchor and, when given, from this source.
+
+    From the names and from Discogs a family can be offered additions at once, under the same
+    artist.
+    """
     return next(
         (
             s
@@ -77,8 +102,16 @@ def _suggestion(store: JsonStore, anchor_id: int, source: str | None) -> FamilyS
 def accept_suggestion(
     store: JsonStore, anchor_id: int, member_ids: list[int], source: str | None = None
 ) -> None:
-    """Turn a suggestion into a family named after its anchor, or add to the family it names
-    — which takes a member out of the family it was in, when it is suggested to move."""
+    """Turn a suggestion into a family named after its anchor, or add to the family it names.
+
+    That takes a member out of the family it was in, when it is suggested to move.
+
+    Args:
+        store: The store of the collection.
+        anchor_id: The artist the suggestion is named after.
+        member_ids: The members accepted.
+        source: Where the suggestion comes from, when it matters.
+    """
     suggestion = _suggestion(store, anchor_id, source)
     if suggestion is None:
         return
@@ -97,7 +130,13 @@ def accept_suggestion(
 
 
 def dismiss_suggestion(store: JsonStore, anchor_id: int, source: str | None = None) -> None:
-    """Turn a suggestion down: a new family by its anchor, an addition by the artists to add."""
+    """Turn a suggestion down: a new family by its anchor, an addition by the artists to add.
+
+    Args:
+        store: The store of the collection.
+        anchor_id: The artist the suggestion is named after.
+        source: Where the suggestion comes from, when it matters.
+    """
     suggestion = _suggestion(store, anchor_id, source)
     turned_down = [anchor_id]
     if suggestion is not None and suggestion.group_id is not None:
@@ -110,8 +149,16 @@ def dismiss_suggestion(store: JsonStore, anchor_id: int, source: str | None = No
 
 
 def join(store: JsonStore, artist_id: int, with_id: int) -> None:
-    """Put an artist with another one, in that one's family — or a new family named after
-    it when it has none: a joint billing put with another artist it names."""
+    """Put an artist with another one, in that one's family.
+
+    Or in a new family named after it when it has none: a joint billing put with another artist it
+    names.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist to place.
+        with_id: The artist to put it with.
+    """
     artists = store.load(Artist)
     artist = next((a for a in artists if a.id == artist_id), None)
     other = next((a for a in artists if a.id == with_id), None)
@@ -125,6 +172,13 @@ def join(store: JsonStore, artist_id: int, with_id: int) -> None:
 
 
 def rename_family(store: JsonStore, group_id: int, label: str) -> None:
+    """Give a family another name.
+
+    Args:
+        store: The store of the collection.
+        group_id: The family.
+        label: Its new name.
+    """
     groups = store.load(AliasGroup)
     for group in groups:
         if group.id == group_id:
@@ -133,7 +187,12 @@ def rename_family(store: JsonStore, group_id: int, label: str) -> None:
 
 
 def delete_family(store: JsonStore, group_id: int) -> None:
-    """Remove a family; its artists stand on their own again."""
+    """Remove a family; its artists stand on their own again.
+
+    Args:
+        store: The store of the collection.
+        group_id: The family.
+    """
     artists = store.load(Artist)
     for artist in artists:
         if artist.alias_group_id == group_id:
@@ -143,7 +202,13 @@ def delete_family(store: JsonStore, group_id: int) -> None:
 
 
 def set_family(store: JsonStore, artist_id: int, group_id: int | None) -> None:
-    """Put an artist in a family, or take it out with group_id None."""
+    """Put an artist in a family, or take it out.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+        group_id: The family; None takes it out.
+    """
     artists = store.load(Artist)
     for artist in artists:
         if artist.id == artist_id:
@@ -152,7 +217,14 @@ def set_family(store: JsonStore, artist_id: int, group_id: int | None) -> None:
 
 
 def families_overview(store: JsonStore) -> dict:
-    """What the Families screen shows: the suggestions, the families, and the artists in none."""
+    """What the Families screen shows: the suggestions, the families, and the artists in none.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        What the screen's template uses, by name.
+    """
     artists = store.load(Artist)
     by_id = {artist.id: artist for artist in artists}
     album_counts = albums_per_artist(store)

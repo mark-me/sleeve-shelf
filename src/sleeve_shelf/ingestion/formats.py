@@ -11,6 +11,13 @@ _VINYL = re.compile(r'^(?:(\d+)x)?(?:LP|7"|10"|12")$')
 
 @dataclass(frozen=True, slots=True)
 class ParsedFormat:
+    """A format as read: whether it is vinyl, and what it says.
+
+    Attributes:
+        is_vinyl: Whether it counts as vinyl.
+        tokens: The terms that matter for the width.
+    """
+
     is_vinyl: bool
     tokens: FormatTokens
 
@@ -19,8 +26,14 @@ def parse_format(text: str, count_bonus_discs_as_vinyl: bool = True) -> ParsedFo
     """Detect vinyl and extract the width-relevant tokens.
 
     A format is a list of '+'-separated segments, each starting with its medium.
-    With count_bonus_discs_as_vinyl any vinyl segment makes the release vinyl
-    (so 'CD + LP' counts); without it the first medium has to be vinyl.
+
+    Args:
+        text: The format.
+        count_bonus_discs_as_vinyl: Any vinyl segment makes the release vinyl (so 'CD + LP' counts);
+            without it the first medium has to be vinyl.
+
+    Returns:
+        The format as read.
     """
     segments = [
         [token.strip() for token in segment.split(",") if token.strip()]

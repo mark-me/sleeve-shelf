@@ -37,6 +37,11 @@ blueprint = Blueprint("albums", __name__, url_prefix="/albums")
 
 @blueprint.get("/<int:album_id>")
 def detail(album_id: int):
+    """An album's page, on the tab asked for.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     album = find_by_id(store.load(Album), album_id)
     if album is None:
@@ -73,8 +78,13 @@ def detail(album_id: int):
 
 @blueprint.get("/<int:album_id>/listen")
 def listen(album_id: int):
-    """The album's previews and videos, as a part the album's page loads after it is shown:
-    the page itself never waits for Deezer or Discogs."""
+    """The album's previews and videos, as a part the album's page loads after it is shown.
+
+    The page itself never waits for Deezer or Discogs.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     if not visitor_may_listen():
         return render_template("albums/_listen.html", album_id=album_id, listening=None), 429
@@ -90,8 +100,14 @@ def listen(album_id: int):
 
 @blueprint.get("/<int:album_id>/previews")
 def previews(album_id: int):
-    """The album's previews from Deezer, for the play button in Browse. Discogs is not asked:
-    its videos are for the album's page, and a shelf full of buttons should not wait on it."""
+    """The album's previews from Deezer, for the play button in Browse.
+
+    Discogs is not asked: its videos are for the album's page, and a shelf full of buttons should
+    not wait on it.
+
+    Args:
+        album_id: The album.
+    """
     if not visitor_may_listen():
         return jsonify(album=None, tracks=[], unreachable=False, busy=True), 429
     deezer = current_app.config.get("DEEZER_CLIENT_FACTORY", DeezerClient)()
@@ -107,14 +123,22 @@ def previews(album_id: int):
 
 @blueprint.post("/<int:album_id>/listen/not-this")
 def listen_not_this(album_id: int):
-    """The album Deezer gave is another one: leave it out for this album."""
+    """The album Deezer gave is another one: leave it out for this album.
+
+    Args:
+        album_id: The album.
+    """
     turn_down(get_store(), album_id)
     return redirect(url_for("albums.detail", album_id=album_id) + "#listen")
 
 
 @blueprint.post("/<int:album_id>/place")
 def place(album_id: int):
-    """Stand an album that waits for a place at its suggested spot."""
+    """Stand an album that waits for a place at its suggested spot.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     if all(album.id != album_id for album in store.load(Album)):
         abort(404)
@@ -129,6 +153,7 @@ def place(album_id: int):
 
 @blueprint.get("/widths")
 def widths():
+    """The Album widths screen: what is to measure, and what was measured."""
     store = get_store()
     artists = {artist.id: artist.name for artist in store.load(Artist)}
     rows = sorted(
@@ -149,6 +174,11 @@ def widths():
 
 @blueprint.post("/<int:album_id>/width")
 def set_width(album_id: int):
+    """Set or clear an album's measured width.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     text = request.form.get("width_cm", "").strip()
     width = parse_number(text) if text else None

@@ -1,5 +1,8 @@
-"""What curating an artist takes: the list of artists with what each still needs, and all that
-the page of one artist shows besides its albums' figures."""
+"""What curating an artist takes.
+
+The list of artists with what each still needs, and all that the page of one artist shows besides
+its figures.
+"""
 
 from collections import defaultdict
 
@@ -50,7 +53,14 @@ def _needs_attention(
 
 
 def artist_rows(store: JsonStore) -> list[dict]:
-    """Every artist with what the list says about it, by name."""
+    """Every artist with what the list says about it, by name.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        One row per artist, for the list's template.
+    """
     by_artist = _albums_by_artist(store)
     album_counts = albums_per_artist(store)
     cluster_names = {cluster.id: cluster.name for cluster in store.load(Cluster)}
@@ -80,7 +90,15 @@ def artist_rows(store: JsonStore) -> list[dict]:
 
 
 def artist_details(store: JsonStore, artist: Artist) -> dict:
-    """What the page of one artist shows about its cluster, connections, family and albums."""
+    """What the page of one artist shows about its cluster, connections, family and albums.
+
+    Args:
+        store: The store of the collection.
+        artist: The artist.
+
+    Returns:
+        What the page's template uses, by name, and needs_attention for the view.
+    """
     artist_id = artist.id
     albums = [album for album in store.load(Album) if album.artist_id == artist_id]
     sorted_albums = _albums_by_artist(store).get(artist_id, [])

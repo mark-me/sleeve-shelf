@@ -15,7 +15,11 @@ ONLINE = "https://mark-me.github.io/sleeve-shelf/"
 
 
 def built_site() -> Path | None:
-    """The folder of the built documentation site, when there is one."""
+    """The folder of the built documentation site, when there is one.
+
+    Returns:
+        The folder, or None.
+    """
     directory = current_app.config.get("HELP_DIR")
     return directory if directory and (Path(directory) / "index.html").is_file() else None
 
@@ -23,6 +27,11 @@ def built_site() -> Path | None:
 @blueprint.get("/", defaults={"path": ""})
 @blueprint.get("/<path:path>")
 def page(path: str):
+    """A page of the help: from the built site, or from GitHub Pages without one.
+
+    Args:
+        path: The page.
+    """
     site = built_site()
     if site is None:
         return redirect(ONLINE + path)
@@ -35,6 +44,13 @@ def page(path: str):
 
 
 def help_url(target: str | None) -> str:
-    """The address of a part of the user guide, given as "page/#anchor"."""
+    """The address of a part of the user guide.
+
+    Args:
+        target: The part as "page/#anchor"; None for the guide's start.
+
+    Returns:
+        The address.
+    """
     page, _, anchor = (target or "user/").partition("#")
     return url_for("help.page", path=page) + (f"#{anchor}" if anchor else "")

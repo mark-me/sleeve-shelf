@@ -6,6 +6,15 @@ from sleeve_shelf.persistence import BrowseQueries, JsonStore
 
 
 def album_details(store: JsonStore, album: Album) -> dict:
+    """What the page of one album shows about it.
+
+    Args:
+        store: The store of the collection.
+        album: The album.
+
+    Returns:
+        What the page's template uses, by name.
+    """
     style_names = {style.id: style.name for style in store.load(Style)}
     placed = {p.album_id for p in store.load(Placement)}
     release = next((r for r in store.load(ReleaseEnrichment) if r.release_id == album.release_id), None)

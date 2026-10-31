@@ -33,7 +33,18 @@ UNPLACED_COLUMNS = ("Cluster", "Artiest", "Titel")
 
 @dataclass(slots=True)
 class InitialLoad:
-    """Everything one spreadsheet yields; a new upload replaces all of it."""
+    """Everything one spreadsheet yields; a new upload replaces all of it.
+
+    Attributes:
+        cabinets: The cabinets.
+        shelves: The shelves.
+        clusters: The clusters.
+        artists: The artists.
+        assignments: Each artist's cluster.
+        era_bands: The era bands.
+        albums: The albums.
+        placements: Where each album stands.
+    """
 
     cabinets: list[Cabinet] = field(default_factory=list)
     shelves: list[Shelf] = field(default_factory=list)
@@ -48,8 +59,18 @@ class InitialLoad:
 def load_initial_layout(path: str | Path, cm_per_lp_unit: float | None = None) -> InitialLoad:
     """Read the spreadsheet at path into a fresh set of domain objects.
 
-    The workbook counts shelf capacity in LP-units; cm_per_lp_unit turns that
-    into an estimated shelf width, to be corrected by measuring later.
+    The workbook counts shelf capacity in LP-units; cm_per_lp_unit turns that into an estimated
+    shelf width, to be corrected by measuring later.
+
+    Args:
+        path: The workbook.
+        cm_per_lp_unit: The width of one LP-unit.
+
+    Returns:
+        What it holds.
+
+    Raises:
+        ValueError: The workbook lacks a sheet or column it needs.
     """
     workbook = load_workbook(path, read_only=True, data_only=True)
     try:

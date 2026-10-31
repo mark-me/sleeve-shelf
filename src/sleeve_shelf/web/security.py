@@ -60,14 +60,25 @@ _SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 
 def csp_nonce() -> str:
-    """This request's nonce: an inline script carrying it may run, any other may not."""
+    """This request's nonce: an inline script carrying it may run, any other may not.
+
+    Returns:
+        The nonce.
+    """
     if "csp_nonce" not in g:
         g.csp_nonce = secrets.token_urlsafe(16)
     return g.csp_nonce
 
 
 def add_headers(response):
-    """Run after every request."""
+    """Run after every request: the security headers on the answer.
+
+    Args:
+        response: The answer.
+
+    Returns:
+        The answer.
+    """
     sources = _HELP_SOURCES if request.blueprint == "help" else _APP_SOURCES
     policy = "; ".join(f"{name} {value}" for name, value in sources.items())
     response.headers["Content-Security-Policy"] = policy.replace("{nonce}", csp_nonce())
@@ -79,9 +90,12 @@ def add_headers(response):
 def reject_other_sites():
     """Run before every request: a change has to come from a page of the app.
 
-    Browsers say where a request comes from. Sec-Fetch-Site must then be same-origin; a
-    browser too old to send it still sends Origin, which must be this host. A request
-    with neither is no browser's, so no visitor can be tricked into sending it.
+    Browsers say where a request comes from. Sec-Fetch-Site must then be same-origin; a browser too
+    old to send it still sends Origin, which must be this host. A request with neither is no
+    browser's, so no visitor can be tricked into sending it.
+
+    Returns:
+        The refusal, or None to let it through.
     """
     if request.method in _SAFE_METHODS:
         return None

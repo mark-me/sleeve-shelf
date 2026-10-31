@@ -15,7 +15,14 @@ from sleeve_shelf.library.versions import keep_restore_point
 
 @dataclass(slots=True)
 class Sample:
-    """One artist — or family — on a showcase shelf, next to what stays on the ordinary shelves."""
+    """One artist — or family — on a showcase shelf, next to what stays on the ordinary shelves.
+
+    Attributes:
+        name: The artist or family.
+        shown: The albums on display.
+        shelved: The albums on ordinary shelves.
+        unplaced: How many have no place.
+    """
 
     name: str
     shown: list[AlbumRow] = field(default_factory=list)
@@ -24,14 +31,24 @@ class Sample:
 
     @property
     def total(self) -> int:
+        """How many albums the artist or family has."""
         return len(self.shown) + len(self.shelved) + self.unplaced
 
     @property
     def share(self) -> float:
+        """The part of them on display, from 0 to 1."""
         return len(self.shown) / self.total if self.total else 0.0
 
 
 def showcase_shelf_ids(store: JsonStore) -> set[int]:
+    """The shelves that are a showcase.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        Their ids.
+    """
     return {shelf.id for shelf in store.load(Shelf) if shelf.is_showcase}
 
 
@@ -49,7 +66,15 @@ def _unit_of(store: JsonStore) -> tuple[dict[int, object], dict[object, str]]:
 
 
 def samples(store: JsonStore, shelf_id: int) -> list[Sample]:
-    """The artists shown on one showcase shelf, each with its albums on display and elsewhere."""
+    """The artists shown on one showcase shelf, each with its albums on display and elsewhere.
+
+    Args:
+        store: The store of the collection.
+        shelf_id: The showcase shelf.
+
+    Returns:
+        One entry per artist or family.
+    """
     showcase_ids = showcase_shelf_ids(store)
     unit_of, names = _unit_of(store)
     result: dict[object, Sample] = {}
@@ -74,7 +99,14 @@ def swap(store: JsonStore, shown_album_id: int, shelved_album_id: int) -> bool:
     """Exchange an album on a showcase shelf with one of the same artist on an ordinary shelf.
 
     Each takes the other's spot, so both shelves hold as many albums as before.
-    Returns False, changing nothing, when the two can't be exchanged.
+
+    Args:
+        store: The store of the collection.
+        shown_album_id: The album on display.
+        shelved_album_id: The album on an ordinary shelf.
+
+    Returns:
+        False, changing nothing, when the two can't be exchanged.
     """
     showcase_ids = showcase_shelf_ids(store)
     placements = store.load(Placement)

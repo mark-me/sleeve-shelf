@@ -11,11 +11,13 @@ blueprint = Blueprint("proposal", __name__, url_prefix="/proposal")
 
 @blueprint.get("/")
 def index():
+    """The Sorting proposal screen."""
     return render_template("proposal/index.html", **proposal.proposal_overview(get_store()))
 
 
 @blueprint.post("/generate")
 def generate():
+    """Make a new proposal."""
     settings = load_settings(current_app.config["DATA_DIR"])
     proposal.generate_proposal(get_store(), settings.width_constants, settings.shelf_room_percent)
     return redirect(url_for("proposal.index"))
@@ -23,11 +25,13 @@ def generate():
 
 @blueprint.post("/accept")
 def accept():
+    """Make the proposal the current layout."""
     proposal.accept_proposal(get_store())
     return redirect(url_for("browse.browse"))
 
 
 @blueprint.post("/discard")
 def discard():
+    """Throw the proposal away."""
     proposal.discard_proposal(get_store())
     return redirect(url_for("proposal.index"))

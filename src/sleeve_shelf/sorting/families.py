@@ -12,28 +12,41 @@ MAX_BANDS = 4
 
 @dataclass(frozen=True, slots=True)
 class FamilySuggestion:
-    """Artists that belong with the anchor, which a new family is named after."""
+    """Artists that belong with the anchor, which a new family is named after.
+
+    Attributes:
+        anchor_id: The artist the family is named after.
+        member_ids: The artists that belong with it.
+        group_id: Set when the suggestion is to add the members to this existing family, not to make
+            one. The anchor is then the artist of that family with the lowest id.
+        source: Where the suggestion comes from: "names" (one name inside the other) or "discogs"
+            (Discogs lists the artists as member, group or other name of each other).
+        others: Joint billings that name other artists too, as (member, the artists it could go with
+            instead): the user may put it there rather than here.
+    """
 
     anchor_id: int
     member_ids: tuple[int, ...]
-    # Set when the suggestion is to add the members to this existing family, not to make one.
-    # The anchor is then the artist of that family with the lowest id.
     group_id: int | None = None
-    # Where the suggestion comes from: "names" (one name inside the other) or "discogs"
-    # (Discogs lists the artists as member, group or other name of each other).
     source: str = "names"
-    # Joint billings that name other artists too, as (member, the artists it could go with
-    # instead): the user may put it there rather than here.
     others: tuple[tuple[int, tuple[int, ...]], ...] = ()
 
 
 def names_inside(
     artists: list[Artist], unrelated: frozenset[tuple[int, int]] | set[tuple[int, int]] = frozenset()
 ) -> dict[int, list[int]]:
-    """For each artist whose name holds the names of others, as whole words: those others,
-    in the order they are named, the longer name first where two start at one place
-    ("The Miles Davis Quintet" holds "Miles Davis"; "Duke Ellington & John Coltrane" both).
-    Pairs the user says are not related (lower id first) are left out."""
+    """For each artist whose name holds the names of others, as whole words: those others.
+
+    In the order they are named, the longer name first where two start at one place ("The Miles
+    Davis Quintet" holds "Miles Davis"; "Duke Ellington & John Coltrane" both).
+
+    Args:
+        artists: All artists.
+        unrelated: Pairs the user says are not related, the lower id first; these are left out.
+
+    Returns:
+        The ids of those others, by artist id.
+    """
     names = {artist.id: sort_name(artist.name) for artist in artists}
     patterns = {
         artist_id: re.compile(r"(?<!\w)" + re.escape(name) + r"(?!\w)")
@@ -64,14 +77,25 @@ def suggest_families(
 ) -> list[FamilySuggestion]:
     """Suggest families from the artist names and from who Discogs says belongs together.
 
-    From the names: "Chet Baker" gathers "Chet Baker Quartet" and "Chet Baker & Crew"; an
-    artist naming several others ("Duke Ellington & John Coltrane") goes to the one with the
-    most albums, counted with its family, and on a tie to the one named first; the others
-    are kept with the suggestion, for the user to choose. One already in a family is
-    suggested to move when another family it names has more albums. From Discogs: the other names of one artist, and a person with the bands that
-    person is in. Whatever the user turned down is left out: a new family by the artist it
-    would be named after, an addition to an existing family by the artist to add. A person
-    in more than max_bands bands of the collection is a sideman, who draws no band in.
+    From the names: "Chet Baker" gathers "Chet Baker Quartet" and "Chet Baker & Crew"; an artist
+    naming several others ("Duke Ellington & John Coltrane") goes to the one with the most albums,
+    counted with its family, and on a tie to the one named first; the others are kept with the
+    suggestion, for the user to choose. One already in a family is suggested to move when another
+    family it names has more albums. From Discogs: the other names of one artist, and a person with
+    the bands that person is in.
+
+    Args:
+        artists: All artists.
+        dismissed_ids: What the user turned down, which is left out: a new family by the artist it
+            would be named after, an addition to an existing family by the artist to add.
+        enrichments: The cached artist records.
+        album_counts: The number of albums by artist id.
+        max_bands: In more bands of the collection than this a person is a sideman, who draws no
+            band in.
+        unrelated: Pairs the user says are not related, the lower id first.
+
+    Returns:
+        The suggestions.
     """
     by_name = _families_from_names(artists, dismissed_ids, album_counts or {}, unrelated)
     return by_name + _families_from_discogs(

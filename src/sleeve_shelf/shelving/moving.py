@@ -1,5 +1,7 @@
-"""Application service for the Move screen: an album, an artist, a family or a cluster moved to
-a shelf, or to where it belongs, worked out as a plan to look at before it is carried out."""
+"""Application service for the Move screen: one album, artist, family or cluster at a time.
+
+To a shelf or to where it belongs, worked out as a plan to look at before it is carried out.
+"""
 
 from collections import Counter
 from dataclasses import dataclass
@@ -54,7 +56,14 @@ class How(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Selection:
-    """What is moved, with its albums in the order a sorting gives them."""
+    """What is moved, with its albums in the order a sorting gives them.
+
+    Attributes:
+        kind: Album, artist, family or cluster.
+        id: The id of that.
+        name: Its name.
+        album_ids: The albums that would move.
+    """
 
     kind: Kind
     id: int
@@ -64,7 +73,18 @@ class Selection:
 
 @dataclass(frozen=True, slots=True)
 class ShelfChange:
-    """A shelf whose contents a move changes."""
+    """A shelf whose contents a move changes.
+
+    Attributes:
+        shelf_id: The shelf.
+        cabinet_id: Its cabinet.
+        name: Its name.
+        before: How many albums it holds now.
+        after: How many it holds afterwards.
+        filled_cm: The width they take afterwards.
+        width_cm: Its width, if known.
+        width_measured: Whether that width was measured.
+    """
 
     shelf_id: int
     cabinet_id: int
@@ -77,28 +97,39 @@ class ShelfChange:
 
     @property
     def over(self) -> bool:
+        """Whether the shelf holds more than its width afterwards."""
         return bool(self.width_cm) and self.filled_cm > self.width_cm + TOLERANCE_CM
 
 
 @dataclass(frozen=True, slots=True)
 class Plan:
-    """What a move would do; nothing has changed yet."""
+    """What a move would do; nothing has changed yet.
+
+    Attributes:
+        selection: What is moved.
+        how: Where on the shelves it goes.
+        shelf_id: The shelf it goes to, if one was chosen.
+        moved: The albums that go somewhere else.
+        without_spot: Where it belongs: albums that have no such place stay where they are.
+        changes: The shelves whose contents change.
+        placements: The layout afterwards.
+    """
 
     selection: Selection
     how: How
     shelf_id: int | None
-    # The albums that go somewhere else.
     moved: tuple[int, ...]
-    # Where it belongs: albums that have no such place stay where they are.
     without_spot: tuple[int, ...]
     changes: tuple[ShelfChange, ...]
     placements: tuple[Placement, ...]
 
 
 def _sorted_on_shelves(store: JsonStore) -> list[tuple[int, int, int | None, int | None]]:
-    """The albums that stand on a shelf a proposal fills, as (album, artist, family, cluster),
-    in the order a proposal sorts them: by cluster, era band, artist (a family together),
-    year. What stands in a showcase or a cabinet kept outside the sorting is left out."""
+    """The albums that stand on a shelf a proposal fills, as (album, artist, family, cluster).
+
+    In the order a proposal sorts them: by cluster, era band, artist (a family together), year. What
+    stands in a showcase or a cabinet kept outside the sorting is left out.
+    """
     kept = kept_shelf_ids(store)
     shelf_of = {p.album_id: p.shelf_id for p in store.load(Placement)}
     family_of = {artist.id: artist.alias_group_id for artist in store.load(Artist)}
@@ -118,9 +149,17 @@ def _sorted_on_shelves(store: JsonStore) -> list[tuple[int, int, int | None, int
 def selection(store: JsonStore, kind: Kind, item_id: int) -> Selection | None:
     """The album, artist, family or cluster with this id, and the albums that would move.
 
-    An album moves whatever it stands on. Of an artist, family or cluster the albums that
-    stand on a shelf move, in sorting order; what stands in a showcase or a cabinet kept
-    outside the sorting stays there, and albums without a place stay without one.
+    An album moves whatever it stands on. Of an artist, family or cluster the albums that stand on a
+    shelf move, in sorting order; what stands in a showcase or a cabinet kept outside the sorting
+    stays there, and albums without a place stay without one.
+
+    Args:
+        store: The store of the collection.
+        kind: What it is.
+        item_id: Its id.
+
+    Returns:
+        The selection, or None when there is no such item.
     """
     if kind is Kind.ALBUM:
         album = find_by_id(store.load(Album), item_id)
@@ -142,8 +181,16 @@ def selection(store: JsonStore, kind: Kind, item_id: int) -> Selection | None:
 
 
 def find(store: JsonStore, text: str, limit: int = 8) -> list[tuple[Kind, int, str, int]]:
-    """Clusters, families, artists and albums whose name holds every word of the text, as
-    (kind, id, name, number of albums that would move), the broadest first."""
+    """Clusters, families, artists and albums whose name holds every word of the text.
+
+    Args:
+        store: The store of the collection.
+        text: What was typed.
+        limit: How many at most.
+
+    Returns:
+        The matches as (kind, id, name, number of albums that would move), the broadest first.
+    """
     words = sort_name(text).split()
     if not words:
         return []
@@ -179,13 +226,25 @@ def plan(
 ) -> Plan:
     """Work out what moving the selection would do, without changing anything.
 
-    At the start of a shelf a proposal fills, the albums run on over the next shelves of
-    its cabinet and what stood there moves up behind them, by width; what no longer fits
-    stays at the end of the cabinet's last shelf. At the start of another shelf (a showcase,
-    a shelf without a width) they are simply put in front. At the end of a shelf they come
-    after what stands there. OFF_SHELF takes them off their shelf. Where it belongs puts
-    each album next to what it belongs with, as the shelves stand; an album without such a
-    place stays where it is. Nothing drops off a shelf.
+    At the start of a shelf a proposal fills, the albums run on over the next shelves of its cabinet
+    and what stood there moves up behind them, by width; what no longer fits stays at the end of the
+    cabinet's last shelf. At the start of another shelf (a showcase, a shelf without a width) they
+    are simply put in front. At the end of a shelf they come after what stands there. OFF_SHELF
+    takes them off their shelf. Where it belongs puts each album next to what it belongs with, as
+    the shelves stand; an album without such a place stays where it is. Nothing drops off a shelf.
+
+    Args:
+        store: The store of the collection.
+        chosen: What is moved.
+        how: Where on the shelves it goes.
+        shelf_id: The shelf, or OFF_SHELF; not needed for where it belongs.
+        constants: The width figures.
+
+    Returns:
+        The plan.
+
+    Raises:
+        ShelvesChanged: The shelf is no longer there.
     """
     shelves = store.load(Shelf)
     by_id = {shelf.id: shelf for shelf in shelves}
@@ -309,7 +368,12 @@ def _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, pl
 
 
 def carry_out(store: JsonStore, chosen: Plan) -> None:
-    """Make the planned move: the layout as it was is kept as a version first."""
+    """Make the planned move: the layout as it was is kept as a version first.
+
+    Args:
+        store: The store of the collection.
+        chosen: The plan.
+    """
     if not chosen.changes:
         return
     save_if_unsaved(store, "before moving")

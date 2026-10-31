@@ -10,7 +10,14 @@ from sleeve_shelf.persistence import JsonStore
 
 
 def fetch_overview(store: JsonStore) -> dict:
-    """The counts and lists of the Discogs screen, with how far each part is as [done, total]."""
+    """The counts and lists of the Discogs screen, with how far each part is as [done, total].
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        What the screen's template uses, by name.
+    """
     albums = store.load(Album)
     artist_list = store.load(Artist)
     artists = {artist.id: artist.name for artist in artist_list}

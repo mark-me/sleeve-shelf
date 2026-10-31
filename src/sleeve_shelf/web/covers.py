@@ -18,6 +18,12 @@ CACHE_SECONDS = 365 * 24 * 60 * 60
 
 @blueprint.get("/<folder>/<name>")
 def file(folder: str, name: str):
+    """A stored cover or picture.
+
+    Args:
+        folder: The folder of covers or of pictures.
+        name: The file.
+    """
     if folder not in (ALBUM_DIR, ARTIST_DIR) or not name.endswith(".jpg"):
         abort(404)
     return send_from_directory(
@@ -26,7 +32,14 @@ def file(folder: str, name: str):
 
 
 def local_cover(url: str | None) -> str | None:
-    """The address a page shows an image from: the stored copy when there is one, else Discogs."""
+    """The address a page shows an image from: the stored copy when there is one, else Discogs.
+
+    Args:
+        url: The address at Discogs.
+
+    Returns:
+        The address to show it from.
+    """
     if not url:
         return url
     if "cover_names" not in g:

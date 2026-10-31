@@ -14,6 +14,7 @@ blueprint = Blueprint("browse", __name__)
 
 @blueprint.get("/browse")
 def browse():
+    """Browse/Search: one shelf at a time, or the results of a search."""
     store = get_store()
     # The proposal can be browsed like the real shelves, before deciding on it.
     # The proposal can be browsed by the owner only.
@@ -48,6 +49,7 @@ def browse():
 
 @blueprint.get("/unplaced")
 def unplaced():
+    """The albums that stand on no shelf."""
     store = get_store()
     albums = BrowseQueries(store).unplaced()
     placed = request.args.get("placed", type=int)

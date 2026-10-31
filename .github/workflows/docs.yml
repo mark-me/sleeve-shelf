@@ -7,6 +7,7 @@ on:
     branches: [ main ]
     paths:
       - "docs-site/**"
+      - "src/sleeve_shelf/**/*.py"
       - "docs/requirements.md"
       - "tests/test_docs.py"
       - ".github/workflows/docs.yml"

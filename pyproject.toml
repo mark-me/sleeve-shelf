@@ -1,7 +1,7 @@
 [project]
 name = "sleeve-shelf"
 version = "0.1.0"
-description = "Add your description here"
+description = "Organises a vinyl collection across cabinets and shelves: browse and search it in shelf order, link it to Discogs, and sort it."
 readme = "README.md"
 authors = [
     { name = "Mark Zwart", email = "mark.zwart@pobox.com" }
@@ -29,8 +29,18 @@ dev = [
     "ruff>=0.9",
     "pytest>=9.1.1",
     "zensical>=0.0.63",
+    "mkdocstrings-python>=2.0.10",
 ]
 
 [tool.ruff.lint]
-# Unused and undefined names. Complexity (C901) is not checked yet: some functions are still too long.
-select = ["F"]
+# Unused and undefined names, and docstrings. Complexity (C901) is not checked yet: some functions are still too long.
+select = ["F", "D"]
+# A class says what its __init__ takes, as the Google style has it.
+ignore = ["D105", "D107"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# The name of a test says what it checks.
+"tests/*" = ["D101", "D102", "D103", "D205", "D212", "D415"]

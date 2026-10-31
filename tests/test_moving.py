@@ -26,7 +26,8 @@ CONSTANTS = Settings().width_constants
 def _collection(tmp_path, last_shelf_cm=1.5):
     """Jazz (Chet Baker, a family, and Miles Davis) scattered over two cabinets and a
     showcase; Rock (Tindersticks) in the first cabinet. Every album is 0.5 cm, so a shelf of
-    2 cm holds four."""
+    2 cm holds four.
+    """
     store = JsonStore(tmp_path)
     store.save(Cluster, [Cluster(1, "Jazz", 0), Cluster(2, "Rock", 1)])
     store.save(AliasGroup, [AliasGroup(1, "Chet Baker")])

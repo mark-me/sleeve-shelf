@@ -34,18 +34,42 @@ from sleeve_shelf.library.versions import save_if_unsaved, save_version
 
 @dataclass(frozen=True, slots=True)
 class Sorted:
+    """The collection as a proposal sorts it.
+
+    Attributes:
+        units: The artists and families sorted, as units on the shelf.
+        ordered: The albums in their order.
+        albums: The albums by id.
+    """
+
     units: list[Unit]
     ordered: list[OrderedAlbum]
     albums: dict[int, Album]
 
 
 def has_proposal(store: JsonStore) -> bool:
+    """Whether a sorting proposal is waiting next to the layout.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        True when there is one.
+    """
     return store.exists(ProposedPlacement)
 
 
 def sort_collection(store: JsonStore, unplaced: set[int] | frozenset[int] = frozenset()) -> Sorted:
-    """The albums in the order a proposal stands them in. Albums in unplaced are sorted as if
-    they stood nowhere yet — those being moved, whose place now is not the owner's choice."""
+    """The albums in the order a proposal stands them in.
+
+    Args:
+        store: The store of the collection.
+        unplaced: Albums sorted as if they stood nowhere yet — those being moved, whose place now is
+            not the owner's choice.
+
+    Returns:
+        The sorted collection.
+    """
     ensure_cluster_order(store)
     placed_ids = {
         p.album_id for p in store.load(Placement)
@@ -68,9 +92,11 @@ def sort_collection(store: JsonStore, unplaced: set[int] | frozenset[int] = froz
 
 
 def _standing(store: JsonStore) -> dict[int, int]:
-    """Each album's place along the walked shelves as they stand now. A showcase and a
-    cabinet kept outside the sorting are left out: what stands there says nothing about
-    the order of the shelves that are sorted."""
+    """Each album's place along the walked shelves as they stand now.
+
+    A showcase and a cabinet kept outside the sorting are left out: what stands there says nothing
+    about the order of the shelves that are sorted.
+    """
     kept = kept_shelf_ids(store)
     shelves = store.load(Shelf)
     walk = {
@@ -91,10 +117,14 @@ def _standing(store: JsonStore) -> dict[int, int]:
 def generate_proposal(store: JsonStore, constants: WidthConstants, room_percent: int = 0) -> None:
     """Sort the collection and fill the shelves, saved as a proposal next to the current layout.
 
-    Each shelf is filled to at most (100 - room_percent)% of its width, and the boundaries
-    between the shelves are chosen so as many albums as possible stay on the shelf they stand
-    on now: the order is the same as filling each shelf to the brim, but far fewer records
-    have to be moved to carry it out (see sorting.placement.fill_shelves_keeping).
+    The boundaries between the shelves are chosen so as many albums as possible stay on the shelf
+    they stand on now: the order is the same as filling each shelf to the brim, but far fewer
+    records have to be moved to carry it out (see sorting.placement.fill_shelves_keeping).
+
+    Args:
+        store: The store of the collection.
+        constants: The width figures.
+        room_percent: Each shelf is filled to at most (100 - room_percent)% of its width.
     """
     result = sort_collection(store)
     usable, _skipped = usable_shelves(store)
@@ -137,8 +167,17 @@ def generate_proposal(store: JsonStore, constants: WidthConstants, room_percent:
 
 
 def mandatory_cabinets(store: JsonStore, result: Sorted) -> dict[int, int]:
-    """The cabinet each album is bound to by a location rule, the most specific rule winning:
-    the album's own, then its artist's, its family's, its cluster's."""
+    """The cabinet each album is bound to by a location rule.
+
+    The most specific rule wins: the album's own, then its artist's, its family's, its cluster's.
+
+    Args:
+        store: The store of the collection.
+        result: The sorted collection.
+
+    Returns:
+        The cabinet by album id.
+    """
     rules: dict[LocationRuleTarget, dict[int, int]] = {target: {} for target in LocationRuleTarget}
     for rule in store.load(LocationRule):
         rules[rule.target_type][rule.target_id] = rule.cabinet_id
@@ -160,11 +199,20 @@ def mandatory_cabinets(store: JsonStore, result: Sorted) -> dict[int, int]:
 
 
 def discard_proposal(store: JsonStore) -> None:
+    """Throw the waiting proposal away; the layout stays as it is.
+
+    Args:
+        store: The store of the collection.
+    """
     store.remove(ProposedPlacement)
 
 
 def accept_proposal(store: JsonStore) -> None:
-    """Make the proposal the current layout, with the clusters and era bands it was sorted by."""
+    """Make the proposal the current layout, with the clusters and era bands it was sorted by.
+
+    Args:
+        store: The store of the collection.
+    """
     if not has_proposal(store):
         return
     proposed = store.load(ProposedPlacement)
@@ -207,7 +255,14 @@ def accept_proposal(store: JsonStore) -> None:
 
 
 def proposal_overview(store: JsonStore) -> dict:
-    """What the Sorting proposal screen shows: what takes part, and a proposal next to the layout."""
+    """What the Sorting proposal screen shows: what takes part, and a proposal next to the layout.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        What the screen's template uses, by name.
+    """
     usable, skipped = usable_shelves(store)
     kept = kept_shelf_ids(store)
     outside = {cabinet.id for cabinet in store.load(Cabinet) if cabinet.outside_sorting}

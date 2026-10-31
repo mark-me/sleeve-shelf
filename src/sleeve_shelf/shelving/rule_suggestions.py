@@ -32,12 +32,19 @@ ALBUM_MIN_ARTIST = 4
 
 @dataclass(frozen=True, slots=True)
 class RuleSuggestion:
-    """A location rule the layout hints at: something standing where a proposal would not put it."""
+    """A location rule the layout hints at: something standing where a proposal would not put it.
+
+    Attributes:
+        target_type: What the rule would bind.
+        target_id: The id of that.
+        cabinet_id: The cabinet it stands in.
+        album_count: The albums the suggestion is read from.
+        proposed_cabinet_id: The cabinet a proposal would give them.
+    """
 
     target_type: LocationRuleTarget
     target_id: int
     cabinet_id: int
-    # The albums the suggestion is read from, and the cabinet a proposal would give them.
     album_count: int
     proposed_cabinet_id: int | None
 
@@ -45,13 +52,18 @@ class RuleSuggestion:
 def rule_suggestions(store: JsonStore) -> list[RuleSuggestion]:
     """The rules the current layout hints at; none is ever made without the user accepting it.
 
-    The layout is compared with the proposal generated without any rule. A
-    cluster, family or artist whose albums all stand in one cabinet, while that
-    proposal would put most of them in a cabinet more than one step away in
-    walking order, is kept there on purpose — so is an album standing apart
-    from the rest of its artist. The most general explanation is suggested: a
-    target covered by a suggestion or an existing rule on something that
-    contains it is skipped, and so is a suggestion the user turned down.
+    The layout is compared with the proposal generated without any rule. A cluster, family or artist
+    whose albums all stand in one cabinet, while that proposal would put most of them in a cabinet
+    more than one step away in walking order, is kept there on purpose — so is an album standing
+    apart from the rest of its artist. The most general explanation is suggested: a target covered
+    by a suggestion or an existing rule on something that contains it is skipped, and so is a
+    suggestion the user turned down.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The suggestions.
     """
     albums = store.load(Album)
     placed = {p.album_id: p for p in store.load(Placement)}
@@ -171,8 +183,16 @@ def rule_suggestions(store: JsonStore) -> list[RuleSuggestion]:
 
 
 def accept_suggestions(store: JsonStore, cabinet_id: int, note: str) -> int:
-    """Turn every suggestion for a cabinet into a rule, each with this note; returns how many
-    rules were made."""
+    """Turn every suggestion for a cabinet into a rule.
+
+    Args:
+        store: The store of the collection.
+        cabinet_id: The cabinet.
+        note: The note each rule gets.
+
+    Returns:
+        How many rules were made.
+    """
     chosen = [s for s in rule_suggestions(store) if s.cabinet_id == cabinet_id]
     if not chosen:
         return 0
@@ -182,7 +202,15 @@ def accept_suggestions(store: JsonStore, cabinet_id: int, note: str) -> int:
 
 
 def dismiss_suggestions(store: JsonStore, cabinet_id: int) -> int:
-    """Turn the suggestions for a cabinet down for good; returns how many."""
+    """Turn the suggestions for a cabinet down for good.
+
+    Args:
+        store: The store of the collection.
+        cabinet_id: The cabinet.
+
+    Returns:
+        How many were turned down.
+    """
     chosen = [s for s in rule_suggestions(store) if s.cabinet_id == cabinet_id]
     if not chosen:
         return 0

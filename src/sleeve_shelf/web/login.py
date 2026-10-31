@@ -69,8 +69,10 @@ _NOT_COUNTED = frozenset({"static", "covers.file", "artists.picture", "help.page
 
 
 class _Window:
-    """What each address did within the last so many seconds, to hold one up that does too
-    much. Addresses gone quiet are forgotten, so a stream of new ones cannot fill memory."""
+    """What each address did within the last so many seconds, to hold one up that does too much.
+
+    Addresses gone quiet are forgotten, so a stream of new ones cannot fill memory.
+    """
 
     def __init__(self, settings: Callable[[], tuple[int, int]]):
         # How many in how many seconds, asked on each use so a test can lower them.
@@ -106,7 +108,11 @@ _reported: dict[str, float] = {}
 
 
 def is_owner() -> bool:
-    """Whether the one looking may change things: logged in, or no password set at all."""
+    """Whether the one looking may change things: logged in, or no password set at all.
+
+    Returns:
+        True for the owner.
+    """
     if "is_owner" not in g:
         settings = load_settings(current_app.config["DATA_DIR"])
         if not settings.owner_password_hash:
@@ -121,8 +127,11 @@ def is_owner() -> bool:
 
 
 def remember_owner(login_key: str) -> None:
-    """Log this device in as the owner, with the login key of the password that was
-    verified: until logging out, or until the password changes."""
+    """Log this device in as the owner: until logging out, or until the password changes.
+
+    Args:
+        login_key: The login key of the password that was verified.
+    """
     session.clear()
     session.permanent = True
     session["owner"] = login_key
@@ -130,8 +139,13 @@ def remember_owner(login_key: str) -> None:
 
 
 def guard():
-    """Run before every request: a visitor gets only what VISITOR_PAGES lists, to read, and
-    only so many pages a minute."""
+    """Run before every request: a visitor gets only what VISITOR_PAGES lists, to read.
+
+    And only so many pages a minute.
+
+    Returns:
+        The answer to a request that is refused; None lets it through.
+    """
     if request.endpoint is None or is_owner():
         return None
     if request.endpoint not in _NOT_COUNTED and not _pages.allow(_address()):
@@ -160,14 +174,21 @@ def _too_busy() -> Response:
 
 
 def visitor_may_listen() -> bool:
-    """Whether a visitor's next listen stays within the limit; the owner always may."""
+    """Whether a visitor's next listen stays within the limit; the owner always may.
+
+    Returns:
+        True when it does.
+    """
     return is_owner() or _listens.allow(_address())
 
 
 def _address() -> str:
-    """Who is asking, for the limits. Only the proxies the app is told to trust
-    (SLEEVE_SHELF_PROXIES, see create_app) may name the address behind them; otherwise a
-    client could name a new one with every request and never be held up."""
+    """Who is asking, for the limits.
+
+    Only the proxies the app is told to trust (SLEEVE_SHELF_PROXIES, see create_app) may name the
+    address behind them; otherwise a client could name a new one with every request and never be
+    held up.
+    """
     return request.remote_addr or ""
 
 
@@ -181,9 +202,11 @@ def _wait(address: str) -> int:
 
 
 def _within(target: str | None) -> bool:
-    """Whether target is a page of this app, never another site. A backslash is refused too,
-    as browsers read "/\\elsewhere.example" as another site, and so is a control character,
-    which browsers drop ("/\t/elsewhere.example")."""
+    """Whether target is a page of this app, never another site.
+
+    A backslash is refused too, as browsers read a slash and a backslash at the start as another
+    site, and so is a control character, which browsers drop.
+    """
     return bool(
         target
         and target.startswith("/")
@@ -195,16 +218,29 @@ def _within(target: str | None) -> bool:
 
 
 def safe_next(target: str | None) -> str:
-    """Where to go after logging in: a page of this app, else the start."""
+    """Where to go after logging in: a page of this app, else the start.
+
+    Args:
+        target: The page asked for.
+
+    Returns:
+        Where to go.
+    """
     return target if _within(target) else url_for("index")
 
 
 def redirect_within(target: str | None, fallback: str) -> Response:
     """Go to target when it is a page of this app, else to fallback.
 
-    _within decides; the check right beside the redirect — backslashes out, no host and no
-    scheme, in the form CodeQL's own advice gives — is what a code scanner recognises as
-    guarding it.
+    _within decides; the check right beside the redirect — backslashes out, no host and no scheme,
+    in the form CodeQL's own advice gives — is what a code scanner recognises as guarding it.
+
+    Args:
+        target: The page asked for.
+        fallback: Where to go otherwise.
+
+    Returns:
+        The redirect.
     """
     if not _within(target):
         return redirect(fallback)
@@ -216,6 +252,7 @@ def redirect_within(target: str | None, fallback: str) -> Response:
 
 @blueprint.route("/login", methods=["GET", "POST"])
 def page():
+    """The login page."""
     if not has_password(current_app.config["DATA_DIR"]):
         return redirect(url_for("index"))
     target = safe_next(request.values.get("next"))
@@ -245,5 +282,6 @@ def page():
 
 @blueprint.post("/logout")
 def logout():
+    """Log this device out."""
     session.clear()
     return redirect(url_for("browse.browse"))

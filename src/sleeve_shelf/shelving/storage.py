@@ -24,7 +24,18 @@ def save_cabinet(
     location: str | None = None,
     outside_sorting: bool = False,
 ) -> Cabinet:
-    """Add a cabinet (cabinet_id None), at the end of the order, or change one."""
+    """Add a cabinet, at the end of the order, or change one.
+
+    Args:
+        store: The store of the collection.
+        cabinet_id: The cabinet; None adds one.
+        name: Its name.
+        location: The room it stands in.
+        outside_sorting: Whether a proposal leaves it as it is.
+
+    Returns:
+        The cabinet.
+    """
     cabinets = store.load(Cabinet)
     if cabinet_id is None:
         cabinet = Cabinet(store.next_id(Cabinet, cabinets), name)
@@ -40,7 +51,15 @@ def save_cabinet(
 
 
 def remove_cabinet(store: JsonStore, cabinet_id: int) -> None:
-    """Remove a cabinet; only an empty one, so no shelf is left without a cabinet."""
+    """Remove a cabinet; only an empty one, so no shelf is left without a cabinet.
+
+    Args:
+        store: The store of the collection.
+        cabinet_id: The cabinet.
+
+    Raises:
+        StillInUse: It still has shelves.
+    """
     cabinets = store.load(Cabinet)
     cabinet = _find(cabinets, cabinet_id)
     if any(shelf.cabinet_id == cabinet_id for shelf in store.load(Shelf)):
@@ -50,7 +69,13 @@ def remove_cabinet(store: JsonStore, cabinet_id: int) -> None:
 
 
 def move_cabinet(store: JsonStore, cabinet_id: int, step: int) -> None:
-    """Move a cabinet a step up (-1) or down (+1) in the order they are walked."""
+    """Move a cabinet a step up (-1) or down (+1) in the order they are walked.
+
+    Args:
+        store: The store of the collection.
+        cabinet_id: The cabinet.
+        step: -1 for up, +1 for down.
+    """
     cabinets = store.load(Cabinet)
     _find(cabinets, cabinet_id)
     move(cabinets, cabinet_id, step)
@@ -69,9 +94,25 @@ def save_shelf(
     is_showcase: bool = False,
     width_measured: bool = False,
 ) -> Shelf:
-    """Add a shelf to a cabinet (shelf_id None), at the end of it, or change one.
+    """Add a shelf to a cabinet, at the end of it, or change one.
 
-    Only a top-loader can be a showcase; anything else raises ValueError, as Shelf does.
+    Args:
+        store: The store of the collection.
+        cabinet_id: The cabinet.
+        shelf_id: The shelf; None adds one.
+        name: Its name.
+        width_cm: Its width.
+        type: How records stand on it.
+        layer: Whether it is an upper or a lower one.
+        reachability_score: How easily it is reached.
+        is_showcase: Whether it holds a sample of an artist's albums.
+        width_measured: Whether the width was measured.
+
+    Returns:
+        The shelf.
+
+    Raises:
+        ValueError: A showcase that is not a top-loader, as Shelf says.
     """
     if is_showcase and type is not ShelfType.TOP_LOADER:
         raise ValueError("Only a top-loader shelf can be a showcase")
@@ -96,7 +137,15 @@ def save_shelf(
 
 
 def remove_shelf(store: JsonStore, shelf_id: int) -> None:
-    """Remove a shelf; only an empty one, so no album loses its place unnoticed."""
+    """Remove a shelf; only an empty one, so no album loses its place unnoticed.
+
+    Args:
+        store: The store of the collection.
+        shelf_id: The shelf.
+
+    Raises:
+        StillInUse: It still holds albums.
+    """
     shelves = store.load(Shelf)
     shelf = _find(shelves, shelf_id)
     if store.exists(Album) and shelf_id in BrowseQueries(store).shelf_fill():
@@ -106,7 +155,16 @@ def remove_shelf(store: JsonStore, shelf_id: int) -> None:
 
 
 def move_shelf(store: JsonStore, shelf_id: int, step: int) -> int:
-    """Move a shelf a step up (-1) or down (+1) within its cabinet; returns the cabinet."""
+    """Move a shelf a step up (-1) or down (+1) within its cabinet.
+
+    Args:
+        store: The store of the collection.
+        shelf_id: The shelf.
+        step: -1 for up, +1 for down.
+
+    Returns:
+        The cabinet.
+    """
     shelves = store.load(Shelf)
     shelf = _find(shelves, shelf_id)
     move([s for s in shelves if s.cabinet_id == shelf.cabinet_id], shelf_id, step)

@@ -5,6 +5,8 @@ from enum import StrEnum
 
 
 class PlacementSource(StrEnum):
+    """Where a placement comes from: the sorting, a move by hand, or the initial load."""
+
     ALGORITHM = "algorithm"
     MANUAL = "manual"
     INITIAL_LOAD = "initial_load"
@@ -12,7 +14,14 @@ class PlacementSource(StrEnum):
 
 @dataclass(slots=True)
 class Placement:
-    """The one canonical location of an album; consumes shelf width."""
+    """The one canonical location of an album; consumes shelf width.
+
+    Attributes:
+        album_id: The album.
+        shelf_id: The shelf it stands on.
+        position: Its place on the shelf.
+        source: Where this placement comes from.
+    """
 
     album_id: int
     shelf_id: int

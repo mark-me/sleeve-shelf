@@ -9,7 +9,14 @@ BANDS = (BEFORE_1960, "1960s", "1970s", "1980s", "1990s", "2000s", "2010s", FROM
 
 
 def band_of(start_year: int | None) -> str:
-    """The band a start year falls in."""
+    """The band a start year falls in.
+
+    Args:
+        start_year: The year; None for an artist without one.
+
+    Returns:
+        The band.
+    """
     if not start_year:
         return UNKNOWN
     if start_year < 1960:
@@ -20,4 +27,12 @@ def band_of(start_year: int | None) -> str:
 
 
 def band_index(band: str) -> int:
+    """The place of a band among the bands, oldest first.
+
+    Args:
+        band: The band.
+
+    Returns:
+        Its place.
+    """
     return BANDS.index(band)

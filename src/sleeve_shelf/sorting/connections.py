@@ -9,23 +9,32 @@ from sleeve_shelf.sorting.families import MAX_BANDS
 
 @dataclass(frozen=True, slots=True)
 class ClusterHint:
-    """The cluster an artist's connections stand in, and the connections it is read from."""
+    """The cluster an artist's connections stand in, and the connections it is read from.
+
+    Attributes:
+        cluster_id: The cluster.
+        via_artist_ids: The connected artists in that cluster, the one with the most albums first.
+        decisive: Whether the connection is close enough to propose the cluster by: another name of
+            the artist, or a person and a band of their own. A band shared with others, or a
+            sideman's, is an indication only.
+    """
 
     cluster_id: int
-    # The connected artists in that cluster, the one with the most albums first.
     via_artist_ids: tuple[int, ...]
-    # Whether the connection is close enough to propose the cluster by: another name of the
-    # artist, or a person and a band of their own. A band shared with others, or a
-    # sideman's, is an indication only.
     decisive: bool = True
 
 
 @dataclass(frozen=True, slots=True)
 class Connections:
-    """The artists in the collection Discogs connects one artist to: artist ids."""
+    """The artists in the collection Discogs connects one artist to: artist ids.
+
+    Attributes:
+        other_names: Other names of the artist.
+        bands: The bands the artist is in, and the members of the artist when it is a band.
+        members: The members of the artist.
+    """
 
     other_names: tuple[int, ...] = ()
-    # The bands the artist is in, and the members of the artist when it is a band.
     bands: tuple[int, ...] = ()
     members: tuple[int, ...] = ()
 
@@ -35,8 +44,16 @@ def connections_of(
 ) -> Connections:
     """Whom Discogs connects the artist to, by what they are to each other.
 
-    Read from both records: a band is listed when the artist's record names it or
-    the band's record names the artist. Only artists in the collection are known.
+    Read from both records: a band is listed when the artist's record names it or the band's record
+    names the artist. Only artists in the collection are known.
+
+    Args:
+        artist_id: The artist.
+        artists: All artists.
+        enrichments: The cached artist records.
+
+    Returns:
+        The connections.
     """
     by_did = artist_ids_by_discogs_id(artists)
     names: set[int] = set()
@@ -74,19 +91,29 @@ def clusters_by_connection(
 ) -> dict[int, ClusterHint]:
     """For each artist without a confirmed cluster: the cluster of whom Discogs connects it to.
 
-    Only direct connections count: the artist's other names, the bands a person is in,
-    and the members of a band — whichever of the two records names the other. A fellow
-    member's other bands are not followed.
+    Only direct connections count: the artist's other names, the bands a person is in, and the
+    members of a band — whichever of the two records names the other. A fellow member's other bands
+    are not followed.
 
-    The close connections are the ones a family is suggested from: other names, and a
-    person with a band that no other artist in the collection is in, unless the person is
-    a sideman (in more than max_bands bands of the collection). With any of those the hint is decisive and goes by them alone. Otherwise it
-    goes by the loose ones — a band several artists share, a sideman's bands — and is no
-    more than an indication: measured against the curated collection those are right
-    about as often as the styles are.
+    The close connections are the ones a family is suggested from: other names, and a person with a
+    band that no other artist in the collection is in, unless the person is a sideman (in more than
+    max_bands bands of the collection). With any of those the hint is decisive and goes by them
+    alone. Otherwise it goes by the loose ones — a band several artists share, a sideman's bands —
+    and is no more than an indication: measured against the curated collection those are right about
+    as often as the styles are.
 
-    With connections in several clusters, the cluster holding most of their albums wins,
-    and on a tie the one of the connection with the most albums.
+    With connections in several clusters, the cluster holding most of their albums wins, and on a
+    tie the one of the connection with the most albums.
+
+    Args:
+        artists: All artists.
+        assignments: Each artist's cluster.
+        enrichments: The cached artist records.
+        album_counts: The number of albums by artist id.
+        max_bands: In more bands than this a person is a sideman.
+
+    Returns:
+        The hints by artist id.
     """
     by_did = artist_ids_by_discogs_id(artists)
 

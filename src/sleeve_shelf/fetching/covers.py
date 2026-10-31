@@ -31,7 +31,14 @@ REPLACE_ATTEMPTS = 6
 
 
 def cover_name(url: str) -> str:
-    """The file an image is kept under: named after its address, so a new address is a new file."""
+    """The file an image is kept under: named after its address, so a new address is a new file.
+
+    Args:
+        url: The address of the image.
+
+    Returns:
+        The file name.
+    """
     return hashlib.sha1(url.encode()).hexdigest()[:20] + ".jpg"
 
 
@@ -41,7 +48,14 @@ _names_cache: dict[Path, tuple[tuple, set[str]]] = {}
 
 
 def stored_names(data_dir: Path) -> set[str]:
-    """Everything stored, images and "missing" marks alike, as "folder/name"."""
+    """Everything stored, images and "missing" marks alike.
+
+    Args:
+        data_dir: The data directory.
+
+    Returns:
+        The files as "folder/name".
+    """
     folders = [Path(data_dir) / COVER_DIR / folder for folder in (ALBUM_DIR, ARTIST_DIR)]
     signature = tuple(d.stat().st_mtime_ns if d.is_dir() else None for d in folders)
     cached = _names_cache.get(Path(data_dir))
@@ -57,7 +71,15 @@ def stored_names(data_dir: Path) -> set[str]:
 
 
 def image_paths(albums: Iterable[Album], pictures: Iterable[ArtistEnrichment]) -> dict[str, str]:
-    """Per image the pages show: where it is kept, as "folder/name", in the order of image_urls."""
+    """Per image the pages show: where it is kept, in the order of image_urls.
+
+    Args:
+        albums: The albums.
+        pictures: The artist records.
+
+    Returns:
+        The place as "folder/name", by the address of the image.
+    """
     albums = list(albums)
     pictures = list(pictures)
     of_albums = {url for album in albums for url in (album.cover_url, album.cover_image_url)}
@@ -68,7 +90,15 @@ def image_paths(albums: Iterable[Album], pictures: Iterable[ArtistEnrichment]) -
 
 
 def image_urls(albums: Iterable[Album], pictures: Iterable[ArtistEnrichment]) -> list[str]:
-    """Every image the pages show, each once: small covers first, then large ones, then artists."""
+    """Every image the pages show, each once: small covers first, then large ones, then artists.
+
+    Args:
+        albums: The albums.
+        pictures: The artist records.
+
+    Returns:
+        The addresses.
+    """
     albums = list(albums)
     pictures = list(pictures)
     urls = [album.cover_url for album in albums]
@@ -79,7 +109,15 @@ def image_urls(albums: Iterable[Album], pictures: Iterable[ArtistEnrichment]) ->
 
 
 def image_pairs(albums: Iterable[Album], pictures: Iterable[ArtistEnrichment]) -> dict[str, str]:
-    """Per small image the address of its large one, for those that have both."""
+    """Per small image the address of its large one, for those that have both.
+
+    Args:
+        albums: The albums.
+        pictures: The artist records.
+
+    Returns:
+        The address of the large image, by that of the small one.
+    """
     pairs = {album.cover_url: album.cover_image_url for album in albums}
     pairs.update({picture.thumb_url: picture.image_url for picture in pictures})
     return {small: large for small, large in pairs.items() if small and large and small != large}
@@ -118,8 +156,14 @@ def _sharpen(small: Path, large: Path) -> bool:
 def sharpen_small_images(store: JsonStore) -> int:
     """Replace Discogs' grainy small images by copies made from the stored large ones.
 
-    Only where both are stored, and only once: an image made here is recognised by
-    its size. Returns how many were made. Nothing is fetched.
+    Only where both are stored, and only once: an image made here is recognised by its size. Nothing
+    is fetched.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        How many were made.
     """
     directory = store.data_dir / COVER_DIR
     stored = stored_names(store.data_dir)
@@ -137,7 +181,16 @@ def missing_images(
     albums: Iterable[Album] | None = None,
     pictures: Iterable[ArtistEnrichment] | None = None,
 ) -> list[str]:
-    """The images not yet in the data directory, and not marked as gone at Discogs."""
+    """The images not yet in the data directory, and not marked as gone at Discogs.
+
+    Args:
+        store: The store of the collection.
+        albums: The albums, when the caller has them already.
+        pictures: The artist records, when the caller has them already.
+
+    Returns:
+        The addresses of those images.
+    """
     stored = stored_names(store.data_dir)
     paths = image_paths(
         store.load(Album) if albums is None else albums,
@@ -156,12 +209,21 @@ def download_images(
     urls: list[str],
     progress: Callable[[int], None] = lambda count: None,
 ) -> int:
-    """Fetch the images into the data directory; returns how many came in.
+    """Fetch the images into the data directory.
 
-    A cover goes into the folder of the albums, an artist's picture into that of the
-    artists. An image Discogs no longer has is marked as such and skipped from then on.
-    Each file is written whole or not at all, so a run that is stopped — the
-    progress callback may raise to stop it — leaves nothing half-written.
+    A cover goes into the folder of the albums, an artist's picture into that of the artists. An
+    image Discogs no longer has is marked as such and skipped from then on. Each file is written
+    whole or not at all, so a run that is stopped — the progress callback may raise to stop it —
+    leaves nothing half-written.
+
+    Args:
+        store: The store of the collection.
+        client: The Discogs client.
+        urls: The addresses to fetch.
+        progress: Told how many were handled after each image.
+
+    Returns:
+        How many came in.
     """
     directory = store.data_dir / COVER_DIR
     albums, pictures = store.load(Album), store.load(ArtistEnrichment)
@@ -193,8 +255,13 @@ def download_images(
 def sort_into_folders(store: JsonStore) -> int:
     """Move images stored before covers and pictures had folders of their own into them.
 
-    Returns how many files were moved. A file no album or artist points to any more
-    stays where it is: nothing is removed.
+    A file no album or artist points to any more stays where it is: nothing is removed.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        How many files were moved.
     """
     directory = store.data_dir / COVER_DIR
     loose = [path for path in directory.iterdir() if path.is_file()] if directory.is_dir() else []

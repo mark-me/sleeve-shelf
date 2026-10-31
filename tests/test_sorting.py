@@ -385,7 +385,8 @@ def test_connections_are_read_from_either_record_and_named_by_what_they_are():
 
 def _spot_case():
     """Shelf 1 holds artist A (albums 1, 2) and B (3), of one cluster and era; shelf 2 holds
-    C (4), of that cluster in another era, and D (5), of another cluster."""
+    C (4), of that cluster in another era, and D (5), of another cluster.
+    """
     ordered = [
         OrderedAlbum(1, 10, "1960s", "a"),
         OrderedAlbum(11, 10, "1960s", "a"),      # new, by artist A

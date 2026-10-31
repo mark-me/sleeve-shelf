@@ -40,6 +40,7 @@ def _targets(store) -> dict[LocationRuleTarget, dict[int, str]]:
 
 @blueprint.get("/")
 def index():
+    """The Location rules screen, with what the layout hints at."""
     store = get_store()
     targets = _targets(store)
     cabinets = in_order(store.load(Cabinet))
@@ -83,6 +84,7 @@ def index():
 
 @blueprint.post("/new")
 def create():
+    """Add a location rule."""
     store = get_store()
     try:
         kind = LocationRuleTarget(request.form.get("target_type", ""))
@@ -103,13 +105,23 @@ def create():
 
 @blueprint.post("/<int:rule_id>/delete")
 def delete(rule_id: int):
+    """Remove a location rule.
+
+    Args:
+        rule_id: The rule.
+    """
     remove_rule(get_store(), rule_id)
     return _back()
 
 
 @blueprint.post("/suggestions/<int:cabinet_id>/<any(accept, dismiss):choice>")
 def decide_suggestions(cabinet_id: int, choice: str):
-    """Make the rules the layout hints at for a cabinet, or turn them down for good."""
+    """Make the rules the layout hints at for a cabinet, or turn them down for good.
+
+    Args:
+        cabinet_id: The cabinet.
+        choice: "accept" or "dismiss".
+    """
     store = get_store()
     if choice == "accept":
         return redirect(url_for("rules.index", added=accept_suggestions(store, cabinet_id, _("Suggested from the layout"))))

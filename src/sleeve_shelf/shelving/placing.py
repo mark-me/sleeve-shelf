@@ -26,10 +26,21 @@ def move_albums(
     shelf_id: int | None,
     entity: type[Placement] | type[ProposedPlacement] = Placement,
 ) -> set[int]:
-    """Stand albums at the end of a shelf, in the order given; None takes them off their shelf.
+    """Stand albums at the end of a shelf, in the order given.
 
-    Works on the shelves as they are, or on the proposal (entity). A change to the shelves as
-    they are keeps a version to go back to first. Returns the shelves whose contents changed.
+    A change to the shelves as they are keeps a version to go back to first.
+
+    Args:
+        store: The store of the collection.
+        album_ids: The albums.
+        shelf_id: The shelf; None takes them off their shelf.
+        entity: The layout to work on: the shelves as they are, or the proposal.
+
+    Returns:
+        The shelves whose contents changed.
+
+    Raises:
+        ShelvesChanged: An album is named twice or is not there, or the shelf is not there.
     """
     if (
         len(album_ids) != len(set(album_ids))
@@ -57,10 +68,19 @@ def rearrange_shelves(
     off_shelf: list[int] = (),
     entity: type[Placement] | type[ProposedPlacement] = Placement,
 ) -> None:
-    """Give shelves new contents, as a drag left them: per shelf its albums in order.
+    """Give shelves new contents, as a drag left them.
 
-    Albums in off_shelf are taken off their shelf. Nothing may silently drop off a shelf:
-    every album that stood on one of these shelves has to be named again, somewhere.
+    Nothing may silently drop off a shelf: every album that stood on one of these shelves has to be
+    named again, somewhere.
+
+    Args:
+        store: The store of the collection.
+        contents: Per shelf its albums in order.
+        off_shelf: Albums taken off their shelf.
+        entity: The layout to work on: the shelves as they are, or the proposal.
+
+    Raises:
+        ShelvesChanged: The page did not show the shelves as they are, or an album would drop off.
     """
     named = [album_id for ids in contents.values() for album_id in ids] + list(off_shelf)
     placements = store.load(entity)
@@ -95,6 +115,14 @@ def applicable_rules(
     """The location rules that bear on an artist, or on one of its albums, the deciding one first.
 
     The most specific rule decides: the album's own, then the artist's, its family's, its cluster's.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+        album_id: The album, when it is about one.
+
+    Returns:
+        The rules.
     """
     artist = find_by_id(store.load(Artist), artist_id)
     cluster_id = next(
@@ -114,8 +142,20 @@ def applicable_rules(
 def set_rule(
     store: JsonStore, target_type: LocationRuleTarget, target_id: int, cabinet_id: int, note: str = ""
 ) -> LocationRule:
-    """Bind a cluster, family, artist or album to a cabinet. A target has one rule: a new
-    rule for it replaces the old."""
+    """Bind a cluster, family, artist or album to a cabinet.
+
+    A target has one rule: a new rule for it replaces the old.
+
+    Args:
+        store: The store of the collection.
+        target_type: What it binds.
+        target_id: The id of that.
+        cabinet_id: The cabinet.
+        note: Why.
+
+    Returns:
+        The rule.
+    """
     rules = [
         rule
         for rule in store.load(LocationRule)
@@ -127,4 +167,10 @@ def set_rule(
 
 
 def remove_rule(store: JsonStore, rule_id: int) -> None:
+    """Remove a location rule.
+
+    Args:
+        store: The store of the collection.
+        rule_id: The rule.
+    """
     store.save(LocationRule, [rule for rule in store.load(LocationRule) if rule.id != rule_id])

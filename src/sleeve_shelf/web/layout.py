@@ -40,6 +40,7 @@ def _blocks(rows: list[AlbumRow]) -> list[dict]:
 
 @blueprint.get("/")
 def index():
+    """The Layout screen: the shelves of one room, as blocks to drag."""
     store = get_store()
     entity, layout = _entity(store)
     queries = BrowseQueries(store, entity)
@@ -97,7 +98,9 @@ def index():
 @blueprint.get("/go")
 def go():
     """Go to cabinet…: to a cabinet, on the tab of its room, or to the albums on no shelf.
-    The page itself goes nowhere the list names; the address is made here."""
+
+    The page itself goes nowhere the list names; the address is made here.
+    """
     store = get_store()
     _, layout = _entity(store)
     to = request.args.get("to", "")
@@ -113,8 +116,8 @@ def go():
 def send():
     """Stand albums at the end of a shelf, in the order given: {albums: [ids], shelf: id}.
 
-    For a move without dragging: the exact spot is then set by dragging within the shelf.
-    Shelf 0 is the tray, which takes the albums off their shelf.
+    For a move without dragging: the exact spot is then set by dragging within the shelf. Shelf 0 is
+    the tray, which takes the albums off their shelf.
     """
     store = get_store()
     entity, _layout = _entity(store)

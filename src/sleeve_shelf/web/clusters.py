@@ -28,6 +28,7 @@ blueprint = Blueprint("clusters", __name__, url_prefix="/clusters")
 
 @blueprint.get("/")
 def index():
+    """The Clusters screen."""
     store = get_store()
     albums = album_counts(store)
     artists = Counter(a.cluster_id for a in store.load(ArtistClusterAssignment))
@@ -48,6 +49,11 @@ def index():
 
 @blueprint.route("/<int:cluster_id>", methods=["GET", "POST"])
 def edit(cluster_id: int):
+    """A cluster's page: its name and its styles.
+
+    Args:
+        cluster_id: The cluster.
+    """
     store = get_store()
     clusters = clusters_in_order(store.load(Cluster))
     cluster = find_by_id(clusters, cluster_id)
@@ -81,12 +87,18 @@ def edit(cluster_id: int):
 
 @blueprint.post("/<int:cluster_id>/move")
 def move(cluster_id: int):
+    """Move a cluster earlier or later in the sequence.
+
+    Args:
+        cluster_id: The cluster.
+    """
     move_cluster(get_store(), cluster_id, -1 if request.form.get("direction") == "up" else 1)
     return redirect(url_for("clusters.index") + f"#cluster-{cluster_id}")
 
 
 @blueprint.post("/merge")
 def merge():
+    """Merge the clusters ticked."""
     cluster_ids = request.form.getlist("cluster", type=int)
     if len(cluster_ids) < 2:
         return redirect(url_for("clusters.index", error=_("Tick at least two clusters to merge.")))
@@ -96,6 +108,11 @@ def merge():
 
 @blueprint.post("/<int:cluster_id>/delete")
 def delete(cluster_id: int):
+    """Remove a cluster nothing points at any more.
+
+    Args:
+        cluster_id: The cluster.
+    """
     if not delete_empty_cluster(get_store(), cluster_id):
         return redirect(
             url_for("clusters.index", error=_("Only a cluster without artists, styles and rules can be removed."))
@@ -105,5 +122,10 @@ def delete(cluster_id: int):
 
 @blueprint.post("/styles/<int:style_id>")
 def move_style(style_id: int):
+    """Make a style point at another cluster.
+
+    Args:
+        style_id: The style.
+    """
     point_style(get_store(), style_id, request.form.get("cluster_id", type=int))
     return redirect_within(request.form.get("next"), url_for("clusters.index"))

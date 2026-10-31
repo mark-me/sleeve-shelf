@@ -16,15 +16,21 @@ EMPTY = "empty"
 
 @dataclass(frozen=True, slots=True)
 class SuggestedSpot:
-    """Where an album would stand: on a shelf, between two albums that stand there now."""
+    """Where an album would stand: on a shelf, between two albums that stand there now.
+
+    Attributes:
+        album_id: The album.
+        shelf_id: The shelf.
+        after_album_id: The album it would stand after; None at the start of the shelf.
+        before_album_id: The album it would stand before; None at the end of the shelf.
+        basis: Which neighbours the spot was found by: the artist's own albums, the artists of the
+            same era band in its cluster, the cluster, or merely the order of the clusters.
+    """
 
     album_id: int
     shelf_id: int
-    # The albums it would stand between; None at either end of the shelf.
     after_album_id: int | None
     before_album_id: int | None
-    # Which neighbours the spot was found by: the artist's own albums, the artists of the
-    # same era band in its cluster, the cluster, or merely the order of the clusters.
     basis: str
 
 
@@ -38,18 +44,25 @@ def suggest_spots(
 ) -> dict[int, SuggestedSpot]:
     """For each of the albums: the spot it belongs at in the layout as it stands.
 
-    ordered holds every album that is sorted, the new ones included, in the order a
-    sorting would give; layout the albums that stand on a shelf as (album, shelf), in
-    the order the shelves are walked. An album goes next to what it belongs with most
-    closely: the artist's (or family's) own albums if any stand on a shelf, else the
-    artists of its era band in its cluster, else its cluster, else whatever comes before
-    it in the order of the clusters. Among those it stands after the last one that
-    sorts before it — or before the first one that sorts after it — and never inside
-    another artist's row.
+    An album goes next to what it belongs with most closely: the artist's (or family's) own albums
+    if any stand on a shelf, else the artists of its era band in its cluster, else its cluster, else
+    whatever comes before it in the order of the clusters. Among those it stands after the last one
+    that sorts before it — or before the first one that sorts after it — and never inside another
+    artist's row. The layout is taken as it is, not as a sorting would have it: what the user moved
+    by hand stays the reference.
 
-    The layout is taken as it is, not as a sorting would have it: what the user moved
-    by hand stays the reference. allowed_shelves limits the shelves for some albums (a
-    location rule); an album without a cluster, or with nowhere to go, gets no spot.
+    Args:
+        album_ids: The albums to find a spot for.
+        ordered: Every album that is sorted, the new ones included, in the order a sorting would
+            give.
+        unit_of: The unit of each artist.
+        layout: The albums that stand on a shelf as (album, shelf), in the order the shelves are
+            walked.
+        allowed_shelves: Limits the shelves for some albums (a location rule).
+        cabinet_of: The cabinet of each shelf.
+
+    Returns:
+        The spots by album id; an album without a cluster, or with nowhere to go, gets none.
     """
     rank = {entry.album_id: index for index, entry in enumerate(ordered)}
     entry_of = {entry.album_id: entry for entry in ordered}

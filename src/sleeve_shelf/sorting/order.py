@@ -18,7 +18,16 @@ from sleeve_shelf.sorting.eras import band_index, band_of
 
 @dataclass(frozen=True, slots=True)
 class Unit:
-    """What stays together on the shelf: one artist, or a family of artists."""
+    """What stays together on the shelf: one artist, or a family of artists.
+
+    Attributes:
+        name: The name it is sorted by.
+        artist_ids: Its artists.
+        cluster_id: Its cluster, if any.
+        cluster_is_proposed: Whether that cluster is only proposed.
+        start_year: The year its era band counts from.
+        band: Its era band.
+    """
 
     name: str
     artist_ids: tuple[int, ...]
@@ -30,6 +39,15 @@ class Unit:
 
 @dataclass(frozen=True, slots=True)
 class OrderedAlbum:
+    """An album in its place in the sorted row.
+
+    Attributes:
+        album_id: The album.
+        cluster_id: The cluster it is sorted under.
+        band: The era band it is sorted under.
+        unit_name: The name of its unit.
+    """
+
     album_id: int
     cluster_id: int | None
     band: str
@@ -37,7 +55,15 @@ class OrderedAlbum:
 
 
 def propose_cluster(albums: list[Album], styles: dict[int, Style]) -> int | None:
-    """The cluster most of the albums' styles point to; a tie goes to the earliest album."""
+    """The cluster most of the albums' styles point to; a tie goes to the earliest album.
+
+    Args:
+        albums: The albums.
+        styles: The styles by id.
+
+    Returns:
+        The cluster, or None when no style points anywhere.
+    """
     votes: Counter[int] = Counter()
     earliest: dict[int, int] = {}
     for album in albums:
@@ -62,9 +88,19 @@ def build_units(
 ) -> list[Unit]:
     """Group the artists into units and settle each unit's cluster and era band.
 
-    A unit none of whose artists has a cluster gets one proposed: the cluster of the
-    artists Discogs connects it to (connected: artist id to cluster id), and without
-    such a connection the cluster its albums' styles point to.
+    A unit none of whose artists has a cluster gets one proposed: the cluster of the artists Discogs
+    connects it to, and without such a connection the cluster its albums' styles point to.
+
+    Args:
+        artists: All artists.
+        albums: The albums taking part.
+        assignments: Each artist's cluster.
+        alias_groups: The families.
+        styles: All styles.
+        connected: The cluster of whom Discogs connects an artist to, by artist id.
+
+    Returns:
+        The units.
     """
     albums_by_artist: dict[int, list[Album]] = defaultdict(list)
     for album in albums:
@@ -130,15 +166,23 @@ def order_albums(
 ) -> list[OrderedAlbum]:
     """Every album of the units in shelf order.
 
-    Clusters follow their curated position; within a cluster the era bands run
-    oldest first. Albums without a cluster come at the very end.
+    Clusters follow their curated position; within a cluster the era bands run oldest first. Albums
+    without a cluster come at the very end.
 
-    Within a band the units, and within a unit its albums, keep the order they stand
-    in now (standing: album -> its place along the walked shelves): that order is the
-    owner's own, and the sorting has no rule that says otherwise. Only what stands
-    nowhere yet goes by the rule — units alphabetically, an artist's albums by original
-    year (unknown last) and title — before the first one standing that the rule puts
-    after it. Without standing, everything goes by the rule.
+    Within a band the units, and within a unit its albums, keep the order they stand in now: that
+    order is the owner's own, and the sorting has no rule that says otherwise. Only what stands
+    nowhere yet goes by the rule — units alphabetically, an artist's albums by original year
+    (unknown last) and title — before the first one standing that the rule puts after it.
+
+    Args:
+        units: The units.
+        albums: The albums.
+        clusters: All clusters.
+        standing: Each album's place along the walked shelves; without it, everything goes by the
+            rule.
+
+    Returns:
+        The albums in order.
     """
     standing = standing or {}
     position = {cluster.id: (index, cluster.id) for index, cluster in enumerate(clusters_in_order(clusters))}
@@ -172,9 +216,11 @@ def order_albums(
 
 
 def _keep_order(items: list, where, rule) -> list:
-    """The items that stand somewhere in the order they stand in; each one that stands
-    nowhere goes before the first standing one the rule puts after it, else at the end.
-    Those that stand nowhere keep the rule's order among themselves."""
+    """The items that stand somewhere in the order they stand in.
+
+    Each one that stands nowhere goes before the first standing one the rule puts after it, else at
+    the end. Those that stand nowhere keep the rule's order among themselves.
+    """
     result = sorted((item for item in items if where(item) is not None), key=where)
     standing_ones = {id(item) for item in result}
     for item in sorted((item for item in items if where(item) is None), key=rule):
@@ -189,9 +235,14 @@ def _keep_order(items: list, where, rule) -> list:
 def cluster_order_from_layout(layout_cluster_ids: list[int | None]) -> list[int]:
     """Read the sequence of the clusters off a layout.
 
-    The layout is the cluster of each album in shelf order. A cluster counts
-    where its longest unbroken run starts, so a few albums sampled elsewhere
-    (a showcase shelf, external storage) don't move it.
+    A cluster counts where its longest unbroken run starts, so a few albums sampled elsewhere (a
+    showcase shelf, external storage) don't move it.
+
+    Args:
+        layout_cluster_ids: The cluster of each album in shelf order.
+
+    Returns:
+        The clusters in sequence.
     """
     best: dict[int, tuple[int, int]] = {}
     start = 0

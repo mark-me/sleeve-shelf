@@ -19,7 +19,7 @@ The owner, Mark, writes in Dutch; reply in Dutch. Code, comments, UI copy, and `
 ```sh
 uv run python -m sleeve_shelf                      # run the app on http://127.0.0.1:5000
 uv run python -m pytest                            # run the tests
-uv run python -m ruff check src tests              # unused and undefined names
+uv run python -m ruff check src tests              # unused and undefined names, and docstrings
 uv run python -m sleeve_shelf load <workbook.xlsx> # load a layout workbook
 uv run python -m sleeve_shelf import-discogs <collection.csv>
 uv run python -m sleeve_shelf enrich               # fetch styles and original years from Discogs
@@ -65,6 +65,8 @@ Strict separation of concerns; keep it that way. `tests/test_architecture.py` ch
 | `src/sleeve_shelf/web/` | Flask blueprints, templates, static files; `web/app.py` builds the app (`create_app`). One blueprint per screen. The menu's five sections and their tabs are declared in `web/navigation.py`; a new screen gets its tab there. |
 | `src/sleeve_shelf/web/pwa.py`, `web/static/icons/` | The web app manifest and the icons for installing the app on a phone. No service worker, on purpose. |
 | `docker/` | Dockerfile and Compose examples; `.github/workflows/docker.yml` builds and publishes the image, after `.github/workflows/security.yml` has checked the runtime packages (`uv export --no-dev`) for HIGH and CRITICAL vulnerabilities with a fix. The workflow also scans the built image before pushing it (`.github/actions/install-trivy` installs Trivy for both). Trivy runs in an empty folder so no `.trivyignore` or `trivy.yaml` from a pull request is read; keep it that way. All stages of the Dockerfile use the same `python:` image (the virtual environment works only with the Python it was made for); a new Python version is moved by hand there and in `.python-version` together. The Compose examples run the container read-only (only `/data` and `/tmp` writable): anything new the app writes belongs in the data directory. |
+
+Docstrings follow the Google style: packages, modules, classes (fields under `Attributes:`) and public functions (`Args:`, `Returns:`, `Raises:`). A view gets a line saying what it shows, with `Args:` for what its route takes; a private function only when it does not speak for itself; a function inside a function and a test none. `ruff` and `tests/test_architecture.py` check this. The Reference pages of the developer guide are generated from them (`domain`, `sorting`, `persistence`, `insights.ties`, `insights.network`, by mkdocstrings).
 
 Things that are easy to get wrong:
 

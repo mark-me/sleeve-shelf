@@ -1,5 +1,7 @@
-"""Application service for the figures on an artist's page and the Statistics screen: what the
-collection says about one artist, and who and what recurs across all of it."""
+"""Application service for the figures on an artist's and an album's page and the Statistics screen.
+
+What the collection says about one artist or album, and who and what recurs across all of it.
+"""
 
 import random
 from collections import Counter, deque
@@ -56,8 +58,15 @@ LONG_AGO_YEARS = 50
 
 @dataclass(frozen=True, slots=True)
 class Person:
-    """Someone credited across albums; artist_id when the person is an artist in the collection,
-    point_id when a musician with a point of their own in the network."""
+    """Someone credited across albums.
+
+    Attributes:
+        name: The name, without Discogs' "(2)".
+        artist_id: Set when the person is an artist in the collection.
+        roles: What they do, the most frequent first.
+        album_ids: The albums they are on.
+        point_id: Set when a musician with a point of their own in the network.
+    """
 
     name: str
     artist_id: int | None
@@ -68,48 +77,77 @@ class Person:
 
 @dataclass(frozen=True, slots=True)
 class ArtistFigures:
+    """What the collection says about one artist.
+
+    Attributes:
+        albums: The number of albums.
+        rank: The artist's place among those with the most albums; None for a compilation's
+            "Various".
+        rank_shared: Whether others have as many.
+        width_cm: How much room what stands on a shelf takes.
+        shelves: On how many shelves it stands.
+        styles: Albums per style, the most first: an album can have several.
+        years: Albums per original year, every year from the first to the last.
+        companions: Who is credited on several of the albums.
+        appears_on: Albums of others the artist is on.
+    """
+
     albums: int
-    # The artist's place among those with the most albums; None for a compilation's "Various".
     rank: int | None
     rank_shared: bool
-    # What stands on a shelf: how much room it takes, and on how many shelves.
     width_cm: float
     shelves: int
-    # Albums per style, the most first: an album can have several.
     styles: tuple[tuple[str, int], ...]
-    # Albums per original year, every year from the first to the last.
     years: tuple[tuple[int, int], ...]
     companions: tuple[Person, ...]
-    # Albums of others the artist is on.
     appears_on: tuple[OnRecord, ...]
 
 
 @dataclass(frozen=True, slots=True)
 class AlbumFigures:
+    """What the collection says about one album.
+
+    Attributes:
+        tracks: The number of songs.
+        minutes: How long the songs last together; None unless Discogs gives every length.
+        writers: Who wrote the songs, with on how many of them.
+        position: Its place among the artist's albums by original year.
+        of_artist: How many of the artist's albums have a year.
+        earlier: The album before it by year.
+        later: The album after it by year.
+        same_year: The other albums of its original year.
+        styles: Its styles, each with the albums of the collection that have it.
+        labels: Its labels as (name, albums of the collection on it, catalogue number).
+        people: Who is on it; each person's album_ids are all their albums in the collection.
+        alike: Other albums with several of the same people, with those people.
+        songs_elsewhere: How many of its songs other albums have too.
+    """
+
     tracks: int
-    # How long the songs last together; None unless Discogs gives every length.
     minutes: int | None
-    # Who wrote the songs, with on how many of them.
     writers: tuple[tuple[str, int], ...]
-    # Its place among the artist's albums by original year, and the albums either side of it.
     position: int | None
     of_artist: int
     earlier: int | None
     later: int | None
-    # The other albums of its original year.
     same_year: tuple[int, ...]
-    # Its styles and labels, each with the albums of the collection that have it.
     styles: tuple[tuple[str, int], ...]
     labels: tuple[tuple[str, int, str], ...]
-    # Who is on it; each person's album_ids are all their albums in the collection.
     people: tuple[Person, ...]
-    # Other albums with several of the same people, with those people.
     alike: tuple[tuple[int, tuple[str, ...]], ...]
     songs_elsewhere: int
 
 
 @dataclass(frozen=True, slots=True)
 class RecordedSong:
+    """A song on albums of several artists.
+
+    Attributes:
+        title: The title.
+        artists: On albums of how many artists.
+        album_ids: The albums it is on.
+    """
+
     title: str
     artists: int
     album_ids: tuple[int, ...]
@@ -117,13 +155,26 @@ class RecordedSong:
 
 @dataclass(frozen=True, slots=True)
 class CountedLabel:
+    """A record label with the albums on it.
+
+    Attributes:
+        name: The label.
+        album_ids: The albums on it.
+    """
+
     name: str
     album_ids: tuple[int, ...]
 
 
 @dataclass(frozen=True, slots=True)
 class Hub:
-    """An artist with its number of close ties: anything but a shared song or label."""
+    """An artist with its number of close ties: anything but a shared song or label.
+
+    Attributes:
+        artist_id: The artist.
+        name: The name.
+        ties: The number of close ties.
+    """
 
     artist_id: int
     name: str
@@ -132,7 +183,15 @@ class Hub:
 
 @dataclass(frozen=True, slots=True)
 class LongestWay:
-    """The two artists furthest apart along close ties, of those a way leads between."""
+    """The two artists furthest apart along close ties, of those a way leads between.
+
+    Attributes:
+        one: The one artist.
+        one_name: Its name.
+        other: The other artist.
+        other_name: Its name.
+        steps: How many steps lie between them.
+    """
 
     one: int
     one_name: str
@@ -143,7 +202,14 @@ class LongestWay:
 
 @dataclass(frozen=True, slots=True)
 class CountedCluster:
-    # None for the albums of artists without a cluster.
+    """A cluster with its number of albums.
+
+    Attributes:
+        cluster_id: The cluster; None for the albums of artists without a cluster.
+        name: Its name.
+        albums: The number of albums.
+    """
+
     cluster_id: int | None
     name: str | None
     albums: int
@@ -151,17 +217,30 @@ class CountedCluster:
 
 @dataclass(frozen=True, slots=True)
 class CollectionFigures:
+    """Who and what recurs across the collection.
+
+    Attributes:
+        sidemen: Who is credited on the most albums of others.
+        songs: The songs on albums of the most artists.
+        labels: The labels with the most albums.
+        hubs: The artists with the most close ties.
+        longest_way: The two artists furthest apart, if a way leads between any.
+        decades: Albums per decade, every decade from the first to the last.
+        without_year: The albums without a year.
+        clusters: Albums per cluster, the most first.
+        credits_fetched: Whether the fetch run has brought credits yet, for all or part of the
+            collection.
+        labels_fetched: Whether it has brought labels yet.
+    """
+
     sidemen: tuple[Person, ...]
     songs: tuple[RecordedSong, ...]
     labels: tuple[CountedLabel, ...]
     hubs: tuple[Hub, ...]
     longest_way: LongestWay | None
-    # Albums per decade, every decade from the first to the last, and those without a year.
     decades: tuple[tuple[int, int], ...]
     without_year: int
-    # Albums per cluster, the most first.
     clusters: tuple[CountedCluster, ...]
-    # Whether the fetch run has brought them yet, for all or part of the collection.
     credits_fetched: bool
     labels_fetched: bool
 
@@ -191,7 +270,15 @@ def _people(
 
 
 def artist_figures(store: JsonStore, artist_id: int) -> ArtistFigures:
-    """What the collection says about one artist."""
+    """What the collection says about one artist.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+
+    Returns:
+        Its figures.
+    """
     artists = store.load(Artist)
     albums = store.load(Album)
     artist = next(a for a in artists if a.id == artist_id)
@@ -257,7 +344,15 @@ def _minutes(tracks) -> int | None:
 
 
 def album_figures(store: JsonStore, album_id: int) -> AlbumFigures:
-    """What the collection says about one album."""
+    """What the collection says about one album.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+
+    Returns:
+        Its figures.
+    """
     artists = store.load(Artist)
     albums = store.load(Album)
     album = next(a for a in albums if a.id == album_id)
@@ -376,7 +471,14 @@ def album_figures(store: JsonStore, album_id: int) -> AlbumFigures:
 
 
 def collection_figures(store: JsonStore) -> CollectionFigures:
-    """Who and what recurs across the collection."""
+    """Who and what recurs across the collection.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The figures.
+    """
     artists = store.load(Artist)
     albums = store.load(Album)
     releases = store.load(ReleaseEnrichment)
@@ -429,8 +531,10 @@ def collection_figures(store: JsonStore) -> CollectionFigures:
 
 
 def _close_ties(shown: Network) -> dict[int, set[int]]:
-    """Per artist the artists it has a close tie with: anything but a shared song or label, and
-    no musician without an album."""
+    """Per artist the artists it has a close tie with.
+
+    That is anything but a shared song or label, and no musician without an album.
+    """
     next_to: dict[int, set[int]] = {}
     for link in shown.links:
         # Among artists: a musician without an album is not one of those holding things together.
@@ -449,8 +553,10 @@ def _hubs(shown: Network) -> tuple[Hub, ...]:
 
 
 def _longest_way(shown: Network) -> LongestWay | None:
-    """The two artists furthest apart along close ties. Songs and labels are left out: they tie
-    nearly everyone to everyone in a few steps."""
+    """The two artists furthest apart along close ties.
+
+    Songs and labels are left out: they tie nearly everyone to everyone in a few steps.
+    """
     names = {point.artist_id: point.name for point in shown.points}
     sorted_as = {artist_id: sort_name(name) for artist_id, name in names.items()}
     next_to = _close_ties(shown)
@@ -485,8 +591,16 @@ def _clusters(store: JsonStore, albums: list[Album]) -> tuple[CountedCluster, ..
 
 
 def from_the_shelf(store: JsonStore, day: date, turn: int = 0) -> tuple[int | None, tuple[int, ...]]:
-    """Something to pull from the shelf: an album that stands somewhere, the same all day unless
-    another is asked for (turn), and those from this year, long ago. Album ids."""
+    """Something to pull from the shelf.
+
+    Args:
+        store: The store of the collection.
+        day: The day it is chosen for: the same all day.
+        turn: Asks for another one that day.
+
+    Returns:
+        An album that stands somewhere, if any, and those from this year, long ago, as album ids.
+    """
     placed = sorted({p.album_id for p in store.load(Placement)})
     chance = random.Random(f"{day.isoformat()}/{turn}")  # noqa: S311 - picks a record, not a secret
     pick = chance.choice(placed) if placed else None

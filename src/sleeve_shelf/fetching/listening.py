@@ -34,6 +34,13 @@ _YOUTUBE = re.compile(r"(?:youtube\.com/watch\?(?:.*&)?v=|youtu\.be/)([\w-]{11})
 
 @dataclass(frozen=True, slots=True)
 class Video:
+    """A video Discogs users linked to a release.
+
+    Attributes:
+        title: Its title.
+        url: Its address.
+    """
+
     title: str
     url: str
 
@@ -46,23 +53,39 @@ class Video:
 
 @dataclass(frozen=True, slots=True)
 class Listening:
-    """What can be played of an album, for its page."""
+    """What can be played of an album, for its page.
+
+    Attributes:
+        album: The album found at Deezer, if any.
+        tracks: Its tracks.
+        videos: The videos of the release.
+        turned_down: The user said the album at Deezer is another one.
+        unreachable: Deezer or Discogs could not be reached: there may be more than is shown.
+    """
 
     album: DeezerAlbum | None = None
     tracks: list[DeezerTrack] = field(default_factory=list)
     videos: list[Video] = field(default_factory=list)
     turned_down: bool = False
-    # Deezer or Discogs could not be reached: there may be more than is shown.
     unreachable: bool = False
 
 
 def listening(
     store: JsonStore, album_id: int, deezer: DeezerClient, discogs: DiscogsClient | None
 ) -> Listening | None:
-    """What can be played of an album; None when there is no such album.
+    """What can be played of an album.
 
-    Looks the album up at Deezer and its release's videos up at Discogs when that was not
-    done yet, and keeps what it found.
+    Looks the album up at Deezer and its release's videos up at Discogs when that was not done yet,
+    and keeps what it found.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+        deezer: The Deezer client.
+        discogs: The Discogs client; None leaves the videos out.
+
+    Returns:
+        What can be played, or None when there is no such album.
     """
     album = find_by_id(store.load(Album), album_id)
     if album is None:
@@ -125,7 +148,12 @@ def listening(
 
 
 def turn_down(store: JsonStore, album_id: int) -> None:
-    """The album Deezer gave is another one: it is no longer offered for this album."""
+    """The album Deezer gave is another one: it is no longer offered for this album.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+    """
     record = _kept(store, album_id) or AlbumListening(album_id, NEVER)
     _keep(store, replace(record, turned_down=True))
 

@@ -33,22 +33,26 @@ def _read(path: Path) -> InitialLoad:
 
 @blueprint.get("/")
 def welcome():
+    """The first page of the wizard."""
     return render_template("setup/welcome.html")
 
 
 @blueprint.post("/start")
 def start_without_workbook():
+    """Begin a collection without a workbook."""
     start_empty(get_store())
     return redirect(url_for("dashboard.index"))
 
 
 @blueprint.get("/upload")
 def upload_form():
+    """The page to upload a workbook on."""
     return render_template("setup/upload.html", has_collection=has_collection())
 
 
 @blueprint.post("/upload")
 def upload():
+    """Keep an uploaded workbook and show what it holds, to confirm."""
     file = request.files.get("workbook")
     if file is None or not file.filename:
         return _upload_error(_("Choose a workbook to upload."))
@@ -87,6 +91,7 @@ def upload():
 
 @blueprint.post("/confirm")
 def confirm():
+    """Load the workbook that was uploaded."""
     pending = _pending_path()
     if not pending.exists():
         return redirect(url_for("setup.upload_form"))

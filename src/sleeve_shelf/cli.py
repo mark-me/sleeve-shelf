@@ -20,7 +20,11 @@ from sleeve_shelf.web.app import create_app
 
 
 def main(arguments: list[str] | None = None) -> None:
-    """Run the app with Flask's built-in server, or load a workbook from the command line."""
+    """Run the app with Flask's built-in server, or carry out a command given on the command line.
+
+    Args:
+        arguments: The command line; None takes the one the program was started with.
+    """
     parser = argparse.ArgumentParser(prog="sleeve-shelf")
     commands = parser.add_subparsers(dest="command")
     load = commands.add_parser(

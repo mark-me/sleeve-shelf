@@ -60,7 +60,14 @@ class DiscogsError(Exception):
 
 
 class DiscogsClient:
-    """Fetches releases and masters, pacing itself to the API's rate limit."""
+    """Fetches releases and masters, pacing itself to the API's rate limit.
+
+    Args:
+        token: The personal access token; without one a few lookups still work.
+        fetch: What fetches a request; given by the tests.
+        sleep: What waits; given by the tests.
+        clock: What tells the time; given by the tests.
+    """
 
     def __init__(
         self,
@@ -76,7 +83,14 @@ class DiscogsClient:
         self._last_request: float | None = None
 
     def release(self, release_id: int) -> ReleaseEnrichment:
-        """Styles, master, year and songs of a release; one that no longer exists yields none."""
+        """Styles, master, year and songs of a release.
+
+        Args:
+            release_id: The release.
+
+        Returns:
+            What it has; a release that no longer exists yields none of it.
+        """
         data = self._get(f"/releases/{release_id}") or {}
         return ReleaseEnrichment(
             release_id=release_id,
@@ -90,10 +104,16 @@ class DiscogsClient:
         )
 
     def videos(self, release_id: int) -> tuple[tuple[str, str], ...]:
-        """The videos Discogs users linked to a release, as (title, address); mostly YouTube.
+        """The videos Discogs users linked to a release; mostly YouTube.
 
         Anyone can add a video to a release, so only web addresses are taken: a link such as
         `javascript:` would run a stranger's script within this app when clicked.
+
+        Args:
+            release_id: The release.
+
+        Returns:
+            The videos as (title, address).
         """
         data = self._get(f"/releases/{release_id}") or {}
         return tuple(
@@ -103,7 +123,14 @@ class DiscogsClient:
         )
 
     def master(self, master_id: int) -> MasterEnrichment:
-        """The original release year of a master."""
+        """The original release year of a master.
+
+        Args:
+            master_id: The master.
+
+        Returns:
+            What Discogs gives for it.
+        """
         data = self._get(f"/masters/{master_id}") or {}
         return MasterEnrichment(
             master_id=master_id,
@@ -112,7 +139,14 @@ class DiscogsClient:
         )
 
     def artist(self, artist_id: int) -> ArtistEnrichment:
-        """The picture of an artist; one without a picture, or that no longer exists, yields none."""
+        """The picture of an artist, and whom Discogs connects it to.
+
+        Args:
+            artist_id: The artist on Discogs.
+
+        Returns:
+            What it has; one without a picture, or that no longer exists, yields none.
+        """
         data = self._get(f"/artists/{artist_id}") or {}
         images = data.get("images") or [{}]
         image = next((i for i in images if i.get("type") == "primary"), images[0])
@@ -138,8 +172,16 @@ class DiscogsClient:
     def collection(self, progress: Callable[[int, int, int], None] | None = None) -> list[dict]:
         """Every release in the collection of the token's owner, as the API gives them.
 
-        progress is told after each page: the pages fetched, of how many, and how many
-        releases the collection holds — Discogs says so with the first page.
+        Args:
+            progress: Told after each page: the pages fetched, of how many, and how many releases
+                the collection holds — Discogs says so with the first page.
+
+        Returns:
+            The releases.
+
+        Raises:
+            DiscogsError: Discogs does not say whose token it is, has no collection for it, or
+                could not be reached.
         """
         username = (self._get("/oauth/identity") or {}).get("username")
         if not username:
@@ -163,7 +205,17 @@ class DiscogsClient:
             page += 1
 
     def image(self, url: str) -> bytes | None:
-        """The bytes of a cover or picture; None when Discogs no longer has it."""
+        """The bytes of a cover or picture.
+
+        Args:
+            url: The address of the image.
+
+        Returns:
+            The bytes, or None when Discogs no longer has it.
+
+        Raises:
+            DiscogsError: Discogs could not be reached.
+        """
         request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
         for attempt in range(1, MAX_ATTEMPTS + 1):
             self._pace(SECONDS_BETWEEN_IMAGES)
@@ -231,11 +283,18 @@ def _writers(credits: list[dict] | None) -> set[int]:
 
 
 def tracklist(entries: list[dict] | None, credits: list[dict] | None = None) -> tuple[Track, ...]:
-    """The songs of a Discogs tracklist, in order, each with who wrote it. A heading ("Side A")
-    is no song; a medley or suite listed with its parts counts by its parts.
+    """The songs of a Discogs tracklist, in order, each with who wrote it.
 
-    The writers come from the track's own credits, its medley's, and the release's credits
-    for the tracks they name ("A1 to A3, B2"), or for all of them when they name none.
+    A heading ("Side A") is no song; a medley or suite listed with its parts counts by its parts.
+    The writers come from the track's own credits, its medley's, and the release's credits for the
+    tracks they name ("A1 to A3, B2"), or for all of them when they name none.
+
+    Args:
+        entries: The tracklist as Discogs gives it.
+        credits: The credits of the release.
+
+    Returns:
+        The songs.
     """
     songs: list[tuple[dict, set[int]]] = []
     for entry in entries or ():
@@ -259,8 +318,16 @@ def tracklist(entries: list[dict] | None, credits: list[dict] | None = None) -> 
 
 
 def credits_of(data: dict) -> tuple[Credit, ...]:
-    """Everyone a release credits, for the release or for a track, whatever the role. A name
-    Discogs has no page for is left out: it cannot be compared with anyone."""
+    """Everyone a release credits, for the release or for a track, whatever the role.
+
+    A name Discogs has no page for is left out: it cannot be compared with anyone.
+
+    Args:
+        data: The release as Discogs gives it.
+
+    Returns:
+        The credits.
+    """
 
     def credit(entry: dict, tracks: str) -> Credit | None:
         if not entry.get("id") or not entry.get("role"):
@@ -278,7 +345,14 @@ def credits_of(data: dict) -> tuple[Credit, ...]:
 
 
 def labels_of(data: dict) -> tuple[ReleaseLabel, ...]:
-    """The record labels of a release, each once, with the catalogue number first given for it."""
+    """The record labels of a release, each once, with the catalogue number first given for it.
+
+    Args:
+        data: The release as Discogs gives it.
+
+    Returns:
+        The labels.
+    """
     found: dict[int, ReleaseLabel] = {}
     for entry in data.get("labels") or ():
         if entry.get("id") and entry.get("name"):
@@ -287,8 +361,10 @@ def labels_of(data: dict) -> tuple[ReleaseLabel, ...]:
 
 
 def _credited(tracks: str, positions: list[str]) -> list[int]:
-    """The tracks a release credit is for: all of them when it names none, else those it names,
-    one by one or as a range ("A1 to A3")."""
+    """The tracks a release credit is for.
+
+    All of them when it names none, else those it names, one by one or as a range ("A1 to A3").
+    """
     if not tracks.strip():
         return list(range(len(positions)))
     found: list[int] = []
@@ -300,7 +376,14 @@ def _credited(tracks: str, positions: list[str]) -> list[int]:
 
 
 def is_web_address(address: str | None) -> bool:
-    """Whether an address from outside is a plain web page: http or https, with a host."""
+    """Whether an address from outside is a plain web page: http or https, with a host.
+
+    Args:
+        address: The address.
+
+    Returns:
+        True for such a page.
+    """
     if not address:
         return False
     parts = urllib.parse.urlsplit(address.strip())
@@ -315,7 +398,15 @@ def _fetch(request: urllib.request.Request) -> bytes:
 def collection_items(
     releases: list[dict], count_bonus_discs_as_vinyl: bool = True
 ) -> list[CollectionItem]:
-    """Turn the releases of the collection API into the items the CSV export gives."""
+    """Turn the releases of the collection API into the items the CSV export gives.
+
+    Args:
+        releases: The releases as the API gives them.
+        count_bonus_discs_as_vinyl: Whether a vinyl disc anywhere in a release makes it vinyl.
+
+    Returns:
+        One item per release.
+    """
     items = []
     for release in releases:
         information = release.get("basic_information") or {}
@@ -341,8 +432,14 @@ def collection_items(
 def format_text(formats: list[dict]) -> str:
     """The format as the CSV export writes it, e.g. '2xLP, Album, RE, 180, Gat + CD'.
 
-    The export keeps only the first three letters of the free text ('Blue, Gatefold'
-    becomes 'Blu'); here the free text is searched for what the width needs instead.
+    The export keeps only the first three letters of the free text ('Blue, Gatefold' becomes 'Blu');
+    here the free text is searched for what the width needs instead.
+
+    Args:
+        formats: The formats as the API gives them.
+
+    Returns:
+        The format.
     """
     segments = []
     for entry in formats:

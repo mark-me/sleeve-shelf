@@ -53,7 +53,8 @@ def _release(release_id: int, *titles: str) -> ReleaseEnrichment:
 def _collection(tmp_path) -> JsonStore:
     """Miles Davis and his quintet (Discogs: a member), Chet Baker with his quartet (a family,
     and one name inside the other), Ella Fitzgerald sharing a song with Miles, and Tom Waits
-    tied to no one."""
+    tied to no one.
+    """
     store = JsonStore(tmp_path)
     store.save(Cluster, [Cluster(1, "Jazz", 0), Cluster(2, "Songwriters", 1)])
     store.save(AliasGroup, [AliasGroup(1, "Chet Baker")])
@@ -383,7 +384,8 @@ def test_a_label_left_out_ties_no_one_however_discogs_spells_it():
 
 def _session_collection(tmp_path, albums_on=MUSICIAN_ALBUMS):
     """A bassist without an album on enough records of two artists to be a point; a member of the
-    band and a producer on as many, who are not; Coltrane's page, and Miles' band."""
+    band and a producer on as many, who are not; Coltrane's page, and Miles' band.
+    """
     store = JsonStore(tmp_path)
     store.save(Artist, [Artist(1, "Miles Davis", discogs_artist_id=101), Artist(2, "John Coltrane", discogs_artist_id=102)])
     store.save(ArtistEnrichment, [ArtistEnrichment(101, None, None, FETCHED, member_ids=(500,))])
@@ -516,7 +518,8 @@ def test_a_joint_billing_borrows_the_picture_of_an_artist_it_names(tmp_path):
 
 def _moondog(tmp_path):
     """Moondog and Moondog Jr., one name inside the other but not related; Jr. without a picture,
-    Moondog with one; and both on one label, which is no matter of their names."""
+    Moondog with one; and both on one label, which is no matter of their names.
+    """
     store = JsonStore(tmp_path)
     store.save(Artist, [Artist(1, "Moondog (2)", discogs_artist_id=101), Artist(2, "Moondog Jr.")])
     store.save(Album, [Album(1, 1, "Moondog", release_id=1), Album(2, 2, "Songs", release_id=2)])

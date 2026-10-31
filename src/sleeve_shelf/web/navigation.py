@@ -8,24 +8,38 @@ from flask_babel import lazy_gettext as _
 
 @dataclass(frozen=True)
 class Tab:
+    """A tab above the page.
+
+    Attributes:
+        endpoint: The screen it opens.
+        label: Short: the section is named in the menu, and the page has its own, fuller title.
+        pages: The blueprints and endpoints whose pages belong to this tab.
+        count: The key in the menu counts of what waits for the user here.
+        help: Where the user guide explains the screen: "page/#anchor" within the documentation.
+    """
+
     endpoint: str
-    # Short: the section is named in the menu, and the page has its own, fuller title.
     label: str
-    # The blueprints and endpoints whose pages belong to this tab.
     pages: tuple[str, ...]
-    # The key in the menu counts of what waits for the user here.
     count: str | None = None
-    # Where the user guide explains the screen: "page/#anchor" within the documentation.
     help: str | None = None
 
 
 @dataclass(frozen=True)
 class Section:
-    # Also the name of the section's icon in static/vendor/menu-icons.svg.
+    """A section of the menu.
+
+    Attributes:
+        key: Also the name of the section's icon in static/vendor/menu-icons.svg.
+        label: What the menu calls it.
+        tabs: Its tabs.
+        other_pages: Pages that belong to the section without having a tab of their own.
+        help: Where the user guide explains it.
+    """
+
     key: str
     label: str
     tabs: tuple[Tab, ...]
-    # Pages that belong to the section without having a tab of their own.
     other_pages: tuple[str, ...] = ()
     help: str | None = None
 
@@ -78,7 +92,14 @@ def _belongs(pages: tuple[str, ...], request: Request) -> bool:
 
 
 def current(request: Request) -> tuple[Section | None, Tab | None]:
-    """The section and the tab the page being shown belongs to."""
+    """The section and the tab the page being shown belongs to.
+
+    Args:
+        request: The request.
+
+    Returns:
+        The two, each None when the page has none.
+    """
     for section in SECTIONS:
         for tab in section.tabs:
             if _belongs(tab.pages, request):
@@ -89,7 +110,15 @@ def current(request: Request) -> tuple[Section | None, Tab | None]:
 
 
 def section_count(section: Section, counts: dict[str, int]) -> int:
-    """What waits for the user in a section: the counts of its tabs together."""
+    """What waits for the user in a section: the counts of its tabs together.
+
+    Args:
+        section: The section.
+        counts: The menu counts.
+
+    Returns:
+        The number.
+    """
     return sum(counts.get(tab.count, 0) for tab in section.tabs if tab.count)
 
 
@@ -103,7 +132,16 @@ PAGE_HELP = {
 
 
 def help_target(request: Request, section: Section | None, tab: Tab | None) -> str:
-    """The part of the user guide that explains the page being shown, as "page/#anchor"."""
+    """The part of the user guide that explains the page being shown, as "page/#anchor".
+
+    Args:
+        request: The request.
+        section: The section of the page.
+        tab: The tab of the page.
+
+    Returns:
+        The part.
+    """
     if request.endpoint in PAGE_HELP:
         return PAGE_HELP[request.endpoint]
     return (tab and tab.help) or (section and section.help) or "user/"
@@ -114,8 +152,15 @@ VISITOR_TABS = ("browse.browse", "connections.index")
 
 
 def visible_sections(owner: bool) -> tuple[Section, ...]:
-    """The menu as the one looking may use it: a visitor only browses, searches and looks at
-    the connections."""
+    """The menu as the one looking may use it.
+
+    Args:
+        owner: Whether it is the owner; a visitor only browses, searches and looks at the
+            connections.
+
+    Returns:
+        The sections.
+    """
     if owner:
         return SECTIONS
     collection = next(section for section in SECTIONS if section.key == "collection")

@@ -38,7 +38,8 @@ def _release(release_id, credits=(), labels=(), songs=()):
 
 def _collection(tmp_path) -> JsonStore:
     """Miles Davis with three albums, a bassist without an album of his own on all of them and
-    on Coltrane's; Coltrane also on one of Miles'; a compilation that counts for no one."""
+    on Coltrane's; Coltrane also on one of Miles'; a compilation that counts for no one.
+    """
     store = JsonStore(tmp_path)
     store.save(Cluster, [Cluster(1, "Jazz", 0)])
     store.save(

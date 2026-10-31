@@ -12,6 +12,7 @@ blueprint = Blueprint("families", __name__, url_prefix="/families")
 
 @blueprint.get("/")
 def index():
+    """The Families screen."""
     return render_template(
         "families/index.html",
         **alias_groups.families_overview(get_store()),
@@ -21,6 +22,11 @@ def index():
 
 @blueprint.post("/suggestions/<int:anchor_id>/accept")
 def accept(anchor_id: int):
+    """Accept a suggested family.
+
+    Args:
+        anchor_id: The artist it is named after.
+    """
     member_ids = request.form.getlist("member", type=int)
     alias_groups.accept_suggestion(get_store(), anchor_id, member_ids, request.form.get("source"))
     return _back("suggestions")
@@ -28,6 +34,7 @@ def accept(anchor_id: int):
 
 @blueprint.post("/suggestions/accept-all")
 def accept_all():
+    """Accept every suggested family."""
     store = get_store()
     for suggestion in alias_groups.family_suggestions(store):
         alias_groups.accept_suggestion(
@@ -38,19 +45,30 @@ def accept_all():
 
 @blueprint.post("/suggestions/<int:anchor_id>/dismiss")
 def dismiss(anchor_id: int):
+    """Turn a suggested family down.
+
+    Args:
+        anchor_id: The artist it is named after.
+    """
     alias_groups.dismiss_suggestion(get_store(), anchor_id, request.form.get("source"))
     return _back("suggestions")
 
 
 @blueprint.post("/members/<int:artist_id>/with/<int:with_id>")
 def put_with(artist_id: int, with_id: int):
-    """A joint billing put with another artist it names, rather than where it was suggested."""
+    """A joint billing put with another artist it names, rather than where it was suggested.
+
+    Args:
+        artist_id: The joint billing.
+        with_id: The artist to put it with.
+    """
     alias_groups.join(get_store(), artist_id, with_id)
     return _back("suggestions")
 
 
 @blueprint.post("/new")
 def create():
+    """Add a family."""
     label = request.form.get("label", "").strip()
     if not label:
         return _back("families", _("Give the family a name."))
@@ -60,6 +78,11 @@ def create():
 
 @blueprint.post("/<int:group_id>/rename")
 def rename(group_id: int):
+    """Give a family another name.
+
+    Args:
+        group_id: The family.
+    """
     label = request.form.get("label", "").strip()
     if not label:
         return _back(f"family-{group_id}", _("Give the family a name."))
@@ -69,12 +92,22 @@ def rename(group_id: int):
 
 @blueprint.post("/<int:group_id>/delete")
 def delete(group_id: int):
+    """Remove a family.
+
+    Args:
+        group_id: The family.
+    """
     alias_groups.delete_family(get_store(), group_id)
     return _back("families")
 
 
 @blueprint.post("/<int:group_id>/members")
 def add_member(group_id: int):
+    """Add an artist to a family.
+
+    Args:
+        group_id: The family.
+    """
     store = get_store()
     name = request.form.get("artist", "").strip().casefold()
     artist = next((a for a in store.load(Artist) if a.name.casefold() == name), None)
@@ -86,6 +119,11 @@ def add_member(group_id: int):
 
 @blueprint.post("/members/<int:artist_id>/remove")
 def remove_member(artist_id: int):
+    """Take an artist out of its family.
+
+    Args:
+        artist_id: The artist.
+    """
     alias_groups.set_family(get_store(), artist_id, None)
     return _back("families")
 

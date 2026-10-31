@@ -53,6 +53,7 @@ def _whole_number_errors(form) -> list[str]:
 
 @blueprint.route("/", methods=["GET", "POST"])
 def index():
+    """The Settings screen, and saving what it holds."""
     data_dir = current_app.config["DATA_DIR"]
     settings = load_settings(data_dir)
     store = get_store()

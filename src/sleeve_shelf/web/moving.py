@@ -1,5 +1,7 @@
-"""Move: an album, an artist, a family or a cluster to another shelf, or to where it belongs,
-with what would change shown before anything moves."""
+"""The Move screen: an album, artist, family or cluster to a shelf or to where it belongs.
+
+What it would do is shown before anything moves.
+"""
 
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
@@ -25,6 +27,7 @@ def _chosen(store, values):
 
 @blueprint.get("/")
 def index():
+    """The Move screen: what, how and where, and the plan to look at before it is carried out."""
     store = get_store()
     chosen, how, shelf_id = _chosen(store, request.args)
     if request.args.get("kind") and chosen is None:

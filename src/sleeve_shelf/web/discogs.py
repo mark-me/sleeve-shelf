@@ -114,6 +114,13 @@ def _step_states(job: dict, fetch_open: bool) -> dict[str, str]:
 
 @blueprint.get("/")
 def index(error: str | None = None, token_error: str | None = None, status: int = 200):
+    """The Discogs screen.
+
+    Args:
+        error: A message for the top of the page.
+        token_error: A message at the token field.
+        status: The status of the answer.
+    """
     store = get_store()
     settings = load_settings(_data_dir())
     token = settings.discogs_token
@@ -149,6 +156,7 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
 
 @blueprint.post("/import")
 def upload():
+    """Keep an uploaded export, to confirm after seeing what importing it would do."""
     file = request.files.get("export")
     if file is None or not file.filename:
         return index(error=_("Choose your Discogs export to upload."), status=400)
@@ -169,8 +177,10 @@ def upload():
 
 @blueprint.post("/sync")
 def sync():
-    """Start a round: fetch the collection from Discogs, take it over, and fetch what the
-    cache still lacks — all in the background, the screen showing how far it is."""
+    """Start a round: fetch the collection from Discogs, take it over, and fetch what the cache lacks.
+
+    All in the background, the screen showing how far it is.
+    """
     settings = load_settings(_data_dir())
     if not settings.discogs_token:
         return index(error=_("Set your Discogs token first."), status=400)
@@ -182,6 +192,7 @@ def sync():
 
 @blueprint.post("/import/confirm")
 def confirm_import():
+    """Import the export that was uploaded."""
     try:
         pending = _pending_items()
     except ValueError as error:
@@ -207,6 +218,7 @@ def discard_import():
 
 @blueprint.post("/token")
 def save_token():
+    """Keep the Discogs token."""
     token = request.form.get("token", "").strip()
     if not token:
         return index(token_error=_("Paste your Discogs personal access token."), status=400)
@@ -218,6 +230,7 @@ def save_token():
 
 @blueprint.post("/enrich/start")
 def start_enrichment():
+    """Start fetching what the cache still lacks."""
     settings = load_settings(_data_dir())
     if not settings.discogs_token:
         return index(token_error=_("Set your Discogs token first."), status=400)
@@ -228,30 +241,46 @@ def start_enrichment():
 
 @blueprint.post("/enrich/stop")
 def stop_enrichment():
+    """Stop the round that is running."""
     _job().stop()
     return redirect(url_for("discogs.index") + "#round")
 
 
 @blueprint.get("/enrich/status")
 def enrichment_status():
+    """How far the round is, for the screen's script."""
     return jsonify(_job().status())
 
 
 @blueprint.post("/matches/<int:album_id>/accept")
 def accept_match(album_id: int):
+    """Accept a proposed match.
+
+    Args:
+        album_id: The album.
+    """
     confirm_match(get_store(), album_id, load_settings(_data_dir()).width_constants)
     return redirect(url_for("discogs.index") + "#waiting")
 
 
 @blueprint.post("/matches/<int:album_id>/reject")
 def decline_match(album_id: int):
+    """Turn a proposed match down.
+
+    Args:
+        album_id: The album.
+    """
     reject_match(get_store(), album_id, load_settings(_data_dir()).width_constants)
     return redirect(url_for("discogs.index") + "#waiting")
 
 
 @blueprint.route("/gone/<int:album_id>/remove", methods=["GET", "POST"])
 def remove_gone(album_id: int):
-    """Ask before removing an album that left the Discogs collection, then remove it."""
+    """Ask before removing an album that left the Discogs collection, then remove it.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     album = next((a for a in store.load(Album) if a.id == album_id and a.left_discogs), None)
     if album is None:
@@ -270,13 +299,22 @@ def remove_gone(album_id: int):
 
 @blueprint.post("/gone/<int:album_id>/keep")
 def keep_gone(album_id: int):
-    """The user still owns an album that left Discogs: stop asking about it."""
+    """The user still owns an album that left Discogs: stop asking about it.
+
+    Args:
+        album_id: The album.
+    """
     keep_departed_album(get_store(), album_id)
     return redirect(url_for("discogs.index") + "#gone")
 
 
 @blueprint.post("/gone/<int:album_id>/ask-again")
 def ask_again(album_id: int):
+    """List an album that left Discogs as gone once more.
+
+    Args:
+        album_id: The album.
+    """
     keep_departed_album(get_store(), album_id, keep=False)
     return redirect(url_for("discogs.index") + "#gone")
 

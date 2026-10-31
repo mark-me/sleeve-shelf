@@ -30,7 +30,14 @@ _cache: dict[Path, tuple[tuple, dict[str, int]]] = {}
 
 
 def waiting_counts(store: JsonStore) -> dict[str, int]:
-    """Per kind of open point, how many there are; kinds without any are included as 0."""
+    """Per kind of open point, how many there are; kinds without any are included as 0.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The numbers by kind.
+    """
     files = [*store.data_dir.glob("*.json"), store.data_dir / "config.yaml"]
     signature = tuple(
         sorted((path.name, path.stat().st_mtime_ns) for path in files if path.exists())
@@ -78,7 +85,14 @@ def _waiting_counts(store: JsonStore) -> dict[str, int]:
 
 
 def menu_counts(store: JsonStore) -> dict[str, int]:
-    """The counts shown behind menu items, by the blueprint or endpoint they belong to."""
+    """The counts shown behind menu items, by the blueprint or endpoint they belong to.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The numbers.
+    """
     counts = waiting_counts(store)
     return {
         "unplaced": counts["unplaced"],

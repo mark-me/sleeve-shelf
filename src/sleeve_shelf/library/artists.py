@@ -19,7 +19,13 @@ from sleeve_shelf.persistence import JsonStore
 
 
 def set_start_year(store: JsonStore, artist_id: int, year: int | None) -> None:
-    """Set the year the artist began; None lets the collection's earliest year stand in again."""
+    """Set the year the artist began.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+        year: The year; None lets the collection's earliest year stand in again.
+    """
     artists = store.load(Artist)
     for artist in artists:
         if artist.id == artist_id:
@@ -33,6 +39,12 @@ def set_cluster(
     """Put the artist in a cluster — an existing one, or a new one by name — as confirmed.
 
     With neither, the artist has no cluster of its own choosing and one is proposed again.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+        cluster_id: An existing cluster.
+        new_cluster_name: The name of a new cluster, which goes first.
     """
     assignments = [a for a in store.load(ArtistClusterAssignment) if a.artist_id != artist_id]
     if new_cluster_name:
@@ -53,7 +65,12 @@ def set_cluster(
 
 
 def confirm_cluster(store: JsonStore, artist_id: int) -> None:
-    """Confirm the cluster that was proposed for the artist."""
+    """Confirm the cluster that was proposed for the artist.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+    """
     assignments = store.load(ArtistClusterAssignment)
     for assignment in assignments:
         if assignment.artist_id == artist_id:
@@ -87,14 +104,28 @@ _IMAGE_KINDS = (
 
 
 def picture_extension(data: bytes) -> str | None:
-    """The kind of image the bytes are — JPEG, PNG, GIF or WebP — or None for anything else."""
+    """The kind of image the bytes are.
+
+    Args:
+        data: The bytes.
+
+    Returns:
+        The extension for JPEG, PNG, GIF or WebP; None for anything else.
+    """
     if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
         return "webp"
     return next((ext for start, ext in _IMAGE_KINDS if data.startswith(start)), None)
 
 
 def thumb_name(picture_file: str) -> str:
-    """The file the small copy of a picture is kept under, next to the picture itself."""
+    """The file the small copy of a picture is kept under, next to the picture itself.
+
+    Args:
+        picture_file: The file of the picture.
+
+    Returns:
+        The file of its small copy.
+    """
     return Path(picture_file).stem + ".thumb.jpg"
 
 
@@ -120,7 +151,12 @@ def _thumbnail(data: bytes) -> bytes | None:
 def picture_thumb(store: JsonStore, artist: Artist) -> str | None:
     """The small copy of the user's own picture, made now if a picture from before has none.
 
-    Returns its file name, or the picture's own when no small copy can be made.
+    Args:
+        store: The store of the collection.
+        artist: The artist.
+
+    Returns:
+        Its file name, or the picture's own when no small copy can be made.
     """
     if not artist.picture_file:
         return None
@@ -139,10 +175,17 @@ def picture_thumb(store: JsonStore, artist: Artist) -> str | None:
 def set_picture(store: JsonStore, artist_id: int, data: bytes) -> bool:
     """Keep the user's own picture of an artist; it is shown instead of the one from Discogs.
 
-    The file goes into the data directory, apart from the images downloaded from
-    Discogs, under a name that changes with its contents. Returns False when the
-    bytes are no image the app can show, or are too large. A small copy is
-    made at once, for the lists: those never load the picture in full.
+    The file goes into the data directory, apart from the images downloaded from Discogs, under a
+    name that changes with its contents. A small copy is made at once, for the lists: those never
+    load the picture in full.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+        data: The bytes of the image.
+
+    Returns:
+        False when the bytes are no image the app can show, or are too large.
     """
     extension = picture_extension(data)
     if extension is None or len(data) > MAX_PICTURE_BYTES:
@@ -170,7 +213,12 @@ def set_picture(store: JsonStore, artist_id: int, data: bytes) -> bool:
 
 
 def remove_picture(store: JsonStore, artist_id: int) -> None:
-    """Take the user's own picture away again; the one from Discogs, if any, shows once more."""
+    """Take the user's own picture away again; the one from Discogs, if any, shows once more.
+
+    Args:
+        store: The store of the collection.
+        artist_id: The artist.
+    """
     artists = store.load(Artist)
     artist = find_by_id(artists, artist_id)
     if artist is None or not artist.picture_file:
@@ -183,5 +231,12 @@ def remove_picture(store: JsonStore, artist_id: int) -> None:
 
 
 def albums_per_artist(store: JsonStore) -> Counter[int]:
-    """How many albums each artist has in the collection, singles included."""
+    """How many albums each artist has in the collection, singles included.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        The number by artist id.
+    """
     return Counter(album.artist_id for album in store.load(Album))

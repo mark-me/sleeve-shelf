@@ -20,33 +20,48 @@ from sleeve_shelf.library.versions import keep_restore_point
 
 @dataclass(frozen=True, slots=True)
 class Spot:
-    """A suggested spot with what is needed to show it."""
+    """A suggested spot with what is needed to show it.
+
+    Attributes:
+        suggestion: Where it is.
+        cabinet: The name of the cabinet.
+        shelf: The name of the shelf.
+        room_cm: How much of the shelf's width is left once the album stands there; negative when it
+            then holds more than its width, None when the shelf has no width.
+        width_measured: Whether that width was measured, or is an estimate.
+        by_rule: The cabinet a location rule binds the album to, when the spot was found within it.
+    """
 
     suggestion: SuggestedSpot
     cabinet: str
     shelf: str
-    # How much of the shelf's width is left once the album stands there; negative when
-    # it then holds more than its width, None when the shelf has no width.
     room_cm: float | None
-    # Whether that width was measured, or is an estimate.
     width_measured: bool
-    # The cabinet a location rule binds the album to, when the spot was found within it.
     by_rule: bool
 
     @property
     def shelf_id(self) -> int:
+        """The shelf of the spot."""
         return self.suggestion.shelf_id
 
 
 def belonging(
     store: JsonStore, album_ids: list[int], placements: list[Placement], result: Sorted | None = None
 ) -> dict[int, SuggestedSpot]:
-    """Where each of these albums belongs among the placements given, which must not hold
-    them: next to the albums it belongs with, as they stand (see sorting.spots).
+    """Where each of these albums belongs: next to the albums it belongs with, as they stand.
 
-    A showcase and a cabinet kept outside the sorting are no place to go to; an album a
-    location rule binds to a cabinet goes within it. An album of an artist without a
-    cluster, or one that is not sorted, gets no spot.
+    A showcase and a cabinet kept outside the sorting are no place to go to; an album a location
+    rule binds to a cabinet goes within it. An album of an artist without a cluster, or one that is
+    not sorted, gets no spot (see sorting.spots).
+
+    Args:
+        store: The store of the collection.
+        album_ids: The albums.
+        placements: The layout to place them in, which must not hold them.
+        result: The sorted collection, when the caller has it already.
+
+    Returns:
+        The spots by album id.
     """
     result = result or sort_collection(store)
     kept = kept_shelf_ids(store)
@@ -102,6 +117,13 @@ def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Sp
     """A spot for every album that is sorted but stands on no shelf yet.
 
     The shelves are taken as they are (see belonging).
+
+    Args:
+        store: The store of the collection.
+        constants: The width figures.
+
+    Returns:
+        The spots by album id.
     """
     result = sort_collection(store)
     placements = store.load(Placement)
@@ -149,9 +171,16 @@ def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Sp
 def place_at_spot(store: JsonStore, album_id: int, constants: WidthConstants) -> Spot | None:
     """Stand the album at its suggested spot, between the albums named there.
 
-    The spot is worked out afresh, so it is the one for the shelves as they are now.
-    This changes the shelves, so a version to go back to is kept first. Returns the
-    spot, or None when there is none to place the album at.
+    The spot is worked out afresh, so it is the one for the shelves as they are now. This changes
+    the shelves, so a version to go back to is kept first.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+        constants: The width figures.
+
+    Returns:
+        The spot, or None when there is none to place the album at.
     """
     spot = suggested_spots(store, constants).get(album_id)
     if spot is None:

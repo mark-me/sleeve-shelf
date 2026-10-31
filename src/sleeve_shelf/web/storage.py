@@ -33,6 +33,7 @@ blueprint = Blueprint("storage", __name__, url_prefix="/storage")
 
 @blueprint.get("/")
 def index():
+    """The Cabinets & shelves screen."""
     store = get_store()
     fill = BrowseQueries(store).shelf_fill() if has_collection() else {}
     shelves = store.load(Shelf)
@@ -61,11 +62,17 @@ def index():
 
 @blueprint.route("/cabinets/new", methods=["GET", "POST"])
 def new_cabinet():
+    """The form for a new cabinet."""
     return _cabinet_form(None)
 
 
 @blueprint.route("/cabinets/<int:cabinet_id>", methods=["GET", "POST"])
 def edit_cabinet(cabinet_id: int):
+    """The form for a cabinet.
+
+    Args:
+        cabinet_id: The cabinet.
+    """
     return _cabinet_form(cabinet_id)
 
 
@@ -94,6 +101,11 @@ def _cabinet_form(cabinet_id: int | None):
 
 @blueprint.post("/cabinets/<int:cabinet_id>/delete")
 def delete_cabinet(cabinet_id: int):
+    """Remove a cabinet, if it is empty.
+
+    Args:
+        cabinet_id: The cabinet.
+    """
     store = get_store()
     cabinet = _find(store.load(Cabinet), cabinet_id)
     try:
@@ -105,6 +117,11 @@ def delete_cabinet(cabinet_id: int):
 
 @blueprint.post("/cabinets/<int:cabinet_id>/move")
 def move_cabinet(cabinet_id: int):
+    """Move a cabinet in the order they are walked.
+
+    Args:
+        cabinet_id: The cabinet.
+    """
     store = get_store()
     _find(store.load(Cabinet), cabinet_id)
     move_cabinet_in_order(store, cabinet_id, _step())
@@ -113,6 +130,11 @@ def move_cabinet(cabinet_id: int):
 
 @blueprint.post("/shelves/<int:shelf_id>/move")
 def move_shelf(shelf_id: int):
+    """Move a shelf within its cabinet.
+
+    Args:
+        shelf_id: The shelf.
+    """
     store = get_store()
     _find(store.load(Shelf), shelf_id)
     cabinet_id = move_shelf_in_order(store, shelf_id, _step())
@@ -125,12 +147,22 @@ def _step() -> int:
 
 @blueprint.route("/cabinets/<int:cabinet_id>/shelves/new", methods=["GET", "POST"])
 def new_shelf(cabinet_id: int):
+    """The form for a new shelf.
+
+    Args:
+        cabinet_id: The cabinet it goes in.
+    """
     cabinet = _find(get_store().load(Cabinet), cabinet_id)
     return _shelf_form(cabinet, None)
 
 
 @blueprint.route("/shelves/<int:shelf_id>", methods=["GET", "POST"])
 def edit_shelf(shelf_id: int):
+    """The form for a shelf.
+
+    Args:
+        shelf_id: The shelf.
+    """
     store = get_store()
     shelf = _find(store.load(Shelf), shelf_id)
     return _shelf_form(_find(store.load(Cabinet), shelf.cabinet_id), shelf_id)
@@ -193,6 +225,11 @@ def _shelf_form(cabinet: Cabinet, shelf_id: int | None):
 
 @blueprint.post("/shelves/<int:shelf_id>/delete")
 def delete_shelf(shelf_id: int):
+    """Remove a shelf, if it is empty.
+
+    Args:
+        shelf_id: The shelf.
+    """
     store = get_store()
     shelf = _find(store.load(Shelf), shelf_id)
     try:

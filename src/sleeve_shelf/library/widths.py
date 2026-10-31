@@ -5,7 +5,12 @@ from sleeve_shelf.persistence import JsonStore
 
 
 def estimate_widths(albums: list[Album], constants: WidthConstants) -> None:
-    """Compute each album's width from its format; compound formats await a manual width."""
+    """Compute each album's width from its format; compound formats await a manual width.
+
+    Args:
+        albums: The albums; changed in place.
+        constants: The width figures.
+    """
     for album in albums:
         if album.format_tokens is None:
             continue
@@ -16,7 +21,12 @@ def estimate_widths(albums: list[Album], constants: WidthConstants) -> None:
 
 
 def apply_width_constants(store: JsonStore, constants: WidthConstants) -> None:
-    """Estimate every album's width again after the constants changed; shelf widths stay."""
+    """Estimate every album's width again after the constants changed; shelf widths stay.
+
+    Args:
+        store: The store of the collection.
+        constants: The width figures.
+    """
     if not store.exists(Album):
         return
     albums = store.load(Album)
@@ -25,9 +35,17 @@ def apply_width_constants(store: JsonStore, constants: WidthConstants) -> None:
 
 
 def set_measured_width(store: JsonStore, album_id: int, width_cm: float | None) -> None:
-    """Set an album's width as measured; None goes back to the estimate.
+    """Set an album's width as measured.
 
-    A compound format (a box set, a bundle) then awaits a measured width again.
+    A compound format (a box set, a bundle) awaits a measured width again when it is cleared.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+        width_cm: The width; None goes back to the estimate.
+
+    Raises:
+        ValueError: The width is not above zero.
     """
     if width_cm is not None and width_cm <= 0:
         raise ValueError("A width is above zero")

@@ -1,5 +1,8 @@
-"""Application services for enriching the collection from Discogs: styles, original years
-and artist pictures fetched and cached, then applied to the albums and artists."""
+"""Application services for enriching the collection from Discogs.
+
+Styles, original years and artist pictures fetched and cached, then applied to the albums and
+artists.
+"""
 
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable
@@ -26,9 +29,16 @@ SAVE_CACHE_EVERY = 25
 def releases_to_fetch(
     albums: Iterable[Album], releases: dict[int, ReleaseEnrichment]
 ) -> tuple[set[int], set[int]]:
-    """The releases of the albums still to be asked for: those never fetched, and those
-    fetched before tracklists, the writers of their songs, credits or labels were kept, which
-    are asked for again for those."""
+    """The releases of the albums still to be asked for.
+
+    Args:
+        albums: The albums.
+        releases: The releases in the cache, by id.
+
+    Returns:
+        Those never fetched, and those fetched before tracklists, the writers of their songs,
+        credits or labels were kept, which are asked for again for those.
+    """
     linked = {album.release_id for album in albums if album.release_id is not None}
     new = linked - releases.keys()
     without_tracks = {
@@ -50,10 +60,17 @@ def enrich_collection(
 ) -> int:
     """Fetch what the Discogs cache still lacks for the stored albums and artists, then apply it.
 
-    Returns the number of lookups made. The cache is saved along the way, so an
-    interrupted run picks up where it stopped. Progress counts the lookups of
-    this run; part names what is being fetched ("albums", then "pictures") and
-    how many of all of them are in, earlier runs included.
+    The cache is saved along the way, so an interrupted run picks up where it stopped.
+
+    Args:
+        store: The store of the collection.
+        client: The Discogs client.
+        progress: Told the lookups of this run so far, and about how many there will be.
+        part: Told what is being fetched ("albums", then "pictures") and how many of all of them are
+            in, earlier runs included.
+
+    Returns:
+        The number of lookups made.
     """
     albums = store.load(Album)
     releases = {release.release_id: release for release in store.load(ReleaseEnrichment)}
@@ -147,7 +164,11 @@ def _save_cache(store: JsonStore, releases: dict, masters: dict, pictures: dict)
 
 
 def apply_enrichment(store: JsonStore) -> None:
-    """Carry the cached Discogs data over to the albums: master, original year and styles."""
+    """Carry the cached Discogs data over to the albums: master, original year and styles.
+
+    Args:
+        store: The store of the collection.
+    """
     albums = store.load(Album)
     releases = {release.release_id: release for release in store.load(ReleaseEnrichment)}
     masters = {master.master_id: master for master in store.load(MasterEnrichment)}

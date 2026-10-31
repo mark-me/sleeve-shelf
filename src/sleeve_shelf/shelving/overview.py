@@ -8,6 +8,14 @@ from sleeve_shelf.shelving.proposal import has_proposal
 
 
 def collection_figures(store: JsonStore) -> dict:
+    """What the Dashboard says about the collection at a glance.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        What the screen's template uses, by name.
+    """
     albums = store.load(Album)
     shelves = store.load(Shelf)
     sorted_albums = albums_taking_part(store)

@@ -20,6 +20,7 @@ def _countable(open_count: int, has_albums: bool) -> dict:
 
 @blueprint.get("/")
 def index():
+    """The Dashboard: the collection at a glance, and what waits for a decision."""
     store = get_store()
     figures = collection_figures(store)
     counts = waiting_counts(store)

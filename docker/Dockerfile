@@ -47,7 +47,9 @@ COPY pyproject.toml uv.lock README.md ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --only-group dev --no-install-project
 
+# The Reference pages are read from the docstrings in the source.
 COPY docs-site ./docs-site
+COPY src ./src
 RUN cd docs-site && uv run --no-sync python -m zensical build --strict
 
 

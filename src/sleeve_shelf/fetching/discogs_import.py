@@ -1,5 +1,8 @@
-"""Application services for linking the collection to Discogs: importing it (a sync or an
-uploaded export), confirming proposed matches, and albums that left the Discogs collection."""
+"""Application services for linking the collection to Discogs.
+
+Importing it (a sync or an uploaded export), confirming proposed matches, and albums that left the
+Discogs collection.
+"""
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass
@@ -29,7 +32,18 @@ PROPOSAL_THRESHOLD = 0.6
 
 @dataclass(frozen=True, slots=True)
 class ImportResult:
-    """What importing a Discogs export did to the collection."""
+    """What importing a Discogs export did to the collection.
+
+    Attributes:
+        vinyl_count: The vinyl releases in the export.
+        skipped_non_vinyl: The other releases, left out.
+        matched: Albums linked to their release outright.
+        proposed: Matches waiting for confirmation.
+        added: New albums, not on a shelf yet.
+        unmatched_albums: Albums without a release.
+        gone: Artist and title of the albums whose release is no longer in the Discogs collection.
+        refreshed: Linked albums whose format was brought up to date.
+    """
 
     vinyl_count: int
     skipped_non_vinyl: int
@@ -37,9 +51,7 @@ class ImportResult:
     proposed: int
     added: int
     unmatched_albums: int
-    # Artist and title of the albums whose release is no longer in the Discogs collection.
     gone: tuple[tuple[str, str], ...] = ()
-    # Linked albums whose format was brought up to date.
     refreshed: int = 0
 
 
@@ -52,13 +64,21 @@ def import_discogs_collection(
 ) -> ImportResult:
     """Link the stored albums to the releases of a Discogs export, and add what is new.
 
-    Albums and releases with the same artist and title are linked outright. For
-    what is left, a similar-looking release is only proposed, to be confirmed by
-    hand. Vinyl releases that no album accounts for become new, unplaced albums.
-    Albums whose release the collection no longer holds are marked and reported,
-    never removed. With refresh_formats the albums that are already linked take
-    the format of their release — for a sync, which knows the format better than
-    an export does. A dry run only reports what would happen.
+    Albums and releases with the same artist and title are linked outright. For what is left, a
+    similar-looking release is only proposed, to be confirmed by hand. Vinyl releases that no album
+    accounts for become new, unplaced albums. Albums whose release the collection no longer holds
+    are marked and reported, never removed.
+
+    Args:
+        store: The store of the collection.
+        items: The releases of the export or the sync.
+        constants: The width figures for what is added.
+        dry_run: Only report what would happen.
+        refresh_formats: The albums already linked take the format of their release — for a sync,
+            which knows the format better than an export does.
+
+    Returns:
+        What was done, or would be with a dry run.
     """
     albums = store.load(Album)
     artists = store.load(Artist)
@@ -197,7 +217,13 @@ def import_discogs_collection(
 
 
 def confirm_match(store: JsonStore, album_id: int, constants: WidthConstants) -> None:
-    """Accept a proposed match: the album takes the proposed release."""
+    """Accept a proposed match: the album takes the proposed release.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+        constants: The width figures for its new format.
+    """
     proposals = store.load(MatchProposal)
     proposal = next((p for p in proposals if p.album_id == album_id), None)
     if proposal is None:
@@ -216,7 +242,13 @@ def confirm_match(store: JsonStore, album_id: int, constants: WidthConstants) ->
 
 
 def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> None:
-    """Turn a proposed match down: the release becomes a new, unplaced album of its own."""
+    """Turn a proposed match down: the release becomes a new, unplaced album of its own.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album the match was proposed for.
+        constants: The width figures for the new album.
+    """
     proposals = store.load(MatchProposal)
     proposal = next((p for p in proposals if p.album_id == album_id), None)
     if proposal is None:
@@ -251,10 +283,17 @@ def reject_match(store: JsonStore, album_id: int, constants: WidthConstants) -> 
 def remove_departed_album(store: JsonStore, album_id: int) -> bool:
     """Remove an album whose release left the Discogs collection; the caller has asked first.
 
-    The album goes, with its place on a shelf (also in a waiting proposal), its
-    own location rule and a proposed match. The layout is saved as a version
-    before an album is taken off its shelf. The artist stays, even without albums.
-    Any other album is left alone: only one marked as gone can be removed here.
+    The album goes, with its place on a shelf (also in a waiting proposal), its own location rule
+    and a proposed match. The layout is saved as a version before an album is taken off its shelf.
+    The artist stays, even without albums. Any other album is left alone: only one marked as gone
+    can be removed here.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+
+    Returns:
+        Whether the album was removed.
     """
     albums = store.load(Album)
     album = next((a for a in albums if a.id == album_id and a.left_discogs), None)
@@ -288,7 +327,13 @@ def remove_departed_album(store: JsonStore, album_id: int) -> bool:
 def keep_departed_album(store: JsonStore, album_id: int, keep: bool = True) -> bool:
     """Note that an album that left the Discogs collection is kept, so it is not asked about again.
 
-    With keep=False the note is taken back and the album is listed as gone once more.
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+        keep: False takes the note back: the album is listed as gone once more.
+
+    Returns:
+        Whether such an album was found.
     """
     albums = store.load(Album)
     album = next((a for a in albums if a.id == album_id and a.left_discogs), None)

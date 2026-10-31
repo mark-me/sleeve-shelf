@@ -12,8 +12,8 @@ BACKGROUND = "#1E293B"
 def manifest():
     """Name, icons and start page of the installed app; it opens on Browse/Search.
 
-    There is no service worker: every page comes from the server, so there is
-    nothing to show without it, and browsers no longer need one to install an app.
+    There is no service worker: every page comes from the server, so there is nothing to show
+    without it, and browsers no longer need one to install an app.
     """
 
     def icon(filename: str, size: int, purpose: str) -> dict:

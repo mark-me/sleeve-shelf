@@ -499,16 +499,19 @@ def test_a_running_round_shows_its_step_and_a_stop_button_and_starts_no_second(a
     import threading
 
     gate = threading.Event()
+    begun = threading.Event()
 
     class Slow(_Client):
         def collection(self, progress=None):
             progress(1, 3, 250)
+            begun.set()
             gate.wait(5)
             return COLLECTION
 
     app.config["DISCOGS_CLIENT_FACTORY"] = Slow
     client.post("/discogs/token", data={"token": "secret"})
     client.post("/discogs/sync")
+    assert begun.wait(5)
     try:
         page = client.get("/discogs/").text
         assert 'ss-step-is-now" id="step-collection"' in page and 'data-part="collection"' in page

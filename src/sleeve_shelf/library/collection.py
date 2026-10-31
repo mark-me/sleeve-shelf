@@ -31,7 +31,13 @@ from sleeve_shelf.library.widths import estimate_widths
 def replace_collection(
     store: JsonStore, load: InitialLoad, constants: WidthConstants | None = None
 ) -> None:
-    """Replace everything stored with an initial load, and save it as the first version."""
+    """Replace everything stored with an initial load, and save it as the first version.
+
+    Args:
+        store: The store of the collection.
+        load: What the workbook holds.
+        constants: The width figures, to estimate the albums' widths.
+    """
     if constants:
         estimate_widths(load.albums, constants)
     store.save(Cabinet, load.cabinets)
@@ -58,7 +64,13 @@ def replace_collection(
 def load_layout(
     store: JsonStore, load: InitialLoad, constants: WidthConstants | None = None
 ) -> None:
-    """Take in a layout workbook: the first time everything, after that only the layout."""
+    """Take in a layout workbook: the first time everything, after that only the layout.
+
+    Args:
+        store: The store of the collection.
+        load: What the workbook holds.
+        constants: The width figures, to estimate the albums' widths.
+    """
     if store.exists(Album):
         update_layout(store, load, constants)
     else:
@@ -70,10 +82,14 @@ def update_layout(
 ) -> None:
     """Apply a newly loaded workbook to the stored collection as a change of layout only.
 
-    Albums are recognised by artist and title and keep everything known about
-    them — Discogs link, years, styles, family, cluster. Where they stand is
-    taken from the workbook. Albums the workbook doesn't list become unplaced;
-    albums, cabinets and shelves that are new are added.
+    Albums are recognised by artist and title and keep everything known about them — Discogs link,
+    years, styles, family, cluster. Where they stand is taken from the workbook. Albums the workbook
+    doesn't list become unplaced; albums, cabinets and shelves that are new are added.
+
+    Args:
+        store: The store of the collection.
+        load: What the workbook holds.
+        constants: The width figures, to estimate the widths of new albums.
     """
     artists = store.load(Artist)
     albums = store.load(Album)
@@ -190,7 +206,11 @@ def update_layout(
 
 
 def start_empty(store: JsonStore) -> None:
-    """Begin a collection without a layout workbook: nothing in it yet, to be filled from Discogs."""
+    """Begin a collection without a layout workbook: nothing in it yet, to be filled from Discogs.
+
+    Args:
+        store: The store of the collection.
+    """
     if not store.exists(Album):
         store.save(Album, [])
 
@@ -198,8 +218,11 @@ def start_empty(store: JsonStore) -> None:
 def ensure_cluster_order(store: JsonStore) -> None:
     """Give every cluster a position in the sequence of clusters.
 
-    The sequence is read off the current layout once; a cluster that has no
-    position yet after that (it is new, or holds no placed album) goes to the end.
+    The sequence is read off the current layout once; a cluster that has no position yet after that
+    (it is new, or holds no placed album) goes to the end.
+
+    Args:
+        store: The store of the collection.
     """
     clusters = store.load(Cluster)
     if all(cluster.position is not None for cluster in clusters):
@@ -233,5 +256,13 @@ def ensure_cluster_order(store: JsonStore) -> None:
 
 
 def album_key(artist: str, title: str) -> tuple[str, str]:
-    """Artist and title as albums are recognised by: case and spacing do not count."""
+    """Artist and title as albums are recognised by: case and spacing do not count.
+
+    Args:
+        artist: The artist.
+        title: The title.
+
+    Returns:
+        The two as compared.
+    """
     return " ".join(artist.casefold().split()), " ".join(title.casefold().split())

@@ -56,7 +56,14 @@ NEEDS_COLLECTION = frozenset(
 
 
 def create_app(data_dir: str | Path | None = None) -> Flask:
-    """Create and configure the Flask application instance."""
+    """Create and configure the Flask application instance.
+
+    Args:
+        data_dir: The data directory; None goes by the environment.
+
+    Returns:
+        The app.
+    """
     # Named after the package: its folders and the name in the log are those of the whole app.
     app = Flask("sleeve_shelf", template_folder="web/templates", static_folder="web/static")
     app.config["DATA_DIR"] = data_directory(data_dir)

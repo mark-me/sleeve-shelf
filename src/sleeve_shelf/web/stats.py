@@ -17,6 +17,7 @@ CLOSE_TIES = ",".join(tie.value for tie in Tie if tie not in (Tie.SONGS, Tie.LAB
 
 @blueprint.get("/")
 def index():
+    """The Statistics screen."""
     store = get_store()
     turn = request.args.get("turn", 0, type=int)
     pick, long_ago = from_the_shelf(store, date.today(), turn)
