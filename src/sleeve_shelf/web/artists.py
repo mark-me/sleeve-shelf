@@ -1,7 +1,6 @@
 """Artists: the list, and curating one artist's start year and cluster."""
 
 import unicodedata
-from collections import defaultdict
 from urllib.parse import quote
 
 from flask import (
@@ -17,45 +16,27 @@ from flask import (
 from flask_babel import gettext as _
 
 from sleeve_shelf.library import artists as artist_service
-from sleeve_shelf.library.alias_groups import cluster_hints
 from sleeve_shelf.insights.collection_stats import artist_figures
 from sleeve_shelf.library.artists import (
     PICTURE_DIR,
-    albums_per_artist,
     picture_thumb,
     remove_picture,
     set_picture,
 )
 from sleeve_shelf.domain import (
-    Album,
-    AliasGroup,
     Artist,
-    ArtistClusterAssignment,
     ArtistEnrichment,
     Cluster,
-    Style,
-    clusters_in_order,
     find_by_id,
     sort_name,
 )
 from sleeve_shelf.persistence import BrowseQueries
+from sleeve_shelf.shelving.curation import artist_details, artist_rows
 from sleeve_shelf.shelving.shifts import cluster_shifts, keep_cluster
-from sleeve_shelf.sorting.connections import connections_of
-from sleeve_shelf.sorting.eras import band_of
-from sleeve_shelf.sorting.order import propose_cluster
-from sleeve_shelf.library.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.login import is_owner, redirect_within
-from sleeve_shelf.web.places import described_rules
 
 blueprint = Blueprint("artists", __name__, url_prefix="/artists")
-
-
-def _albums_taking_part(store) -> dict[int, list[Album]]:
-    by_artist: dict[int, list[Album]] = defaultdict(list)
-    for album in albums_taking_part(store):
-        by_artist[album.artist_id].append(album)
-    return by_artist
 
 
 # The list without a search is shown one letter at a time; "#" holds names that start with
@@ -73,10 +54,6 @@ def initial(name: str) -> str:
     return "#"
 
 
-def _earliest_year(albums: list[Album]) -> int | None:
-    return min((a.original_release_year for a in albums if a.original_release_year), default=None)
-
-
 @blueprint.get("/")
 def index():
     store = get_store()
@@ -90,11 +67,6 @@ def index():
     letter = request.args.get("letter", "").upper()
     if by_letter and letter not in available:
         letter = next((c for c in LETTERS[1:] if c in available), "#")
-    by_artist = _albums_taking_part(store)
-    album_counts = albums_per_artist(store)
-    cluster_names = {cluster.id: cluster.name for cluster in store.load(Cluster)}
-    assignments = {a.artist_id: a for a in store.load(ArtistClusterAssignment)}
-    families = {group.id: group.label for group in store.load(AliasGroup)}
     pictures = {
         picture.discogs_artist_id: picture.thumb_url for picture in store.load(ArtistEnrichment)
     }
@@ -106,45 +78,21 @@ def index():
             return url_for("artists.picture", name=picture_thumb(store, artist))
         return pictures.get(artist.discogs_artist_id)
 
-
-    shifts = {shift.artist_id: shift for shift in cluster_shifts(store)}
-
-    rows = []
-    for artist in artists:
-        if by_letter and initial(artist.name) != letter:
-            continue
-        assignment = assignments.get(artist.id)
-        sorted_albums = by_artist.get(artist.id, [])
-        # Only artists that are sorted need a cluster and a start year.
-        shift = shifts.get(artist.id)
-        attention = shift is not None or bool(sorted_albums) and (
-            assignment is None or not assignment.confirmed or artist.start_year is None
-        )
-        if (search and search not in artist.name.casefold()) or (only_attention and not attention):
-            continue
-        if cluster_filter is not None and (assignment is None or assignment.cluster_id != cluster_filter):
-            continue
-        rows.append(
-            {
-                "artist": artist,
-                "picture": picture_of(artist),
-                "albums": album_counts[artist.id],
-                "cluster": cluster_names.get(assignment.cluster_id) if assignment else None,
-                "cluster_confirmed": bool(assignment and assignment.confirmed),
-                "derived_year": _earliest_year(sorted_albums),
-                "family": families.get(artist.alias_group_id),
-                "attention": attention,
-                "shift_to": cluster_names.get(shift.proposed_cluster_id) if shift else None,
-                "sorted": bool(sorted_albums),
-            }
-        )
-    rows.sort(key=lambda row: sort_name(row["artist"].name))
+    chosen = find_by_id(store.load(Cluster), cluster_filter)
+    rows = [
+        {**row, "picture": picture_of(row["artist"])}
+        for row in artist_rows(store)
+        if not (by_letter and initial(row["artist"].name) != letter)
+        and not (search and search not in row["artist"].name.casefold())
+        and not (only_attention and not row["attention"])
+        and not (cluster_filter is not None and row["cluster_id"] != cluster_filter)
+    ]
     return render_template(
         "artists/index.html",
         rows=rows,
         search_text=request.args.get("q", "").strip(),
         only_attention=only_attention,
-        cluster_name=cluster_names.get(cluster_filter),
+        cluster_name=chosen.name if chosen else None,
         letters=[(c, c in available) for c in LETTERS] if by_letter else [],
         letter=letter if by_letter else None,
         total=len(artists),
@@ -170,89 +118,28 @@ def edit(artist_id: int):
             artist_service.set_cluster(store, artist_id, cluster_id, new_cluster)
             return redirect(url_for("artists.edit", artist_id=artist_id, tab="manage", saved=1))
 
-    albums = [album for album in store.load(Album) if album.artist_id == artist_id]
-    sorted_albums = _albums_taking_part(store).get(artist_id, [])
-    clusters = clusters_in_order(store.load(Cluster))
-    assignment = next(
-        (a for a in store.load(ArtistClusterAssignment) if a.artist_id == artist_id), None
-    )
-    proposed_id = propose_cluster(sorted_albums, {style.id: style for style in store.load(Style)})
-    all_artists = store.load(Artist)
-    cluster_of = {
-        a.artist_id: a.cluster_id for a in store.load(ArtistClusterAssignment)
-    }
-    connections = connections_of(artist_id, all_artists, store.load(ArtistEnrichment))
-
-    def related(artist_ids: tuple[int, ...]) -> list[dict]:
-        found = [a for a in all_artists if a.id in artist_ids]
-        return [
-            {"id": a.id, "name": a.name, "cluster": cluster_names.get(cluster_of.get(a.id))}
-            for a in sorted(found, key=lambda a: sort_name(a.name))
-        ]
-
-    # Whom Discogs connects the artist to goes before its styles, when the connection is close.
-    hint = cluster_hints(store).get(artist_id)
-    names = {a.id: a.name for a in store.load(Artist)}
-    located = {row.album_id: row for row in BrowseQueries(store).artist_albums(artist_id)}
-    family = find_by_id(store.load(AliasGroup), artist.alias_group_id)
-    derived_year = _earliest_year(sorted_albums)
-    shift = next((s for s in cluster_shifts(store) if s.artist_id == artist_id), None)
-    cluster_names = {cluster.id: cluster.name for cluster in clusters}
+    details = artist_details(store, artist)
+    needs_attention = details.pop("needs_attention")
     # What the artist is comes first; what can be changed about it is the owner's, a tab further.
     owner = is_owner()
     tab = "manage" if owner and (errors or request.args.get("tab") == "manage") else "artist"
     return (
         render_template(
             "artists/edit.html",
+            **details,
             tab=tab,
             # What waits for the owner here, said on the first tab too.
-            attention=owner
-            and (
-                shift is not None
-                or bool(sorted_albums) and (assignment is None or not assignment.confirmed or artist.start_year is None)
-            ),
-            cluster_name=cluster_names.get(assignment.cluster_id) if assignment else None,
+            attention=owner and needs_attention,
             figures=artist_figures(store, artist_id) if tab == "artist" else None,
             places={row.album_id: row for row in BrowseQueries(store).everything()} if tab == "artist" else {},
             artist=artist,
             picture=_picture(store, artist),
             picture_error=request.args.get("picture_error"),
             errors=errors,
-            shift=shift
-            and {
-                "current": cluster_names.get(shift.cluster_id),
-                "proposed": cluster_names.get(shift.proposed_cluster_id),
-                "titles": [album.title for album in albums if album.id in shift.album_ids],
-            },
             saved=request.args.get("saved") and not errors,
-            clusters=clusters,
-            assignment=assignment,
-            proposed_cluster=find_by_id(clusters, proposed_id),
-            connected_cluster=find_by_id(clusters, hint.cluster_id if hint else None),
-            connection_decides=bool(hint and hint.decisive),
-            related={
-                "other_names": related(connections.other_names),
-                "bands": related(connections.bands),
-                "members": related(connections.members),
-            },
-            connected_artists=[
-                {"id": other_id, "name": names[other_id]}
-                for other_id in (hint.via_artist_ids if hint else ())
-            ],
-            derived_year=derived_year,
-            band=band_of(artist.start_year or derived_year),
-            family=family,
-            rules=described_rules(store, artist_id),
             moved=request.args.get("moved"),
             wikipedia_url="https://en.wikipedia.org/wiki/Special:Search?search="
             + quote(sort_name(artist.name)),
-            albums=sorted(
-                (
-                    {"album": album, "place": located.get(album.id)}
-                    for album in albums
-                ),
-                key=lambda row: (row["album"].original_release_year or 9999, row["album"].title.casefold()),
-            ),
         ),
         400 if errors else 200,
     )

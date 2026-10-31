@@ -43,7 +43,7 @@ flowchart TB
 
 `tests/test_architecture.py` checks these layers: `shelving`, `fetching` and `insights` may use `library`, but not each other, and `library` none of them.
 
-A blueprint never writes to the store itself: it reads and checks the form, calls a service, and turns the service's outcome into a page or a redirect. Business rules — *only an empty shelf can be removed*, *nothing drops off a shelf during a drag* — live in the services, where they have tests of their own.
+A blueprint never writes to the store itself, and leaves gathering a screen's data to a service as well (`curation`, `fetching/overview`, `proposal_overview`, …): it reads and checks the form, calls a service, and turns the service's outcome into a page or a redirect. Business rules — *only an empty shelf can be removed*, *nothing drops off a shelf during a drag* — live in the services, where they have tests of their own.
 
 !!! warning "A service and a blueprint can share a name"
     `shelving/storage.py` and `web/storage.py`, likewise `versions`. In web modules import names explicitly — `from sleeve_shelf.shelving.storage import save_shelf`.
@@ -77,7 +77,7 @@ sequenceDiagram
 
 The five menu sections and their tabs are declared once, in `web/navigation.py`; a new screen gets its tab there. Each section also has an icon, named after the section's key, in the sprite `web/static/vendor/menu-icons.svg`, which also holds those of Help, logging in and out, and the language at the end of the menu.
 
-What waits for a decision — matches, family suggestions, albums without a place, shelves over a measured width — is counted in one place, `web/waiting.py`. The counts feed both the Dashboard and the numbers in the menu. Working them out takes a while (family suggestions compare every artist with every other), so they are kept until a data file or `config.yaml` changes.
+What waits for a decision — matches, family suggestions, albums without a place, shelves over a measured width — is counted in one place, `shelving/waiting.py`. The counts feed both the Dashboard and the numbers in the menu. Working them out takes a while (family suggestions compare every artist with every other), so they are kept until a data file or `config.yaml` changes.
 
 Each tab also names the part of the user guide that explains its screen, as `help="user/shelves/#layout"`; pages that share a tab but have their own part are in `PAGE_HELP`. The **?** beside the tabs links there. The app serves the documentation site itself under `/help/` (`web/help.py`): the Docker image builds it with Zensical and carries it in `/app/help`; a local run uses `docs-site/site` once built, and GitHub Pages otherwise. `tests/test_help.py` checks that every page and anchor named exists — rename a heading in the guide and the test says which screen to update.
 

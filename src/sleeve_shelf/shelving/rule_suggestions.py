@@ -3,8 +3,6 @@
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 
-from flask_babel import gettext as _
-
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
@@ -172,15 +170,14 @@ def rule_suggestions(store: JsonStore) -> list[RuleSuggestion]:
     return suggestions
 
 
-def accept_suggestions(store: JsonStore, cabinet_id: int) -> int:
-    """Turn every suggestion for a cabinet into a rule; returns how many rules were made."""
+def accept_suggestions(store: JsonStore, cabinet_id: int, note: str) -> int:
+    """Turn every suggestion for a cabinet into a rule, each with this note; returns how many
+    rules were made."""
     chosen = [s for s in rule_suggestions(store) if s.cabinet_id == cabinet_id]
     if not chosen:
         return 0
     for suggestion in chosen:
-        set_rule(
-            store, suggestion.target_type, suggestion.target_id, cabinet_id, _("Suggested from the layout")
-        )
+        set_rule(store, suggestion.target_type, suggestion.target_id, cabinet_id, note)
     return len(chosen)
 
 

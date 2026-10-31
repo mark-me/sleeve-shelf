@@ -8,7 +8,7 @@ from sleeve_shelf.domain import Album
 from sleeve_shelf.shelving.moving import OFF_SHELF, How, Kind, carry_out, find, plan, selection
 from sleeve_shelf.shelving.placing import ShelvesChanged
 from sleeve_shelf.web.context import get_store
-from sleeve_shelf.web.places import shelf_options
+from sleeve_shelf.shelving.places import shelf_options
 
 blueprint = Blueprint("moving", __name__, url_prefix="/move")
 

@@ -47,3 +47,12 @@ def albums_taking_part(store: JsonStore) -> list[Album]:
     """The albums that are sorted and placed, as the shelves stand now (see takes_part)."""
     placed = {p.album_id for p in store.load(Placement)}
     return [album for album in store.load(Album) if takes_part(album, placed)]
+
+
+def room_on_shelves(store: JsonStore, base_width_cm: float) -> tuple[float, float]:
+    """The width the albums to sort need, and what the shelves offer. What stands in a showcase
+    or outside the sorting needs no room on the other shelves."""
+    kept = kept_shelf_ids(store)
+    staying = {p.album_id for p in store.load(Placement) if p.shelf_id in kept}
+    needed = sum(album.width_cm or base_width_cm for album in albums_taking_part(store) if album.id not in staying)
+    return needed, sum(shelf.width_cm for shelf in usable_shelves(store)[0])

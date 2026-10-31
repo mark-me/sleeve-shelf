@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-31 10:30+0100\n"
+"POT-Creation-Date: 2026-10-31 10:51+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -17,10 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
-
-#: src/sleeve_shelf/shelving/rule_suggestions.py
-msgid "Suggested from the layout"
-msgstr "Voorgesteld vanuit de indeling"
 
 #: src/sleeve_shelf/web/albums.py
 msgid "A width has to be a number of centimetres above zero."
@@ -226,13 +222,9 @@ msgstr "Kies een naam uit de lijst."
 msgid "Choose a cabinet."
 msgstr "Kies een kast."
 
-#: src/sleeve_shelf/web/settings.py
-msgid "The base width has to be a number above zero."
-msgstr "De basisbreedte moet een getal boven nul zijn."
-
-#: src/sleeve_shelf/web/settings.py
-msgid "A surcharge has to be a number, zero or more."
-msgstr "Een toeslag moet een getal zijn, nul of meer."
+#: src/sleeve_shelf/web/rules.py
+msgid "Suggested from the layout"
+msgstr "Voorgesteld vanuit de indeling"
 
 #: src/sleeve_shelf/web/settings.py
 msgid "The showcase fill has to be a whole percentage from 1 to 100."
@@ -249,6 +241,14 @@ msgstr "Het aantal platen op de tafel moet een heel getal van 1 tot 1000 zijn."
 #: src/sleeve_shelf/web/settings.py
 msgid "The number of bands has to be a whole number from 1 to 20."
 msgstr "Het aantal bands moet een heel getal van 1 tot 20 zijn."
+
+#: src/sleeve_shelf/web/settings.py
+msgid "The base width has to be a number above zero."
+msgstr "De basisbreedte moet een getal boven nul zijn."
+
+#: src/sleeve_shelf/web/settings.py
+msgid "A surcharge has to be a number, zero or more."
+msgstr "Een toeslag moet een getal zijn, nul of meer."
 
 #: src/sleeve_shelf/web/settings.py
 msgid "The current password is not right."

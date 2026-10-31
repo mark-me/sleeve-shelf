@@ -1,8 +1,10 @@
 """Application services for the sorting proposal: a layout kept next to the current one."""
 
 from dataclasses import dataclass
+from math import ceil
 
-from sleeve_shelf.library.alias_groups import cluster_hints
+from sleeve_shelf.config import load_settings
+from sleeve_shelf.library.alias_groups import cluster_hints, family_suggestions
 from sleeve_shelf.library.collection import ensure_cluster_order
 from sleeve_shelf.domain import (
     Album,
@@ -23,10 +25,10 @@ from sleeve_shelf.domain import (
     WidthConstants,
     in_order,
 )
-from sleeve_shelf.persistence import JsonStore
+from sleeve_shelf.persistence import BrowseQueries, JsonStore
 from sleeve_shelf.sorting.order import OrderedAlbum, Unit, build_units, order_albums
 from sleeve_shelf.sorting.placement import place
-from sleeve_shelf.library.taking_part import kept_shelf_ids, takes_part, usable_shelves
+from sleeve_shelf.library.taking_part import albums_taking_part, kept_shelf_ids, takes_part, usable_shelves
 from sleeve_shelf.library.versions import save_if_unsaved, save_version
 
 
@@ -202,3 +204,74 @@ def accept_proposal(store: JsonStore) -> None:
     )
     store.remove(ProposedPlacement)
     save_version(store, "proposal accepted")
+
+
+def proposal_overview(store: JsonStore) -> dict:
+    """What the Sorting proposal screen shows: what takes part, and a proposal next to the layout."""
+    usable, skipped = usable_shelves(store)
+    kept = kept_shelf_ids(store)
+    outside = {cabinet.id for cabinet in store.load(Cabinet) if cabinet.outside_sorting}
+    cabinet_names = {cabinet.id: cabinet.name for cabinet in store.load(Cabinet)}
+    current = {
+        p.album_id: p.shelf_id for p in store.load(Placement)
+    }
+    albums = albums_taking_part(store)
+    context = {
+        # What stands on a kept shelf stays there, and is not among the albums to place.
+        "taking_part": sum(1 for album in albums if current.get(album.id) not in kept),
+        "usable_count": len(usable),
+        "skipped": [
+            {"cabinet": cabinet_names[s.cabinet_id], "shelf": s, "outside": s.cabinet_id in outside}
+            for s in skipped
+        ],
+        "suggestion_count": len(family_suggestions(store)),
+        "has_proposal": has_proposal(store),
+    }
+    if not context["has_proposal"]:
+        return context
+
+    proposed = {p.album_id: p.shelf_id for p in store.load(ProposedPlacement)}
+    artist_names = {artist.id: artist.name for artist in store.load(Artist)}
+    now_fill = BrowseQueries(store).shelf_fill()
+    new_fill = BrowseQueries(store, ProposedPlacement).shelf_fill()
+    shelves = usable + skipped
+    cabinets = [
+        {
+            "name": cabinet.name,
+            "shelves": [
+                {
+                    "shelf": shelf,
+                    "skipped": shelf in skipped,
+                    "kept": shelf.id in kept,
+                    "outside": shelf.cabinet_id in outside,
+                    "now": now_fill.get(shelf.id, (0, 0.0)),
+                    "new": new_fill.get(shelf.id, (0, 0.0)),
+                }
+                for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
+            ],
+        }
+        for cabinet in in_order(store.load(Cabinet))
+    ]
+    left_out = sorted(
+        (
+            {"album_id": album.id, "artist": artist_names[album.artist_id], "title": album.title,
+             "was_placed": album.id in current}
+            for album in albums
+            if album.id not in proposed
+        ),
+        key=lambda row: (row["artist"].casefold(), row["title"].casefold()),
+    )
+    moved_count = sum(1 for album_id, shelf_id in proposed.items() if current.get(album_id) != shelf_id)
+    settings = load_settings(store.data_dir)
+    return {
+        **context,
+        "cabinets": cabinets,
+        "placed_count": len(proposed),
+        "left_out": left_out,
+        "moved_count": moved_count,
+        "staying_count": sum(1 for album_id, shelf_id in proposed.items() if current.get(album_id) == shelf_id),
+        # What carrying it out takes: every album that moves passes over the table once.
+        "table_records": settings.table_records,
+        "rounds": ceil(moved_count / settings.table_records),
+        "room_percent": settings.shelf_room_percent,
+    }

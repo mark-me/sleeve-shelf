@@ -1,5 +1,5 @@
 {# A suggested spot for an album that stands on no shelf yet: where, between which albums, and why.
-   `spot` comes from described_spots (web/places.py). #}
+   `spot` comes from described_spots (shelving/places.py). #}
 {% macro neighbour(album) %}<a href="{{ url_for('browse.browse', shelf=album.shelf_id) }}#album-{{ album.id }}">{{ album.artist }} &ndash; {{ album.title }}</a>{% endmacro %}
 
 {% macro where(spot) %}

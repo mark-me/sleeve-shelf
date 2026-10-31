@@ -112,7 +112,7 @@ def decide_suggestions(cabinet_id: int, choice: str):
     """Make the rules the layout hints at for a cabinet, or turn them down for good."""
     store = get_store()
     if choice == "accept":
-        return redirect(url_for("rules.index", added=accept_suggestions(store, cabinet_id)))
+        return redirect(url_for("rules.index", added=accept_suggestions(store, cabinet_id, _("Suggested from the layout"))))
     return redirect(url_for("rules.index", dismissed=dismiss_suggestions(store, cabinet_id)))
 
 

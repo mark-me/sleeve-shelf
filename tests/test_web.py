@@ -543,7 +543,7 @@ def test_the_search_fields_search_while_typing(client):
 
 
 def test_the_waiting_counts_are_kept_until_something_changes(client):
-    from sleeve_shelf.web.waiting import waiting_counts
+    from sleeve_shelf.shelving.waiting import waiting_counts
 
     _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
     store = JsonStore(client.application.config["DATA_DIR"])

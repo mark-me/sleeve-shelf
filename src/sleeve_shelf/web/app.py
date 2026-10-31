@@ -43,7 +43,7 @@ from sleeve_shelf.web import help as help_screen
 from sleeve_shelf.web import proposal as proposal_screen
 from sleeve_shelf.web.context import get_store, has_collection
 from sleeve_shelf.web.help import help_url
-from sleeve_shelf.web.waiting import menu_counts
+from sleeve_shelf.shelving.waiting import menu_counts
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 

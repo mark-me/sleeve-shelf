@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-31 10:30+0100\n"
+"POT-Creation-Date: 2026-10-31 10:51+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -17,10 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
-
-#: src/sleeve_shelf/shelving/rule_suggestions.py
-msgid "Suggested from the layout"
-msgstr ""
 
 #: src/sleeve_shelf/web/albums.py
 msgid "A width has to be a number of centimetres above zero."
@@ -226,12 +222,8 @@ msgstr ""
 msgid "Choose a cabinet."
 msgstr ""
 
-#: src/sleeve_shelf/web/settings.py
-msgid "The base width has to be a number above zero."
-msgstr ""
-
-#: src/sleeve_shelf/web/settings.py
-msgid "A surcharge has to be a number, zero or more."
+#: src/sleeve_shelf/web/rules.py
+msgid "Suggested from the layout"
 msgstr ""
 
 #: src/sleeve_shelf/web/settings.py
@@ -248,6 +240,14 @@ msgstr ""
 
 #: src/sleeve_shelf/web/settings.py
 msgid "The number of bands has to be a whole number from 1 to 20."
+msgstr ""
+
+#: src/sleeve_shelf/web/settings.py
+msgid "The base width has to be a number above zero."
+msgstr ""
+
+#: src/sleeve_shelf/web/settings.py
+msgid "A surcharge has to be a number, zero or more."
 msgstr ""
 
 #: src/sleeve_shelf/web/settings.py

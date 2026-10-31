@@ -21,6 +21,9 @@ ALLOWED = {
 }
 
 
+MOST_LOADS_IN_A_VIEW = 4
+
+
 def _imports(path: Path) -> set[str]:
     """The packages of the app this file imports."""
     found = set()
@@ -40,6 +43,32 @@ def test_each_layer_imports_only_what_is_below_it():
         folder = ROOT / package
         for path in folder.rglob("*.py") if folder.is_dir() else [ROOT / f"{package}.py"]:
             wrong.extend(f"{path.relative_to(ROOT)} imports {other}" for other in _imports(path) - allowed - {package})
+    assert not wrong, wrong
+
+
+def test_nothing_outside_the_web_layer_knows_flask():
+    wrong = []
+    for path in ROOT.rglob("*.py"):
+        relative = path.relative_to(ROOT)
+        if relative.parts[0] != "web":
+            imported = {
+                name.split(".")[0]
+                for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+                if isinstance(node, (ast.Import, ast.ImportFrom))
+                for name in ([node.module or ""] if isinstance(node, ast.ImportFrom) else [a.name for a in node.names])
+            }
+            if imported & {"flask", "flask_babel"}:
+                wrong.append(str(relative))
+    assert not wrong, wrong
+
+
+def test_a_view_leaves_gathering_data_to_the_services():
+    """A view reads the form and shows a page: a few lookups at most, not a whole screen's data."""
+    wrong = []
+    for path in (ROOT / "web").glob("*.py"):
+        for node in ast.parse(path.read_text(encoding="utf-8")).body:
+            if isinstance(node, ast.FunctionDef) and ast.unparse(node).count("store.load(") > MOST_LOADS_IN_A_VIEW:
+                wrong.append(f"{path.name}: {node.name}")
     assert not wrong, wrong
 
 

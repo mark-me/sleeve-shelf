@@ -3,6 +3,7 @@
 from sleeve_shelf.library.artists import albums_per_artist
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
+    Cluster,
     AliasGroup,
     Artist,
     ArtistClusterAssignment,
@@ -148,3 +149,72 @@ def set_family(store: JsonStore, artist_id: int, group_id: int | None) -> None:
         if artist.id == artist_id:
             artist.alias_group_id = group_id
     store.save(Artist, artists)
+
+
+def families_overview(store: JsonStore) -> dict:
+    """What the Families screen shows: the suggestions, the families, and the artists in none."""
+    artists = store.load(Artist)
+    by_id = {artist.id: artist for artist in artists}
+    album_counts = albums_per_artist(store)
+    cluster_names = {cluster.id: cluster.name for cluster in store.load(Cluster)}
+    cluster_of = {
+        assignment.artist_id: cluster_names.get(assignment.cluster_id)
+        for assignment in store.load(ArtistClusterAssignment)
+    }
+
+    labels = {group.id: group.label for group in store.load(AliasGroup)}
+    family_albums: dict[int, int] = {}
+    for artist in artists:
+        if artist.alias_group_id is not None:
+            family_albums[artist.alias_group_id] = family_albums.get(artist.alias_group_id, 0) + album_counts[artist.id]
+
+    def describe(artist_id: int, others: tuple[int, ...] = ()) -> dict:
+        family = by_id[artist_id].alias_group_id
+        return {
+            "id": artist_id,
+            "name": by_id[artist_id].name,
+            "albums": album_counts[artist_id],
+            "cluster": cluster_of.get(artist_id),
+            # A member already in a family is suggested to move out of it.
+            "family": labels.get(family),
+            # The other artists a joint billing names, to put it with instead: by their
+            # family when they have one, with its albums.
+            "others": [
+                {
+                    "id": other_id,
+                    "name": labels.get(by_id[other_id].alias_group_id) or by_id[other_id].name,
+                    "albums": family_albums.get(by_id[other_id].alias_group_id, album_counts[other_id]),
+                }
+                for other_id in others
+            ],
+        }
+
+    suggestions = [
+        {
+            "anchor": describe(suggestion.anchor_id),
+            "members": [
+                describe(member_id, dict(suggestion.others).get(member_id, ()))
+                for member_id in suggestion.member_ids
+            ],
+            # The family the members would be added to, when the suggestion is not a new one.
+            "family": labels.get(suggestion.group_id),
+            "source": suggestion.source,
+            "family_albums": family_albums.get(suggestion.group_id) if suggestion.group_id else None,
+        }
+        for suggestion in family_suggestions(store)
+    ]
+    families = [
+        {
+            "group": group,
+            "members": sorted(
+                (describe(a.id) for a in artists if a.alias_group_id == group.id),
+                key=lambda member: member["name"].casefold(),
+            ),
+        }
+        for group in sorted(store.load(AliasGroup), key=lambda group: group.label.casefold())
+    ]
+    return {
+        "suggestions": suggestions,
+        "families": families,
+        "free_artists": sorted((a.name for a in artists if a.alias_group_id is None), key=str.casefold),
+    }

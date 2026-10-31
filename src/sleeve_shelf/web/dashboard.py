@@ -2,22 +2,11 @@
 
 from flask import Blueprint, render_template, request, url_for
 
-from sleeve_shelf.domain import (
-    Album,
-    Cabinet,
-    Cluster,
-    LocationRule,
-    Placement,
-    ReleaseEnrichment,
-    Shelf,
-)
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.shelving.proposal import has_proposal
-from sleeve_shelf.library.taking_part import albums_taking_part
-from sleeve_shelf.library.versions import list_versions
 from sleeve_shelf.web.context import get_store
-from sleeve_shelf.web.places import described_spots
-from sleeve_shelf.web.waiting import waiting_counts
+from sleeve_shelf.shelving.places import described_spots
+from sleeve_shelf.shelving.overview import collection_figures
+from sleeve_shelf.shelving.waiting import waiting_counts
 
 blueprint = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
@@ -25,19 +14,14 @@ blueprint = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 TO_PLACE_SHOWN = 3
 
 
-def _countable(open_count: int, albums: list[Album]) -> dict:
-    return {"open": open_count} if albums else {"later": True}
+def _countable(open_count: int, has_albums: bool) -> dict:
+    return {"open": open_count} if has_albums else {"later": True}
 
 
 @blueprint.get("/")
 def index():
     store = get_store()
-    albums = store.load(Album)
-    shelves = store.load(Shelf)
-    placed = {p.album_id for p in store.load(Placement)}
-    sorted_albums = albums_taking_part(store)
-    sorted_artists = {album.artist_id for album in sorted_albums}
-    versions = list_versions(store)
+    figures = collection_figures(store)
     counts = waiting_counts(store)
     urls = {
         "matches": url_for("discogs.index") + "#matches",
@@ -52,10 +36,6 @@ def index():
         "unplaced": url_for("browse.unplaced"),
     }
     waiting = [{"count": counts[kind], "kind": kind, "url": url} for kind, url in urls.items()]
-    cluster_count = len(store.load(Cluster))
-    fetched = {release.release_id for release in store.load(ReleaseEnrichment)}
-    to_fetch = len({a.release_id for a in albums if a.release_id is not None} - fetched)
-    unmeasured = sum(1 for s in shelves if not s.width_cm and not s.is_showcase)
     # The way to a new layout, in the order of the menu. "open" counts what is left
     # to do in a step; a step with "info" has nothing to count and is never ticked off.
     steps = [
@@ -63,21 +43,21 @@ def index():
         {
             "kind": "discogs",
             "url": url_for("discogs.index"),
-            "open": counts["matches"] + to_fetch + (0 if albums else 1),
+            "open": counts["matches"] + figures["to_fetch"] + (0 if figures["has_albums"] else 1),
         },
         # Families and artists come with the albums: without any, these steps are
         # neither to do nor done.
-        {"kind": "families", "url": urls["families"], **_countable(counts["families"], albums)},
-        {"kind": "artists", "url": urls["artists"], **_countable(counts["artists_in_all"], albums)},
-        {"kind": "clusters", "url": url_for("clusters.index"), "info": cluster_count},
+        {"kind": "families", "url": urls["families"], **_countable(counts["families"], figures["has_albums"])},
+        {"kind": "artists", "url": urls["artists"], **_countable(counts["artists_in_all"], figures["has_albums"])},
+        {"kind": "clusters", "url": url_for("clusters.index"), "info": figures["cluster_count"]},
         # Likewise a collection without a single shelf has its shelves still to enter.
         {
             "kind": "storage",
             "url": urls["overfull"],
-            "open": unmeasured + counts["overfull"] + (0 if shelves else 1),
+            "open": figures["unmeasured"] + counts["overfull"] + (0 if figures["shelf_count"] else 1),
         },
-        {"kind": "rules", "url": url_for("rules.index"), "info": len(store.load(LocationRule))},
-        {"kind": "proposal", "url": url_for("proposal.index"), "info": int(has_proposal(store))},
+        {"kind": "rules", "url": url_for("rules.index"), "info": figures["rule_count"]},
+        {"kind": "proposal", "url": url_for("proposal.index"), "info": int(figures["has_proposal"])},
     ]
     # The LPs that wait for a place, each with the spot suggested for it, until they stand there.
     queries = BrowseQueries(store)
@@ -92,16 +72,7 @@ def index():
         placed=next((row for row in queries.everything() if row.album_id == just_placed), None)
         if just_placed
         else None,
-        album_count=len(sorted_albums),
-        placed_count=len(placed),
-        single_count=len(albums) - len(sorted_albums),
-        artist_count=len(sorted_artists),
-        cluster_count=cluster_count,
+        **figures,
         steps=steps,
-        cabinet_count=len(store.load(Cabinet)),
-        shelf_count=len(shelves),
         waiting=[item for item in waiting if item["count"]],
-        has_proposal=has_proposal(store),
-        last_version=versions[0] if versions else None,
-        unsaved=not any(version.is_current for version in versions),
     )

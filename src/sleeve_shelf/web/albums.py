@@ -17,9 +17,6 @@ from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
     Artist,
-    Placement,
-    ReleaseEnrichment,
-    Style,
     find_by_id,
 )
 from sleeve_shelf.ingestion.deezer import DeezerClient
@@ -28,10 +25,11 @@ from sleeve_shelf.fetching.listening import listening, turn_down
 from sleeve_shelf.insights.connections import album_songs_elsewhere
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.shelving.spots import place_at_spot
-from sleeve_shelf.library.taking_part import albums_taking_part, takes_part
+from sleeve_shelf.library.albums import album_details
+from sleeve_shelf.library.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store, parse_number
 from sleeve_shelf.web.login import is_owner, visitor_may_listen
-from sleeve_shelf.web.places import described_rules, described_spots
+from sleeve_shelf.shelving.places import described_rules, described_spots
 from sleeve_shelf.library.widths import set_measured_width
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
@@ -43,17 +41,6 @@ def detail(album_id: int):
     album = find_by_id(store.load(Album), album_id)
     if album is None:
         abort(404)
-    artist = find_by_id(store.load(Artist), album.artist_id)
-    # Where the album stands, with its cluster and era band, comes from the same query as Browse.
-    row = next(
-        (r for r in BrowseQueries(store).artist_albums(album.artist_id) if r.album_id == album_id),
-        None,
-    )
-    style_names = {style.id: style.name for style in store.load(Style)}
-    placed = {p.album_id for p in store.load(Placement)}
-    release = next(
-        (r for r in store.load(ReleaseEnrichment) if r.release_id == album.release_id), None
-    )
     # What the album is comes first, then what the collection says about it; what can be changed
     # about it is the owner's, a tab further.
     owner = is_owner()
@@ -66,23 +53,17 @@ def detail(album_id: int):
     rows = {r.album_id: r for r in BrowseQueries(store).everything()} if elsewhere or tab == "statistics" else {}
     elsewhere = [(title, [rows[i] for i in others if i in rows]) for title, others in elsewhere]
     # An album waiting for a place is the owner's to place, on Manage; a visitor reads it here.
-    is_waiting = takes_part(album, placed) and album_id not in placed
+    details = album_details(store, album)
     return render_template(
         "albums/detail.html",
         tab=tab,
         figures=album_figures(store, album_id) if tab == "statistics" else None,
         places=rows,
+        **details,
         album=album,
-        artist=artist,
-        row=row,
-        styles=[style_names[i] for i in album.style_ids if i in style_names],
-        # None while the release was not fetched with its tracklist yet.
-        tracklist=release.tracklist if release else None,
         elsewhere=elsewhere,
-        takes_part=takes_part(album, placed),
-        is_placed=album_id in placed,
-        attention=owner and is_waiting,
-        spot=described_spots(store).get(album_id) if album_id not in placed and tab == ("manage" if owner else "album") else None,
+        attention=owner and details["takes_part"] and not details["is_placed"],
+        spot=described_spots(store).get(album_id) if not details["is_placed"] and tab == ("manage" if owner else "album") else None,
         placed=request.args.get("placed"),
         rules=described_rules(store, album.artist_id, album_id) if tab == "manage" else [],
         moved=request.args.get("moved"),

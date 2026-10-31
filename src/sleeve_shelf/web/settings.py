@@ -19,8 +19,7 @@ from sleeve_shelf.access import (
     set_password,
 )
 from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.domain import Placement
-from sleeve_shelf.library.taking_part import albums_taking_part, kept_shelf_ids, usable_shelves
+from sleeve_shelf.library.taking_part import room_on_shelves
 from sleeve_shelf.web.context import get_store, has_collection, parse_number
 from sleeve_shelf.web.language import COOKIE as LANGUAGE_COOKIE
 from sleeve_shelf.web.language import LANGUAGES, editable
@@ -30,6 +29,26 @@ from sleeve_shelf.library.widths import apply_width_constants
 blueprint = Blueprint("settings", __name__, url_prefix="/settings")
 
 WIDTH_FIELDS = ("base_width_cm", "surcharge_180_gram_cm", "surcharge_gatefold_cm")
+
+
+def _whole_numbers() -> tuple[tuple[str, int, int, str], ...]:
+    """The settings that are whole numbers: the field, what it may be, and what is said otherwise."""
+    return (
+        ("showcase_fill_percent", 1, 100, _("The showcase fill has to be a whole percentage from 1 to 100.")),
+        ("shelf_room_percent", 0, 50, _("The room left on a shelf has to be a whole percentage from 0 to 50.")),
+        ("table_records", 1, 1000, _("The records on the table have to be a whole number from 1 to 1000.")),
+        ("sideman_bands", 1, 20, _("The number of bands has to be a whole number from 1 to 20.")),
+    )
+
+
+def _whole_number_errors(form) -> list[str]:
+    """What is wrong with the whole numbers filled in; one left empty keeps its value."""
+    found = []
+    for name, low, high, message in _whole_numbers():
+        text = form.get(name, "").strip()
+        if text and not (text.isdigit() and low <= int(text) <= high):
+            found.append(message)
+    return found
 
 
 @blueprint.route("/", methods=["GET", "POST"])
@@ -47,27 +66,11 @@ def index():
             errors.append(_("The base width has to be a number above zero."))
         if any(numbers[name] is None or numbers[name] < 0 for name in WIDTH_FIELDS[1:]):
             errors.append(_("A surcharge has to be a number, zero or more."))
-        fill_text = request.form.get("showcase_fill_percent", "").strip()
-        if fill_text and not (fill_text.isdigit() and 1 <= int(fill_text) <= 100):
-            errors.append(_("The showcase fill has to be a whole percentage from 1 to 100."))
-        room_text = request.form.get("shelf_room_percent", "").strip()
-        if room_text and not (room_text.isdigit() and 0 <= int(room_text) <= 50):
-            errors.append(_("The room left on a shelf has to be a whole percentage from 0 to 50."))
-        table_text = request.form.get("table_records", "").strip()
-        if table_text and not (table_text.isdigit() and 1 <= int(table_text) <= 1000):
-            errors.append(_("The records on the table have to be a whole number from 1 to 1000."))
-        sideman_text = request.form.get("sideman_bands", "").strip()
-        if sideman_text and not (sideman_text.isdigit() and 1 <= int(sideman_text) <= 20):
-            errors.append(_("The number of bands has to be a whole number from 1 to 20."))
+        errors.extend(_whole_number_errors(request.form))
         if not errors:
-            if fill_text:
-                settings.showcase_fill_percent = int(fill_text)
-            if sideman_text:
-                settings.sideman_bands = int(sideman_text)
-            if room_text:
-                settings.shelf_room_percent = int(room_text)
-            if table_text:
-                settings.table_records = int(table_text)
+            for name, _low, _high, _message in _whole_numbers():
+                if text := request.form.get(name, "").strip():
+                    setattr(settings, name, int(text))
             if "labels_left_out" in request.form:
                 settings.labels_left_out = [
                     line.strip() for line in request.form["labels_left_out"].splitlines() if line.strip()
@@ -82,17 +85,7 @@ def index():
             apply_width_constants(store, settings.width_constants)
             return redirect(url_for("settings.index", saved=1))
 
-    needed = offered = None
-    if has_collection():
-        # What stands in a showcase or outside the sorting needs no room on the other shelves.
-        kept = kept_shelf_ids(store)
-        staying = {p.album_id for p in store.load(Placement) if p.shelf_id in kept}
-        needed = sum(
-            album.width_cm or settings.base_width_cm
-            for album in albums_taking_part(store)
-            if album.id not in staying
-        )
-        offered = sum(shelf.width_cm for shelf in usable_shelves(store)[0])
+    needed, offered = room_on_shelves(store, settings.base_width_cm) if has_collection() else (None, None)
     token = settings.discogs_token
     return (
         render_template(
