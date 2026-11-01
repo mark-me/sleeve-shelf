@@ -9,6 +9,10 @@
   // The button pressed last: an album still being fetched when another is pressed is dropped.
   let wanted = null;
 
+  function rowOf(element) {
+    return element.closest(".ss-row, [data-play-row]");
+  }
+
   function line(row) {
     let now = row.querySelector(".ss-now-playing");
     if (!now) {
@@ -24,7 +28,7 @@
     if (button) {
       button.textContent = "\u25B6";
       button.classList.remove("ss-playing");
-      const now = button.closest(".ss-row").querySelector(".ss-now-playing");
+      const now = rowOf(button).querySelector(".ss-now-playing");
       if (now) now.remove();
     }
     button = null;
@@ -34,15 +38,18 @@
   function next() {
     const track = queue.shift();
     if (!track || !button) return stop();
-    line(button.closest(".ss-row")).textContent = "\u266A " + track.title;
+    line(rowOf(button)).textContent = "\u266A " + track.title;
     audio.src = track.preview;
     audio.play().catch(stop);
   }
   audio.addEventListener("ended", next);
+  document.addEventListener("ss-plays", function (event) {
+    if (event.detail !== "album") stop();
+  });
 
   // Say why nothing plays, under the album's title.
   function say(target, text) {
-    line(target.closest(".ss-row")).textContent = text;
+    line(rowOf(target)).textContent = text;
   }
 
   document.addEventListener("click", async function (event) {
@@ -78,6 +85,8 @@
     button = target;
     button.textContent = "\u275A\u275A";
     button.classList.add("ss-playing");
+    // On an album's page: what plays under Listen stops.
+    document.dispatchEvent(new CustomEvent("ss-plays", { detail: "album" }));
     queue = tracks.slice();
     next();
   });

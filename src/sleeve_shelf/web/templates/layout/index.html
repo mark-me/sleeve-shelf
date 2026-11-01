@@ -44,7 +44,8 @@
   {% if layout %}
   <div class="ss-alert mt-3">{{ _('You are adjusting the proposal. Your shelves change only when you accept it.') }} <a href="{{ url_for('proposal.index') }}">{{ _('Back to the proposal') }}</a></div>
   {% else %}
-  <div class="ss-alert mt-3">{{ _('Every move is saved at once; a version from before is kept.') }} <a href="{{ url_for('versions.index') }}">{{ _('Versions') }}</a></div>
+  {# Worth saying once: put away for this device. #}
+  <div class="ss-alert mt-3" data-put-away="layout-saved-notice">{{ _('Every move is saved at once; a version from before is kept.') }} <a href="{{ url_for('versions.index') }}">{{ _('Versions') }}</a> <button class="ss-link-button ms-2" type="button" data-put-away-button>{{ _('Got it') }}</button></div>
   {% endif %}
   {% if rooms %}
   <nav class="ss-tabs mt-4" aria-label="{{ _('Rooms') }}">

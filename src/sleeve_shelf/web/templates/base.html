@@ -22,11 +22,18 @@
 <body>
 <div class="ss-shell">
   <header class="ss-sidebar">
-    <div class="ss-brand-row">
+    {# Search from wherever one is; Browse has the field of its own that searches while typing. #}
+    {% set top_search = nav_section and request.endpoint != 'browse.browse' %}
+    <div class="ss-brand-row{{ ' ss-with-search' if top_search }}">
       <a class="ss-brand" href="{{ url_for('index') }}">
         <img class="ss-brand-icon" src="{{ url_for('static', filename='icons/favicon.svg') }}" width="30" height="30" alt="">
-        Sleeve &amp; Shelf
+        <span class="ss-brand-name">Sleeve &amp; Shelf</span>
       </a>
+      {% if top_search %}
+      <form class="ss-top-search" method="get" action="{{ url_for('browse.browse') }}" role="search">
+        <input type="search" name="q" placeholder="{{ _('Search…') }}" aria-label="{{ _('Search by artist, album or song') }}" autocomplete="off">
+      </form>
+      {% endif %}
       <button class="ss-menu-button d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav" aria-controls="main-nav" aria-expanded="false" aria-label="{{ _('Open menu') }}">
         <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><rect width="18" height="2" rx="1" fill="#fff"/><rect y="6" width="18" height="2" rx="1" fill="#fff"/><rect y="12" width="18" height="2" rx="1" fill="#fff"/></svg>
       </button>

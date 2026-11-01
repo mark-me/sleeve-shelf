@@ -681,3 +681,34 @@ a.ss-row-title { text-decoration: none; }
 .ss-year-bar { display: block; width: 100%; border-radius: 2px 2px 0 0; background: var(--ss-bar); }
 .ss-years-axis { display: flex; justify-content: space-between; margin-top: 4px; color: var(--ss-muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
 .ss-artist-manage { max-width: 760px; }
+
+/* Search from every page, in the menu's own colours. On a phone it takes the place of the name. */
+.ss-top-search { flex: 1; min-width: 0; margin: 0 10px; }
+.ss-top-search input {
+  width: 100%; height: 38px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 16px;
+}
+.ss-top-search input::placeholder { color: rgba(255, 255, 255, 0.65); }
+.ss-top-search input:focus { outline: 2px solid var(--ss-accent); outline-offset: 1px; }
+@media (max-width: 991.98px) {
+  .ss-with-search .ss-brand-name { display: none; }
+}
+@media (min-width: 992px) {
+  .ss-brand-row.ss-with-search { flex-wrap: wrap; row-gap: 14px; }
+  .ss-top-search { flex-basis: 100%; margin: 0; }
+  .ss-top-search input { font-size: 0.9rem; }
+}
+
+/* An album's page: where it stands and its play button, first thing under the title. */
+.ss-album-where { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.ss-album-where .ss-now-playing { flex-basis: 100%; }
+.ss-album-more > summary { padding: 12px 16px; cursor: pointer; color: var(--ss-muted); font-size: 0.9rem; }
+
+/* A place that leads to a shelf is easy to tap. */
+a.ss-row-place { display: inline-flex; align-items: center; justify-content: flex-end; min-height: 44px; padding: 0 4px; font-size: 0.85rem; }
+
+/* The whole row opens the album; the artist, the place and the play button stay what they are. */
+.ss-row-opens { position: relative; }
+.ss-row-opens a.ss-row-title::after { content: ""; position: absolute; inset: 0; }
+.ss-row-opens a.ss-row-artist, .ss-row-opens a.ss-row-place, .ss-row-opens .ss-play { position: relative; z-index: 1; }
+.ss-row-opens:hover { background: var(--ss-chip); }

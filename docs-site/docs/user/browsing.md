@@ -6,7 +6,7 @@
 
 Every album has a **▶** button: it plays the album's 30-second previews from Deezer, one track after another, and shows the track playing under the title. Press it again to stop; pressing another album stops the first. When Deezer doesn't have the album, the row says so — its page may still have videos.
 
-**Search** finds artists, albums and songs across all shelves. The results follow as you type; the title opens the album's page, the artist its page, and the place beside it the shelf with the album marked. Emptying the search field takes you back to browsing.
+**Search** finds artists, albums and songs across all shelves. The results follow as you type; a row opens the album's page, the artist its page, and the place beside it the shelf with the album marked. From any other page, the search field in the menu leads here too. Emptying the search field takes you back to browsing.
 
 Every word you type has to be in the artist and title, or in the artist, title and one song together: *waits martha* finds the Tom Waits album with *Martha* on it. An album found by a song names that song under its title, with its place on the record (♪ B1 · Martha). Songs are known once the fetch run has brought the tracklists from Discogs (see [Fetching styles, years and pictures](discogs.md#fetching-styles-years-and-pictures)).
 
@@ -56,11 +56,13 @@ Credits and labels come with the fetch run; until it has run, those parts say so
 
 Open an album by its title, wherever one is listed: a search result, a shelf, its artist's page, Layout, Connections, Statistics and the lists under Discogs and in a sorting proposal. The page has three tabs: **Album**, **Statistics** and — for you as owner — **Manage**.
 
+Under the title, on every tab, stands where the album is: a button to its shelf, with the album marked. Beside it the **▶** button plays its previews.
+
 **Album** shows:
 
-- where it stands, and what it is sorted under (cluster and era band)
+- what it is sorted under (cluster and era band)
 - its original release year — from Discogs, or confirmed by you
-- its format, Discogs styles and Discogs release
+- its Discogs styles, and under **More details** its format and Discogs release
 - its **tracklist**: the songs with their place on the record and their length
 - **the same songs elsewhere**: the other albums in your collection with one of its songs, and where each stands — another version to pull from the shelf
 - **Connections**, beside the artist's name: the artist in the middle of its [connections](#connections); next to it **Discogs** opens the release on Discogs (an artist's page has the same link to the artist)

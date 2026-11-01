@@ -24,7 +24,8 @@
         {% set spot = spots.get(album.album_id) %}
         {% if spot %}
         <span class="ss-row-title mt-1">{{ _('Suggested:') }} {{ spot_text.where(spot) }}</span>
-        <span class="ss-row-title">{{ spot_text.room(spot) }}</span>
+        {% set room_line = spot_text.room(spot, true) %}
+        {% if room_line | trim %}<span class="ss-row-title">{{ room_line }}</span>{% endif %}
         {% elif album.cluster %}
         <span class="ss-row-title mt-1">{{ _('No spot: nothing stands on the shelves it could go to.') }}</span>
         {% else %}
@@ -35,6 +36,7 @@
     </div>
     {% endfor %}
   </div>
+  {{ spot_text.estimates_note(lps, spots) }}
   {% else %}
   <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('Every LP has a place on a shelf.') }}</div></div>
   {% endif %}

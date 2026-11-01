@@ -3,6 +3,7 @@
 
 {% from "_cover.html" import zoomable, zoom_dialog %}
 {% import "_spot.html" as spots %}
+{% from "_play.html" import play_button, play_script %}
 {% block content %}
 <div class="ss-page" style="max-width: 760px;">
   {% if artist %}
@@ -14,6 +15,16 @@
       <h1>{{ album.title }}</h1>
       <p class="ss-muted mb-0 mt-1">{{ artist.name if artist }}{% if album.original_release_year %} &middot; {{ album.original_release_year }}{% endif %}{% if artist %} &middot; <a href="{{ url_for('connections.index', artist=artist.id) }}">{{ _('Connections') }}</a>{% endif %}{% if album.release_id %} &middot; <a href="https://www.discogs.com/release/{{ album.release_id }}" target="_blank" rel="noopener">{{ _('Discogs') }}</a>{% endif %}</p>
     </div>
+  </div>
+
+  {# What one comes here for: where it stands, and what it sounds like. #}
+  <div class="ss-album-where mt-3" data-play-row>
+    {% if row and row.shelf_id is not none %}
+    <a class="ss-button ss-button-primary" href="{{ url_for('browse.browse', shelf=row.shelf_id) }}#album-{{ album.id }}">{{ _('Stands in') }} {{ row.cabinet }} &middot; {{ row.shelf }}</a>
+    {% else %}
+    <span class="fw-semibold">{{ _('Not on a shelf') }}</span>
+    {% endif %}
+    {{ play_button(album.id, album.title) }}
   </div>
 
   {% if error %}
@@ -92,14 +103,6 @@
 
   <div class="ss-card mt-4">
     <div class="ss-row">
-      <span class="ss-row-artist">{{ _('Where it stands') }}</span>
-      {% if row and row.shelf_id is not none %}
-      <a class="ss-row-place" href="{{ url_for('browse.browse', shelf=row.shelf_id) }}#album-{{ album.id }}">{{ row.cabinet }} &middot; {{ row.shelf }}</a>
-      {% else %}
-      <span class="ss-row-place">{{ _('Not on a shelf') }}</span>
-      {% endif %}
-    </div>
-    <div class="ss-row">
       <span class="ss-row-artist">{{ _('Sorted under') }}</span>
       <span class="ss-row-place">{% if row and (row.cluster or row.era_band) %}{{ [row.cluster, row.era_band] | select | join(' · ') }}{% else %}&mdash;{% endif %}</span>
     </div>
@@ -111,12 +114,15 @@
       </span>
     </div>
     <div class="ss-row">
-      <span class="ss-row-artist">{{ _('Format') }}</span>
-      <span class="ss-row-place">{% if album.format_tokens %}{{ album.format_tokens.qualifiers | unique | join(', ') }}{% else %}{{ _('unknown') }}{% endif %}</span>
-    </div>
-    <div class="ss-row">
       <span class="ss-row-artist">{{ _('Discogs styles') }}</span>
       <span class="ss-row-place">{{ styles | join(', ') if styles else '—' }}</span>
+    </div>
+    {# What is seldom looked up stays out of the way. #}
+    <details class="ss-album-more">
+      <summary>{{ _('More details') }}</summary>
+    <div class="ss-row">
+      <span class="ss-row-artist">{{ _('Format') }}</span>
+      <span class="ss-row-place">{% if album.format_tokens %}{{ album.format_tokens.qualifiers | unique | join(', ') }}{% else %}{{ _('unknown') }}{% endif %}</span>
     </div>
     <div class="ss-row">
       <span class="ss-row-artist">{{ _('Discogs release') }}</span>
@@ -126,6 +132,7 @@
       <span class="ss-row-place">{{ _('not linked') }}</span>
       {% endif %}
     </div>
+    </details>
   </div>
 
   {% if tracklist %}
@@ -178,4 +185,5 @@
   {% endif %}
 </div>
 {{ zoom_dialog(album.cover_url, album.cover_image_url, _('Cover of %(title)s', title=album.title)) }}
+{{ play_script(_('No previews at Deezer; there may be videos under Listen.')) }}
 {% endblock %}

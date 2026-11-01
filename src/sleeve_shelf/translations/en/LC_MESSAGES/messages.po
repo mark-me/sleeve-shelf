@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-31 10:51+0100\n"
+"POT-Creation-Date: 2026-11-01 23:22+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -459,6 +459,10 @@ msgid "The shelf then holds %(cm)s cm more than its estimated width."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_spot.html
+msgid "Some of these shelves would go over their estimated width. That says little until you measure them."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
 msgid "Put it there"
 msgstr ""
 
@@ -627,6 +631,16 @@ msgid "Discogs"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Stands in"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Not on a shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
 msgid "Moved. A version from before the move is kept under Versions."
 msgstr ""
@@ -716,16 +730,6 @@ msgid "A single or EP: it is kept outside the layout and gets no place in a sort
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
-msgid "Where it stands"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/layout/index.html
-#: src/sleeve_shelf/web/templates/moving/index.html
-msgid "Not on a shelf"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Sorted under"
 msgstr ""
 
@@ -746,11 +750,15 @@ msgid "unknown"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
-msgid "Format"
+msgid "Discogs styles"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
-msgid "Discogs styles"
+msgid "More details"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Format"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -792,6 +800,10 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #, python-format
 msgid "Cover of %(title)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "No previews at Deezer; there may be videos under Listen."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/widths.html
@@ -1196,6 +1208,15 @@ msgid "No artist matches."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
+msgid "Search…"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
+#: src/sleeve_shelf/web/templates/browse/_search.html
+msgid "Search by artist, album or song"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/base.html
 msgid "Open menu"
 msgstr ""
 
@@ -1220,10 +1241,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
 msgid "How this screen works"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/browse/_search.html
-msgid "Search by artist, album or song"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
@@ -1262,7 +1279,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
-msgid "The title opens the album, the place beside it its shelf with the album marked."
+msgid "A row opens the album, the place beside it its shelf with the album marked."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/results.html
@@ -2494,6 +2511,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Every move is saved at once; a version from before is kept."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Got it"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html

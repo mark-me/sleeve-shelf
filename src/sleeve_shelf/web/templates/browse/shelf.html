@@ -29,7 +29,7 @@
       <span class="ss-reach">&middot; {{ _('outside the sorting') }}</span>
       {% endif %}
       {% if shelf.reachability_score is not none %}
-      <span class="ss-reach">&middot; {{ _('reachability %(score)d', score=shelf.reachability_score) }}</span>
+      <span>&middot; {{ _('reachability %(score)d', score=shelf.reachability_score) }}</span>
       {% endif %}
     </span>
     <div class="ss-shelf-nav d-none d-lg-flex">{{ shelf_nav() }}</div>
@@ -59,7 +59,7 @@
     {% if loop.changed(album.cluster, album.era_band) %}
     <div class="ss-group">{{ [album.cluster, album.era_band] | select | join(' · ') }}</div>
     {% endif %}
-    <div class="ss-row" id="album-{{ album.album_id }}">
+    <div class="ss-row ss-row-opens" id="album-{{ album.album_id }}">
       {{ cover(album.cover_url, covers) }}
       <div class="ss-row-text">
         <a class="ss-row-artist" href="{{ url_for('artists.edit', artist_id=album.artist_id) }}">{{ album.artist }}</a>
