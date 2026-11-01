@@ -6,7 +6,7 @@ from flask_babel import gettext as _
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Cabinet, Shelf, in_order
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.showcase import samples, swap
+from sleeve_shelf.shelving.showcase import samples, swap
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("showcase", __name__, url_prefix="/showcase")
@@ -14,6 +14,7 @@ blueprint = Blueprint("showcase", __name__, url_prefix="/showcase")
 
 @blueprint.get("/")
 def index():
+    """The Showcase screen: each showcase shelf with the artists on it."""
     store = get_store()
     settings = load_settings(current_app.config["DATA_DIR"])
     fill = BrowseQueries(store).shelf_fill()
@@ -55,6 +56,7 @@ def index():
 
 @blueprint.post("/swap")
 def exchange():
+    """Exchange an album on a showcase shelf with one of the same artist elsewhere."""
     shown = request.form.get("shown", type=int)
     shelved = request.form.get("shelved", type=int)
     anchor = request.form.get("anchor", "")

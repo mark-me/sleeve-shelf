@@ -22,8 +22,12 @@ TRANSLATIONS = Path(__file__).resolve().parent.parent / "translations"
 
 
 def select() -> str:
-    """The language for this request: the one chosen on this device, or else the first of
-    the browser's languages there is a catalogue for."""
+    """The language for this request.
+
+    Returns:
+        The one chosen on this device, or else the first of the browser's languages there is a
+        catalogue for.
+    """
     chosen = request.cookies.get(COOKIE)
     if chosen in LANGUAGES:
         return chosen
@@ -31,9 +35,14 @@ def select() -> str:
 
 
 def compile_catalogues(directory: Path = TRANSLATIONS) -> None:
-    """Make the compiled catalogue (.mo) of each language whose .po is newer, as Flask-Babel
-    reads only those. The Docker image has them made at build time; a folder that cannot be
-    written to is left as it is."""
+    """Make the compiled catalogue (.mo) of each language whose .po is newer.
+
+    Flask-Babel reads only those. The Docker image has them made at build time; a folder that cannot
+    be written to is left as it is.
+
+    Args:
+        directory: The folder of the catalogues.
+    """
     for source in directory.glob("*/LC_MESSAGES/messages.po"):
         target = source.with_suffix(".mo")
         if target.exists() and target.stat().st_mtime >= source.stat().st_mtime:
@@ -48,20 +57,39 @@ def compile_catalogues(directory: Path = TRANSLATIONS) -> None:
 
 
 def decimal(value: float, digits: int = 1) -> str:
-    """A number as the language writes it: "39.8" in English, "39,8" in Dutch."""
+    """A number as the language writes it: "39.8" in English, "39,8" in Dutch.
+
+    Args:
+        value: The number.
+        digits: How many decimals.
+
+    Returns:
+        The number as text.
+    """
     return format_decimal(value, format="#,##0." + "0" * digits if digits else "#,##0")
 
 
 def editable(value: float) -> str:
-    """A number to put in a form field: as few decimals as it needs, and no thousands
-    separator, so it is read back as it was (a decimal comma is accepted)."""
+    """A number to put in a form field.
+
+    As few decimals as it needs, and no thousands separator, so it is read back as it was (a decimal
+    comma is accepted).
+
+    Args:
+        value: The number.
+
+    Returns:
+        The number as text.
+    """
     return format_decimal(value, format="0.###")
 
 
 @blueprint.post("/language")
 def choose():
-    """Choose the language for this device, or leave it to the browser again; back to the
-    page it was chosen on (the menu), or to Settings."""
+    """Choose the language for this device, or leave it to the browser again.
+
+    Back to the page it was chosen on (the menu), or to Settings.
+    """
     chosen = request.form.get("language", "")
     target = request.form.get("next")
     # From the menu, back to that page (or the start, should it be no page of this app);

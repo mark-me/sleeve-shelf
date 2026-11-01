@@ -5,11 +5,11 @@ from datetime import datetime
 
 import pytest
 
-from sleeve_shelf import create_app
-from sleeve_shelf.alias_groups import family_suggestions
+from sleeve_shelf.web.app import create_app
+from sleeve_shelf.library.alias_groups import family_suggestions
 from sleeve_shelf.access import set_password
 from sleeve_shelf.config import load_settings
-from sleeve_shelf.covers import ARTIST_DIR, COVER_DIR, cover_name
+from sleeve_shelf.fetching.covers import ARTIST_DIR, COVER_DIR, cover_name
 from sleeve_shelf.domain import (
     Album,
     AliasGroup,
@@ -26,7 +26,18 @@ from sleeve_shelf.domain import (
     Track,
     UnrelatedArtists,
 )
-from sleeve_shelf.network import MUSICIAN_ALBUMS, Link, Network, OnRecord, Point, Tie, TiedAlbum, build, network, on_the_record, song_key, songs_elsewhere, tied_albums, ties_of, way
+from sleeve_shelf.insights.connections import network, ties_of
+from sleeve_shelf.insights.network import (
+    Link,
+    Network,
+    Point,
+    TiedAlbum,
+    build,
+    songs_elsewhere,
+    tied_albums,
+    way,
+)
+from sleeve_shelf.insights.ties import MUSICIAN_ALBUMS, OnRecord, Tie, on_the_record, song_key
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web import login
 
@@ -42,7 +53,8 @@ def _release(release_id: int, *titles: str) -> ReleaseEnrichment:
 def _collection(tmp_path) -> JsonStore:
     """Miles Davis and his quintet (Discogs: a member), Chet Baker with his quartet (a family,
     and one name inside the other), Ella Fitzgerald sharing a song with Miles, and Tom Waits
-    tied to no one."""
+    tied to no one.
+    """
     store = JsonStore(tmp_path)
     store.save(Cluster, [Cluster(1, "Jazz", 0), Cluster(2, "Songwriters", 1)])
     store.save(AliasGroup, [AliasGroup(1, "Chet Baker")])
@@ -372,7 +384,8 @@ def test_a_label_left_out_ties_no_one_however_discogs_spells_it():
 
 def _session_collection(tmp_path, albums_on=MUSICIAN_ALBUMS):
     """A bassist without an album on enough records of two artists to be a point; a member of the
-    band and a producer on as many, who are not; Coltrane's page, and Miles' band."""
+    band and a producer on as many, who are not; Coltrane's page, and Miles' band.
+    """
     store = JsonStore(tmp_path)
     store.save(Artist, [Artist(1, "Miles Davis", discogs_artist_id=101), Artist(2, "John Coltrane", discogs_artist_id=102)])
     store.save(ArtistEnrichment, [ArtistEnrichment(101, None, None, FETCHED, member_ids=(500,))])
@@ -505,7 +518,8 @@ def test_a_joint_billing_borrows_the_picture_of_an_artist_it_names(tmp_path):
 
 def _moondog(tmp_path):
     """Moondog and Moondog Jr., one name inside the other but not related; Jr. without a picture,
-    Moondog with one; and both on one label, which is no matter of their names."""
+    Moondog with one; and both on one label, which is no matter of their names.
+    """
     store = JsonStore(tmp_path)
     store.save(Artist, [Artist(1, "Moondog (2)", discogs_artist_id=101), Artist(2, "Moondog Jr.")])
     store.save(Album, [Album(1, 1, "Moondog", release_id=1), Album(2, 2, "Songs", release_id=2)])

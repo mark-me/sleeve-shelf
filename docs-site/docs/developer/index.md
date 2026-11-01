@@ -25,6 +25,10 @@ Sorting follows the real shelves
 Tests accompany every feature
 :   They live in `tests/`, use real files in `tmp_path`, and drive the web layer through Flask's test client.
 
+## 📚 Reference
+
+The [Reference](reference/domain.md) pages are generated from the docstrings of the domain, the sorting engine, the store and the network; the pages around them explain how it fits together. Docstrings follow the Google style, and `uv run python -m ruff check src tests` and `tests/test_architecture.py` check them.
+
 ## 🗂️ The requirements document
 
 `docs/requirements.md` in the repository is the source of truth for scope, sorting logic, data model, and every screen. It moves with the code: a change in behaviour is reflected there in the same piece of work, and its last section, *Open questions*, lists what is undecided.

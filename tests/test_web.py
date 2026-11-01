@@ -5,7 +5,9 @@ import io
 import pytest
 from openpyxl import Workbook
 
-from sleeve_shelf import create_app, main
+from sleeve_shelf.cli import main
+
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.domain import Album, Shelf
 from sleeve_shelf.persistence import JsonStore
 
@@ -541,7 +543,7 @@ def test_the_search_fields_search_while_typing(client):
 
 
 def test_the_waiting_counts_are_kept_until_something_changes(client):
-    from sleeve_shelf.web.waiting import waiting_counts
+    from sleeve_shelf.shelving.waiting import waiting_counts
 
     _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
     store = JsonStore(client.application.config["DATA_DIR"])

@@ -1,5 +1,6 @@
 """Read queries behind Browse/Search: the collection in physical shelf order."""
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 
@@ -19,20 +20,48 @@ from sleeve_shelf.persistence.store import JsonStore
 
 @dataclass(frozen=True, slots=True)
 class ShelfSummary:
-    """A shelf as a stop in the crate-digging order."""
+    """A shelf as a stop in the crate-digging order.
+
+    Attributes:
+        shelf_id: The shelf.
+        cabinet: The name of its cabinet.
+        shelf: Its name.
+        reachability_score: The reachability score: a whole number, from the workbook or entered by hand; it does
+            not steer the sorting.
+        album_count: How many albums it holds.
+        outside_sorting: The cabinet is kept outside the sorting: not part of the sorted collection.
+    """
 
     shelf_id: int
     cabinet: str
     shelf: str
     reachability_score: int | None
     album_count: int
-    # The cabinet is kept outside the sorting: not part of the sorted collection.
     outside_sorting: bool = False
 
 
 @dataclass(frozen=True, slots=True)
 class AlbumRow:
-    """An album with everything Browse/Search shows about it."""
+    """An album with everything Browse/Search shows about it.
+
+    Attributes:
+        album_id: The album.
+        artist: The artist's name.
+        title: The title.
+        year: The original year.
+        cluster: The cluster's name.
+        era_band: The era band's label.
+        shelf_id: The shelf it stands on; None without a place.
+        cabinet: The name of that shelf's cabinet.
+        shelf: The name of that shelf.
+        is_lp: Whether it is an LP.
+        artist_id: The artist.
+        cover_url: The small cover.
+        added_on: The day a sync or import added the album; None for one that came with the
+            workbook.
+        tracks: In search results: the songs that matched, as (position, title), when the artist and
+            title alone did not.
+    """
 
     album_id: int
     artist: str
@@ -46,15 +75,17 @@ class AlbumRow:
     is_lp: bool = True
     artist_id: int | None = None
     cover_url: str | None = None
-    # The day a sync or import added the album; None for one that came with the workbook.
     added_on: date | None = None
-    # In search results: the songs that matched, as (position, title), when the artist and
-    # title alone did not.
     tracks: tuple[tuple[str, str], ...] = ()
 
 
 class BrowseQueries:
-    """Shelf-order and search queries over the stored collection."""
+    """Shelf-order and search queries over the stored collection.
+
+    Args:
+        store: The store of the collection.
+        placements: The current layout, or a proposal kept next to it.
+    """
 
     def __init__(self, store: JsonStore, placements: type[Placement] = Placement) -> None:
         self._store = store
@@ -62,7 +93,11 @@ class BrowseQueries:
         self._placements = placements
 
     def shelves(self) -> list[ShelfSummary]:
-        """All shelves in physical order, with how many albums each holds."""
+        """All shelves in physical order, with how many albums each holds.
+
+        Returns:
+            The shelves.
+        """
         rows = self._store.query(
             f"""
             {self._located_albums()}
@@ -81,7 +116,11 @@ class BrowseQueries:
         return [ShelfSummary(*row) for row in rows]
 
     def shelf_fill(self) -> dict[int, tuple[int, float]]:
-        """Per shelf that holds anything: the number of albums and their summed width in cm."""
+        """Per shelf that holds anything: the number of albums and their summed width.
+
+        Returns:
+            The number and the width in cm, by shelf id.
+        """
         rows = self._store.query(
             f"""
             {self._located_albums()}
@@ -94,25 +133,81 @@ class BrowseQueries:
         return {shelf_id: (count, width) for shelf_id, count, width in rows}
 
     def shelf_albums(self, shelf_id: int) -> list[AlbumRow]:
-        """The albums on one shelf, in the order they stand there."""
+        """The albums on one shelf, in the order they stand there.
+
+        Args:
+            shelf_id: The shelf.
+
+        Returns:
+            The albums.
+        """
         return self._albums("WHERE shelf_id = ?", [shelf_id])
 
     def artist_albums(self, artist_id: int) -> list[AlbumRow]:
-        """All albums of one artist, placed or not."""
+        """All albums of one artist, placed or not.
+
+        Args:
+            artist_id: The artist.
+
+        Returns:
+            The albums.
+        """
         return self._albums("WHERE artist_id = ?", [artist_id])
 
     def everything(self) -> list[AlbumRow]:
-        """Every album, placed or not, in shelf order."""
+        """Every album, placed or not, in shelf order.
+
+        Returns:
+            The albums.
+        """
         return self._albums("", [])
 
+    def by_shelf(self) -> dict[int, list[AlbumRow]]:
+        """The albums per shelf, each in the order they stand there: one query for all shelves.
+
+        Returns:
+            The albums by shelf id, only of the shelves that hold any.
+        """
+        found: dict[int, list[AlbumRow]] = {}
+        for row in self._albums("WHERE shelf_id IS NOT NULL", []):
+            found.setdefault(row.shelf_id, []).append(row)
+        return found
+
+    def albums(self, album_ids: Iterable[int]) -> dict[int, AlbumRow]:
+        """These albums, for a page that names only some, rather than all there are.
+
+        Args:
+            album_ids: The albums.
+
+        Returns:
+            The albums by id.
+        """
+        wanted = sorted(set(album_ids))
+        if not wanted:
+            return {}
+        marks = ", ".join("?" for _ in wanted)
+        return {row.album_id: row for row in self._albums(f"WHERE located.album_id IN ({marks})", wanted)}
+
     def unplaced(self) -> list[AlbumRow]:
-        """Albums without a spot on any shelf: what was added last first, then the rest."""
+        """Albums without a spot on any shelf: what was added last first, then the rest.
+
+        Returns:
+            The albums.
+        """
         rows = self._albums("WHERE shelf_id IS NULL", [])
         return sorted(rows, key=lambda row: -(row.added_on.toordinal() if row.added_on else 0))
 
     def search(self, text: str) -> list[AlbumRow]:
-        """Albums whose artist and title contain every word of the text, or whose artist,
-        title and one of its songs do; such an album comes with the songs that matched."""
+        """Albums whose artist and title contain every word of the text, or with one of its songs.
+
+        Such an album comes with the songs that matched.
+
+        Args:
+            text: What was typed.
+
+        Returns:
+            The albums.
+        """
         terms = text.split()
         if not terms:
             return []

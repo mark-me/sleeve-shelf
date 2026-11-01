@@ -15,8 +15,7 @@ from flask import (
 from flask_babel import gettext as _
 
 from sleeve_shelf.config import load_settings, save_settings
-from sleeve_shelf.covers import image_paths, missing_images, stored_names
-from sleeve_shelf.discogs_import import (
+from sleeve_shelf.fetching.discogs_import import (
     confirm_match,
     import_discogs_collection,
     keep_departed_album,
@@ -26,18 +25,14 @@ from sleeve_shelf.discogs_import import (
 from sleeve_shelf.domain import (
     Album,
     Artist,
-    ArtistEnrichment,
     Cabinet,
     MatchProposal,
     Placement,
-    ReleaseEnrichment,
     Shelf,
     find_by_id,
 )
-from sleeve_shelf.enrichment import releases_to_fetch
+from sleeve_shelf.fetching.overview import fetch_overview
 from sleeve_shelf.ingestion.discogs_api import (
-    SECONDS_BETWEEN_IMAGES,
-    SECONDS_BETWEEN_REQUESTS,
     DiscogsClient,
 )
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem, read_collection
@@ -119,27 +114,15 @@ def _step_states(job: dict, fetch_open: bool) -> dict[str, str]:
 
 @blueprint.get("/")
 def index(error: str | None = None, token_error: str | None = None, status: int = 200):
+    """The Discogs screen.
+
+    Args:
+        error: A message for the top of the page.
+        token_error: A message at the token field.
+        status: The status of the answer.
+    """
     store = get_store()
     settings = load_settings(_data_dir())
-    albums = store.load(Album)
-    artist_list = store.load(Artist)
-    artists = {artist.id: artist.name for artist in artist_list}
-    linked = {album.release_id for album in albums if album.release_id is not None}
-    # A release fetched before tracklists were kept is asked for again, for its tracklist.
-    new_ids, tracklist_ids = releases_to_fetch(
-        albums, {release.release_id: release for release in store.load(ReleaseEnrichment)}
-    )
-    to_fetch = new_ids | tracklist_ids
-    by_id = {album.id: album for album in albums}
-    proposals = [
-        {
-            "proposal": proposal,
-            "album_artist": artists.get(by_id[proposal.album_id].artist_id, ""),
-            "album_title": by_id[proposal.album_id].title,
-        }
-        for proposal in store.load(MatchProposal)
-        if proposal.album_id in by_id
-    ]
     token = settings.discogs_token
     # An export that was uploaded but not imported yet: what importing it would do.
     preview = None
@@ -150,67 +133,18 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
         _clear_pending()
     if pending is not None:
         preview = import_discogs_collection(store, pending, settings.width_constants, dry_run=True)
-    named = {a.discogs_artist_id for a in artist_list if a.discogs_artist_id is not None}
-    pictures_by_id = {p.discogs_artist_id: p for p in store.load(ArtistEnrichment)}
-    pictured = set(pictures_by_id)
     job = _job().status()
-    pictures_stored = store.load(ArtistEnrichment)
-    images = image_paths(albums, pictures_stored)
-    images_missing = len(missing_images(store, albums, pictures_stored))
-    names = stored_names(store.data_dir)
-    images_stored = sum(path in names for path in images.values())
-    to_fetch_pictures = sum(
-        1
-        for a in artist_list
-        if a.discogs_artist_id is not None
-        and (
-            a.discogs_artist_id not in pictures_by_id
-            or pictures_by_id[a.discogs_artist_id].member_ids is None
-        )
-    )
-    gone = [
-        {"album": album, "artist": artists.get(album.artist_id, "")}
-        for album in albums
-        if album.left_discogs and not album.kept_after_discogs
-    ]
-    kept = [
-        {"album": album, "artist": artists.get(album.artist_id, "")}
-        for album in albums
-        if album.left_discogs and album.kept_after_discogs
-    ]
+    overview = fetch_overview(store)
+    # A running job knows how far each part is more precisely.
+    for part in ("albums", "pictures", "covers"):
+        overview[f"{part}_progress"] = job[part] or overview[f"{part}_progress"]
     return (
         render_template(
             "discogs/index.html",
-            album_count=len(albums),
-            linked_count=sum(album.release_id is not None for album in albums),
-            fetched_count=len(linked - to_fetch),
-            to_fetch_count=len(to_fetch),
+            **overview,
             preview=preview,
-            # Whether anything is left to fetch, which a round would do.
-            fetch_open=bool(to_fetch or to_fetch_pictures or images_missing),
-            steps=_step_states(job, bool(to_fetch or to_fetch_pictures or images_missing)),
-            pictures_to_fetch_count=to_fetch_pictures,
-            # How far each part is, as [done, total]; a running job knows it more precisely.
-            albums_progress=job["albums"] or [len(linked - to_fetch), len(linked)],
-            pictures_progress=job["pictures"] or [len(named & pictured), len(named)],
-            covers_to_fetch_count=images_missing,
-            covers_progress=job["covers"] or [images_stored, len(images)],
-            covers_gone_count=len(images) - images_stored - images_missing,
-            unnamed_count=sum(artist.discogs_artist_id is None for artist in artist_list),
-            minutes=ceil(
-                (
-                    (2 * len(new_ids) + len(tracklist_ids) + len(named - pictured))
-                    * SECONDS_BETWEEN_REQUESTS
-                    # Covers and pictures that are still to be named come on top of these.
-                    + images_missing * SECONDS_BETWEEN_IMAGES
-                )
-                / 60
-            ),
+            steps=_step_states(job, overview["fetch_open"]),
             minutes_left=ceil(job["seconds_left"] / 60),
-            seconds_per_lookup=SECONDS_BETWEEN_REQUESTS,
-            proposals=proposals,
-            gone=gone,
-            kept=kept,
             masked_token=f"••••{token[-4:]}" if token else None,
             job=job,
             error=error,
@@ -222,6 +156,7 @@ def index(error: str | None = None, token_error: str | None = None, status: int 
 
 @blueprint.post("/import")
 def upload():
+    """Keep an uploaded export, to confirm after seeing what importing it would do."""
     file = request.files.get("export")
     if file is None or not file.filename:
         return index(error=_("Choose your Discogs export to upload."), status=400)
@@ -242,8 +177,10 @@ def upload():
 
 @blueprint.post("/sync")
 def sync():
-    """Start a round: fetch the collection from Discogs, take it over, and fetch what the
-    cache still lacks — all in the background, the screen showing how far it is."""
+    """Start a round: fetch the collection from Discogs, take it over, and fetch what the cache lacks.
+
+    All in the background, the screen showing how far it is.
+    """
     settings = load_settings(_data_dir())
     if not settings.discogs_token:
         return index(error=_("Set your Discogs token first."), status=400)
@@ -255,6 +192,7 @@ def sync():
 
 @blueprint.post("/import/confirm")
 def confirm_import():
+    """Import the export that was uploaded."""
     try:
         pending = _pending_items()
     except ValueError as error:
@@ -280,6 +218,7 @@ def discard_import():
 
 @blueprint.post("/token")
 def save_token():
+    """Keep the Discogs token."""
     token = request.form.get("token", "").strip()
     if not token:
         return index(token_error=_("Paste your Discogs personal access token."), status=400)
@@ -291,6 +230,7 @@ def save_token():
 
 @blueprint.post("/enrich/start")
 def start_enrichment():
+    """Start fetching what the cache still lacks."""
     settings = load_settings(_data_dir())
     if not settings.discogs_token:
         return index(token_error=_("Set your Discogs token first."), status=400)
@@ -301,30 +241,46 @@ def start_enrichment():
 
 @blueprint.post("/enrich/stop")
 def stop_enrichment():
+    """Stop the round that is running."""
     _job().stop()
     return redirect(url_for("discogs.index") + "#round")
 
 
 @blueprint.get("/enrich/status")
 def enrichment_status():
+    """How far the round is, for the screen's script."""
     return jsonify(_job().status())
 
 
 @blueprint.post("/matches/<int:album_id>/accept")
 def accept_match(album_id: int):
+    """Accept a proposed match.
+
+    Args:
+        album_id: The album.
+    """
     confirm_match(get_store(), album_id, load_settings(_data_dir()).width_constants)
     return redirect(url_for("discogs.index") + "#waiting")
 
 
 @blueprint.post("/matches/<int:album_id>/reject")
 def decline_match(album_id: int):
+    """Turn a proposed match down.
+
+    Args:
+        album_id: The album.
+    """
     reject_match(get_store(), album_id, load_settings(_data_dir()).width_constants)
     return redirect(url_for("discogs.index") + "#waiting")
 
 
 @blueprint.route("/gone/<int:album_id>/remove", methods=["GET", "POST"])
 def remove_gone(album_id: int):
-    """Ask before removing an album that left the Discogs collection, then remove it."""
+    """Ask before removing an album that left the Discogs collection, then remove it.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     album = next((a for a in store.load(Album) if a.id == album_id and a.left_discogs), None)
     if album is None:
@@ -343,13 +299,22 @@ def remove_gone(album_id: int):
 
 @blueprint.post("/gone/<int:album_id>/keep")
 def keep_gone(album_id: int):
-    """The user still owns an album that left Discogs: stop asking about it."""
+    """The user still owns an album that left Discogs: stop asking about it.
+
+    Args:
+        album_id: The album.
+    """
     keep_departed_album(get_store(), album_id)
     return redirect(url_for("discogs.index") + "#gone")
 
 
 @blueprint.post("/gone/<int:album_id>/ask-again")
 def ask_again(album_id: int):
+    """List an album that left Discogs as gone once more.
+
+    Args:
+        album_id: The album.
+    """
     keep_departed_album(get_store(), album_id, keep=False)
     return redirect(url_for("discogs.index") + "#gone")
 

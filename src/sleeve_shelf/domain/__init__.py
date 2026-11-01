@@ -10,6 +10,9 @@ from sleeve_shelf.domain.catalog import (
     FormatTokens,
     Style,
     WidthConstants,
+    artist_ids_by_discogs_id,
+    artists_by_discogs_id,
+    clusters_in_order,
 )
 from sleeve_shelf.domain.clustering import (
     ArtistClusterAssignment,
@@ -25,8 +28,11 @@ from sleeve_shelf.domain.enrichment import (
     ReleaseEnrichment,
     ReleaseLabel,
     Track,
+    WRITER_ROLE,
+    credits_by_release,
 )
 from sleeve_shelf.domain.lookup import find_by_id
+from sleeve_shelf.domain.names import plain_name, sort_name
 from sleeve_shelf.domain.placement import (
     Placement,
     PlacementSource,
@@ -77,7 +83,14 @@ __all__ = [
     "ReleaseLabel",
     "Track",
     "WidthConstants",
+    "WRITER_ROLE",
+    "artist_ids_by_discogs_id",
+    "artists_by_discogs_id",
+    "clusters_in_order",
+    "credits_by_release",
     "in_order",
     "move",
+    "plain_name",
+    "sort_name",
     "settle_order",
 ]

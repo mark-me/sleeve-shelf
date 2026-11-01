@@ -6,8 +6,8 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 
 from sleeve_shelf.domain import Cabinet, Placement, ProposedPlacement, Shelf, in_order
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries
-from sleeve_shelf.placing import ShelvesChanged, move_albums, rearrange_shelves
-from sleeve_shelf.proposal import has_proposal
+from sleeve_shelf.shelving.placing import ShelvesChanged, move_albums, rearrange_shelves
+from sleeve_shelf.shelving.proposal import has_proposal
 from sleeve_shelf.web.context import get_store, shelf_fill
 
 blueprint = Blueprint("layout", __name__, url_prefix="/layout")
@@ -40,10 +40,12 @@ def _blocks(rows: list[AlbumRow]) -> list[dict]:
 
 @blueprint.get("/")
 def index():
+    """The Layout screen: the shelves of one room, as blocks to drag."""
     store = get_store()
     entity, layout = _entity(store)
     queries = BrowseQueries(store, entity)
     fill = queries.shelf_fill()
+    on_shelf = queries.by_shelf()
     shelves = store.load(Shelf)
     all_cabinets = in_order(store.load(Cabinet))
     # One tab per room, in the order the rooms first occur; no tabs while there is only one.
@@ -58,7 +60,7 @@ def index():
                 {
                     "shelf": shelf,
                     **shelf_fill(fill, shelf.id),
-                    "blocks": _blocks(queries.shelf_albums(shelf.id)),
+                    "blocks": _blocks(on_shelf.get(shelf.id, [])),
                 }
                 for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
             ],
@@ -97,7 +99,9 @@ def index():
 @blueprint.get("/go")
 def go():
     """Go to cabinet…: to a cabinet, on the tab of its room, or to the albums on no shelf.
-    The page itself goes nowhere the list names; the address is made here."""
+
+    The page itself goes nowhere the list names; the address is made here.
+    """
     store = get_store()
     _, layout = _entity(store)
     to = request.args.get("to", "")
@@ -113,8 +117,8 @@ def go():
 def send():
     """Stand albums at the end of a shelf, in the order given: {albums: [ids], shelf: id}.
 
-    For a move without dragging: the exact spot is then set by dragging within the shelf.
-    Shelf 0 is the tray, which takes the albums off their shelf.
+    For a move without dragging: the exact spot is then set by dragging within the shelf. Shelf 0 is
+    the tray, which takes the albums off their shelf.
     """
     store = get_store()
     entity, _layout = _entity(store)

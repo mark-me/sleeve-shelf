@@ -18,7 +18,7 @@ flowchart LR
 2. **`order_albums`** puts every album in its place in one long row: by the clusters' order and era band; within a band the units, and within a unit the albums, keep the order they stand in now (`standing`, each album's place along the walked shelves, from `proposal._standing`). Only what stands nowhere yet goes by unit name, or by original year and title, before the first standing one the rule puts after it (`_keep_order`). `sort_collection(store, unplaced)` treats albums being moved as standing nowhere.
 3. **`place`** fills the shelves with that row, in walking order. A shelf takes albums until the next one no longer fits; a shelf once passed is not gone back to. Location rules restrict albums to a cabinet, and a cabinet a rule points to takes only its bound albums. What doesn't fit is returned, not forced in.
 
-`proposal.py` runs these steps and saves the result as a `ProposedPlacement`; `taking_part.py` decides which albums take part (LPs, and whatever already stands on a shelf) and which shelves are filled (not a showcase, not a cabinet kept outside the sorting, not a shelf without a width).
+`shelving/proposal.py` runs these steps and saves the result as a `ProposedPlacement`; `library/taking_part.py` decides which albums take part (LPs, and whatever already stands on a shelf) and which shelves are filled (not a showcase, not a cabinet kept outside the sorting, not a shelf without a width).
 
 ## 🧲 Clusters from styles and connections
 

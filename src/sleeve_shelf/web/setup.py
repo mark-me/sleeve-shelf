@@ -8,7 +8,7 @@ from flask import Blueprint, current_app, redirect, render_template, request, ur
 from flask_babel import gettext as _
 from openpyxl.utils.exceptions import InvalidFileException
 
-from sleeve_shelf.collection import load_layout, start_empty
+from sleeve_shelf.library.collection import load_layout, start_empty
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.ingestion.initial_load import InitialLoad, load_initial_layout
 from sleeve_shelf.web.context import get_store, has_collection
@@ -33,22 +33,26 @@ def _read(path: Path) -> InitialLoad:
 
 @blueprint.get("/")
 def welcome():
+    """The first page of the wizard."""
     return render_template("setup/welcome.html")
 
 
 @blueprint.post("/start")
 def start_without_workbook():
+    """Begin a collection without a workbook."""
     start_empty(get_store())
     return redirect(url_for("dashboard.index"))
 
 
 @blueprint.get("/upload")
 def upload_form():
+    """The page to upload a workbook on."""
     return render_template("setup/upload.html", has_collection=has_collection())
 
 
 @blueprint.post("/upload")
 def upload():
+    """Keep an uploaded workbook and show what it holds, to confirm."""
     file = request.files.get("workbook")
     if file is None or not file.filename:
         return _upload_error(_("Choose a workbook to upload."))
@@ -87,6 +91,7 @@ def upload():
 
 @blueprint.post("/confirm")
 def confirm():
+    """Load the workbook that was uploaded."""
     pending = _pending_path()
     if not pending.exists():
         return redirect(url_for("setup.upload_form"))

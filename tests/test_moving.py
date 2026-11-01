@@ -2,7 +2,7 @@
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.config import Settings
 from sleeve_shelf.domain import (
     Album,
@@ -15,10 +15,10 @@ from sleeve_shelf.domain import (
     Shelf,
     ShelfType,
 )
-from sleeve_shelf.moving import OFF_SHELF, How, Kind, carry_out, find, plan, selection
+from sleeve_shelf.shelving.moving import OFF_SHELF, How, Kind, carry_out, find, plan, selection
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.placing import ShelvesChanged
-from sleeve_shelf.versions import list_versions
+from sleeve_shelf.shelving.placing import ShelvesChanged
+from sleeve_shelf.library.versions import list_versions
 
 CONSTANTS = Settings().width_constants
 
@@ -26,7 +26,8 @@ CONSTANTS = Settings().width_constants
 def _collection(tmp_path, last_shelf_cm=1.5):
     """Jazz (Chet Baker, a family, and Miles Davis) scattered over two cabinets and a
     showcase; Rock (Tindersticks) in the first cabinet. Every album is 0.5 cm, so a shelf of
-    2 cm holds four."""
+    2 cm holds four.
+    """
     store = JsonStore(tmp_path)
     store.save(Cluster, [Cluster(1, "Jazz", 0), Cluster(2, "Rock", 1)])
     store.save(AliasGroup, [AliasGroup(1, "Chet Baker")])

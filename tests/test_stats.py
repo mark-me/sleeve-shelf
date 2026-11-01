@@ -4,9 +4,9 @@ from datetime import date, datetime
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.access import set_password
-from sleeve_shelf.collection_stats import album_figures, artist_figures, collection_figures, from_the_shelf
+from sleeve_shelf.insights.collection_stats import album_figures, artist_figures, collection_figures, from_the_shelf
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -38,7 +38,8 @@ def _release(release_id, credits=(), labels=(), songs=()):
 
 def _collection(tmp_path) -> JsonStore:
     """Miles Davis with three albums, a bassist without an album of his own on all of them and
-    on Coltrane's; Coltrane also on one of Miles'; a compilation that counts for no one."""
+    on Coltrane's; Coltrane also on one of Miles'; a compilation that counts for no one.
+    """
     store = JsonStore(tmp_path)
     store.save(Cluster, [Cluster(1, "Jazz", 0)])
     store.save(

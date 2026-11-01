@@ -29,6 +29,15 @@ class DeezerError(Exception):
 
 @dataclass(frozen=True, slots=True)
 class DeezerAlbum:
+    """An album at Deezer.
+
+    Attributes:
+        id: Its id at Deezer.
+        title: Its title.
+        artist: Its artist.
+        cover: The address of its cover, if any.
+    """
+
     id: int
     title: str
     artist: str
@@ -36,23 +45,45 @@ class DeezerAlbum:
 
     @property
     def link(self) -> str:
+        """The album's page at Deezer."""
         return f"https://www.deezer.com/album/{self.id}"
 
 
 @dataclass(frozen=True, slots=True)
 class DeezerTrack:
+    """A track at Deezer.
+
+    Attributes:
+        title: Its title.
+        seconds: Its length.
+        preview: The 30-second preview; None when Deezer has none for this track.
+    """
+
     title: str
     seconds: int
-    # The 30-second preview; None when Deezer has none for this track.
     preview: str | None
 
 
 class DeezerClient:
+    """Looks albums and their tracks up at Deezer, which needs no key.
+
+    Args:
+        fetch: What fetches an address; given by the tests.
+    """
+
     def __init__(self, fetch: Callable[[str], bytes] | None = None) -> None:
         self._fetch = fetch or _fetch
 
     def find_album(self, artist: str, title: str) -> DeezerAlbum | None:
-        """The album at Deezer that is ours, going by artist and title; None when none is."""
+        """The album at Deezer that is ours, going by artist and title.
+
+        Args:
+            artist: The artist.
+            title: The title.
+
+        Returns:
+            The album, or None when none is ours.
+        """
         first = first_artist(artist)
         queries = [f'artist:"{_plain(artist)}" album:"{_plain(title)}"']
         if first != artist:
@@ -67,6 +98,14 @@ class DeezerClient:
         return None
 
     def tracks(self, album_id: int) -> list[DeezerTrack]:
+        """The tracks of an album at Deezer.
+
+        Args:
+            album_id: The album at Deezer.
+
+        Returns:
+            Its tracks.
+        """
         data = self._get(f"/album/{album_id}/tracks", limit=100).get("data") or []
         return [
             DeezerTrack(track.get("title") or "", int(track.get("duration") or 0), track.get("preview") or None)
@@ -85,9 +124,19 @@ class DeezerClient:
 
 
 def best_album(artist: str, title: str, candidates: list[dict]) -> DeezerAlbum | None:
-    """The candidate that is our album: close in title and in artist, and not a live
-    record, remix or soundtrack when ours is not. On a tie the shortest title, the plain
-    edition, wins."""
+    """The candidate that is our album.
+
+    Close in title and in artist, and not a live record, remix or soundtrack when ours is not. On a
+    tie the shortest title, the plain edition, wins.
+
+    Args:
+        artist: Our artist.
+        title: Our title.
+        candidates: The albums Deezer gave, as it gives them.
+
+    Returns:
+        The album, or None when none will do.
+    """
     first = first_artist(artist)
     best, best_key = None, None
     for candidate in candidates:
@@ -114,7 +163,14 @@ def best_album(artist: str, title: str, candidates: list[dict]) -> DeezerAlbum |
 
 
 def first_artist(artist: str) -> str:
-    """The first of several artists credited together: "Duke Ellington, Charles Mingus"."""
+    """The first of several artists credited together: "Duke Ellington, Charles Mingus".
+
+    Args:
+        artist: The artists as one name.
+
+    Returns:
+        The first of them.
+    """
     # Spaces made single first, so the patterns below need no \\s* or \\s+, which take
     # quadratic time on a long run of spaces.
     name = re.sub(r"\(\d+\)$", "", " ".join(artist.split())).rstrip()
@@ -128,9 +184,11 @@ def _plain(text: str) -> str:
 
 
 def _without_brackets(text: str) -> str:
-    """The text without what stands between an opening bracket and the next closing one —
-    "(2)", "(Remastered)", "[Live]" — in one pass: a pattern for it takes quadratic time on
-    many opening brackets that are never closed. An opening bracket that is not closed stays."""
+    """The text without what stands between an opening bracket and the next closing one.
+
+    Such as "(2)", "(Remastered)", "[Live]", in one pass: a pattern for it takes quadratic time on
+    many opening brackets that are never closed. An opening bracket that is not closed stays.
+    """
     next_close: list[int | None] = [None] * (len(text) + 1)
     for index in range(len(text) - 1, -1, -1):
         next_close[index] = index if text[index] in ")]" else next_close[index + 1]

@@ -5,9 +5,9 @@ from datetime import datetime
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.config import load_settings
-from sleeve_shelf.covers import cover_name
+from sleeve_shelf.fetching.covers import cover_name
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -25,7 +25,7 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.ingestion.discogs_api import DiscogsError
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.versions import list_versions
+from sleeve_shelf.library.versions import list_versions
 
 EXPORT = (
     "Catalog#,Artist,Title,Label,Format,Rating,Released,release_id\n"
@@ -499,16 +499,19 @@ def test_a_running_round_shows_its_step_and_a_stop_button_and_starts_no_second(a
     import threading
 
     gate = threading.Event()
+    begun = threading.Event()
 
     class Slow(_Client):
         def collection(self, progress=None):
             progress(1, 3, 250)
+            begun.set()
             gate.wait(5)
             return COLLECTION
 
     app.config["DISCOGS_CLIENT_FACTORY"] = Slow
     client.post("/discogs/token", data={"token": "secret"})
     client.post("/discogs/sync")
+    assert begun.wait(5)
     try:
         page = client.get("/discogs/").text
         assert 'ss-step-is-now" id="step-collection"' in page and 'data-part="collection"' in page

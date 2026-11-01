@@ -1,13 +1,17 @@
-"""Connections: how the artists of the collection are tied together, as a network around one
-artist or over the whole collection. Visitors may look too."""
+"""Connections: how the artists of the collection are tied together.
+
+As a network around one artist or over the whole collection. Visitors may look too.
+"""
 
 from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
-from sleeve_shelf.artists import picture_thumb
-from sleeve_shelf.domain import Artist, ArtistEnrichment
-from sleeve_shelf.network import Tie, network, set_unrelated, ties_of, unrelated_pairs, way
+from sleeve_shelf.library.artists import picture_thumb
+from sleeve_shelf.domain import Artist, ArtistEnrichment, sort_name
+from sleeve_shelf.insights.connections import network, set_unrelated, ties_of, unrelated_pairs
+from sleeve_shelf.insights.network import way
+from sleeve_shelf.insights.ties import Tie
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.sorting.families import names_inside, sort_name
+from sleeve_shelf.sorting.families import names_inside
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.covers import local_cover
 
@@ -19,6 +23,7 @@ FOUND_LIMIT = 20
 
 @blueprint.get("/")
 def index():
+    """The Connections screen: the whole collection, one artist, or the way between two."""
     store = get_store()
     shown = network(store)
     points = {point.artist_id: point for point in shown.points}
@@ -36,6 +41,9 @@ def index():
     clusters = dict(shown.clusters)
     switched, ties_param = _switched(artist_id is not None)
     the_way = way(shown, artist_id, to_id, switched) if to_id is not None else None
+    # A label ties an artist to many: they are listed only when asked for.
+    left_out = frozenset() if Tie.LABEL in switched else frozenset({Tie.LABEL})
+    around = ties_of(store, shown, artist_id, left_out) if artist_id is not None else []
     return render_template(
         "connections/index.html",
         ties=list(Tie),
@@ -45,12 +53,11 @@ def index():
         artist=points.get(artist_id),
         cluster=clusters.get(points[artist_id].cluster_id) if artist_id is not None else None,
         steps=2 if request.args.get("steps") == "2" else 1,
-        # A label ties an artist to many: they are listed only when asked for.
-        around=ties_of(store, shown, artist_id, frozenset() if Tie.LABEL in switched else frozenset({Tie.LABEL}))
-        if artist_id is not None
-        else [],
+        around=around,
         # Where each album stands, to take it from the shelf.
-        places={row.album_id: row for row in BrowseQueries(store).everything()} if artist_id is not None else {},
+        places=BrowseQueries(store).albums(
+            tied_album.album_id for tied in around for tied_album in (*tied.theirs, *tied.mine)
+        ),
         clusters=clusters,
         search_text=text,
         found=found,
@@ -70,8 +77,10 @@ def index():
 
 @blueprint.post("/unrelated")
 def unrelated():
-    """A name inside another does not make these two related, or does after all (undo); back to
-    the artist it was said on. Nothing but the name's tie goes: what Discogs lists stays."""
+    """A name inside another does not make these two related, or does after all (undo).
+
+    Back to the artist it was said on. Nothing but the name's tie goes: what Discogs lists stays.
+    """
     store = get_store()
     artist_id = request.form.get("artist", type=int)
     other_id = request.form.get("other", type=int)
@@ -96,10 +105,11 @@ def _matching(shown, text: str, leave_out: int | None = None) -> list:
 
 
 def _switched(around_one: bool) -> tuple[set[Tie], str | None]:
-    """The kinds of tie switched on: as the link says once the user switched one, or else the
-    defaults — everything but Same label, which ties an artist to many, and Same song only
-    around one artist, as over the whole collection it ties almost every jazz artist to every
-    other."""
+    """The kinds of tie switched on: as the link says once the user switched one, or else the defaults.
+
+    The defaults are everything but Same label, which ties an artist to many, and Same song only
+    around one artist, as over the whole collection it ties almost every jazz artist to every other.
+    """
     given = request.args.get("ties")
     if given is None:
         return {tie for tie in Tie if tie is not Tie.LABEL and (around_one or tie is not Tie.SONGS)}, None
@@ -136,11 +146,13 @@ def data():
 
 
 def _pictures(store) -> dict[int, tuple[str, bool]]:
-    """The small picture of each artist that has one kept in the data directory, as (address,
-    borrowed): the owner's own, else the one a sync stored. One still at Discogs is left out —
-    the network draws on a canvas, which takes images from the app itself only, and it works
-    offline too. A joint billing has no page on Discogs, so no picture of its own: it borrows
-    that of the first artist it names who has one."""
+    """The small picture of each artist that has one kept in the data directory.
+
+    As (address, borrowed): the owner's own, else the one a sync stored. One still at Discogs is
+    left out: the network draws on a canvas, which takes images from the app itself only, and it
+    works offline too. A joint billing has no page on Discogs, so no picture of its own: it borrows
+    that of the first artist it names who has one.
+    """
     if not store.exists(Artist):
         return {}
     thumbs = {

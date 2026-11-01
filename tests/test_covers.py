@@ -4,8 +4,8 @@ from datetime import datetime
 
 import pytest
 
-from sleeve_shelf import create_app
-from sleeve_shelf.covers import (
+from sleeve_shelf.web.app import create_app
+from sleeve_shelf.fetching.covers import (
     COVER_DIR,
     cover_name,
     download_images,
@@ -246,7 +246,7 @@ def test_a_file_that_is_no_image_is_refused_as_a_picture(app, client):
 
 
 def test_a_picture_can_be_set_from_the_command_line(app, tmp_path, monkeypatch, capsys):
-    from sleeve_shelf import main
+    from sleeve_shelf.cli import main
 
     image = tmp_path / "low.jpg"
     image.write_bytes(JPEG)
@@ -327,7 +327,7 @@ def test_small_images_stored_before_are_made_afresh_without_fetching(app):
 
 
 def test_the_list_of_stored_images_follows_the_folders(tmp_path):
-    from sleeve_shelf.covers import ALBUM_DIR, COVER_DIR, stored_names
+    from sleeve_shelf.fetching.covers import ALBUM_DIR, COVER_DIR, stored_names
 
     folder = tmp_path / COVER_DIR / ALBUM_DIR
     folder.mkdir(parents=True)

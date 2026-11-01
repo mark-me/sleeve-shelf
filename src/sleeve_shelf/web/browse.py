@@ -4,16 +4,17 @@ from flask import Blueprint, render_template, request
 
 from sleeve_shelf.domain import ProposedPlacement
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.proposal import has_proposal
+from sleeve_shelf.shelving.proposal import has_proposal
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.login import is_owner
-from sleeve_shelf.web.places import described_spots
+from sleeve_shelf.shelving.places import described_spots
 
 blueprint = Blueprint("browse", __name__)
 
 
 @blueprint.get("/browse")
 def browse():
+    """Browse/Search: one shelf at a time, or the results of a search."""
     store = get_store()
     # The proposal can be browsed like the real shelves, before deciding on it.
     # The proposal can be browsed by the owner only.
@@ -48,6 +49,7 @@ def browse():
 
 @blueprint.get("/unplaced")
 def unplaced():
+    """The albums that stand on no shelf."""
     store = get_store()
     albums = BrowseQueries(store).unplaced()
     placed = request.args.get("placed", type=int)

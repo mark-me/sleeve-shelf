@@ -12,48 +12,40 @@ from flask import (
 )
 from flask_babel import gettext as _
 
-from sleeve_shelf.collection_stats import album_figures
+from sleeve_shelf.insights.collection_stats import AlbumFigures, album_figures
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
     Artist,
-    Placement,
-    ReleaseEnrichment,
-    Style,
     find_by_id,
 )
 from sleeve_shelf.ingestion.deezer import DeezerClient
 from sleeve_shelf.ingestion.discogs_api import DiscogsClient
-from sleeve_shelf.listening import listening, turn_down
-from sleeve_shelf.network import album_songs_elsewhere
+from sleeve_shelf.fetching.listening import listening, turn_down
+from sleeve_shelf.insights.connections import album_songs_elsewhere
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.spots import place_at_spot
-from sleeve_shelf.taking_part import albums_taking_part, takes_part
+from sleeve_shelf.shelving.spots import place_at_spot
+from sleeve_shelf.library.albums import album_details
+from sleeve_shelf.library.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store, parse_number
 from sleeve_shelf.web.login import is_owner, visitor_may_listen
-from sleeve_shelf.web.places import described_rules, described_spots
-from sleeve_shelf.widths import set_measured_width
+from sleeve_shelf.shelving.places import described_rules, described_spots
+from sleeve_shelf.library.widths import set_measured_width
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
 
 
 @blueprint.get("/<int:album_id>")
 def detail(album_id: int):
+    """An album's page, on the tab asked for.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     album = find_by_id(store.load(Album), album_id)
     if album is None:
         abort(404)
-    artist = find_by_id(store.load(Artist), album.artist_id)
-    # Where the album stands, with its cluster and era band, comes from the same query as Browse.
-    row = next(
-        (r for r in BrowseQueries(store).artist_albums(album.artist_id) if r.album_id == album_id),
-        None,
-    )
-    style_names = {style.id: style.name for style in store.load(Style)}
-    placed = {p.album_id for p in store.load(Placement)}
-    release = next(
-        (r for r in store.load(ReleaseEnrichment) if r.release_id == album.release_id), None
-    )
     # What the album is comes first, then what the collection says about it; what can be changed
     # about it is the owner's, a tab further.
     owner = is_owner()
@@ -63,26 +55,21 @@ def detail(album_id: int):
         tab = "manage" if owner and (error or tab == "manage") else "album"
     # The same songs on other albums of the collection, each album with where it stands.
     elsewhere = album_songs_elsewhere(store, album_id) if tab == "album" else []
-    rows = {r.album_id: r for r in BrowseQueries(store).everything()} if elsewhere or tab == "statistics" else {}
+    figures = album_figures(store, album_id) if tab == "statistics" else None
+    rows = BrowseQueries(store).albums(_albums_named(figures, elsewhere))
     elsewhere = [(title, [rows[i] for i in others if i in rows]) for title, others in elsewhere]
     # An album waiting for a place is the owner's to place, on Manage; a visitor reads it here.
-    is_waiting = takes_part(album, placed) and album_id not in placed
+    details = album_details(store, album, with_contents=tab == "album")
     return render_template(
         "albums/detail.html",
         tab=tab,
-        figures=album_figures(store, album_id) if tab == "statistics" else None,
+        figures=figures,
         places=rows,
+        **details,
         album=album,
-        artist=artist,
-        row=row,
-        styles=[style_names[i] for i in album.style_ids if i in style_names],
-        # None while the release was not fetched with its tracklist yet.
-        tracklist=release.tracklist if release else None,
         elsewhere=elsewhere,
-        takes_part=takes_part(album, placed),
-        is_placed=album_id in placed,
-        attention=owner and is_waiting,
-        spot=described_spots(store).get(album_id) if album_id not in placed and tab == ("manage" if owner else "album") else None,
+        attention=owner and details["takes_part"] and not details["is_placed"],
+        spot=described_spots(store).get(album_id) if not details["is_placed"] and tab == ("manage" if owner else "album") else None,
         placed=request.args.get("placed"),
         rules=described_rules(store, album.artist_id, album_id) if tab == "manage" else [],
         moved=request.args.get("moved"),
@@ -90,10 +77,23 @@ def detail(album_id: int):
     )
 
 
+def _albums_named(figures: AlbumFigures | None, elsewhere: list[tuple[str, tuple[int, ...]]]) -> set[int]:
+    """The other albums an album's page names."""
+    named = {album_id for _, others in elsewhere for album_id in others}
+    if figures is not None:
+        named |= {figures.earlier, figures.later, *figures.same_year, *(album_id for album_id, _ in figures.alike)}
+    return named - {None}
+
+
 @blueprint.get("/<int:album_id>/listen")
 def listen(album_id: int):
-    """The album's previews and videos, as a part the album's page loads after it is shown:
-    the page itself never waits for Deezer or Discogs."""
+    """The album's previews and videos, as a part the album's page loads after it is shown.
+
+    The page itself never waits for Deezer or Discogs.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     if not visitor_may_listen():
         return render_template("albums/_listen.html", album_id=album_id, listening=None), 429
@@ -109,8 +109,14 @@ def listen(album_id: int):
 
 @blueprint.get("/<int:album_id>/previews")
 def previews(album_id: int):
-    """The album's previews from Deezer, for the play button in Browse. Discogs is not asked:
-    its videos are for the album's page, and a shelf full of buttons should not wait on it."""
+    """The album's previews from Deezer, for the play button in Browse.
+
+    Discogs is not asked: its videos are for the album's page, and a shelf full of buttons should
+    not wait on it.
+
+    Args:
+        album_id: The album.
+    """
     if not visitor_may_listen():
         return jsonify(album=None, tracks=[], unreachable=False, busy=True), 429
     deezer = current_app.config.get("DEEZER_CLIENT_FACTORY", DeezerClient)()
@@ -126,14 +132,22 @@ def previews(album_id: int):
 
 @blueprint.post("/<int:album_id>/listen/not-this")
 def listen_not_this(album_id: int):
-    """The album Deezer gave is another one: leave it out for this album."""
+    """The album Deezer gave is another one: leave it out for this album.
+
+    Args:
+        album_id: The album.
+    """
     turn_down(get_store(), album_id)
     return redirect(url_for("albums.detail", album_id=album_id) + "#listen")
 
 
 @blueprint.post("/<int:album_id>/place")
 def place(album_id: int):
-    """Stand an album that waits for a place at its suggested spot."""
+    """Stand an album that waits for a place at its suggested spot.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     if all(album.id != album_id for album in store.load(Album)):
         abort(404)
@@ -148,6 +162,7 @@ def place(album_id: int):
 
 @blueprint.get("/widths")
 def widths():
+    """The Album widths screen: what is to measure, and what was measured."""
     store = get_store()
     artists = {artist.id: artist.name for artist in store.load(Artist)}
     rows = sorted(
@@ -168,6 +183,11 @@ def widths():
 
 @blueprint.post("/<int:album_id>/width")
 def set_width(album_id: int):
+    """Set or clear an album's measured width.
+
+    Args:
+        album_id: The album.
+    """
     store = get_store()
     text = request.form.get("width_cm", "").strip()
     width = parse_number(text) if text else None

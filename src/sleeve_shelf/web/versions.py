@@ -4,7 +4,7 @@ from flask import Blueprint, abort, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 from flask_babel import ngettext
 
-from sleeve_shelf.versions import list_versions, restore_version, save_version
+from sleeve_shelf.library.versions import list_versions, restore_version, save_version
 from sleeve_shelf.web.context import get_store
 
 blueprint = Blueprint("versions", __name__, url_prefix="/versions")
@@ -12,6 +12,7 @@ blueprint = Blueprint("versions", __name__, url_prefix="/versions")
 
 @blueprint.get("/")
 def index():
+    """The Versions screen."""
     versions = list_versions(get_store())
     return render_template(
         "versions/index.html",
@@ -23,12 +24,18 @@ def index():
 
 @blueprint.post("/save")
 def save():
+    """Save the current layout as a version."""
     save_version(get_store(), request.form.get("label", "").strip())
     return redirect(url_for("versions.index"))
 
 
 @blueprint.post("/<name>/restore")
 def restore(name: str):
+    """Put a saved version back.
+
+    Args:
+        name: The version.
+    """
     store = get_store()
     if name not in store.snapshots():
         abort(404)

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from sleeve_shelf import create_app
+from sleeve_shelf.web.app import create_app
 from sleeve_shelf.domain import Album, AlbumListening, Artist
 from sleeve_shelf.ingestion.deezer import (
     DeezerAlbum,
@@ -13,7 +13,7 @@ from sleeve_shelf.ingestion.deezer import (
     best_album,
     first_artist,
 )
-from sleeve_shelf.listening import LOOK_AGAIN_AFTER, listening, turn_down
+from sleeve_shelf.fetching.listening import LOOK_AGAIN_AFTER, listening, turn_down
 from sleeve_shelf.persistence import JsonStore
 
 

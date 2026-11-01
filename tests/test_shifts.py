@@ -2,8 +2,8 @@
 
 import pytest
 
-from sleeve_shelf import create_app
-from sleeve_shelf.discogs_import import import_discogs_collection
+from sleeve_shelf.web.app import create_app
+from sleeve_shelf.fetching.discogs_import import import_discogs_collection
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -19,7 +19,7 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.ingestion.discogs_csv import CollectionItem
 from sleeve_shelf.ingestion.formats import parse_format
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.shifts import cluster_shifts
+from sleeve_shelf.shelving.shifts import cluster_shifts
 
 CONSTANTS = WidthConstants(0.5, 0.15, 0.2)
 

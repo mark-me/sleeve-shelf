@@ -1,14 +1,16 @@
-"""Move: an album, an artist, a family or a cluster to another shelf, or to where it belongs,
-with what would change shown before anything moves."""
+"""The Move screen: an album, artist, family or cluster to a shelf or to where it belongs.
+
+What it would do is shown before anything moves.
+"""
 
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Album
-from sleeve_shelf.moving import OFF_SHELF, How, Kind, carry_out, find, plan, selection
-from sleeve_shelf.placing import ShelvesChanged
+from sleeve_shelf.shelving.moving import OFF_SHELF, How, Kind, carry_out, find, plan, selection
+from sleeve_shelf.shelving.placing import ShelvesChanged
 from sleeve_shelf.web.context import get_store
-from sleeve_shelf.web.places import shelf_options
+from sleeve_shelf.shelving.places import shelf_options
 
 blueprint = Blueprint("moving", __name__, url_prefix="/move")
 
@@ -25,6 +27,7 @@ def _chosen(store, values):
 
 @blueprint.get("/")
 def index():
+    """The Move screen: what, how and where, and the plan to look at before it is carried out."""
     store = get_store()
     chosen, how, shelf_id = _chosen(store, request.args)
     if request.args.get("kind") and chosen is None:

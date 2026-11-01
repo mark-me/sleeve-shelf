@@ -4,7 +4,7 @@ import pytest
 
 from sleeve_shelf.domain import Album, FormatTokens, WidthConstants
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.widths import apply_width_constants, set_measured_width
+from sleeve_shelf.library.widths import apply_width_constants, set_measured_width
 
 CONSTANTS = WidthConstants(0.5, 0.15, 0.2)
 
