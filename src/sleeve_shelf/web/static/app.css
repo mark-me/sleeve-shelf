@@ -712,3 +712,19 @@ a.ss-row-place { display: inline-flex; align-items: center; justify-content: fle
 .ss-row-opens a.ss-row-title::after { content: ""; position: absolute; inset: 0; }
 .ss-row-opens a.ss-row-artist, .ss-row-opens a.ss-row-place, .ss-row-opens .ss-play { position: relative; z-index: 1; }
 .ss-row-opens:hover { background: var(--ss-chip); }
+
+/* After a move on Layout: the way back, within reach wherever the page is scrolled to. */
+.ss-undo {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 1040;
+  display: flex; align-items: center; gap: 14px; padding: 10px 16px; white-space: nowrap;
+  background: var(--ss-surface); border: 1px solid var(--ss-border); border-radius: 12px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+}
+.ss-undo[hidden] { display: none; }
+
+/* On along the shelves from an album's page. */
+.ss-album-walk { display: flex; justify-content: space-between; gap: 16px; font-size: 0.85rem; }
+.ss-album-walk a { min-width: 0; max-width: 48%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 8px 0; }
+
+/* A row to tick, when placing several albums at once. */
+.ss-choose-row { justify-content: flex-start; gap: 12px; cursor: pointer; }
+

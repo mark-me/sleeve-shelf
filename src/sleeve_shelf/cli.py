@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 from sleeve_shelf.access import remove_password, set_password
+from sleeve_shelf.library.albums import set_own_cover
 from sleeve_shelf.library.artists import set_picture
 from sleeve_shelf.library.collection import load_layout
 from sleeve_shelf.config import data_directory, load_settings
@@ -36,6 +37,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     set_picture_command.add_argument("artist")
     set_picture_command.add_argument("image", type=Path)
+    set_cover_command = commands.add_parser(
+        "set-cover", help="add your own cover of an album by its number in the page's address, for when a browser can't upload"
+    )
+    set_cover_command.add_argument("album", type=int)
+    set_cover_command.add_argument("image", type=Path)
     password_command = commands.add_parser(
         "set-password", help="set the owner's password (also when it was forgotten); visitors may then only look"
     )
@@ -69,6 +75,12 @@ def _set_picture(options, parser, data_dir, settings, store) -> None:
     if not set_picture(store, artist.id, options.image.read_bytes()):
         parser.exit(1, "That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB\n")
     print(f"Picture of {artist.name} set")
+
+
+def _set_cover(options, parser, data_dir, settings, store) -> None:
+    if not set_own_cover(store, options.album, options.image.read_bytes()):
+        parser.exit(1, f"No album {options.album}, or that file is not a JPEG, PNG, GIF or WebP image of at most 5 MB\n")
+    print(f"Cover of album {options.album} set")
 
 
 def _set_password(options, parser, data_dir, settings, store) -> None:
@@ -114,6 +126,7 @@ def main(arguments: list[str] | None = None) -> None:
         "load": _load,
         "import-discogs": _import_discogs,
         "set-picture": _set_picture,
+        "set-cover": _set_cover,
         "set-password": _set_password,
         "enrich": _enrich,
     }.get(options.command)

@@ -203,6 +203,7 @@ _TABLES: dict[type, _Table] = {
             "kept_after_discogs": "BOOLEAN",
             "new_purchase": "BOOLEAN",
             "added_on": "DATE",
+            "own_cover_file": "VARCHAR",
         },
         {"format_tokens": _format_tokens},
     ),

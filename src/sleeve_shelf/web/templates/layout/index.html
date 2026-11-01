@@ -143,6 +143,10 @@
   </div>
 </div>
 
+<div id="layout-undo" class="ss-undo" role="status" hidden>
+  <span>{{ _('Moved.') }}</span>
+  <button class="ss-button ss-button-small" type="button">{{ _('Undo') }}</button>
+</div>
 <script nonce="{{ csp_nonce() }}">
   window.layoutText = {
     current: {{ _('it stands here') | tojson }},

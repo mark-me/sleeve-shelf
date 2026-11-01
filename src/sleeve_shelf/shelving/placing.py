@@ -1,5 +1,7 @@
 """Application services for one album or artist: moving it by hand, and the rules that bind it."""
 
+from collections.abc import Iterable
+
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -60,6 +62,35 @@ def move_albums(
         ]
     _save(store, entity, kept)
     return touched
+
+
+def contents_before(
+    store: JsonStore,
+    shelf_ids: Iterable[int],
+    album_ids: Iterable[int],
+    entity: type[Placement] | type[ProposedPlacement] = Placement,
+) -> tuple[dict[int, list[int]], list[int]]:
+    """What a move is about to change, to put back with rearrange_shelves when it is undone.
+
+    Args:
+        store: The store of the collection.
+        shelf_ids: The shelves the move names.
+        album_ids: The albums it moves.
+        entity: The layout to work on: the shelves as they are, or the proposal.
+
+    Returns:
+        Per shelf concerned its albums in order, and the albums among those moved that stand on no
+        shelf now.
+    """
+    moving = set(album_ids)
+    placements = sorted(store.load(entity), key=lambda p: p.position)
+    standing = {p.album_id for p in placements}
+    concerned = set(shelf_ids) | {p.shelf_id for p in placements if p.album_id in moving}
+    contents: dict[int, list[int]] = {shelf_id: [] for shelf_id in concerned}
+    for placement in placements:
+        if placement.shelf_id in concerned:
+            contents[placement.shelf_id].append(placement.album_id)
+    return contents, sorted(moving - standing)
 
 
 def rearrange_shelves(

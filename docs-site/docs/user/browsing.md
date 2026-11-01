@@ -6,6 +6,8 @@
 
 Every album has a **▶** button: it plays the album's 30-second previews from Deezer, one track after another, and shows the track playing under the title. Press it again to stop; pressing another album stops the first. When Deezer doesn't have the album, the row says so — its page may still have videos.
 
+The bar says which shelf you are at. The arrow keys, or a swipe on a phone, go to the previous or next shelf.
+
 **Search** finds artists, albums and songs across all shelves. The results follow as you type; a row opens the album's page, the artist its page, and the place beside it the shelf with the album marked. From any other page, the search field in the menu leads here too. Emptying the search field takes you back to browsing.
 
 Every word you type has to be in the artist and title, or in the artist, title and one song together: *waits martha* finds the Tom Waits album with *Martha* on it. An album found by a song names that song under its title, with its place on the record (♪ B1 · Martha). Songs are known once the fetch run has brought the tracklists from Discogs (see [Fetching styles, years and pictures](discogs.md#fetching-styles-years-and-pictures)).
@@ -56,7 +58,7 @@ Credits and labels come with the fetch run; until it has run, those parts say so
 
 Open an album by its title, wherever one is listed: a search result, a shelf, its artist's page, Layout, Connections, Statistics and the lists under Discogs and in a sorting proposal. The page has three tabs: **Album**, **Statistics** and — for you as owner — **Manage**.
 
-Under the title, on every tab, stands where the album is: a button to its shelf, with the album marked. Beside it the **▶** button plays its previews.
+Under the title, on every tab, stands where the album is: a button to its shelf, with the album marked. Beside it the **▶** button plays its previews. Below that are the albums before and after it along the shelves; the arrow keys or a swipe go there too.
 
 **Album** shows:
 
@@ -69,7 +71,7 @@ Under the title, on every tab, stands where the album is: a button to its shelf,
 
 **Statistics** shows what your collection says about the album: how many songs and minutes it has, its place among the artist's albums by year with those before and after it, who is on it and on how many of your albums, other albums with several of the same people, who wrote the songs, how many of your albums share its styles and label, and what else you have from its year.
 
-**Manage** holds what can be changed: the suggested spot of an album without a place, its width, the location rules that apply to it, and a way to put it on another shelf. The first tab says so when an album waits for a place.
+**Manage** holds what can be changed: the suggested spot of an album without a place, its width, a cover of your own, the location rules that apply to it, and a way to put it on another shelf. The first tab says so when an album waits for a place.
 
 ### Listen
 
@@ -98,6 +100,8 @@ On a wide screen the albums are on the left and the figures on the right; on a p
 ## 📦 Albums without a place
 
 **Unplaced** lists the LPs that stand on no shelf yet — new purchases, and albums a proposal had no room for. For each one the app suggests a spot in your shelves as they stand now: the shelf, the two albums it would go between, and whether it fits. *Put it there* places it; nothing else moves.
+
+With more than one waiting, **Place all at once…** shows every album at its suggested spot and what that does to each shelf. Untick what you would rather place yourself; **Place them** stands the rest in one go, and a version from before is kept.
 
 New purchases carry a **New** label and come first. The Dashboard shows the first three as well.
 

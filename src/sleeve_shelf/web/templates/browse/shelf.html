@@ -2,8 +2,8 @@
 {% block title %}{{ _('Browse / Search') }}{% endblock %}
 
 {% macro shelf_nav() %}
-<a class="ss-button {{ 'disabled' if not previous }}" {% if previous %}href="{{ url_for('browse.browse', shelf=previous.shelf_id, layout=layout) }}"{% else %}aria-disabled="true"{% endif %}>&larr; {{ _('Previous shelf') }}</a>
-<a class="ss-button ss-button-primary {{ 'disabled' if not next }}" {% if next %}href="{{ url_for('browse.browse', shelf=next.shelf_id, layout=layout) }}"{% else %}aria-disabled="true"{% endif %}>{{ _('Next shelf') }} &rarr;</a>
+<a class="ss-button {{ 'disabled' if not previous }}" data-walk="prev" {% if previous %}href="{{ url_for('browse.browse', shelf=previous.shelf_id, layout=layout) }}"{% else %}aria-disabled="true"{% endif %}>&larr; {{ _('Previous shelf') }}</a>
+<a class="ss-button ss-button-primary {{ 'disabled' if not next }}" data-walk="next" {% if next %}href="{{ url_for('browse.browse', shelf=next.shelf_id, layout=layout) }}"{% else %}aria-disabled="true"{% endif %}>{{ _('Next shelf') }} &rarr;</a>
 {% endmacro %}
 
 {% from "_cover.html" import cover %}
@@ -24,6 +24,7 @@
   <div class="ss-shelf-bar">
     <span>
       {{ shelf.cabinet }} &rsaquo; <strong>{{ shelf.shelf }}</strong>
+      &middot; {{ _('shelf %(number)d of %(total)d', number=shelf_number, total=shelf_total) }}
       &middot; {{ ngettext('%(num)d album', '%(num)d albums', shelf.album_count) }}
       {% if shelf.outside_sorting %}
       <span class="ss-reach">&middot; {{ _('outside the sorting') }}</span>
@@ -76,4 +77,5 @@
 <div class="ss-sticky-bottom ss-shelf-nav d-lg-none mt-3">{{ shelf_nav() }}</div>
 {% endif %}
 {{ play_script() }}
+<script src="{{ url_for('static', filename='page-walk.js') }}" defer></script>
 {% endblock %}

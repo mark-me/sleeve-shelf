@@ -43,6 +43,32 @@
     });
   }
 
+  // After a move: the way back, until the next one. The page is loaded anew afterwards, as a
+  // block may have been split or joined.
+  const undoBar = document.getElementById("layout-undo");
+  let undoing = null;
+
+  function offerUndo(shelves) {
+    undoing = shelves;
+    undoBar.hidden = false;
+  }
+
+  undoBar.querySelector("button").addEventListener("click", async function () {
+    undoBar.hidden = true;
+    try {
+      const response = await fetch(root.dataset.moveUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shelves: undoing }),
+      });
+      if (!response.ok) throw new Error(response.status);
+      window.location.reload();
+    } catch (error) {
+      document.getElementById("layout-error").classList.remove("d-none");
+      window.scrollTo({ top: 0 });
+    }
+  });
+
   async function save(lists) {
     const shelves = {};
     lists.forEach(function (list) {
@@ -60,6 +86,7 @@
         const shelf = root.querySelector('.ss-shelf[data-shelf="' + entry[0] + '"]');
         showFill(shelf, entry[1].albums, entry[1].filled_cm);
       });
+      offerUndo(result.undo);
     } catch (error) {
       // What is on screen no longer matches what is stored; say so rather than pretend.
       document.getElementById("layout-error").classList.remove("d-none");
@@ -182,6 +209,7 @@
         return;
       }
       list.append(block);
+      offerUndo(result.undo);
       Object.entries(result.shelves).forEach(function (entry) {
         const shelf = root.querySelector('.ss-shelf[data-shelf="' + entry[0] + '"]');
         if (shelf) showFill(shelf, entry[1].albums, entry[1].filled_cm);

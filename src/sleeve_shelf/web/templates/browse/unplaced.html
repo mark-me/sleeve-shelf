@@ -11,9 +11,14 @@
   <div class="ss-alert mt-3">{{ _('%(title)s now stands on', title=placed.title) }} <a href="{{ url_for('browse.browse', shelf=placed.shelf_id) }}#album-{{ placed.album_id }}">{{ placed.cabinet }} &rsaquo; {{ placed.shelf }}</a>. {{ _('A version from before is kept under Versions.') }}</div>
   {% endif %}
 
+  {% if placed_all is not none %}
+  <div class="ss-alert mt-3">{{ ngettext('%(num)d album now stands at its spot. A version from before is kept under Versions.', '%(num)d albums now stand at their spots. A version from before is kept under Versions.', placed_all) }}</div>
+  {% endif %}
+
   {% set lps = albums | selectattr('is_lp') | list %}
   {% set others = albums | rejectattr('is_lp') | list %}
   {% if lps %}
+  {% if spots | length > 1 %}<p class="mt-3"><a class="ss-button" href="{{ url_for('browse.place_all') }}">{{ _('Place all at once…') }}</a></p>{% endif %}
   <div class="ss-card">
     {% for album in lps %}
     <div class="ss-row" id="album-{{ album.album_id }}">

@@ -35,7 +35,7 @@
   {% endif %}
   {% if to_place %}
   <h2 class="mt-5" id="to-place">{{ _('To place') }} <span class="ss-chip align-middle">{{ to_place_count }}</span></h2>
-  <p class="ss-muted mt-1">{{ _('LPs on no shelf yet, each with a suggested spot; new purchases first.') }}</p>
+  <p class="ss-muted mt-1">{{ _('LPs on no shelf yet, each with a suggested spot; new purchases first.') }}{% if spots | length > 1 %} <a href="{{ url_for('browse.place_all') }}">{{ _('Place all at once…') }}</a>{% endif %}</p>
   <div class="ss-card mt-3">
     {% set covers = to_place | selectattr('cover_url') | list | length > 0 %}
     {% for album in to_place %}

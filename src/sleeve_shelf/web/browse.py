@@ -1,9 +1,11 @@
 """Browse/Search: the collection in physical shelf order, and the unplaced albums."""
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, redirect, render_template, request, url_for
 
+from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import ProposedPlacement
 from sleeve_shelf.persistence import BrowseQueries
+from sleeve_shelf.shelving.moving import carry_out, plan_placing
 from sleeve_shelf.shelving.proposal import has_proposal
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.web.login import is_owner
@@ -42,6 +44,8 @@ def browse():
         shelf=shelf,
         layout=layout,
         albums=queries.shelf_albums(shelf.shelf_id),
+        shelf_number=index + 1,
+        shelf_total=len(shelves),
         previous=shelves[index - 1] if index > 0 else None,
         next=shelves[index + 1] if index < len(shelves) - 1 else None,
     )
@@ -58,7 +62,29 @@ def unplaced():
         albums=albums,
         spots=described_spots(store),
         # The album that was just put at its spot, to say where it went.
+        placed_all=request.args.get("placed_all", type=int),
         placed=next((row for row in BrowseQueries(store).everything() if row.album_id == placed), None)
         if placed
         else None,
+    )
+
+
+@blueprint.route("/unplaced/place", methods=["GET", "POST"])
+def place_all():
+    """Stand the albums waiting for a place at their spots: first what that does, then all at once."""
+    store = get_store()
+    constants = load_settings(store.data_dir).width_constants
+    spots = described_spots(store)
+    if request.method == "POST":
+        chosen = [album_id for album_id in request.form.getlist("album", type=int) if album_id in spots]
+        worked_out = plan_placing(store, chosen, constants) if chosen else None
+        if worked_out is not None:
+            carry_out(store, worked_out)
+        return redirect(url_for("browse.unplaced", placed_all=len(worked_out.moved) if worked_out else 0))
+    albums = [row for row in BrowseQueries(store).unplaced() if row.is_lp and row.album_id in spots]
+    return render_template(
+        "browse/place_all.html",
+        albums=albums,
+        spots=spots,
+        changes=plan_placing(store, list(spots), constants).changes if spots else (),
     )
