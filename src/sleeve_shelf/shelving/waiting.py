@@ -1,7 +1,5 @@
 """What is waiting for the user: the counts behind the Dashboard list and the menu."""
 
-from pathlib import Path
-
 from sleeve_shelf.library.alias_groups import family_suggestions
 from sleeve_shelf.domain import (
     Album,
@@ -23,12 +21,6 @@ from sleeve_shelf.library.taking_part import albums_taking_part
 _LAYOUT_ENTITIES = (Album, Artist, ArtistClusterAssignment, Cabinet, Cluster, EraBand, Placement, Shelf)
 
 
-# The counts are on every page, in the menu, and take a while to work out (family suggestions
-# compare every artist with every other): they are worked out again only when a data file or
-# the settings changed.
-_cache: dict[Path, tuple[tuple, dict[str, int]]] = {}
-
-
 def waiting_counts(store: JsonStore) -> dict[str, int]:
     """Per kind of open point, how many there are; kinds without any are included as 0.
 
@@ -38,16 +30,9 @@ def waiting_counts(store: JsonStore) -> dict[str, int]:
     Returns:
         The numbers by kind.
     """
-    files = [*store.data_dir.glob("*.json"), store.data_dir / "config.yaml"]
-    signature = tuple(
-        sorted((path.name, path.stat().st_mtime_ns) for path in files if path.exists())
-    )
-    cached = _cache.get(store.data_dir)
-    if cached is None or cached[0] != signature:
-        cached = (signature, _waiting_counts(store))
-        _cache[store.data_dir] = cached
-    # A copy, so a caller changing it does not change what is kept.
-    return dict(cached[1])
+    # On every page, in the menu, and they take a while: family suggestions compare every artist
+    # with every other. A copy, so a caller changing it does not change what is kept.
+    return dict(store.remembered("waiting counts", lambda: _waiting_counts(store)))
 
 
 def _waiting_counts(store: JsonStore) -> dict[str, int]:

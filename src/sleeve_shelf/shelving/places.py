@@ -75,6 +75,11 @@ def described_spots(store: JsonStore) -> dict[int, dict]:
     Returns:
         The spots by album id, for a template.
     """
+    # For the pages to show only, so it can be kept; placing an album works its spot out afresh.
+    return store.remembered("described spots", lambda: _described_spots(store))
+
+
+def _described_spots(store: JsonStore) -> dict[int, dict]:
     spots = suggested_spots(store, load_settings(store.data_dir).width_constants)
     if not spots:
         return {}

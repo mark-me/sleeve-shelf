@@ -23,8 +23,8 @@ from sleeve_shelf.domain import (
     plain_name,
     sort_name,
 )
-from sleeve_shelf.insights.connections import album_songs_elsewhere, network
-from sleeve_shelf.insights.network import Network
+from sleeve_shelf.insights.connections import network
+from sleeve_shelf.insights.network import Network, songs_elsewhere
 from sleeve_shelf.insights.ties import (
     LOOSE_TIES,
     NO_LABEL,
@@ -269,6 +269,16 @@ def _people(
     return sorted(people, key=lambda p: (-len(p.album_ids), sort_name(p.name)))
 
 
+def _musicians(
+    store: JsonStore, artists: list[Artist], albums: list[Album], releases: list[ReleaseEnrichment]
+) -> set[int]:
+    """Who has a point of their own in the network: asked for on every page of figures."""
+    return store.remembered(
+        "musicians",
+        lambda: musicians_as_points(side_players(artists, albums, store.load(ArtistEnrichment), releases), artists),
+    )
+
+
 def artist_figures(store: JsonStore, artist_id: int) -> ArtistFigures:
     """What the collection says about one artist.
 
@@ -314,8 +324,7 @@ def artist_figures(store: JsonStore, artist_id: int) -> ArtistFigures:
         for parts in [on_the_record(credit.role)]
         if parts
     ]
-    records = store.load(ArtistEnrichment)
-    musicians = musicians_as_points(side_players(artists, albums, records, releases), artists)
+    musicians = _musicians(store, artists, albums, releases)
     companions = [p for p in _people(entries, by_did, musicians) if len(p.album_ids) >= COMPANION_ALBUMS][:COMPANIONS]
     return ArtistFigures(
         albums=mine,
@@ -430,11 +439,7 @@ def _people_on(
     names_here, roles = _credited_here(artist, release)
     on_albums = _albums_per_person(artists, albums, releases, on_release)
     by_did = artists_by_discogs_id(artists)
-    musicians = (
-        musicians_as_points(side_players(artists, albums, store.load(ArtistEnrichment), releases), artists)
-        if names_here and store.exists(ArtistEnrichment)
-        else set()
-    )
+    musicians = _musicians(store, artists, albums, releases) if names_here else set()
     return tuple(
         sorted(
             (
@@ -522,7 +527,7 @@ def album_figures(store: JsonStore, album_id: int) -> AlbumFigures:
         labels=_counted_labels(release, releases, on_release),
         people=people,
         alike=_alike(album_id, people),
-        songs_elsewhere=len(album_songs_elsewhere(store, album_id)),
+        songs_elsewhere=len(songs_elsewhere(album_id, artists, albums, releases)),
     )
 
 

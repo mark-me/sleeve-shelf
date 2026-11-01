@@ -41,6 +41,9 @@ def index():
     clusters = dict(shown.clusters)
     switched, ties_param = _switched(artist_id is not None)
     the_way = way(shown, artist_id, to_id, switched) if to_id is not None else None
+    # A label ties an artist to many: they are listed only when asked for.
+    left_out = frozenset() if Tie.LABEL in switched else frozenset({Tie.LABEL})
+    around = ties_of(store, shown, artist_id, left_out) if artist_id is not None else []
     return render_template(
         "connections/index.html",
         ties=list(Tie),
@@ -50,12 +53,11 @@ def index():
         artist=points.get(artist_id),
         cluster=clusters.get(points[artist_id].cluster_id) if artist_id is not None else None,
         steps=2 if request.args.get("steps") == "2" else 1,
-        # A label ties an artist to many: they are listed only when asked for.
-        around=ties_of(store, shown, artist_id, frozenset() if Tie.LABEL in switched else frozenset({Tie.LABEL}))
-        if artist_id is not None
-        else [],
+        around=around,
         # Where each album stands, to take it from the shelf.
-        places={row.album_id: row for row in BrowseQueries(store).everything()} if artist_id is not None else {},
+        places=BrowseQueries(store).albums(
+            tied_album.album_id for tied in around for tied_album in (*tied.theirs, *tied.mine)
+        ),
         clusters=clusters,
         search_text=text,
         found=found,

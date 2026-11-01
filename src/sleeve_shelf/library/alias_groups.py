@@ -49,6 +49,10 @@ def cluster_hints(store: JsonStore) -> dict[int, ClusterHint]:
     Returns:
         The hints by artist id.
     """
+    return store.remembered("cluster hints", lambda: _cluster_hints(store))
+
+
+def _cluster_hints(store: JsonStore) -> dict[int, ClusterHint]:
     album_counts = albums_per_artist(store)
     return clusters_by_connection(
         store.load(Artist),

@@ -319,6 +319,10 @@ def _swap_in(temporary: Path, target: Path) -> None:
             time.sleep(0.05 * (attempt + 1))
 
 
+# What took a while to work out, per data directory: see JsonStore.remembered.
+_remembered: dict[Path, dict[str, tuple[tuple, Any]]] = {}
+
+
 class JsonStore:
     """Reads and writes each entity's JSON file in a data directory.
 
@@ -396,6 +400,27 @@ class JsonStore:
         if last != marks.get(table.filename):
             marks[table.filename] = last
             self.save(_IdMark, [_IdMark(name, last_id) for name, last_id in sorted(marks.items())])
+
+    def remembered[T](self, key: str, work: Callable[[], T]) -> T:
+        """What takes a while to work out, worked out again only when the data or settings changed.
+
+        The answer is shared by everyone who asks, so it is not to be changed: never use this for
+        what is loaded in order to be saved again.
+
+        Args:
+            key: What is being asked for.
+            work: Works it out.
+
+        Returns:
+            The answer.
+        """
+        files = [*self.data_dir.glob("*.json"), self.data_dir / "config.yaml"]
+        signature = tuple(sorted((path.name, path.stat().st_mtime_ns, path.stat().st_size) for path in files if path.exists()))
+        known = _remembered.setdefault(self.data_dir, {})
+        # The signature is taken before the work: what changes meanwhile is worked out again.
+        if key not in known or known[key][0] != signature:
+            known[key] = (signature, work())
+        return known[key][1]
 
     def load[T](self, entity: type[T]) -> list[T]:
         """Read all items of the entity; a file that doesn't exist yet yields none.

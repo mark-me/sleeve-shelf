@@ -1,5 +1,6 @@
 """Read queries behind Browse/Search: the collection in physical shelf order."""
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 
@@ -160,6 +161,32 @@ class BrowseQueries:
             The albums.
         """
         return self._albums("", [])
+
+    def by_shelf(self) -> dict[int, list[AlbumRow]]:
+        """The albums per shelf, each in the order they stand there: one query for all shelves.
+
+        Returns:
+            The albums by shelf id, only of the shelves that hold any.
+        """
+        found: dict[int, list[AlbumRow]] = {}
+        for row in self._albums("WHERE shelf_id IS NOT NULL", []):
+            found.setdefault(row.shelf_id, []).append(row)
+        return found
+
+    def albums(self, album_ids: Iterable[int]) -> dict[int, AlbumRow]:
+        """These albums, for a page that names only some, rather than all there are.
+
+        Args:
+            album_ids: The albums.
+
+        Returns:
+            The albums by id.
+        """
+        wanted = sorted(set(album_ids))
+        if not wanted:
+            return {}
+        marks = ", ".join("?" for _ in wanted)
+        return {row.album_id: row for row in self._albums(f"WHERE located.album_id IN ({marks})", wanted)}
 
     def unplaced(self) -> list[AlbumRow]:
         """Albums without a spot on any shelf: what was added last first, then the rest.

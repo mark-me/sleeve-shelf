@@ -64,16 +64,20 @@ def network(store: JsonStore) -> Network:
     if not store.exists(Artist):
         return Network((), (), ())
 
-    return build(
-        store.load(Artist),
-        store.load(Album),
-        store.load(ArtistEnrichment),
-        store.load(ReleaseEnrichment),
-        store.load(ArtistClusterAssignment),
-        store.load(Cluster),
-        load_settings(store.data_dir).labels_left_out,
-        unrelated_pairs(store),
-    )
+    def work() -> Network:
+        return build(
+            store.load(Artist),
+            store.load(Album),
+            store.load(ArtistEnrichment),
+            store.load(ReleaseEnrichment),
+            store.load(ArtistClusterAssignment),
+            store.load(Cluster),
+            load_settings(store.data_dir).labels_left_out,
+            unrelated_pairs(store),
+        )
+
+    # The page and its data each ask for it, and it takes a second: nothing in it can be changed.
+    return store.remembered("network", work)
 
 
 def unrelated_pairs(store: JsonStore) -> set[tuple[int, int]]:

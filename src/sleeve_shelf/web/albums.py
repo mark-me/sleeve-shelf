@@ -12,7 +12,7 @@ from flask import (
 )
 from flask_babel import gettext as _
 
-from sleeve_shelf.insights.collection_stats import album_figures
+from sleeve_shelf.insights.collection_stats import AlbumFigures, album_figures
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import (
     Album,
@@ -55,14 +55,15 @@ def detail(album_id: int):
         tab = "manage" if owner and (error or tab == "manage") else "album"
     # The same songs on other albums of the collection, each album with where it stands.
     elsewhere = album_songs_elsewhere(store, album_id) if tab == "album" else []
-    rows = {r.album_id: r for r in BrowseQueries(store).everything()} if elsewhere or tab == "statistics" else {}
+    figures = album_figures(store, album_id) if tab == "statistics" else None
+    rows = BrowseQueries(store).albums(_albums_named(figures, elsewhere))
     elsewhere = [(title, [rows[i] for i in others if i in rows]) for title, others in elsewhere]
     # An album waiting for a place is the owner's to place, on Manage; a visitor reads it here.
-    details = album_details(store, album)
+    details = album_details(store, album, with_contents=tab == "album")
     return render_template(
         "albums/detail.html",
         tab=tab,
-        figures=album_figures(store, album_id) if tab == "statistics" else None,
+        figures=figures,
         places=rows,
         **details,
         album=album,
@@ -74,6 +75,14 @@ def detail(album_id: int):
         moved=request.args.get("moved"),
         error=error,
     )
+
+
+def _albums_named(figures: AlbumFigures | None, elsewhere: list[tuple[str, tuple[int, ...]]]) -> set[int]:
+    """The other albums an album's page names."""
+    named = {album_id for _, others in elsewhere for album_id in others}
+    if figures is not None:
+        named |= {figures.earlier, figures.later, *figures.same_year, *(album_id for album_id, _ in figures.alike)}
+    return named - {None}
 
 
 @blueprint.get("/<int:album_id>/listen")

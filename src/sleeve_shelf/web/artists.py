@@ -136,6 +136,7 @@ def edit(artist_id: int):
     # What the artist is comes first; what can be changed about it is the owner's, a tab further.
     owner = is_owner()
     tab = "manage" if owner and (errors or request.args.get("tab") == "manage") else "artist"
+    figures = artist_figures(store, artist_id) if tab == "artist" else None
     return (
         render_template(
             "artists/edit.html",
@@ -143,8 +144,8 @@ def edit(artist_id: int):
             tab=tab,
             # What waits for the owner here, said on the first tab too.
             attention=owner and needs_attention,
-            figures=artist_figures(store, artist_id) if tab == "artist" else None,
-            places={row.album_id: row for row in BrowseQueries(store).everything()} if tab == "artist" else {},
+            figures=figures,
+            places=BrowseQueries(store).albums(entry.album_id for entry in figures.appears_on) if figures else {},
             artist=artist,
             picture=_picture(store, artist),
             picture_error=request.args.get("picture_error"),

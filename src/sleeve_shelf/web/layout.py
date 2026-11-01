@@ -45,6 +45,7 @@ def index():
     entity, layout = _entity(store)
     queries = BrowseQueries(store, entity)
     fill = queries.shelf_fill()
+    on_shelf = queries.by_shelf()
     shelves = store.load(Shelf)
     all_cabinets = in_order(store.load(Cabinet))
     # One tab per room, in the order the rooms first occur; no tabs while there is only one.
@@ -59,7 +60,7 @@ def index():
                 {
                     "shelf": shelf,
                     **shelf_fill(fill, shelf.id),
-                    "blocks": _blocks(queries.shelf_albums(shelf.id)),
+                    "blocks": _blocks(on_shelf.get(shelf.id, [])),
                 }
                 for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
             ],
