@@ -35,7 +35,7 @@
   {% endif %}
   {% if to_place %}
   <h2 class="mt-5" id="to-place">{{ _('To place') }} <span class="ss-chip align-middle">{{ to_place_count }}</span></h2>
-  <p class="ss-muted mt-1">{{ _('LPs on no shelf yet, each with a suggested spot; new purchases first.') }}</p>
+  <p class="ss-muted mt-1">{{ _('LPs on no shelf yet, each with a suggested spot; new purchases first.') }}{% if spots | length > 1 %} <a href="{{ url_for('browse.place_all') }}">{{ _('Place all at once…') }}</a>{% endif %}</p>
   <div class="ss-card mt-3">
     {% set covers = to_place | selectattr('cover_url') | list | length > 0 %}
     {% for album in to_place %}
@@ -47,7 +47,8 @@
         {% set spot = spots.get(album.album_id) %}
         {% if spot %}
         <span class="ss-row-title mt-1">{{ _('Suggested:') }} {{ spot_text.where(spot) }}</span>
-        <span class="ss-row-title">{{ spot_text.room(spot) }}</span>
+        {% set room_line = spot_text.room(spot, true) %}
+        {% if room_line | trim %}<span class="ss-row-title">{{ room_line }}</span>{% endif %}
         {% elif album.cluster %}
         <span class="ss-row-title mt-1">{{ _('No spot: nothing stands on the shelves it could go to.') }}</span>
         {% else %}
@@ -61,6 +62,7 @@
     <a class="ss-row" href="{{ url_for('browse.unplaced') }}"><span class="ss-row-artist">{{ ngettext('And %(num)d more to place', 'And %(num)d more to place', to_place_count - to_place | length) }} &rarr;</span></a>
     {% endif %}
   </div>
+    {{ spot_text.estimates_note(to_place, spots) }}
   {% endif %}
 
   <h2 class="mt-5">{{ _('Waiting for you') }}</h2>

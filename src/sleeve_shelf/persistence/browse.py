@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from sleeve_shelf.domain import (
+    OWN_COVER,
     Album,
     Artist,
     ArtistClusterAssignment,
@@ -188,6 +189,32 @@ class BrowseQueries:
         marks = ", ".join("?" for _ in wanted)
         return {row.album_id: row for row in self._albums(f"WHERE located.album_id IN ({marks})", wanted)}
 
+    def neighbours(self, album_id: int) -> tuple[AlbumRow | None, AlbumRow | None]:
+        """The albums either side of this one along the shelves, on to the next shelf at its end.
+
+        Args:
+            album_id: The album.
+
+        Returns:
+            The album before it and the one after it; None at either end, or for one on no shelf.
+        """
+        rows = self._store.query(
+            f"""
+            {self._located_albums()}
+            SELECT located.album_id FROM located
+            WHERE shelf_id IS NOT NULL
+            ORDER BY cabinet_order NULLS LAST, cabinet_id, shelf_order, shelf_id, position, title, located.album_id
+            """
+        )
+        walked = [row[0] for row in rows]
+        if album_id not in walked:
+            return None, None
+        index = walked.index(album_id)
+        before = walked[index - 1] if index else None
+        after = walked[index + 1] if index + 1 < len(walked) else None
+        found = self.albums(other for other in (before, after) if other is not None)
+        return found.get(before), found.get(after)
+
     def unplaced(self) -> list[AlbumRow]:
         """Albums without a spot on any shelf: what was added last first, then the rest.
 
@@ -270,7 +297,12 @@ class BrowseQueries:
             WITH placement AS (SELECT * FROM {relation(self._placements)}),
             located AS (
                 SELECT album.id AS album_id, artist.name AS artist, artist.id AS artist_id,
-                       album.title, album.cover_url, album.added_on,
+                       album.title,
+                       coalesce(
+                           '{OWN_COVER}' || regexp_replace(album.own_cover_file, '\\.[^.]+$', '') || '.thumb.jpg',
+                           album.cover_url
+                       ) AS cover_url,
+                       album.added_on,
                        album.original_release_year AS year, cluster.name AS cluster,
                        era_band.label AS era_band, shelf.id AS shelf_id,
                        cabinet.id AS cabinet_id, cabinet.name AS cabinet, shelf.name AS shelf,

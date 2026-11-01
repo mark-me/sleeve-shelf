@@ -3,8 +3,13 @@
 import re
 from dataclasses import dataclass, field
 from datetime import date
+from pathlib import Path
 
 _LP = re.compile(r"^(?:\d+x)?LP$")
+
+
+# How a cover the user added is told apart from an address at Discogs.
+OWN_COVER = "own:"
 
 
 @dataclass(slots=True)
@@ -189,6 +194,8 @@ class Album:
             shelving/shifts.py).
         added_on: The day a sync or import added the album; None for one that came with the
             workbook.
+        own_cover_file: The file of a cover the user added, in the data directory; it goes before
+            Discogs' own.
     """
 
     id: int
@@ -210,6 +217,19 @@ class Album:
     kept_after_discogs: bool = False
     new_purchase: bool = False
     added_on: date | None = None
+    own_cover_file: str | None = None
+
+    @property
+    def shown_cover(self) -> str | None:
+        """The small cover the pages show: the user's own goes before the one from Discogs."""
+        if self.own_cover_file:
+            return f"{OWN_COVER}{Path(self.own_cover_file).stem}.thumb.jpg"
+        return self.cover_url
+
+    @property
+    def shown_large_cover(self) -> str | None:
+        """The large cover to enlarge to: the user's own goes before the one from Discogs."""
+        return f"{OWN_COVER}{self.own_cover_file}" if self.own_cover_file else self.cover_image_url
 
     @property
     def width_cm(self) -> float | None:

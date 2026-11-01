@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Place these albums') }}{% endblock %}
+
+{% from "_cover.html" import cover %}
+{% import "_spot.html" as spot_text %}
+{% block content %}
+<div class="ss-page">
+  <p class="mb-1"><a href="{{ url_for('browse.unplaced') }}">&larr; {{ _('Unplaced albums') }}</a></p>
+  <h1>{{ _('Place these albums') }}</h1>
+  <p class="ss-muted mt-1">{{ _('Each album at its suggested spot. Nothing moves until you confirm, and a version from before is kept. Untick what you would rather place yourself.') }}</p>
+  {% if albums %}
+  <form method="post">
+    <div class="ss-card mt-3">
+      {% for album in albums %}
+      {% set spot = spots[album.album_id] %}
+      <label class="ss-row ss-choose-row">
+        <input class="form-check-input flex-shrink-0" type="checkbox" name="album" value="{{ album.album_id }}" checked>
+        {{ cover(album.cover_url) }}
+        <span class="ss-row-text">
+          <span class="ss-row-artist">{{ album.artist }}</span>
+          <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+          <span class="ss-row-title mt-1">{{ spot_text.where(spot) }}</span>
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+    {{ spot_text.estimates_note(albums, spots) }}
+    {% if changes %}
+    <h2 class="mt-4">{{ _('What that does to the shelves') }}</h2>
+    <p class="ss-muted small mt-1 mb-2">{{ _('With every album above ticked.') }}</p>
+    <div class="ss-card">
+      {% for change in changes %}
+      <div class="ss-row">
+        <span class="ss-row-artist">{{ change.name }}</span>
+        <span class="ss-row-place">{{ _('%(before)d to %(after)d albums', before=change.before, after=change.after) }}{% if change.over and change.width_measured %} &middot; <span class="ss-over">{{ _('over its width') }}</span>{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <button class="ss-button ss-button-primary mt-4" type="submit">{{ _('Place them') }}</button>
+  </form>
+  {% else %}
+  <div class="ss-card mt-3"><div class="ss-card-body ss-muted">{{ _('No album is waiting with a suggested spot.') }}</div></div>
+  {% endif %}
+</div>
+{% endblock %}

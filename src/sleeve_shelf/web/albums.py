@@ -8,6 +8,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    send_from_directory,
     url_for,
 )
 from flask_babel import gettext as _
@@ -25,7 +26,7 @@ from sleeve_shelf.fetching.listening import listening, turn_down
 from sleeve_shelf.insights.connections import album_songs_elsewhere
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.shelving.spots import place_at_spot
-from sleeve_shelf.library.albums import album_details
+from sleeve_shelf.library.albums import OWN_COVER_DIR, album_details, remove_own_cover, set_own_cover
 from sleeve_shelf.library.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store, parse_number
 from sleeve_shelf.web.login import is_owner, visitor_may_listen
@@ -60,11 +61,14 @@ def detail(album_id: int):
     elsewhere = [(title, [rows[i] for i in others if i in rows]) for title, others in elsewhere]
     # An album waiting for a place is the owner's to place, on Manage; a visitor reads it here.
     details = album_details(store, album, with_contents=tab == "album")
+    before, after = BrowseQueries(store).neighbours(album_id)
     return render_template(
         "albums/detail.html",
         tab=tab,
         figures=figures,
         places=rows,
+        before=before,
+        after=after,
         **details,
         album=album,
         elsewhere=elsewhere,
@@ -83,6 +87,44 @@ def _albums_named(figures: AlbumFigures | None, elsewhere: list[tuple[str, tuple
     if figures is not None:
         named |= {figures.earlier, figures.later, *figures.same_year, *(album_id for album_id, _ in figures.alike)}
     return named - {None}
+
+
+@blueprint.get("/covers/<name>")
+def own_cover(name: str):
+    """A cover the user added; its name changes with its contents, so it can be cached for long.
+
+    Args:
+        name: The file.
+    """
+    return send_from_directory(current_app.config["DATA_DIR"] / OWN_COVER_DIR, name, max_age=365 * 24 * 60 * 60)
+
+
+@blueprint.post("/<int:album_id>/cover")
+def upload_cover(album_id: int):
+    """Keep a cover the user uploaded of an album.
+
+    Args:
+        album_id: The album.
+    """
+    file = request.files.get("cover")
+    data = file.read() if file is not None and file.filename else b""
+    error = None
+    if not data:
+        error = _("Choose an image to upload.")
+    elif not set_own_cover(get_store(), album_id, data):
+        error = _("That file is not a JPEG, PNG, GIF or WebP image of at most 5 MB.")
+    return redirect(url_for("albums.detail", album_id=album_id, tab="manage", error=error))
+
+
+@blueprint.post("/<int:album_id>/cover/remove")
+def delete_cover(album_id: int):
+    """Take the user's own cover of an album away.
+
+    Args:
+        album_id: The album.
+    """
+    remove_own_cover(get_store(), album_id)
+    return redirect(url_for("albums.detail", album_id=album_id, tab="manage"))
 
 
 @blueprint.get("/<int:album_id>/listen")

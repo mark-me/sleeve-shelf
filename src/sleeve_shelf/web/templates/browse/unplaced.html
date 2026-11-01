@@ -11,9 +11,14 @@
   <div class="ss-alert mt-3">{{ _('%(title)s now stands on', title=placed.title) }} <a href="{{ url_for('browse.browse', shelf=placed.shelf_id) }}#album-{{ placed.album_id }}">{{ placed.cabinet }} &rsaquo; {{ placed.shelf }}</a>. {{ _('A version from before is kept under Versions.') }}</div>
   {% endif %}
 
+  {% if placed_all is not none %}
+  <div class="ss-alert mt-3">{{ ngettext('%(num)d album now stands at its spot. A version from before is kept under Versions.', '%(num)d albums now stand at their spots. A version from before is kept under Versions.', placed_all) }}</div>
+  {% endif %}
+
   {% set lps = albums | selectattr('is_lp') | list %}
   {% set others = albums | rejectattr('is_lp') | list %}
   {% if lps %}
+  {% if spots | length > 1 %}<p class="mt-3"><a class="ss-button" href="{{ url_for('browse.place_all') }}">{{ _('Place all at once…') }}</a></p>{% endif %}
   <div class="ss-card">
     {% for album in lps %}
     <div class="ss-row" id="album-{{ album.album_id }}">
@@ -24,7 +29,8 @@
         {% set spot = spots.get(album.album_id) %}
         {% if spot %}
         <span class="ss-row-title mt-1">{{ _('Suggested:') }} {{ spot_text.where(spot) }}</span>
-        <span class="ss-row-title">{{ spot_text.room(spot) }}</span>
+        {% set room_line = spot_text.room(spot, true) %}
+        {% if room_line | trim %}<span class="ss-row-title">{{ room_line }}</span>{% endif %}
         {% elif album.cluster %}
         <span class="ss-row-title mt-1">{{ _('No spot: nothing stands on the shelves it could go to.') }}</span>
         {% else %}
@@ -35,6 +41,7 @@
     </div>
     {% endfor %}
   </div>
+  {{ spot_text.estimates_note(lps, spots) }}
   {% else %}
   <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('Every LP has a place on a shelf.') }}</div></div>
   {% endif %}

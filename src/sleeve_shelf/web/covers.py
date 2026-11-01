@@ -2,6 +2,7 @@
 
 from flask import Blueprint, abort, current_app, g, send_from_directory, url_for
 
+from sleeve_shelf.domain import OWN_COVER
 from sleeve_shelf.fetching.covers import (
     ALBUM_DIR,
     ARTIST_DIR,
@@ -42,6 +43,8 @@ def local_cover(url: str | None) -> str | None:
     """
     if not url:
         return url
+    if url.startswith(OWN_COVER):
+        return url_for("albums.own_cover", name=url.removeprefix(OWN_COVER))
     if "cover_names" not in g:
         g.cover_names = stored_names(current_app.config["DATA_DIR"])
     name = cover_name(url)

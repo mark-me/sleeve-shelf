@@ -64,6 +64,7 @@ erDiagram
         int era_band_id FK "nullable"
         string cover_url "small cover image at Discogs, set by a sync"
         string cover_image_url "large cover image at Discogs, set by a sync"
+        string own_cover_file "the user's own cover; nullable"
         bool original_year_confirmed
         bool left_discogs "release no longer in the Discogs collection"
         bool kept_after_discogs "kept although it left Discogs; not asked about again"

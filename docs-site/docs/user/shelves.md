@@ -8,7 +8,7 @@ When your cabinets are spread over rooms, each room gets a tab. *Go to cabinetâ€
 
 ## âœ‹ Dragging in Layout
 
-Drag a block to another spot on the same shelf, or to another shelf. Every move is saved at once, and a version of the layout from before you started is kept.
+Drag a block to another spot on the same shelf, or to another shelf. Every move is saved at once; a bar then offers **Undo** for that move. A version of the layout from before you started is kept.
 
 On a phone, **hold a block for a moment** until it lifts, then drag it. A quick swipe that starts on a block scrolls the page instead, so you don't move albums by accident.
 

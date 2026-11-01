@@ -260,7 +260,7 @@
     document.querySelectorAll('a[href^="/connections/"]').forEach((link) => {
       link.setAttribute("href", withTies(link.getAttribute("href")));
     });
-    const hidden = document.querySelector('form[role="search"] input[name="ties"]');
+    const hidden = document.querySelector('.ss-main form[role="search"] input[name="ties"]');
     const value = TIES.filter((tie) => active().has(tie)).join(",");
     if (hidden) hidden.value = value;
     else {
@@ -268,7 +268,7 @@
       field.type = "hidden";
       field.name = "ties";
       field.value = value;
-      document.querySelector('form[role="search"]').append(field);
+      document.querySelector('.ss-main form[role="search"]').append(field);
     }
     window.history.replaceState(null, "", withTies(window.location.href));
   }

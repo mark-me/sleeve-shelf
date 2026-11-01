@@ -1,0 +1,11 @@
+{# List or grid, for this device; the script shows it and remembers the choice. #}
+<div class="ss-view-switch" role="group" aria-label="{{ _('How to show the albums') }}">
+  <button type="button" data-browse-view-choice="list" aria-pressed="true">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M1 3h14v2H1zM1 7h14v2H1zM1 11h14v2H1z"/></svg>
+    <span>{{ _('List') }}</span>
+  </button>
+  <button type="button" data-browse-view-choice="grid" aria-pressed="false">
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M1 1h6v6H1zM9 1h6v6H9zM1 9h6v6H1zM9 9h6v6H9z"/></svg>
+    <span>{{ _('Grid') }}</span>
+  </button>
+</div>

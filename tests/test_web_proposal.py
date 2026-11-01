@@ -800,7 +800,10 @@ def test_a_new_album_of_an_artist_on_the_shelves_is_suggested_a_spot_and_put_the
     listed = client.get("/unplaced").text
     # Next to the artist's own albums on shelf b; the shelf (1.5 cm, 3.5 cm of albums) is full.
     assert "Suggested:" in listed and "Kast &rsaquo; b" in listed
-    assert "The shelf then holds" in listed and "Put it there" in listed
+    assert "Put it there" in listed
+    # An estimated width is said once below the list, and in full on the album's own page.
+    assert "The shelf then holds" not in listed and "would go over their estimated width" in listed
+    assert "The shelf then holds" in client.get("/albums/6?tab=manage").text
     # Nothing has moved yet.
     assert _shelf_page(client, 2) == before
     # The album's first tab says it waits; the spot and the button are on Manage.
