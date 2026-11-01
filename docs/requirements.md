@@ -591,6 +591,7 @@ An artist's page is reached from Layout (the name on a block) and from Browse/Se
 
 ### Browse/Search screen
 
+- **List or grid** (asked for by Mark 2026-11-02): a shelf and search results can be shown as a list or as a wall of covers, with a switch in the bar above them, remembered per device. In the grid each album is its cover with its artist and title under it, the play button on the cover, and everything works as in a row: the cover and title open the album, the artist the artist. The list stays the default
 - **Walking through** (asked for by Mark 2026-11-01): besides the buttons, the arrow keys and a swipe go to the previous or next shelf; a swipe from the very edge of the screen is left to the phone. The bar says which shelf of how many this is
 - **Search from every page** (asked for by Mark 2026-11-01): a search field in the menu, on a phone in the bar at the top in place of the app's name, leads to the results here. Enter searches; only the field on this screen follows the typing, and it is the only field here. Visitors have it too. The wizard and the login have none
 - **A row opens the album** (asked for by Mark 2026-11-01), on a shelf and among search results; its artist still opens the artist, its place the shelf with the album marked, and its play button plays
@@ -831,6 +832,7 @@ Phase 2 is closed (see Phase 2). What is left is work that waits for measurement
 
 ### Chosen without asking, not yet looked at
 
+- **The grid** (2026-11-02): only on a shelf and among search results, not yet on Unplaced albums or an artist's page; in search results a song that matched and the place stay under the album; the size of a cover follows the width of the screen, at least 150 px, so two across on a phone. An album without a cover stays a grey square
 - **Placing all at once** (2026-11-01), Mark's request, the way it is done chosen without asking: from the Unplaced albums list and the Dashboard, when more than one LP has a spot. One page lists each album at its suggested spot with what that does per shelf; albums can be unticked, and **Place them** stands those ticked at once, worked out anew as one plan, a version from before kept. What it does per shelf is shown for all albums ticked, and does not follow unticking
 - **Calmer screens** (2026-11-01), Mark's request, the way it is done chosen without asking: on Layout the notice that every move is saved is put away per device with **Got it**, and comes back with cleared browser data; the reachability on a shelf is no longer in the accent colour; in the lists of albums to place an estimated width that is exceeded is said once below the list, while a measured width stays on the row in the warning colour and the album's own page keeps saying it in full
 - **Listening**: which words make Deezer's album another one (live, remix, soundtrack, tribute, karaoke, instrumental, cover)
@@ -858,6 +860,10 @@ Phase 2 is closed (see Phase 2). What is left is work that waits for measurement
 - **On the record** (2026-10-30), chosen without asking: a tie runs between an album's artist and whoever is credited on it, not between two people credited on one album; what does not count is named rather than what does, as instruments are too many to list, so an unknown role counts; programming counts as behind the record; a reissue or executive producer does not count. Measured on the whole collection (2026-10-30): 1,067 of 1,205 releases have credits, giving 261 such ties, 95 of them between artists nothing else ties; 300 of 665 artists now have a close tie
 - **Figures and statistics** (2026-10-30), chosen without asking: the Statistics screen is the owner's, while the figures on an artist's page are for visitors too; bars are of one colour, checked with a validator for both themes; *Recurring on the records* counts producers, *Most on your records* does not; hover shows the count per year on a computer, and on a phone the album list beside it says the same. The bars of Per decade and Per cluster do not open to their albums, as those lists would hold the whole collection. The longest way goes by close ties only. The first list of labels that tie no one was drawn up from the largest of the collection without asking, for Mark to check under Settings; with it the same label ties 3,106 pairs of artists, Verve the most (630)
 - **Musicians without an album of their own** (2026-10-30), chosen without asking within Mark's decision: the five albums are a constant, not a setting; a musician is a diamond in the network, without a colour of its own; a musician's page is the Connections screen, with no artist page; they stay out of *Who holds your collection together* and the longest way, which are about artists
+
+### Parked ideas
+
+- **On the turntable** (set aside by Mark 2026-11-02, not built): marking what is taken from the shelves, showing where it goes back and keeping what was played. Still to decide: one record or a stack; whether its place on the shelf stays while it is out; when a record counts as played; whether visitors see it
 
 ### Parked from Phase 1a
 

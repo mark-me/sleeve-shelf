@@ -709,6 +709,8 @@ a.ss-row-place { display: inline-flex; align-items: center; justify-content: fle
 
 /* The whole row opens the album; the artist, the place and the play button stay what they are. */
 .ss-row-opens { position: relative; }
+/* What lies above a row's link stays within the list, under the bars that stay in view. */
+.ss-album-rows { isolation: isolate; }
 .ss-row-opens a.ss-row-title::after { content: ""; position: absolute; inset: 0; }
 .ss-row-opens a.ss-row-artist, .ss-row-opens a.ss-row-place, .ss-row-opens .ss-play { position: relative; z-index: 1; }
 .ss-row-opens:hover { background: var(--ss-chip); }
@@ -727,4 +729,30 @@ a.ss-row-place { display: inline-flex; align-items: center; justify-content: fle
 
 /* A row to tick, when placing several albums at once. */
 .ss-choose-row { justify-content: flex-start; gap: 12px; cursor: pointer; }
+
+/* Browse as a list or as a wall of covers. */
+.ss-view-switch { display: none; flex-shrink: 0; border: 1px solid var(--ss-border); border-radius: 10px; overflow: hidden; }
+html[data-browse-view] .ss-view-switch { display: inline-flex; }
+.ss-view-switch button { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 10px; border: 0; background: var(--ss-surface); color: var(--ss-muted); font-size: 0.82rem; }
+.ss-view-switch button[aria-pressed="true"] { background: var(--ss-chip); color: var(--ss-text); font-weight: 600; }
+@media (max-width: 575.98px) {
+  .ss-view-switch span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}
+
+html[data-browse-view="grid"] .ss-album-rows { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px 12px; padding: 12px; }
+html[data-browse-view="grid"] .ss-album-rows .ss-group { grid-column: 1 / -1; margin: 4px -12px 0; }
+html[data-browse-view="grid"] .ss-album-rows .ss-group:first-child { margin-top: -12px; }
+html[data-browse-view="grid"] .ss-album-rows .ss-row { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 6px; padding: 0; border: 0; border-radius: 6px; min-width: 0; }
+html[data-browse-view="grid"] .ss-album-rows .ss-row:hover { background: none; }
+html[data-browse-view="grid"] .ss-album-rows .ss-row:hover .ss-cover { outline: 2px solid var(--ss-accent); }
+html[data-browse-view="grid"] .ss-album-rows .ss-row:target { box-shadow: none; background: none; }
+html[data-browse-view="grid"] .ss-album-rows .ss-row:target .ss-cover { outline: 3px solid var(--ss-accent); }
+/* An empty cover has its size in its style attribute. */
+html[data-browse-view="grid"] .ss-album-rows .ss-cover { display: block; width: 100% !important; height: auto !important; aspect-ratio: 1; margin: 0; border-radius: 6px; }
+html[data-browse-view="grid"] .ss-album-rows .ss-row-artist { font-size: 0.85rem; line-height: 1.25; }
+html[data-browse-view="grid"] .ss-album-rows .ss-row-title { font-size: 0.78rem; line-height: 1.25; }
+html[data-browse-view="grid"] .ss-album-rows .ss-row-text { flex: none; overflow-wrap: anywhere; }
+html[data-browse-view="grid"] .ss-album-rows a.ss-row-place { justify-content: flex-start; min-height: 28px; padding: 0; text-align: left; font-size: 0.78rem; }
+/* The play button lies on the cover. */
+html[data-browse-view="grid"] .ss-album-rows .ss-play { position: absolute; top: 6px; right: 6px; z-index: 1; }
 

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Browse / Search') }}{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='browse-view.js') }}"></script>{% endblock %}
 
 {% macro shelf_nav() %}
 <a class="ss-button {{ 'disabled' if not previous }}" data-walk="prev" {% if previous %}href="{{ url_for('browse.browse', shelf=previous.shelf_id, layout=layout) }}"{% else %}aria-disabled="true"{% endif %}>&larr; {{ _('Previous shelf') }}</a>
@@ -33,6 +34,7 @@
       <span>&middot; {{ _('reachability %(score)d', score=shelf.reachability_score) }}</span>
       {% endif %}
     </span>
+    {% include "browse/_view_switch.html" %}
     <div class="ss-shelf-nav d-none d-lg-flex">{{ shelf_nav() }}</div>
   </div>
   <form method="get" action="{{ url_for('browse.browse') }}">
@@ -55,7 +57,7 @@
   <div class="ss-card"><div class="ss-card-body ss-muted">{{ _('This shelf is empty.') }}</div></div>
   {% else %}
   {% set covers = albums | selectattr('cover_url') | list | length > 0 %}
-  <div class="ss-card">
+  <div class="ss-card ss-album-rows">
     {% for album in albums %}
     {% if loop.changed(album.cluster, album.era_band) %}
     <div class="ss-group">{{ [album.cluster, album.era_band] | select | join(' · ') }}</div>

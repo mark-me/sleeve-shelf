@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Search results') }}{% endblock %}
+{% block head %}<script src="{{ url_for('static', filename='browse-view.js') }}"></script>{% endblock %}
 
 {% from "_cover.html" import cover %}
 {% from "_play.html" import play_button, play_script %}
@@ -13,6 +14,7 @@
   {% include "browse/_search.html" %}
   <div class="ss-shelf-bar">
     <span>{{ ngettext('%(num)d result for “%(text)s”', '%(num)d results for “%(text)s”', albums | length, text=search_text) }}</span>
+    {% include "browse/_view_switch.html" %}
     <a href="{{ url_for('browse.browse') }}">{{ _('Back to browsing') }}</a>
   </div>
 </div>
@@ -20,7 +22,7 @@
 <div class="ss-page">
   {% if albums %}
   {% set covers = albums | selectattr('cover_url') | list | length > 0 %}
-  <div class="ss-card">
+  <div class="ss-card ss-album-rows">
     {% for album in albums %}
     {# The title leads to the album's page, the place to its shelf with the album marked. #}
     <div class="ss-row ss-row-opens">

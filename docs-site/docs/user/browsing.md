@@ -6,7 +6,7 @@
 
 Every album has a **▶** button: it plays the album's 30-second previews from Deezer, one track after another, and shows the track playing under the title. Press it again to stop; pressing another album stops the first. When Deezer doesn't have the album, the row says so — its page may still have videos.
 
-The bar says which shelf you are at. The arrow keys, or a swipe on a phone, go to the previous or next shelf.
+The switch in the bar shows a shelf or search results as a **list** or as a **grid** of covers, and this device remembers your choice. The bar says which shelf you are at. The arrow keys, or a swipe on a phone, go to the previous or next shelf.
 
 **Search** finds artists, albums and songs across all shelves. The results follow as you type; a row opens the album's page, the artist its page, and the place beside it the shelf with the album marked. From any other page, the search field in the menu leads here too. Emptying the search field takes you back to browsing.
 

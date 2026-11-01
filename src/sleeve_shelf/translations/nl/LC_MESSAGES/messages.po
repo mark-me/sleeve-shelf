@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-01 23:35+0100\n"
+"POT-Creation-Date: 2026-11-01 23:49+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -1283,6 +1283,18 @@ msgstr "Hoe dit scherm werkt"
 #: src/sleeve_shelf/web/templates/browse/_search.html
 msgid "Search by artist, album or song…"
 msgstr "Zoek op artiest, album of nummer…"
+
+#: src/sleeve_shelf/web/templates/browse/_view_switch.html
+msgid "How to show the albums"
+msgstr "Hoe de albums getoond worden"
+
+#: src/sleeve_shelf/web/templates/browse/_view_switch.html
+msgid "List"
+msgstr "Lijst"
+
+#: src/sleeve_shelf/web/templates/browse/_view_switch.html
+msgid "Grid"
+msgstr "Raster"
 
 #: src/sleeve_shelf/web/templates/browse/place_all.html
 msgid "Place these albums"
