@@ -21,6 +21,7 @@ uv run python -m sleeve_shelf load <workbook.xlsx>
 uv run python -m sleeve_shelf import-discogs <collection.csv>
 uv run python -m sleeve_shelf enrich
 uv run python -m sleeve_shelf set-picture "<artist>" <image>
+uv run python -m sleeve_shelf set-cover <album id> <image>
 ```
 
 !!! note "Templates are read at start-up"

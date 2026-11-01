@@ -6,7 +6,7 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 
 from sleeve_shelf.domain import Cabinet, Placement, ProposedPlacement, Shelf, in_order
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries
-from sleeve_shelf.shelving.placing import ShelvesChanged, move_albums, rearrange_shelves
+from sleeve_shelf.shelving.placing import ShelvesChanged, contents_before, move_albums, rearrange_shelves
 from sleeve_shelf.shelving.proposal import has_proposal
 from sleeve_shelf.web.context import get_store, shelf_fill
 
@@ -130,6 +130,7 @@ def send():
         return jsonify(error="Albums and the shelf are given by number."), 400
     if not moving:
         return _changed()
+    undo = _undo(store, [] if target == TRAY else [target], moving, entity)
     try:
         touched = move_albums(store, moving, None if target == TRAY else target, entity)
     except ShelvesChanged:
@@ -139,7 +140,7 @@ def send():
         # The room the shelf is in, for a jump to a shelf that is on another tab.
         cabinet_id = next(shelf.cabinet_id for shelf in store.load(Shelf) if shelf.id == target)
         room = next(c.location for c in store.load(Cabinet) if c.id == cabinet_id) or ""
-    return _filled(store, entity, touched, room=room)
+    return _filled(store, entity, touched, room=room, undo=undo)
 
 
 @blueprint.post("/move")
@@ -155,11 +156,19 @@ def move():
     except (TypeError, ValueError):
         return jsonify(error="Shelves and albums are given by number."), 400
     tray = contents.pop(TRAY, [])
+    moving = [album_id for album_ids in contents.values() for album_id in album_ids] + tray
+    undo = _undo(store, contents, moving, entity)
     try:
         rearrange_shelves(store, contents, tray, entity)
     except ShelvesChanged:
         return _changed()
-    return _filled(store, entity, contents)
+    return _filled(store, entity, contents, undo=undo)
+
+
+def _undo(store, shelf_ids, album_ids, entity) -> dict[str, list[int]]:
+    """What to send to /move to put a move back: the shelves as they stand, and the tray."""
+    contents, off_shelf = contents_before(store, shelf_ids, album_ids, entity)
+    return {str(shelf_id): albums for shelf_id, albums in {**contents, TRAY: off_shelf}.items()}
 
 
 def _changed():

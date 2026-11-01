@@ -39,6 +39,7 @@ VISITOR_PAGES = frozenset(
         "connections.index",
         "connections.data",
         "albums.detail",
+        "albums.own_cover",
         "albums.listen",
         "albums.previews",
         "artists.edit",
@@ -65,7 +66,7 @@ VISITOR_PAGES_PER_WINDOW = 300
 VISITOR_PAGE_SECONDS = 60
 # Not counted: files, as a shelf alone shows a hundred covers and sending a file costs little;
 # and the login, which has a limit of its own, so the owner can always log in.
-_NOT_COUNTED = frozenset({"static", "covers.file", "artists.picture", "help.page", "pwa.manifest", "login.page"})
+_NOT_COUNTED = frozenset({"static", "covers.file", "artists.picture", "albums.own_cover", "help.page", "pwa.manifest", "login.page"})
 
 
 class _Window:

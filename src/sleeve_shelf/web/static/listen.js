@@ -18,12 +18,21 @@
     }
   }
   audio.addEventListener("ended", stop);
+  // The album's play button at the top of the page: one thing plays at a time.
+  document.addEventListener("ss-plays", function (event) {
+    if (event.detail !== "listen") stop();
+  });
+
+  function plays() {
+    document.dispatchEvent(new CustomEvent("ss-plays", { detail: "listen" }));
+  }
 
   function wire() {
     section.querySelectorAll("[data-preview]").forEach(function (button) {
       button.addEventListener("click", function () {
         if (preview === button) return stop();
         stop();
+        plays();
         audio.src = button.dataset.preview;
         audio.play().catch(stop);
         button.textContent = "\u275A\u275A";
@@ -34,6 +43,7 @@
     section.querySelectorAll("[data-youtube]").forEach(function (button) {
       button.addEventListener("click", function () {
         stop();
+        plays();
         const frame = document.createElement("iframe");
         frame.className = "ss-video-frame";
         frame.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(button.dataset.youtube) + "?autoplay=1";

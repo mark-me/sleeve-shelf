@@ -4,7 +4,7 @@ To a shelf or to where it belongs, worked out as a plan to look at before it is 
 """
 
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -385,6 +385,25 @@ def _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, pl
         ),
         tuple(kept + rebuilt),
     )
+
+
+def plan_placing(store: JsonStore, album_ids: Iterable[int], constants: WidthConstants) -> Plan:
+    """Work out standing these albums where they belong, together, without changing anything.
+
+    Albums going to one spot stand there in sorting order, which is why they are planned as one.
+
+    Args:
+        store: The store of the collection.
+        album_ids: The albums.
+        constants: The width figures.
+
+    Returns:
+        The plan; an album with no place it belongs to is under its without_spot.
+    """
+    wanted = set(album_ids)
+    order = {entry.album_id: index for index, entry in enumerate(sort_collection(store, wanted).ordered)}
+    in_order = sorted(wanted, key=lambda album_id: (order.get(album_id, len(order)), album_id))
+    return plan(store, Selection(Kind.ALBUM, 0, "", tuple(in_order)), How.BELONGS, None, constants)
 
 
 def carry_out(store: JsonStore, chosen: Plan) -> None:

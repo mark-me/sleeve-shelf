@@ -1,13 +1,11 @@
 """Application services for curating an artist: start year, cluster and picture."""
 
 import hashlib
-import io
 from collections import Counter
 from pathlib import Path
 
-from PIL import Image, ImageOps
-
 from sleeve_shelf.library.collection import ensure_cluster_order
+from sleeve_shelf.library.images import MAX_IMAGE_BYTES, image_extension, thumb_name, thumbnail
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -91,62 +89,6 @@ def _clear_purchases(store: JsonStore, artist_id: int) -> None:
 
 
 PICTURE_DIR = "artist_pictures"
-MAX_PICTURE_BYTES = 5 * 1024 * 1024
-# The longest side of the small copy made for lists: twice the 150 px a picture is shown at
-# on the artist's page, so it stays sharp on a phone.
-THUMB_PIXELS = 300
-# What an image file starts with, and the extension it is kept under.
-_IMAGE_KINDS = (
-    (b"\xff\xd8\xff", "jpg"),
-    (b"\x89PNG\r\n\x1a\n", "png"),
-    (b"GIF87a", "gif"),
-    (b"GIF89a", "gif"),
-)
-
-
-def picture_extension(data: bytes) -> str | None:
-    """The kind of image the bytes are.
-
-    Args:
-        data: The bytes.
-
-    Returns:
-        The extension for JPEG, PNG, GIF or WebP; None for anything else.
-    """
-    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
-        return "webp"
-    return next((ext for start, ext in _IMAGE_KINDS if data.startswith(start)), None)
-
-
-def thumb_name(picture_file: str) -> str:
-    """The file the small copy of a picture is kept under, next to the picture itself.
-
-    Args:
-        picture_file: The file of the picture.
-
-    Returns:
-        The file of its small copy.
-    """
-    return Path(picture_file).stem + ".thumb.jpg"
-
-
-def _thumbnail(data: bytes) -> bytes | None:
-    """A small JPEG copy of an image, upright and without transparency; None if it can't be read."""
-    try:
-        with Image.open(io.BytesIO(data)) as image:
-            image = ImageOps.exif_transpose(image)
-            image.thumbnail((THUMB_PIXELS, THUMB_PIXELS))
-            if image.mode != "RGB":
-                # JPEG has no transparency: lay the picture on white.
-                image = image.convert("RGBA")
-                background = Image.new("RGB", image.size, "white")
-                background.paste(image, mask=image.getchannel("A"))
-                image = background
-            out = io.BytesIO()
-            image.save(out, "JPEG", quality=85, optimize=True)
-            return out.getvalue()
-    except Exception:  # noqa: BLE001 - whatever is wrong with the file, it is no usable image
-        return None
 
 
 def picture_thumb(store: JsonStore, artist: Artist) -> str | None:
@@ -166,7 +108,7 @@ def picture_thumb(store: JsonStore, artist: Artist) -> str | None:
     if (directory / name).exists():
         return name
     source = directory / artist.picture_file
-    small = _thumbnail(source.read_bytes()) if source.exists() else None
+    small = thumbnail(source.read_bytes()) if source.exists() else None
     if small is None:
         return artist.picture_file
     (directory / name).write_bytes(small)
@@ -188,10 +130,10 @@ def set_picture(store: JsonStore, artist_id: int, data: bytes) -> bool:
     Returns:
         False when the bytes are no image the app can show, or are too large.
     """
-    extension = picture_extension(data)
-    if extension is None or len(data) > MAX_PICTURE_BYTES:
+    extension = image_extension(data)
+    if extension is None or len(data) > MAX_IMAGE_BYTES:
         return False
-    small = _thumbnail(data)
+    small = thumbnail(data)
     if small is None:
         return False
     artists = store.load(Artist)
