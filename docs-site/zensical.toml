@@ -18,6 +18,8 @@ nav = [
     "user/index.md",
     "user/getting-started.md",
     "user/browsing.md",
+    "user/albums-and-artists.md",
+    "user/connections.md",
     "user/discogs.md",
     "user/shelves.md",
     "user/sorting.md",

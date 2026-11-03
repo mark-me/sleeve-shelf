@@ -16,7 +16,7 @@ The **Settings** screen edits `config.yaml` in your data folder:
 | Count a bundle such as "CD + LP" as vinyl | on | Applies the next time a Discogs export is imported |
 | Discogs personal access token | — | Shown masked; paste a new one to replace it |
 
-**Labels that tie no artists** lists, one per line, the record labels that don't count for *Same label* under [Connections](browsing.md#connections): labels that reissue others' records, or are a large company's name on them. It starts with a first list for you to check. Statistics still counts them.
+**Labels that tie no artists** lists, one per line, the record labels that don't count for *Same label* under [Connections](connections.md#connections): labels that reissue others' records, or are a large company's name on them. It starts with a first list for you to check. Statistics still counts them.
 
 Saving the width figures estimates every album's width again. Shelf widths are not touched — those are yours.
 
