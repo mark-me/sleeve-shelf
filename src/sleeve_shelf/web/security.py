@@ -33,13 +33,14 @@ _APP_SOURCES = {
     "frame-ancestors": "'none'",
 }
 
-# The help is the documentation site, built by Zensical: it runs inline scripts of its own and
-# draws its diagrams with Mermaid from a CDN. It holds nothing but our own pages.
+# The help is the documentation site, built by Zensical: it runs inline scripts of its own. Mermaid
+# for its diagrams and its fonts come with it, so nothing is fetched from elsewhere. It holds
+# nothing but our own pages.
 _HELP_SOURCES = {
     "default-src": "'self'",
-    "script-src": "'self' 'unsafe-inline' https://unpkg.com",
-    "style-src": "'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src": "'self' data: https://fonts.gstatic.com",
+    "script-src": "'self' 'unsafe-inline'",
+    "style-src": "'self' 'unsafe-inline'",
+    "font-src": "'self' data:",
     "img-src": "'self' data: https:",
     "connect-src": "'self' https://api.github.com",
     "object-src": "'none'",

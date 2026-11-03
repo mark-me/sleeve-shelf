@@ -95,6 +95,14 @@ An artist's page opens on **Artist**: the artist's albums and where each one sta
 
 **Manage**, the second tab, holds what can be changed: **start year** (which sets the era band — with a link to look it up), **cluster**, location rules, moving all its albums to another shelf at once, and your own picture of the artist, which is kept with your data and never replaced by a sync. When the artist still needs something from you for the sorting, the first tab says so, and the Artists list takes you straight to Manage. Visitors see only the first part, without tabs.
 
+!!! tip "When the browser can't upload"
+    Some managed computers block file uploads in the browser. Add a picture of an artist, or a cover of an album — by the number in its page's address, `/albums/43` — from the command line instead:
+
+    ```sh
+    uv run python -m sleeve_shelf set-picture "Miles Davis" path/to/picture.jpg
+    uv run python -m sleeve_shelf set-cover 43 path/to/cover.jpg
+    ```
+
 On a wide screen the albums are on the left and the figures on the right; on a phone the figures come first.
 
 ## 📦 Albums without a place
