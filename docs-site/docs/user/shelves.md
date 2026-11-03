@@ -2,6 +2,8 @@
 
 ## 🧱 Layout
 
+![Layout: the shelves of one room, as blocks to drag](../images/screens/layout.png)
+
 **Layout** shows all your cabinets with their shelves and what stands on them. Neighbouring albums of one artist form a **block**; the number on a block is how many albums it holds — click it to split the block into single albums. A bar on each shelf shows how full it is.
 
 When your cabinets are spread over rooms, each room gets a tab. *Go to cabinet…* at the top stays in view while you scroll and jumps to any cabinet, or to the albums not on a shelf.

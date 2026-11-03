@@ -4,6 +4,8 @@ Every album and every artist has a page of its own, with what it is, what your c
 
 ## 💿 An album's page
 
+![An album's page: where it stands, and what it is](../images/screens/album.png)
+
 Open an album by its title, wherever one is listed: a search result, a shelf, its artist's page, Layout, Connections, Statistics and the lists under Discogs and in a sorting proposal. The page has three tabs: **Album**, **Statistics** and — for you as owner — **Manage**.
 
 Under the title, on every tab, stands where the album is: a button to its shelf, with the album marked. Beside it the **▶** button plays its previews. Below that are the albums before and after it along the shelves; the arrow keys or a swipe go there too.

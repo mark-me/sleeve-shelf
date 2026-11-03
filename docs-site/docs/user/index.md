@@ -4,6 +4,8 @@ Sleeve & Shelf keeps track of where every record in your collection stands, and 
 
 ## 🗺️ The five sections
 
+![The Dashboard: the collection at a glance, and the albums waiting for a place](../images/screens/dashboard.png)
+
 The menu has five sections. Each opens on its first screen; the other screens of a section are tabs at the top of the page.
 
 | Section | Screens | What you do there |

@@ -125,6 +125,9 @@ pymdownx.tabbed.alternate_style = true
 pymdownx.tasklist.custom_checkbox = true
 pymdownx.tilde = {}
 
+# A screenshot in the user guide enlarges when clicked (GLightbox, carried with the site).
+[project.plugins.glightbox]
+
 # The Reference pages are read from the docstrings: parsed, so the app is not installed for it.
 [project.plugins.mkdocstrings.handlers.python]
 paths = ["../src"]

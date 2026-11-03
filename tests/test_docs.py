@@ -70,3 +70,14 @@ def test_the_help_fetches_nothing_from_outside():
     for path in config["extra_javascript"] + config["extra_css"]:
         assert (site / "docs" / path).is_file(), path
 
+
+def test_every_picture_the_guide_shows_is_there():
+    docs = ROOT / "docs-site" / "docs"
+    missing = [
+        f"{page.relative_to(docs)}: {target}"
+        for page in docs.rglob("*.md")
+        for target in re.findall(r"!\[[^\]]*\]\(([^)\s]+)", page.read_text(encoding="utf-8"))
+        if not (page.parent / target).resolve().is_file()
+    ]
+    assert not missing, missing
+

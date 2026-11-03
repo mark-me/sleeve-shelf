@@ -4,6 +4,8 @@ How the artists in your collection hang together, and who and what recurs across
 
 ## 🕸️ Connections
 
+![The connections of one artist, with its picture in the middle](../images/screens/connections.png)
+
 **Connections** shows how the artists in your collection are tied together, as a network you can move around in. Every point is an artist — bigger with more albums, coloured by its cluster (grey means no cluster yet). Every line is a tie:
 
 | Line | What ties the two |

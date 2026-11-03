@@ -24,6 +24,14 @@ uv run python -m sleeve_shelf set-picture "<artist>" <image>
 uv run python -m sleeve_shelf set-cover <album id> <image>
 ```
 
+!!! note "Screenshots of the user guide"
+    The pictures in the user guide are taken from the running app by `docs-site/take_screenshots.py`, on a copy of a data directory, in English and in the light theme. Take them again after a screen changed:
+
+    ```sh
+    uv run --with playwright python -m playwright install chromium   # once
+    uv run --with playwright python docs-site/take_screenshots.py data
+    ```
+
 !!! note "Templates are read at start-up"
     The running app does not pick up changed templates. Restart it after editing one — a frequent cause of "my change doesn't show".
 
