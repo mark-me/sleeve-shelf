@@ -6,7 +6,8 @@ Run from the repository, after installing the browser once:
     uv run --with playwright python docs-site/take_screenshots.py path/to/data
 
 The data directory is copied first, so nothing in it changes. The pictures land in
-docs-site/docs/images/screens/, in English and in the light theme.
+docs-site/docs/images/screens/, in English and in the light theme; only when every one of them
+was taken, so a run that fails leaves the pictures there as they were.
 """
 
 import argparse
@@ -35,14 +36,14 @@ def _first(items: list, wanted, fallback):
     return next((item for item in items if wanted(item)), fallback)
 
 
-def _shoot(page: Page, address: str, name: str, *, wait: int = 600, only: str | None = None) -> None:
+def _shoot(page: Page, into: Path, address: str, name: str, *, wait: int = 600, only: str | None = None) -> None:
     """One screenshot: the window as it opens, or only the part of the page given."""
     page.goto(address)
     page.wait_for_timeout(wait)
     if only:
-        page.locator(only).screenshot(path=OUT / f"{name}.png")
+        page.locator(only).screenshot(path=into / f"{name}.png")
     else:
-        page.screenshot(path=OUT / f"{name}.png")
+        page.screenshot(path=into / f"{name}.png")
     print(f"{name}.png  {address}")
 
 
@@ -57,6 +58,8 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory() as temporary:
         copy = Path(temporary) / "data"
+        taken = Path(temporary) / "screens"
+        taken.mkdir()
         # The artists' own pictures are left out of the copy: they are not needed to show the pages.
         shutil.copytree(data, copy, ignore=shutil.ignore_patterns("artist_pictures", "*.part"))
         store = JsonStore(copy)
@@ -84,15 +87,18 @@ def main() -> None:
                     " localStorage.setItem('sleeve-shelf-browse-view', 'grid'); } catch (e) {}"
                 )
                 page = context.new_page()
-                _shoot(page, "/dashboard/", "dashboard")
-                _shoot(page, "/browse", "browse")
-                _shoot(page, f"/albums/{album.id}", "album")
-                _shoot(page, f"/connections/?artist={artist.id}", "connections", wait=2500, only="#ss-network-frame")
-                _shoot(page, "/layout/", "layout")
-                _shoot(page, "/unplaced/place", "place-all")
+                _shoot(page, taken, "/dashboard/", "dashboard")
+                _shoot(page, taken, "/browse", "browse")
+                _shoot(page, taken, f"/albums/{album.id}", "album")
+                _shoot(page, taken, f"/connections/?artist={artist.id}", "connections", wait=2500, only="#ss-network-frame")
+                _shoot(page, taken, "/layout/", "layout")
+                _shoot(page, taken, "/unplaced/place", "place-all")
                 browser.close()
         finally:
             server.shutdown()
+        # All of them, or none: a run that stopped halfway changes nothing.
+        for picture in taken.glob("*.png"):
+            shutil.move(picture, OUT / picture.name)
 
 
 if __name__ == "__main__":
