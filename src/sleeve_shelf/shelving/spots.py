@@ -269,17 +269,20 @@ def place_in_cluster(
     Args:
         store: The store of the collection.
         album_id: The album.
-        cluster_id: One of the other clusters its styles point to.
+        cluster_id: The cluster of one of the other spots offered (other_spots).
         constants: The width figures.
         confirm: Whether the album's artist is put in that cluster as confirmed, so that a later
             proposal keeps it there.
 
     Returns:
-        The spot, or None when that cluster is not one offered or has no spot.
+        The spot, or None when that cluster is not one of the other spots offered as the shelves
+        stand now.
     """
-    artist_ids, clusters = _other_clusters(store, album_id)
-    if cluster_id not in clusters:
+    # The same spots as the album's page offers, worked out anew: a cluster further down the
+    # styles, or one offered on a page opened before the shelves changed, is refused.
+    if cluster_id not in {spot.cluster_id for spot in other_spots(store, album_id, constants)}:
         return None
+    artist_ids, _ = _other_clusters(store, album_id)
     album = next((a for a in store.load(Album) if a.id == album_id), None)
     spot = place_at_spot(store, album_id, constants, dict.fromkeys(artist_ids, cluster_id))
     if spot is not None and confirm and album is not None:

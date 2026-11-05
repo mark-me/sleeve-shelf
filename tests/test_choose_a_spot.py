@@ -225,3 +225,21 @@ def test_a_visitor_reads_why_but_gets_no_action(store):
     assert "Choose a cluster" not in page
     assert "Or in Rock" not in page
     assert "Somewhere else" not in page
+
+
+def test_a_cluster_further_down_the_styles_than_the_spots_offered_places_nothing(store):
+    # Blues twice, then Rock, Folk and Jazz once each: three other clusters, of which two are offered.
+    store.save(Cluster, [*store.load(Cluster), Cluster(4, "Folk", 3)])
+    store.save(Style, [*store.load(Style), Style(4, "Folk Rock", 4)])
+    albums = store.load(Album)
+    next(a for a in albums if a.id == 41).style_ids = [2, 3, 4]
+    next(a for a in albums if a.id == 42).style_ids = [2, 1]
+    store.save(Album, albums)
+    offered = {s.cluster_id for s in other_spots(store, 41, CONSTANTS)}
+    assert len(offered) == 2
+    not_offered = ({1, 2, 4} - offered).pop()
+    before = _shelves(store)
+
+    assert place_in_cluster(store, 41, not_offered, CONSTANTS, confirm=True) is None
+    assert _shelves(store) == before
+    assert _confirmed(store, 4) is None
