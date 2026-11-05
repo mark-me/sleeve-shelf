@@ -41,7 +41,7 @@ _HELP_SOURCES = {
     "script-src": "'self' 'unsafe-inline'",
     "style-src": "'self' 'unsafe-inline'",
     "font-src": "'self' data:",
-    "img-src": "'self' data: https:",
+    "img-src": "'self' data:",
     "connect-src": "'self' https://api.github.com",
     "object-src": "'none'",
     "base-uri": "'self'",

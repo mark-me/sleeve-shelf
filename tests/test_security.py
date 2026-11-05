@@ -49,8 +49,10 @@ def test_the_help_may_run_the_documentation_site_s_own_scripts(client):
     # Mermaid and the fonts come with the site: nothing from outside.
     assert policy["script-src"] == ["'self'", "'unsafe-inline'"]
     # Only the repository's figures in the site's header are asked of GitHub.
-    outside = {source for name, sources in policy.items() for source in sources if "http" in source and source != "https:"}
+    outside = {source for sources in policy.values() for source in sources if source.startswith(("http", "https:"))}
     assert outside == {"https://api.github.com"}
+    # Its images are its own too: no picture from any other site.
+    assert policy["img-src"] == ["'self'", "data:"]
     assert policy["frame-ancestors"] == ["'none'"]
 
 
