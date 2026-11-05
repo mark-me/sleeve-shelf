@@ -5,7 +5,8 @@ Run from the repository, after installing the browser once:
     uv run --with playwright python -m playwright install chromium
     uv run --with playwright python docs-site/take_screenshots.py path/to/data
 
-The data directory is copied first, so nothing in it changes. The pictures land in
+The data directory is copied first, so nothing in it changes; while the app changes it during the
+copy, as a sync does, the copy is made again. The pictures land in
 docs-site/docs/images/screens/, in English and in the light theme; only when every one of them
 was taken, so a run that fails leaves the pictures there as they were.
 """
@@ -47,6 +48,33 @@ def _shoot(page: Page, into: Path, address: str, name: str, *, wait: int = 600, 
     print(f"{name}.png  {address}")
 
 
+# How often the copy is tried again when the app changed the data while it was being made.
+COPY_ATTEMPTS = 3
+
+
+def _signature(data: Path) -> tuple:
+    """The collection's files as they are now: name, size and time of the last change."""
+    files = [*data.glob("*.json"), *data.glob("config.yaml")]
+    return tuple(sorted((path.name, path.stat().st_size, path.stat().st_mtime_ns) for path in files))
+
+
+def _copy_at_rest(data: Path, copy: Path) -> None:
+    """Copy the data directory, again when the app changed a file meanwhile.
+
+    The app writes each file whole, but a sync changes several one after the other: a copy made
+    in between would hold some files from before and some from after. The files are compared
+    before and after copying, and the copy made anew while they differ.
+    """
+    for _attempt in range(COPY_ATTEMPTS):
+        before = _signature(data)
+        shutil.rmtree(copy, ignore_errors=True)
+        # The artists' own pictures are left out of the copy: they are not needed to show the pages.
+        shutil.copytree(data, copy, ignore=shutil.ignore_patterns("artist_pictures", "*.part"))
+        if _signature(data) == before:
+            return
+    sys.exit(f"The data in {data} kept changing while it was copied; try again when the app is idle.")
+
+
 def main() -> None:
     """Copy the data, run the app on the copy, and take each screenshot."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
@@ -60,8 +88,7 @@ def main() -> None:
         copy = Path(temporary) / "data"
         taken = Path(temporary) / "screens"
         taken.mkdir()
-        # The artists' own pictures are left out of the copy: they are not needed to show the pages.
-        shutil.copytree(data, copy, ignore=shutil.ignore_patterns("artist_pictures", "*.part"))
+        _copy_at_rest(data, copy)
         store = JsonStore(copy)
         albums, artists = store.load(Album), store.load(Artist)
         album = _first(albums, lambda a: a.title == ALBUM_TITLE, albums[0])
