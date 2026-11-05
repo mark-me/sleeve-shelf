@@ -35,6 +35,30 @@
 {% if found.over %}<p class="ss-muted small mt-2 mb-0">{{ _('Some of these shelves would go over their estimated width. That says little until you measure them.') }}</p>{% endif %}
 {% endmacro %}
 
+{# The cluster a spot goes by, when the artist has none of its own: said, and for the owner where to
+   choose one. An imported macro does not see the page's is_owner, so it is passed. #}
+{% macro proposed(spot, owner) %}
+{% if spot.cluster_proposed and spot.cluster %}{{ _('Its cluster, %(cluster)s, is proposed from the styles: %(artist)s has no cluster of its own yet.', cluster=spot.cluster, artist=spot.artist) }}{% if owner %} <a href="{{ url_for('artists.edit', artist_id=spot.artist_id, tab='manage') }}">{{ _('Choose a cluster') }}</a>{% endif %}{% endif %}
+{% endmacro %}
+
+{# Putting it at a spot in another cluster, with the artist put in that cluster unless unticked. #}
+{% macro place_in_cluster(album_id, spot) %}
+<form method="post" action="{{ url_for('albums.place', album_id=album_id) }}">
+  <input type="hidden" name="back" value="album">
+  <input type="hidden" name="cluster" value="{{ spot.cluster_id }}">
+  <div class="form-check mb-2">
+    <input class="form-check-input" type="checkbox" name="confirm_cluster" value="1" id="confirm-{{ spot.cluster_id }}" checked>
+    <label class="form-check-label small" for="confirm-{{ spot.cluster_id }}">{{ _('Also put %(artist)s in %(cluster)s', artist=spot.artist, cluster=spot.cluster) }}</label>
+  </div>
+  <button class="ss-button ss-button-small" type="submit">{{ _('Put it there') }}</button>
+</form>
+{% endmacro %}
+
+{# In a list: when the spot goes by a cluster only proposed, where the other spots are. #}
+{% macro other_spots_link(spot, album_id) %}
+{% if spot.cluster_proposed %}<span class="ss-row-title">{{ _('Cluster proposed from the styles.') }} <a href="{{ url_for('albums.detail', album_id=album_id, tab='manage', _anchor='spot') }}">{{ _('Other spots') }}</a></span>{% endif %}
+{% endmacro %}
+
 {% macro place_button(album_id, back) %}
 <form class="d-inline" method="post" action="{{ url_for('albums.place', album_id=album_id) }}">
   <input type="hidden" name="back" value="{{ back }}">

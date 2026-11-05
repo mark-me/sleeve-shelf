@@ -5,10 +5,11 @@ To a shelf or to where it belongs, worked out as a plan to look at before it is 
 
 from collections import Counter
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum
 
 from sleeve_shelf.domain import (
+    ArtistClusterAssignment,
     Album,
     AliasGroup,
     Artist,
@@ -54,6 +55,13 @@ class How(StrEnum):
     END = "end"
     # Next to what each album belongs with, as the shelves stand: no shelf to choose.
     BELONGS = "belongs"
+    # Right before or after an album one chooses, on its shelf.
+    BEFORE = "before"
+    AFTER = "after"
+
+
+# The ways that go next to a chosen album rather than to a shelf.
+NEXT_TO = frozenset({How.BEFORE, How.AFTER})
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,6 +123,7 @@ class Plan:
         without_spot: Where it belongs: albums that have no such place stay where they are.
         changes: The shelves whose contents change.
         placements: The layout afterwards.
+        next_to: The album it goes before or after, for those ways.
     """
 
     selection: Selection
@@ -124,6 +133,7 @@ class Plan:
     without_spot: tuple[int, ...]
     changes: tuple[ShelfChange, ...]
     placements: tuple[Placement, ...]
+    next_to: int | None = None
 
 
 def _sorted_on_shelves(store: JsonStore) -> list[tuple[int, int, int | None, int | None]]:
@@ -277,7 +287,12 @@ def _stand_in_front(
 
 
 def plan(
-    store: JsonStore, chosen: Selection, how: How, shelf_id: int | None, constants: WidthConstants
+    store: JsonStore,
+    chosen: Selection,
+    how: How,
+    shelf_id: int | None,
+    constants: WidthConstants,
+    next_to: int | None = None,
 ) -> Plan:
     """Work out what moving the selection would do, without changing anything.
 
@@ -294,18 +309,19 @@ def plan(
         how: Where on the shelves it goes.
         shelf_id: The shelf, or OFF_SHELF; not needed for where it belongs.
         constants: The width figures.
+        next_to: The album to stand right before or after, for those ways; the shelf is then its own.
 
     Returns:
         The plan.
 
     Raises:
-        ShelvesChanged: The shelf is no longer there.
+        ShelvesChanged: The shelf is no longer there, or the album to stand next to stands on none or
+            is itself moved.
     """
     shelves = store.load(Shelf)
     by_id = {shelf.id: shelf for shelf in shelves}
-    if how is not How.BELONGS and shelf_id != OFF_SHELF and shelf_id not in by_id:
-        raise ShelvesChanged
     placements = store.load(Placement)
+    shelf_id = _target_shelf(how, shelf_id, next_to, by_id, placements, chosen)
     rows: dict[int, list[int]] = {}
     for p in sorted(placements, key=lambda p: (p.shelf_id, p.position)):
         rows.setdefault(p.shelf_id, []).append(p.album_id)
@@ -328,6 +344,10 @@ def plan(
 
     if how is How.BELONGS:
         _stand_where_they_belong(new_rows, moving, spots, leaving)
+    elif how in NEXT_TO:
+        row = new_rows[shelf_id]
+        index = row.index(next_to) + (1 if how is How.AFTER else 0)
+        row[index:index] = moving
     elif shelf_id == OFF_SHELF:
         pass
     elif how is How.END:
@@ -335,7 +355,59 @@ def plan(
     else:
         _stand_in_front(store, by_id[shelf_id], moving, rows, new_rows, width)
 
-    return _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, placements, width)
+    worked_out = _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, placements, width)
+    return replace(worked_out, next_to=next_to if how in NEXT_TO else None)
+
+
+def _target_shelf(
+    how: How, shelf_id: int | None, next_to: int | None, by_id: dict, placements: list[Placement], chosen: Selection
+) -> int | None:
+    """The shelf a move goes to: the one chosen, or that of the album to stand next to."""
+    if how in NEXT_TO:
+        target = next((p for p in placements if p.album_id == next_to), None)
+        if target is None or next_to in chosen.album_ids:
+            raise ShelvesChanged
+        return target.shelf_id
+    if how is not How.BELONGS and shelf_id != OFF_SHELF and shelf_id not in by_id:
+        raise ShelvesChanged
+    return shelf_id
+
+
+def cluster_offer(store: JsonStore, chosen: Selection, next_to: int | None) -> dict | None:
+    """The cluster to confirm for an album's artist that goes next to an album of another cluster.
+
+    When the artist has no confirmed cluster, a later proposal would take the album back to the one
+    its styles point to; confirming the cluster of the album it now stands next to keeps it there.
+
+    Args:
+        store: The store of the collection.
+        chosen: What is moved.
+        next_to: The album it goes before or after.
+
+    Returns:
+        The artist and the cluster, by id and name, or None when there is nothing to confirm.
+    """
+    if chosen.kind is not Kind.ALBUM or next_to is None:
+        return None
+    albums = {album.id: album for album in store.load(Album)}
+    moved, target = albums.get(chosen.id), albums.get(next_to)
+    if moved is None or target is None:
+        return None
+    assignments = {a.artist_id: a for a in store.load(ArtistClusterAssignment)}
+    own, theirs = assignments.get(moved.artist_id), assignments.get(target.artist_id)
+    if (own is not None and own.confirmed) or theirs is None or not theirs.confirmed:
+        return None
+    unit = next((u for u in sort_collection(store).units if moved.artist_id in u.artist_ids), None)
+    if unit is not None and unit.cluster_id == theirs.cluster_id:
+        return None
+    names = {artist.id: artist.name for artist in store.load(Artist)}
+    clusters = {cluster.id: cluster.name for cluster in store.load(Cluster)}
+    return {
+        "artist_id": moved.artist_id,
+        "artist": names.get(moved.artist_id, ""),
+        "cluster_id": theirs.cluster_id,
+        "cluster": clusters.get(theirs.cluster_id, ""),
+    }
 
 
 def _placed_before(standing: int, album_id: int, moving: list[int]) -> bool:

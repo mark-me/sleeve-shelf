@@ -6,7 +6,7 @@
 {% block content %}
 <div class="ss-page" style="max-width: 860px;">
   <h1>{{ _('Move') }}</h1>
-  <p class="ss-muted mt-1">{{ _('Move an album, an artist, a family or a whole cluster: to another shelf, or to where it belongs. You see what changes before anything moves; to put albums in their exact spot, drag them in Layout.') }}</p>
+  <p class="ss-muted mt-1">{{ _('Move an album, an artist, a family or a whole cluster: to another shelf, right before or after an album, or to where it belongs. You see what changes before anything moves; to put albums in their exact spot, drag them in Layout.') }}</p>
 
   {% if done is not none %}
   <div class="ss-alert mt-3" role="status">
@@ -49,10 +49,11 @@
   {# 2 · Where and how #}
   {% if chosen %}
   {% if chosen.album_ids %}
-  <form class="ss-card mt-4" method="get" action="{{ url_for('moving.index') }}">
+  <section class="ss-card mt-4">
+  <div class="ss-card-head"><h2>2 · {{ _('Where to') }}</h2></div>
+  <form method="get" action="{{ url_for('moving.index') }}">
     <input type="hidden" name="kind" value="{{ chosen.kind.value }}">
     <input type="hidden" name="id" value="{{ chosen.id }}">
-    <div class="ss-card-head"><h2>2 · {{ _('Where to') }}</h2></div>
     <div class="ss-card-body d-flex flex-column gap-3">
       <div class="form-check">
         <input class="form-check-input" type="radio" name="how" id="how-belongs" value="belongs" {{ 'checked' if how == 'belongs' or not how }}>
@@ -76,6 +77,31 @@
       <div><button class="ss-button" type="submit">{{ _('Show what changes') }}</button></div>
     </div>
   </form>
+  <div class="ss-card-body border-top" id="next-to">
+    <form method="get" action="{{ url_for('moving.index', _anchor='next-to') }}" role="search">
+      <input type="hidden" name="kind" value="{{ chosen.kind.value }}">
+      <input type="hidden" name="id" value="{{ chosen.id }}">
+      <label for="near" class="form-label fw-semibold">{{ _('Right before or after an album') }}</label>
+      <p class="ss-muted small mb-2">{{ _('Search an artist or an album on a shelf, then choose before or after it. Nothing else moves on that shelf.') }}</p>
+      <div class="d-flex gap-2" style="max-width: 480px;">
+        <input id="near" class="ss-search" type="search" name="near" value="{{ near }}" placeholder="{{ _('Search an artist or album…') }}" autocomplete="off">
+        <button class="ss-button" type="submit">{{ _('Search') }}</button>
+      </div>
+    </form>
+  </div>
+  {% for album in nearby %}
+  <div class="ss-row">
+    <div class="ss-row-text">
+      <span class="ss-row-artist">{{ album.artist }}</span>
+      <span class="ss-row-title">{{ album.title }} &middot; {{ album.cabinet }} &rsaquo; {{ album.shelf }}</span>
+    </div>
+    <a class="ss-row-place" href="{{ url_for('moving.index', kind=chosen.kind.value, id=chosen.id, how='before', next_to=album.id, _anchor='plan') }}">{{ _('Before') }}</a>
+    <a class="ss-row-place" href="{{ url_for('moving.index', kind=chosen.kind.value, id=chosen.id, how='after', next_to=album.id, _anchor='plan') }}">{{ _('After') }}</a>
+  </div>
+  {% else %}
+  {% if near %}<div class="ss-card-body ss-muted">{{ _('No album on a shelf matches this search.') }}</div>{% endif %}
+  {% endfor %}
+  </section>
   {% else %}
   <div class="ss-card mt-4"><div class="ss-card-body ss-muted">{{ _('None of its albums stands on a shelf that is sorted, so there is nothing to move. Albums without a place get a suggested spot under Unplaced.') }}</div></div>
   {% endif %}
@@ -85,6 +111,9 @@
   {% if plan %}
   <section class="ss-card mt-4" id="plan">
     <div class="ss-card-head"><h2>3 · {{ _('What changes') }}</h2></div>
+    {% if plan.next_to is not none %}
+    <div class="ss-card-body pb-0"><p class="mb-0">{% if plan.how == 'before' %}{{ _('Right before %(album)s.', album=next_to_name) }}{% else %}{{ _('Right after %(album)s.', album=next_to_name) }}{% endif %}</p></div>
+    {% endif %}
     {% if plan.changes %}
     <div class="ss-card-body">
       <p class="mb-0">{{ ngettext('%(num)d album moves; these shelves change:', '%(num)d albums move; these shelves change:', plan.moved | length) }}</p>
@@ -118,6 +147,13 @@
       <input type="hidden" name="id" value="{{ plan.selection.id }}">
       <input type="hidden" name="how" value="{{ plan.how.value }}">
       {% if plan.shelf_id is not none %}<input type="hidden" name="shelf" value="{{ plan.shelf_id }}">{% endif %}
+      {% if plan.next_to is not none %}<input type="hidden" name="next_to" value="{{ plan.next_to }}">{% endif %}
+      {% if cluster_offer %}
+      <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" name="confirm_cluster" value="1" id="confirm-cluster" checked>
+        <label class="form-check-label" for="confirm-cluster">{{ _('Also put %(artist)s in %(cluster)s', artist=cluster_offer.artist, cluster=cluster_offer.cluster) }}<br><span class="ss-muted small">{{ _('Its cluster is now only proposed from its styles; without confirming it, a sorting proposal would take the album back there.') }}</span></label>
+      </div>
+      {% endif %}
       <button class="ss-button ss-button-primary" type="submit">{{ _('Move') }}</button>
       <span class="ss-muted small ms-2">{{ _('The layout as it is now is kept as a version first.') }}</span>
     </form>

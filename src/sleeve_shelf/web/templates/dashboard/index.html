@@ -49,6 +49,7 @@
         <span class="ss-row-title mt-1">{{ _('Suggested:') }} {{ spot_text.where(spot) }}</span>
         {% set room_line = spot_text.room(spot, true) %}
         {% if room_line | trim %}<span class="ss-row-title">{{ room_line }}</span>{% endif %}
+        {{ spot_text.other_spots_link(spot, album.album_id) }}
         {% elif album.cluster %}
         <span class="ss-row-title mt-1">{{ _('No spot: nothing stands on the shelves it could go to.') }}</span>
         {% else %}
