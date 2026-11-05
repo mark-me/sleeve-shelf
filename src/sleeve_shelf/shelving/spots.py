@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from sleeve_shelf.domain import (
+    Style,
     Album,
     Cabinet,
     Placement,
@@ -13,8 +14,10 @@ from sleeve_shelf.domain import (
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.shelving.proposal import Sorted, mandatory_cabinets, sort_collection
+from sleeve_shelf.sorting.order import clusters_by_styles
 from sleeve_shelf.sorting.spots import EMPTY, SuggestedSpot, suggest_spots
 from sleeve_shelf.library.taking_part import kept_shelf_ids
+from sleeve_shelf.library.artists import set_cluster
 from sleeve_shelf.library.versions import keep_restore_point
 
 
@@ -30,6 +33,8 @@ class Spot:
             then holds more than its width, None when the shelf has no width.
         width_measured: Whether that width was measured, or is an estimate.
         by_rule: The cabinet a location rule binds the album to, when the spot was found within it.
+        cluster_id: The cluster the album is sorted under.
+        cluster_proposed: Whether that cluster is only proposed: its artist has none confirmed.
     """
 
     suggestion: SuggestedSpot
@@ -38,6 +43,8 @@ class Spot:
     room_cm: float | None
     width_measured: bool
     by_rule: bool
+    cluster_id: int | None = None
+    cluster_proposed: bool = False
 
     @property
     def shelf_id(self) -> int:
@@ -113,7 +120,9 @@ def _walked_shelves(store: JsonStore, kept: set[int]) -> list[Shelf]:
     ]
 
 
-def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Spot]:
+def suggested_spots(
+    store: JsonStore, constants: WidthConstants, assumed: dict[int, int] | None = None
+) -> dict[int, Spot]:
     """A spot for every album that is sorted but stands on no shelf yet.
 
     The shelves are taken as they are (see belonging).
@@ -121,11 +130,12 @@ def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Sp
     Args:
         store: The store of the collection.
         constants: The width figures.
+        assumed: Clusters by artist id to sort by as if they were confirmed.
 
     Returns:
         The spots by album id.
     """
-    result = sort_collection(store)
+    result = sort_collection(store, assumed=assumed)
     placements = store.load(Placement)
     standing = {p.album_id for p in placements}
     waiting = [album_id for album_id in result.albums if album_id not in standing]
@@ -144,6 +154,7 @@ def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Sp
         album = all_albums.get(album_id)
         return (album.width_cm if album else None) or constants.base_per_disc
 
+    unit_of = {artist_id: unit for unit in result.units for artist_id in unit.artist_ids}
     filled: dict[int, float] = {}
     for album_id, shelf_id in layout:
         filled[shelf_id] = filled.get(shelf_id, 0.0) + width(album_id)
@@ -157,6 +168,7 @@ def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Sp
             if shelf.width_cm
             else None
         )
+        unit = unit_of.get(all_albums[album_id].artist_id) if album_id in all_albums else None
         spots[album_id] = Spot(
             suggestion,
             cabinet_names[shelf.cabinet_id],
@@ -164,11 +176,15 @@ def suggested_spots(store: JsonStore, constants: WidthConstants) -> dict[int, Sp
             room,
             width_measured=shelf.width_measured,
             by_rule=album_id in bound,
+            cluster_id=unit.cluster_id if unit else None,
+            cluster_proposed=bool(unit and unit.cluster_is_proposed),
         )
     return spots
 
 
-def place_at_spot(store: JsonStore, album_id: int, constants: WidthConstants) -> Spot | None:
+def place_at_spot(
+    store: JsonStore, album_id: int, constants: WidthConstants, assumed: dict[int, int] | None = None
+) -> Spot | None:
     """Stand the album at its suggested spot, between the albums named there.
 
     The spot is worked out afresh, so it is the one for the shelves as they are now. This changes
@@ -178,11 +194,13 @@ def place_at_spot(store: JsonStore, album_id: int, constants: WidthConstants) ->
         store: The store of the collection.
         album_id: The album.
         constants: The width figures.
+        assumed: Clusters by artist id to find the spot as if they were confirmed: another of
+            the spots offered.
 
     Returns:
         The spot, or None when there is none to place the album at.
     """
-    spot = suggested_spots(store, constants).get(album_id)
+    spot = suggested_spots(store, constants, assumed).get(album_id)
     if spot is None:
         return None
     keep_restore_point(store)
@@ -196,4 +214,74 @@ def place_at_spot(store: JsonStore, album_id: int, constants: WidthConstants) ->
     for position, placement in enumerate(on_shelf):
         placement.position = position
     store.save(Placement, [p for p in placements if p.shelf_id != spot.shelf_id] + on_shelf)
+    return spot
+
+
+# How many other spots an album whose artist has no confirmed cluster is offered.
+OTHER_SPOTS = 2
+
+
+def other_spots(store: JsonStore, album_id: int, constants: WidthConstants) -> list[Spot]:
+    """Spots in the other clusters the styles point to, for an album whose cluster is only proposed.
+
+    The suggested spot goes by the cluster the styles point to most; these go by the next ones, as
+    if the artist were confirmed in that cluster.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+        constants: The width figures.
+
+    Returns:
+        At most OTHER_SPOTS spots, each in another cluster; none when the cluster is confirmed.
+    """
+    artist_ids, clusters = _other_clusters(store, album_id)
+    found = []
+    for cluster_id in clusters:
+        spot = suggested_spots(store, constants, dict.fromkeys(artist_ids, cluster_id)).get(album_id)
+        if spot is not None:
+            found.append(spot)
+        if len(found) == OTHER_SPOTS:
+            break
+    return found
+
+
+def _other_clusters(store: JsonStore, album_id: int) -> tuple[tuple[int, ...], list[int]]:
+    """The artists sorted with the album, and the other clusters their styles point to, most first.
+
+    No clusters when the album's cluster is confirmed, or comes from its connections.
+    """
+    result = sort_collection(store)
+    album = result.albums.get(album_id)
+    unit = next((u for u in result.units if album and album.artist_id in u.artist_ids), None)
+    if unit is None or not unit.cluster_is_proposed:
+        return (), []
+    styles = {style.id: style for style in store.load(Style)}
+    unit_albums = [a for a in result.albums.values() if a.artist_id in unit.artist_ids]
+    return tuple(unit.artist_ids), [c for c in clusters_by_styles(unit_albums, styles) if c != unit.cluster_id]
+
+
+def place_in_cluster(
+    store: JsonStore, album_id: int, cluster_id: int, constants: WidthConstants, confirm: bool
+) -> Spot | None:
+    """Stand the album at the spot offered in another cluster, and put its artist there if asked.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+        cluster_id: One of the other clusters its styles point to.
+        constants: The width figures.
+        confirm: Whether the album's artist is put in that cluster as confirmed, so that a later
+            proposal keeps it there.
+
+    Returns:
+        The spot, or None when that cluster is not one offered or has no spot.
+    """
+    artist_ids, clusters = _other_clusters(store, album_id)
+    if cluster_id not in clusters:
+        return None
+    album = next((a for a in store.load(Album) if a.id == album_id), None)
+    spot = place_at_spot(store, album_id, constants, dict.fromkeys(artist_ids, cluster_id))
+    if spot is not None and confirm and album is not None:
+        set_cluster(store, album.artist_id, cluster_id)
     return spot

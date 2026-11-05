@@ -54,9 +54,23 @@
     <div class="ss-card-body">
       <div class="fw-semibold">{{ _('Suggested spot') }}</div>
       <p class="mt-1 mb-1">{{ spots.where(spot) }}</p>
-      <p class="ss-muted small mb-3">{{ spots.why(spot) }} {{ spots.room(spot) }}</p>
+      <p class="ss-muted small mb-3">{{ spots.why(spot) }} {{ spots.room(spot) }} {{ spots.proposed(spot) }}</p>
       {% if is_owner %}{{ spots.place_button(album.id, 'album') }}{% endif %}
     </div>
+    {% for other in other_spots %}
+    <div class="ss-card-body border-top">
+      <div class="fw-semibold">{{ _('Or in %(cluster)s', cluster=other.cluster) }}</div>
+      <p class="mt-1 mb-1">{{ spots.where(other) }}</p>
+      <p class="ss-muted small mb-2">{{ spots.why(other) }} {{ spots.room(other) }}</p>
+      {{ spots.place_in_cluster(album.id, other) }}
+    </div>
+    {% endfor %}
+    {% if is_owner %}
+    <div class="ss-card-body border-top">
+      <a href="{{ url_for('moving.index', kind='album', id=album.id, _anchor='next-to') }}">{{ _('Somewhere else…') }}</a>
+      <span class="ss-muted small">{{ _('Right before or after an album you choose.') }}</span>
+    </div>
+    {% endif %}
   </div>
   {% elif takes_part and not is_placed %}
   {% if row and row.cluster %}
@@ -64,6 +78,7 @@
   {% else %}
   <div class="ss-alert mt-3">{{ _('No spot can be suggested yet: the artist has no cluster.') }} {% if artist %}<a href="{{ url_for('artists.edit', artist_id=artist.id, tab='manage') }}">{{ _('Give the artist a cluster') }}</a>{% endif %}</div>
   {% endif %}
+  {% if is_owner %}<p class="mt-2 small"><a href="{{ url_for('moving.index', kind='album', id=album.id, _anchor='next-to') }}">{{ _('Somewhere else…') }}</a> <span class="ss-muted">{{ _('Right before or after an album you choose.') }}</span></p>{% endif %}
   {% endif %}
   {% endset %}
 

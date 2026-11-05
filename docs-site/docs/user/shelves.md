@@ -21,10 +21,11 @@ For a shelf far away, use the ⋮ on a block (or right-click it) and pick the sh
 **Move** (under Shelves) moves more than one block at a time: an album, an artist, a family, or a whole cluster. The pages of an album, artist and cluster, and each family, have a **Move…** button that opens it with that already chosen.
 
 1. **What** — search for it, or come from its page. Of an artist, family or cluster the albums that stand on a shelf go, in sorting order; what stands in a showcase or a cabinet kept outside the sorting stays there.
-2. **Where to** — one of three:
+2. **Where to** — one of four:
     - **Where it belongs**: next to what each album goes with, on your shelves as they stand — the artist's other albums, the artists of its era in its cluster, or its cluster. A location rule is kept to. Handy to put back something you moved before, without a whole proposal. An album whose artist has no cluster stays where it is.
     - **At the front of a shelf**: it runs on over the next shelves of that cabinet, and what stood there moves up behind it. A shelf counts as at least as wide as what stands on it now, so an estimated width that is too narrow doesn't push albums on. What no longer fits stays at the end of the cabinet's last shelf.
     - **At the end of a shelf**: after what stands there; nothing else moves. Choose *Not on a shelf* to take it off the shelves.
+    - **Right before or after an album**: search an artist or album on a shelf — *Cream*, say — and pick **Before** or **After** one of the albums found. Nothing else moves on that shelf. If the album's artist has no cluster of its own yet, **Also put … in …** (ticked) gives it the cluster of the album it now stands next to, so a later proposal keeps it there.
 3. **What changes** — every shelf that changes, with its albums now and after and how full it gets; a shelf that ends up over its width is marked. Only **Move** changes anything, and the layout from before is kept as a version.
 
 To put albums in their exact spot on a shelf, drag them in Layout afterwards.

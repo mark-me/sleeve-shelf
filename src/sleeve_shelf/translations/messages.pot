@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-01 23:49+0100\n"
+"POT-Creation-Date: 2026-11-05 22:59+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -462,7 +462,30 @@ msgid "Some of these shelves would go over their estimated width. That says litt
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_spot.html
+#, python-format
+msgid "Its cluster, %(cluster)s, is proposed from the styles: %(artist)s has no cluster of its own yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Choose a cluster"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+#: src/sleeve_shelf/web/templates/moving/index.html
+#, python-format
+msgid "Also put %(artist)s in %(cluster)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
 msgid "Put it there"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Cluster proposed from the styles."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_spot.html
+msgid "Other spots"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/_figures.html
@@ -662,6 +685,19 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Suggested spot"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#, python-format
+msgid "Or in %(cluster)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Somewhere else…"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+msgid "Right before or after an album you choose."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -2702,7 +2738,7 @@ msgid "This device stays logged in until you log out."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
-msgid "Move an album, an artist, a family or a whole cluster: to another shelf, or to where it belongs. You see what changes before anything moves; to put albums in their exact spot, drag them in Layout."
+msgid "Move an album, an artist, a family or a whole cluster: to another shelf, right before or after an album, or to where it belongs. You see what changes before anything moves; to put albums in their exact spot, drag them in Layout."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
@@ -2783,11 +2819,49 @@ msgid "Show what changes"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Right before or after an album"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Search an artist or an album on a shelf, then choose before or after it. Nothing else moves on that shelf."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Search an artist or album…"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Search"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Before"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "After"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "No album on a shelf matches this search."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "None of its albums stands on a shelf that is sorted, so there is nothing to move. Albums without a place get a suggested spot under Unplaced."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "What changes"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+#, python-format
+msgid "Right before %(album)s."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+#, python-format
+msgid "Right after %(album)s."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
@@ -2820,6 +2894,10 @@ msgid "This album has no place it belongs to — its artist has no cluster — a
 msgid_plural "These albums have no place they belong to — their artist has no cluster — and stay where they are:"
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Its cluster is now only proposed from its styles; without confirming it, a sorting proposal would take the album back there."
+msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "The layout as it is now is kept as a version first."
