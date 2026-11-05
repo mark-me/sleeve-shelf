@@ -3,6 +3,8 @@
 The other clusters its styles point to, and right before or after an album one chooses.
 """
 
+import re
+
 import pytest
 
 from sleeve_shelf.access import set_password
@@ -75,6 +77,14 @@ def _shelves(store):
 
 def _confirmed(store, artist_id):
     return next((a.cluster_id for a in store.load(ArtistClusterAssignment) if a.artist_id == artist_id and a.confirmed), None)
+
+
+def _confirm_boxes(page):
+    """Each box to confirm the cluster on the page: "checked" or "unchecked"."""
+    return [
+        "checked" if re.search(r"\bchecked\b", box) else "unchecked"
+        for box in re.findall(r"<input[^>]*name=\"confirm_cluster\"[^>]*>", page)
+    ]
 
 
 @pytest.fixture
@@ -172,6 +182,7 @@ def test_the_album_page_offers_the_other_cluster_and_somewhere_else(client):
     assert "is proposed from the styles" in page
     assert "Or in Rock" in page
     assert "Also put The Jimi Hendrix Experience in Rock" in page
+    assert _confirm_boxes(page) == ["checked"]
     assert "/move/?kind=album&amp;id=41#next-to" in page
 
 
@@ -202,6 +213,7 @@ def test_the_move_screen_shows_and_carries_out_a_move_next_to_an_album(client, s
     page = client.get("/move/?kind=album&id=41&how=after&next_to=22").get_data(as_text=True)
     assert "Right after Cream — Disraeli Gears." in page
     assert "Also put The Jimi Hendrix Experience in Rock" in page
+    assert _confirm_boxes(page) == ["checked"]
 
     answer = client.post("/move/", data={"kind": "album", "id": "41", "how": "after", "next_to": "22", "confirm_cluster": "1"})
 
