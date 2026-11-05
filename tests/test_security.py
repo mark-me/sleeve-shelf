@@ -46,8 +46,13 @@ def test_an_inline_script_carries_this_request_s_nonce_and_no_handler_is_inline(
 
 def test_the_help_may_run_the_documentation_site_s_own_scripts(client):
     policy = _directives(client.get("/help/"))
-    # Mermaid comes from unpkg; nothing else from outside may run.
-    assert policy["script-src"] == ["'self'", "'unsafe-inline'", "https://unpkg.com"]
+    # Mermaid and the fonts come with the site: nothing from outside.
+    assert policy["script-src"] == ["'self'", "'unsafe-inline'"]
+    # Only the repository's figures in the site's header are asked of GitHub.
+    outside = {source for sources in policy.values() for source in sources if source.startswith(("http", "https:"))}
+    assert outside == {"https://api.github.com"}
+    # Its images are its own too: no picture from any other site.
+    assert policy["img-src"] == ["'self'", "data:"]
     assert policy["frame-ancestors"] == ["'none'"]
 
 

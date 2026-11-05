@@ -4,12 +4,14 @@ Sleeve & Shelf keeps track of where every record in your collection stands, and 
 
 ## 🗺️ The five sections
 
+![The Dashboard: the collection at a glance, and the albums waiting for a place](../images/screens/dashboard.png)
+
 The menu has five sections. Each opens on its first screen; the other screens of a section are tabs at the top of the page.
 
 | Section | Screens | What you do there |
 | --- | --- | --- |
 | **Dashboard** | Dashboard | See what is waiting for you, and the steps towards a new layout |
-| **Collection** | Browse / Search · Unplaced · Discogs sync | Look up records, place the ones without a spot, bring the collection in from Discogs |
+| **Collection** | Browse / Search · Connections · Statistics · Unplaced · Discogs sync | Look up records and how their artists hang together, place the ones without a spot, bring the collection in from Discogs |
 | **Shelves** | Layout · Move · Proposal · Showcase · Versions · Cabinets | Rearrange the shelves, move an album, artist, family or cluster at once, let the app propose a layout, manage top-loaders, go back to an earlier layout, describe your cabinets |
 | **Organise** | Artists · Families · Clusters · Rules | Decide what belongs together and where: an artist's cluster and start year, which artists stand together, the order of the clusters, and fixed places |
 | **Settings** | Settings | Width estimates, the Discogs token, light or dark |

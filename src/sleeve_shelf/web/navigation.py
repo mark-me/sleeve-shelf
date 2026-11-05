@@ -51,14 +51,14 @@ SECTIONS = (
         _("Collection"),
         (
             Tab("browse.browse", _("Browse / Search"), ("browse.browse",), help="user/browsing/#browse-and-search"),
-            Tab("connections.index", _("Connections"), ("connections",), help="user/browsing/#connections"),
-            Tab("stats.index", _("Statistics"), ("stats",), help="user/browsing/#statistics"),
+            Tab("connections.index", _("Connections"), ("connections",), help="user/connections/#connections"),
+            Tab("stats.index", _("Statistics"), ("stats",), help="user/connections/#statistics"),
             Tab("browse.unplaced", _("Unplaced"), ("browse.unplaced",), "unplaced", "user/browsing/#albums-without-a-place"),
             Tab("discogs.index", _("Discogs sync"), ("discogs", "setup"), "discogs", "user/discogs/"),
         ),
         # An album's page is reached from Browse and from the unplaced albums.
         other_pages=("albums.detail",),
-        help="user/browsing/#an-albums-page",
+        help="user/albums-and-artists/#an-albums-page",
     ),
     Section(
         "shelves",
@@ -124,7 +124,7 @@ def section_count(section: Section, counts: dict[str, int]) -> int:
 
 # Pages that share a tab with others but have their own part of the user guide.
 PAGE_HELP = {
-    "artists.edit": "user/browsing/#an-artists-page",
+    "artists.edit": "user/albums-and-artists/#an-artists-page",
     "albums.widths": "user/settings/#album-widths",
     "setup.upload_form": "user/getting-started/#first-start",
     "setup.upload": "user/getting-started/#first-start",

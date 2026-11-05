@@ -87,6 +87,6 @@ def test_every_screen_links_to_its_part_of_the_guide(tmp_path, monkeypatch, site
     client.post("/setup/confirm")
 
     assert 'class="ss-help-link" href="/help/user/shelves/#layout"' in client.get("/layout/").text
-    assert 'href="/help/user/browsing/#an-artists-page"' in client.get("/artists/1").text
+    assert 'href="/help/user/albums-and-artists/#an-artists-page"' in client.get("/artists/1").text
     assert 'href="/help/user/settings/#settings"' in client.get("/settings/").text
     assert 'href="/help/user/" class="ss-nav-help" target="sleeve-shelf-help"' in client.get("/dashboard/").text

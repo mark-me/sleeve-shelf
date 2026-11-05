@@ -60,3 +60,24 @@ def test_the_data_model_diagram_is_the_one_in_the_requirements():
         return re.search(r"```mermaid\nerDiagram\n.*?\n```", path.read_text(encoding="utf-8"), re.S).group(0)
 
     assert diagram(DOCS / "developer" / "data-model.md") == diagram(ROOT / "docs" / "requirements.md")
+
+
+def test_the_help_fetches_nothing_from_outside():
+    """The app serves the site as its help, also offline: no fonts or scripts from a CDN."""
+    site = ROOT / "docs-site"
+    config = tomllib.loads((site / "zensical.toml").read_text(encoding="utf-8"))["project"]
+    assert config["theme"]["font"] is False
+    for path in config["extra_javascript"] + config["extra_css"]:
+        assert (site / "docs" / path).is_file(), path
+
+
+def test_every_picture_the_guide_shows_is_there():
+    docs = ROOT / "docs-site" / "docs"
+    missing = [
+        f"{page.relative_to(docs)}: {target}"
+        for page in docs.rglob("*.md")
+        for target in re.findall(r"!\[[^\]]*\]\(([^)\s]+)", page.read_text(encoding="utf-8"))
+        if not (page.parent / target).resolve().is_file()
+    ]
+    assert not missing, missing
+

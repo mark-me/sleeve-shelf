@@ -18,6 +18,8 @@ nav = [
     "user/index.md",
     "user/getting-started.md",
     "user/browsing.md",
+    "user/albums-and-artists.md",
+    "user/connections.md",
     "user/discogs.md",
     "user/shelves.md",
     "user/sorting.md",
@@ -39,8 +41,11 @@ nav = [
   ] },
 ]
 
-# extra_css = ["stylesheets/extra.css"]
-# extra_javascript = ["javascripts/extra.js"]
+# The app serves this site as its help, also offline: what the theme would fetch from unpkg when a
+# page needs it is carried here instead (Mermaid 11.17.2 for the diagrams, GLightbox 3.3.1 for
+# enlarging images; both MIT). The theme looks for them before it reaches out.
+extra_css = ["javascripts/vendor/glightbox.min.css"]
+extra_javascript = ["javascripts/vendor/mermaid.min.js", "javascripts/vendor/glightbox.min.js"]
 
 [project.theme]
 # variant = "classic"
@@ -77,9 +82,8 @@ features = [
   # "toc.integrate",
 ]
 
-[project.theme.font]
-text = "Inter"
-code = "Jetbrains Mono"
+# The system's own fonts, rather than Inter from Google Fonts: nothing from outside, also offline.
+font = false
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme)"
@@ -120,6 +124,9 @@ pymdownx.superfences.custom_fences = [
 pymdownx.tabbed.alternate_style = true
 pymdownx.tasklist.custom_checkbox = true
 pymdownx.tilde = {}
+
+# A screenshot in the user guide enlarges when clicked (GLightbox, carried with the site).
+[project.plugins.glightbox]
 
 # The Reference pages are read from the docstrings: parsed, so the app is not installed for it.
 [project.plugins.mkdocstrings.handlers.python]
