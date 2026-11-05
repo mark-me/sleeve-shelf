@@ -54,7 +54,7 @@
     <div class="ss-card-body">
       <div class="fw-semibold">{{ _('Suggested spot') }}</div>
       <p class="mt-1 mb-1">{{ spots.where(spot) }}</p>
-      <p class="ss-muted small mb-3">{{ spots.why(spot) }} {{ spots.room(spot) }} {{ spots.proposed(spot) }}</p>
+      <p class="ss-muted small mb-3">{{ spots.why(spot) }} {{ spots.room(spot) }} {{ spots.proposed(spot, is_owner) }}</p>
       {% if is_owner %}{{ spots.place_button(album.id, 'album') }}{% endif %}
     </div>
     {% for other in other_spots %}

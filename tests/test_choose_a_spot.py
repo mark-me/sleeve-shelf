@@ -5,6 +5,7 @@ The other clusters its styles point to, and right before or after an album one c
 
 import pytest
 
+from sleeve_shelf.access import set_password
 from sleeve_shelf.config import Settings
 from sleeve_shelf.domain import (
     Album,
@@ -212,3 +213,15 @@ def test_the_move_screen_shows_and_carries_out_a_move_next_to_an_album(client, s
 def test_a_move_next_to_an_album_on_no_shelf_is_refused(client):
     assert client.get("/move/?kind=album&id=41&how=after&next_to=42").status_code == 400
     assert client.post("/move/", data={"kind": "album", "id": "41", "how": "before", "next_to": "42"}).status_code == 400
+
+
+def test_a_visitor_reads_why_but_gets_no_action(store):
+    set_password(store.data_dir, "a long enough password")
+    visitor = create_app(store.data_dir).test_client()
+
+    page = visitor.get("/albums/41").get_data(as_text=True)
+
+    assert "is proposed from the styles" in page
+    assert "Choose a cluster" not in page
+    assert "Or in Rock" not in page
+    assert "Somewhere else" not in page

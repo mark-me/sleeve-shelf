@@ -35,9 +35,10 @@
 {% if found.over %}<p class="ss-muted small mt-2 mb-0">{{ _('Some of these shelves would go over their estimated width. That says little until you measure them.') }}</p>{% endif %}
 {% endmacro %}
 
-{# The cluster a spot goes by, when the artist has none of its own: said, with where to choose one. #}
-{% macro proposed(spot) %}
-{% if spot.cluster_proposed and spot.cluster %}{{ _('Its cluster, %(cluster)s, is proposed from the styles: %(artist)s has no cluster of its own yet.', cluster=spot.cluster, artist=spot.artist) }} <a href="{{ url_for('artists.edit', artist_id=spot.artist_id, tab='manage') }}">{{ _('Choose a cluster') }}</a>{% endif %}
+{# The cluster a spot goes by, when the artist has none of its own: said, and for the owner where to
+   choose one. An imported macro does not see the page's is_owner, so it is passed. #}
+{% macro proposed(spot, owner) %}
+{% if spot.cluster_proposed and spot.cluster %}{{ _('Its cluster, %(cluster)s, is proposed from the styles: %(artist)s has no cluster of its own yet.', cluster=spot.cluster, artist=spot.artist) }}{% if owner %} <a href="{{ url_for('artists.edit', artist_id=spot.artist_id, tab='manage') }}">{{ _('Choose a cluster') }}</a>{% endif %}{% endif %}
 {% endmacro %}
 
 {# Putting it at a spot in another cluster, with the artist put in that cluster unless unticked. #}
