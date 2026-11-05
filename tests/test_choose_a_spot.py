@@ -204,8 +204,18 @@ def test_the_list_of_albums_to_place_links_to_the_other_spots(client):
 def test_the_move_screen_searches_an_album_to_stand_next_to(client):
     page = client.get("/move/?kind=album&id=41&near=cream").get_data(as_text=True)
 
-    assert "Fresh Cream" in page and "Disraeli Gears" in page
-    assert "how=after&amp;next_to=22" in page
+    # Each result row with the links on it: every link names the album of its own row.
+    rows = page[page.index('id="next-to"'):].split('<div class="ss-row">')[1:]
+    links = {
+        title: re.findall(r"how=(before|after)&amp;next_to=(\d+)", row)
+        for row in rows
+        for title in ("Fresh Cream", "Disraeli Gears")
+        if title in row
+    }
+    assert links == {
+        "Fresh Cream": [("before", "21"), ("after", "21")],
+        "Disraeli Gears": [("before", "22"), ("after", "22")],
+    }
     assert "Kind of Blue" not in page
 
 
