@@ -410,6 +410,7 @@
 
   function draw() {
     loading.hidden = false;
+    delete box.dataset.placed;
     if (drawing) return;
     drawing = true;
     requestAnimationFrame(() =>
@@ -465,6 +466,8 @@
     placing.one("layoutstop", () => {
       fit();
       loading.hidden = true;
+      // Said on the page, for whoever waits for the network to stand: a screenshot, a test.
+      box.dataset.placed = "1";
     });
     placing.run();
   }

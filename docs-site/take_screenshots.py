@@ -37,10 +37,19 @@ def _first(items: list, wanted, fallback):
     return next((item for item in items if wanted(item)), fallback)
 
 
-def _shoot(page: Page, into: Path, address: str, name: str, *, wait: int = 600, only: str | None = None) -> None:
-    """One screenshot: the window as it opens, or only the part of the page given."""
+def _shoot(
+    page: Page, into: Path, address: str, name: str, *, ready: str | None = None, only: str | None = None
+) -> None:
+    """One screenshot: the window as it opens, or only the part of the page given.
+
+    With ready, the page is first waited for until that element is there: a page that builds what
+    it shows after loading says so.
+    """
     page.goto(address)
-    page.wait_for_timeout(wait)
+    if ready:
+        page.wait_for_selector(ready, state="attached", timeout=60_000)
+    # What is left to settle: covers and pictures coming in.
+    page.wait_for_timeout(600)
     if only:
         page.locator(only).screenshot(path=into / f"{name}.png")
     else:
@@ -117,7 +126,10 @@ def main() -> None:
                 _shoot(page, taken, "/dashboard/", "dashboard")
                 _shoot(page, taken, "/browse", "browse")
                 _shoot(page, taken, f"/albums/{album.id}", "album")
-                _shoot(page, taken, f"/connections/?artist={artist.id}", "connections", wait=2500, only="#ss-network-frame")
+                _shoot(
+                    page, taken, f"/connections/?artist={artist.id}", "connections",
+                    ready="#ss-network[data-placed]", only="#ss-network-frame",
+                )
                 _shoot(page, taken, "/layout/", "layout")
                 _shoot(page, taken, "/unplaced/place", "place-all")
                 browser.close()
