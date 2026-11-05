@@ -25,7 +25,6 @@ from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.web.app import create_app
 
 OUT = Path(__file__).parent / "docs" / "images" / "screens"
-PORT = 5098
 WIDTH, HEIGHT = 1280, 820
 # The album and artist the pages show: ones every collection of jazz has, or the first there is.
 ALBUM_TITLE = "Kind Of Blue"
@@ -38,7 +37,7 @@ def _first(items: list, wanted, fallback):
 
 def _shoot(page: Page, address: str, name: str, *, wait: int = 600, only: str | None = None) -> None:
     """One screenshot: the window as it opens, or only the part of the page given."""
-    page.goto(f"http://127.0.0.1:{PORT}{address}")
+    page.goto(address)
     page.wait_for_timeout(wait)
     if only:
         page.locator(only).screenshot(path=OUT / f"{name}.png")
@@ -67,13 +66,17 @@ def main() -> None:
 
         # The pages asked for are listed here, not each request.
         logging.getLogger("werkzeug").setLevel(logging.WARNING)
-        server = make_server("127.0.0.1", PORT, create_app(copy))
+        # Port 0: whichever port is free, so a running app or another run is no obstacle.
+        server = make_server("127.0.0.1", 0, create_app(copy))
         threading.Thread(target=server.serve_forever, daemon=True).start()
         try:
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch()
                 context = browser.new_context(
-                    locale="en-GB", color_scheme="light", viewport={"width": WIDTH, "height": HEIGHT}
+                    base_url=f"http://127.0.0.1:{server.port}",
+                    locale="en-GB",
+                    color_scheme="light",
+                    viewport={"width": WIDTH, "height": HEIGHT},
                 )
                 # Layout's notice about saving put away, and Browse as the wall of covers.
                 context.add_init_script(
