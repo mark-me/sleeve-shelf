@@ -22,10 +22,10 @@
 <body>
 <div class="ss-shell">
   <header class="ss-sidebar">
-    {# Search from wherever one is; Browse has the field of its own that searches while typing. #}
-    {% set top_search = nav_section and request.endpoint != 'browse.browse' %}
+    {# Search from wherever one is; Browse and Home have the field of their own that searches while typing. #}
+    {% set top_search = nav_section and request.endpoint not in ('browse.browse', 'home.index') %}
     <div class="ss-brand-row{{ ' ss-with-search' if top_search }}">
-      <a class="ss-brand" href="{{ url_for('index') }}">
+      <a class="ss-brand" href="{{ url_for('home.index') }}">
         <img class="ss-brand-icon" src="{{ url_for('static', filename='icons/favicon.svg') }}" width="30" height="30" alt="">
         <span class="ss-brand-name">Sleeve &amp; Shelf</span>
       </a>

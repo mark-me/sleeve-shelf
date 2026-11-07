@@ -1,0 +1,18 @@
+{# An album to take from the shelf: its cover, what it is and where it stands.
+   `place` is a row of BrowseQueries (persistence/browse.py); nothing is shown without one. #}
+{% from "_cover.html" import cover %}
+
+{% macro album_row(place) %}
+{% if place %}
+<div class="ss-row">
+  <a class="ss-row-link" href="{{ url_for('albums.detail', album_id=place.album_id) }}">
+    {{ cover(place.cover_url, true) }}
+    <div class="ss-row-text">
+      <span class="ss-row-artist">{{ place.artist }}</span>
+      <span class="ss-row-title">{{ place.title }}{% if place.year %} &middot; {{ place.year }}{% endif %}</span>
+    </div>
+    <span class="ss-row-place">{% if place.shelf_id is not none %}{{ place.cabinet }} &middot; {{ place.shelf }}{% else %}{{ _('Unplaced') }}{% endif %}</span>
+  </a>
+</div>
+{% endif %}
+{% endmacro %}

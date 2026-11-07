@@ -1,4 +1,4 @@
-"""The menu: five sections, and the screens of a section as tabs above the page."""
+"""The menu: its sections, and the screens of a section as tabs above the page."""
 
 from dataclasses import dataclass, replace
 
@@ -45,6 +45,7 @@ class Section:
 
 
 SECTIONS = (
+    Section("home", _("Home"), (Tab("home.index", _("Home"), ("home",), help="user/#home"),)),
     Section("overview", _("Dashboard"), (Tab("dashboard.index", _("Dashboard"), ("dashboard",), help="user/#a-typical-round"),)),
     Section(
         "collection",
@@ -148,20 +149,20 @@ def help_target(request: Request, section: Section | None, tab: Tab | None) -> s
 
 
 # The tabs a visitor sees.
-VISITOR_TABS = ("browse.browse", "connections.index")
+VISITOR_TABS = ("home.index", "browse.browse", "connections.index", "stats.index")
 
 
 def visible_sections(owner: bool) -> tuple[Section, ...]:
     """The menu as the one looking may use it.
 
     Args:
-        owner: Whether it is the owner; a visitor only browses, searches and looks at the
-            connections.
+        owner: Whether it is the owner; a visitor only looks things up: Home, browsing and
+            searching, the connections and the statistics.
 
     Returns:
         The sections.
     """
     if owner:
         return SECTIONS
-    collection = next(section for section in SECTIONS if section.key == "collection")
-    return (replace(collection, tabs=tuple(tab for tab in collection.tabs if tab.endpoint in VISITOR_TABS)),)
+    visible = (replace(s, tabs=tuple(t for t in s.tabs if t.endpoint in VISITOR_TABS)) for s in SECTIONS)
+    return tuple(section for section in visible if section.tabs)

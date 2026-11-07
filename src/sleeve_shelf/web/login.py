@@ -34,7 +34,8 @@ blueprint = Blueprint("login", __name__)
 # What a visitor may open, to read only: looking the collection up, listening, the help.
 VISITOR_PAGES = frozenset(
     {
-        "index",
+        "home.index",
+        "stats.index",
         "browse.browse",
         "connections.index",
         "connections.data",
@@ -227,7 +228,7 @@ def safe_next(target: str | None) -> str:
     Returns:
         Where to go.
     """
-    return target if _within(target) else url_for("index")
+    return target if _within(target) else url_for("home.index")
 
 
 def redirect_within(target: str | None, fallback: str) -> Response:
@@ -255,7 +256,7 @@ def redirect_within(target: str | None, fallback: str) -> Response:
 def page():
     """The login page."""
     if not has_password(current_app.config["DATA_DIR"]):
-        return redirect(url_for("index"))
+        return redirect(url_for("home.index"))
     target = safe_next(request.values.get("next"))
     error = None
     status = 200
@@ -270,7 +271,7 @@ def page():
             _failures.pop(address, None)
             remember_owner(verified)
             current_app.logger.info("Owner logged in from %s", address)
-            return redirect_within(target, url_for("index"))
+            return redirect_within(target, url_for("home.index"))
         else:
             count, _last = _failures.get(address, (0, 0.0))
             _failures[address] = (count + 1, time.monotonic())

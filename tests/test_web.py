@@ -74,7 +74,7 @@ def test_upload_previews_before_loading(client):
     assert client.get("/browse").headers["Location"] == "/setup/"
 
     assert client.post("/setup/confirm").headers["Location"] == "/browse"
-    assert client.get("/").headers["Location"] == "/dashboard/"
+    assert client.get("/").status_code == 200
 
 
 def test_browse_shows_a_shelf_in_row_order_with_neighbours(client):
@@ -392,18 +392,18 @@ def test_covers_show_in_browse_search_and_layout_once_albums_have_them(client):
     assert "nenette.jpeg" in artist and "ss-cover-empty" in artist
 
 
-def test_menu_has_five_sections_and_tabs_that_count_what_is_waiting(client):
+def test_menu_has_its_sections_and_tabs_that_count_what_is_waiting(client):
     _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
 
     page = client.get("/browse").text
 
     menu = page[page.index('id="main-nav"'):page.index("</nav>")]
-    sections = ["Dashboard", "Collection", "Shelves", "Organise", "Settings"]
+    sections = ["Home", "Dashboard", "Collection", "Shelves", "Organise", "Settings"]
     assert [menu.index(f"<span>{name}</span>") for name in sections] == sorted(
         menu.index(f"<span>{name}</span>") for name in sections
     )
-    # Five sections, and Help apart at the end.
-    assert menu.count("<a ") == 6 and menu.rindex("<span>Help</span>") > menu.index("<span>Settings</span>")
+    # Six sections, and Help apart at the end.
+    assert menu.count("<a ") == 7 and menu.rindex("<span>Help</span>") > menu.index("<span>Settings</span>")
     # Browse belongs to Collection: that section is marked, and its screens are the tabs.
     collection = menu[menu.rindex("<a ", 0, menu.index("<span>Collection</span>")):]
     assert 'class="active"' in collection[: collection.index("</a>")]

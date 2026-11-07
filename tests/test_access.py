@@ -51,7 +51,7 @@ def test_without_a_password_everyone_is_the_owner(app):
     client = app.test_client()
 
     assert client.get("/dashboard/").status_code == 200
-    assert client.get("/").headers["Location"] == "/dashboard/"
+    assert client.get("/").status_code == 200
     page = client.get("/settings/").text
     assert "The app is open" in page and "Log in" not in page
 
@@ -60,9 +60,8 @@ def test_a_visitor_may_look_the_collection_up_and_nothing_more(app):
     set_password(app.config["DATA_DIR"], PASSWORD)
     visitor = app.test_client()
 
-    # Looking up: the collection, an album, an artist, listening, the help.
-    assert visitor.get("/").headers["Location"] == "/browse"
-    for page in ("/browse", "/browse?q=closing", "/albums/1", "/artists/1"):
+    # Looking up: Home, the collection, an album, an artist, the statistics, listening, the help.
+    for page in ("/", "/browse", "/browse?q=closing", "/albums/1", "/artists/1", "/statistics/"):
         assert visitor.get(page).status_code == 200, page
     # The help is the built site, or GitHub Pages where none is built — never the login.
     help_page = visitor.get("/help/")

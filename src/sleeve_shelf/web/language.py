@@ -94,7 +94,7 @@ def choose():
     target = request.form.get("next")
     # From the menu, back to that page (or the start, should it be no page of this app);
     # from Settings, which sends none, back there.
-    response = redirect_within(target, url_for("index") if target else url_for("settings.index"))
+    response = redirect_within(target, url_for("home.index") if target else url_for("settings.index"))
     if chosen in LANGUAGES:
         response.set_cookie(
             COOKIE, chosen, max_age=COOKIE_DAYS * 24 * 3600, samesite="Lax", httponly=True

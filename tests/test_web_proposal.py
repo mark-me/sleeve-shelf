@@ -408,7 +408,6 @@ def test_dashboard_sums_up_and_lists_what_is_waiting(client):
     albums[0].kept_after_discogs = True
     store.save(Album, albums)
     assert "no longer in your Discogs collection" not in client.get("/dashboard/").text
-    assert client.get("/").headers["Location"] == "/dashboard/"
 
 
 def test_a_box_set_gets_its_measured_width(client):

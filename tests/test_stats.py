@@ -6,7 +6,13 @@ import pytest
 
 from sleeve_shelf.web.app import create_app
 from sleeve_shelf.access import set_password
-from sleeve_shelf.insights.collection_stats import album_figures, artist_figures, collection_figures, from_the_shelf
+from sleeve_shelf.insights.collection_stats import (
+    album_figures,
+    artist_figures,
+    collection_figures,
+    from_the_shelf,
+    recently_added,
+)
 from sleeve_shelf.domain import (
     Album,
     Artist,
@@ -253,9 +259,9 @@ def test_a_visitor_sees_the_artist_and_no_tabs(tmp_path, monkeypatch):
         page = visitor.get(address).text
         assert "Kind Of Blue" in page and "ss-tabs" not in page and 'name="start_year"' not in page
     assert "still needs something" not in visitor.get("/artists/2").text
-    # The Statistics screen is the owner's.
-    assert visitor.get("/statistics/").status_code != 200
-    assert "/statistics/" not in visitor.get("/browse").text
+    # The Statistics screen a visitor may open too: it changes nothing.
+    assert visitor.get("/statistics/").status_code == 200
+    assert "/statistics/" in visitor.get("/browse").text
 
 
 def test_the_statistics_screen_opens_to_the_albums(client):
@@ -264,7 +270,8 @@ def test_the_statistics_screen_opens_to_the_albums(client):
     assert "Most on your records" in page and "Paul Chambers" in page
     assert "So What" in page and "By 2 artists" in page
     assert "Blue Note" in page
-    assert "From the shelf today" in page and "?turn=1#today" in page
+    # Something to pull from the shelf is on Home now.
+    assert "From the shelf today" not in page
     assert "Who holds your collection together" in page and 'href="/connections/?artist=1"' in page
     assert "Per decade" in page and "1950s" in page and "Per cluster" in page and 'href="/artists/?cluster=1"' in page
     assert 'href="/albums/1">Miles Davis — Kind Of Blue</a>' in page and "Kast &middot; a" in page
@@ -372,3 +379,39 @@ def test_an_album_and_an_artist_link_to_discogs_when_linked(tmp_path):
     store.save(Album, albums)
     assert "discogs.com/artist" not in client.get("/artists/1").text
     assert "discogs.com/release" not in client.get("/albums/2").text
+
+
+
+def test_home_offers_something_from_the_shelf_and_a_search(client):
+    page = client.get("/").text
+
+    assert "From the shelf today" in page and "?turn=1#today" in page
+    # Browse's own search, which follows the typing; emptied, it leads back to Home.
+    assert 'action="/browse" role="search" data-live-search data-live-search-empty="/"' in page
+    # The only search field: the menu's is left out, as on Browse.
+    assert page.count('type="search"') == 1
+    assert "Recently added" not in page
+
+
+def test_home_shows_what_came_in_last_the_latest_first(client, tmp_path):
+    store = JsonStore(tmp_path / "data")
+    albums = store.load(Album)
+    albums[0].added_on = date(2026, 11, 1)
+    albums[1].added_on = date(2026, 11, 5)
+    store.save(Album, albums)
+
+    assert recently_added(store) == (albums[1].id, albums[0].id)
+    page = client.get("/").text
+    recent = page[page.index("Recently added"):]
+    assert recent.index(albums[1].title) < recent.index(albums[0].title)
+
+
+def test_home_says_what_waits_to_the_owner_only(client, tmp_path):
+    page = client.get("/").text
+    assert "wait for you" in page or "waits for you" in page
+
+    set_password(tmp_path / "data", "a long enough password")
+    visitor = client.application.test_client()
+    page = visitor.get("/").text
+    assert "From the shelf today" in page
+    assert "for you" not in page and "/dashboard/" not in page

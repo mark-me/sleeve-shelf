@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Home') }}{% endblock %}
+
+{% from "_album_row.html" import album_row %}
+
+{% block content %}
+<h1 class="visually-hidden">{{ _('Home') }}</h1>
+{# The same search as Browse's, in the same place, so the results take the page's place while
+   typing; emptying the field brings Home back. #}
+<div class="ss-sticky-top">
+  {% set empty_url = url_for('home.index') %}
+  {% include "browse/_search.html" %}
+</div>
+
+<div class="ss-page" style="max-width: 860px;">
+
+  {% if pick %}
+  <section class="mt-4" id="today">
+    <h2>{{ _('From the shelf today') }}</h2>
+    <div class="ss-card mt-2">{{ album_row(places.get(pick)) }}</div>
+    <p class="small mt-2 mb-0"><a href="{{ url_for('home.index', turn=turn + 1) }}#today">{{ _('Another one') }}</a></p>
+  </section>
+  {% endif %}
+
+  {% if long_ago %}
+  <section class="mt-5">
+    <h2>{{ _('From %(years)d years ago', years=long_ago_years) }}</h2>
+    <div class="ss-card mt-2">{% for album_id in long_ago %}{{ album_row(places.get(album_id)) }}{% endfor %}</div>
+  </section>
+  {% endif %}
+
+  {% if recent %}
+  <section class="mt-5">
+    <h2>{{ _('Recently added') }}</h2>
+    <div class="ss-card mt-2">{% for album_id in recent %}{{ album_row(places.get(album_id)) }}{% endfor %}</div>
+  </section>
+  {% endif %}
+
+  {# What waits for the owner: one line, the work itself is on the Dashboard. #}
+  {% set waiting = menu_counts.values() | sum %}
+  {% if is_owner and waiting %}
+  <p class="mt-5 mb-0"><a href="{{ url_for('dashboard.index') }}">{{ ngettext('%(num)d thing waits for you', '%(num)d things wait for you', waiting) }} &rarr;</a></p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-05 22:59+0100\n"
+"POT-Creation-Date: 2026-11-07 20:34+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -88,6 +88,11 @@ msgid "That is not the password."
 msgstr "Dat is niet het wachtwoord."
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/home/index.html
+msgid "Home"
+msgstr "Thuis"
+
+#: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Dashboard"
 msgstr "Overzicht"
@@ -118,6 +123,7 @@ msgid "Statistics"
 msgstr "Statistieken"
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/_album_row.html
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/browse/results.html
@@ -1286,6 +1292,7 @@ msgstr "Zoeken…"
 
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/browse/_search.html
+#: src/sleeve_shelf/web/templates/home/index.html
 msgid "Search by artist, album or song"
 msgstr "Zoek op artiest, album of nummer"
 
@@ -1317,6 +1324,7 @@ msgid "How this screen works"
 msgstr "Hoe dit scherm werkt"
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
+#: src/sleeve_shelf/web/templates/home/index.html
 msgid "Search by artist, album or song…"
 msgstr "Zoek op artiest, album of nummer…"
 
@@ -2600,6 +2608,30 @@ msgstr "Een artiest toevoegen…"
 msgid "Add"
 msgstr "Toevoegen"
 
+#: src/sleeve_shelf/web/templates/home/index.html
+msgid "From the shelf today"
+msgstr "Vandaag uit de kast"
+
+#: src/sleeve_shelf/web/templates/home/index.html
+msgid "Another one"
+msgstr "Een andere"
+
+#: src/sleeve_shelf/web/templates/home/index.html
+#, python-format
+msgid "From %(years)d years ago"
+msgstr "Van %(years)d jaar geleden"
+
+#: src/sleeve_shelf/web/templates/home/index.html
+msgid "Recently added"
+msgstr "Pas binnengekomen"
+
+#: src/sleeve_shelf/web/templates/home/index.html
+#, python-format
+msgid "%(num)d thing waits for you"
+msgid_plural "%(num)d things wait for you"
+msgstr[0] "%(num)d ding wacht op je"
+msgstr[1] "%(num)d dingen wachten op je"
+
 #: src/sleeve_shelf/web/templates/layout/index.html
 #, python-format
 msgid "Split %(artist)s into single albums"
@@ -3487,19 +3519,6 @@ msgstr "Ruilen zet elk album op de plek van het andere, zodat de toplader en het
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Who and what keeps coming back in your collection. Open a line to see the albums, with where each stands."
 msgstr "Wie en wat er steeds terugkomt in je collectie. Open een regel om de albums te zien, met hun plaats."
-
-#: src/sleeve_shelf/web/templates/stats/index.html
-msgid "From the shelf today"
-msgstr "Vandaag uit de kast"
-
-#: src/sleeve_shelf/web/templates/stats/index.html
-msgid "Another one"
-msgstr "Een andere"
-
-#: src/sleeve_shelf/web/templates/stats/index.html
-#, python-format
-msgid "From %(years)d years ago"
-msgstr "Van %(years)d jaar geleden"
 
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Who holds your collection together"

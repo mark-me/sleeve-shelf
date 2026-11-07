@@ -2,14 +2,25 @@
 
 Sleeve & Shelf keeps track of where every record in your collection stands, and helps you decide where it *should* stand. This guide walks through the app the way you use it: from getting it running, to browsing your shelves, to letting it propose a new layout.
 
-## 🗺️ The five sections
+## 🏠 Home
+
+The app opens on **Home**: a search field for an artist, album or song, and something to play.
+
+- **From the shelf today** — one album from your shelves, the same all day; **Another one** picks a different one.
+- **From 50 years ago** — albums from your collection that came out fifty years ago this year.
+- **Recently added** — the albums a Discogs sync or import brought in last.
+
+When something waits for a decision, a line at the bottom says how many things, and leads to the Dashboard. Visitors see Home too, without that line.
+
+## 🗺️ The sections
 
 ![The Dashboard: the collection at a glance, and the albums waiting for a place](../images/screens/dashboard.png)
 
-The menu has five sections. Each opens on its first screen; the other screens of a section are tabs at the top of the page.
+Each section of the menu opens on its first screen; the other screens of a section are tabs at the top of the page.
 
 | Section | Screens | What you do there |
 | --- | --- | --- |
+| **Home** | Home | Search, and find something to play |
 | **Dashboard** | Dashboard | See what is waiting for you, and the steps towards a new layout |
 | **Collection** | Browse / Search · Connections · Statistics · Unplaced · Discogs sync | Look up records and how their artists hang together, place the ones without a spot, bring the collection in from Discogs |
 | **Shelves** | Layout · Move · Proposal · Showcase · Versions · Cabinets | Rearrange the shelves, move an album, artist, family or cluster at once, let the app propose a layout, manage top-loaders, go back to an earlier layout, describe your cabinets |

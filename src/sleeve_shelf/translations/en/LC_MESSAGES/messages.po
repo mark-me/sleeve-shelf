@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-05 22:59+0100\n"
+"POT-Creation-Date: 2026-11-07 20:34+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -88,6 +88,11 @@ msgid "That is not the password."
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/home/index.html
+msgid "Home"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Dashboard"
 msgstr ""
@@ -118,6 +123,7 @@ msgid "Statistics"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/_album_row.html
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/browse/results.html
@@ -1286,6 +1292,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/browse/_search.html
+#: src/sleeve_shelf/web/templates/home/index.html
 msgid "Search by artist, album or song"
 msgstr ""
 
@@ -1317,6 +1324,7 @@ msgid "How this screen works"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
+#: src/sleeve_shelf/web/templates/home/index.html
 msgid "Search by artist, album or song…"
 msgstr ""
 
@@ -2600,6 +2608,30 @@ msgstr ""
 msgid "Add"
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/home/index.html
+msgid "From the shelf today"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/home/index.html
+msgid "Another one"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/home/index.html
+#, python-format
+msgid "From %(years)d years ago"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/home/index.html
+msgid "Recently added"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/home/index.html
+#, python-format
+msgid "%(num)d thing waits for you"
+msgid_plural "%(num)d things wait for you"
+msgstr[0] ""
+msgstr[1] ""
+
 #: src/sleeve_shelf/web/templates/layout/index.html
 #, python-format
 msgid "Split %(artist)s into single albums"
@@ -3486,19 +3518,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Who and what keeps coming back in your collection. Open a line to see the albums, with where each stands."
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/stats/index.html
-msgid "From the shelf today"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/stats/index.html
-msgid "Another one"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/stats/index.html
-#, python-format
-msgid "From %(years)d years ago"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/stats/index.html
