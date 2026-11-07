@@ -82,6 +82,9 @@ jobs:
       - name: Compute version for APP_VERSION
         id: version
         run: |
+          # The day of the build: the image takes Debian's security fixes of that day.
+          echo "security_day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
           # A release tag like v1.2.3
           if [[ "$GITHUB_REF" == refs/tags/v*.*.* ]]; then
             VERSION=${GITHUB_REF_NAME#v}
@@ -129,6 +132,7 @@ jobs:
           tags: sleeve-shelf:scan
           build-args: |
             APP_VERSION=${{ steps.version.outputs.version }}
+            SECURITY_DAY=${{ steps.version.outputs.security_day }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -160,3 +164,4 @@ jobs:
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: |
             APP_VERSION=${{ steps.version.outputs.version }}
+            SECURITY_DAY=${{ steps.version.outputs.security_day }}
