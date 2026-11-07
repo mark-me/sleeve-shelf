@@ -286,4 +286,4 @@ def page():
 def logout():
     """Log this device out."""
     session.clear()
-    return redirect(url_for("browse.browse"))
+    return redirect(url_for("home.index"))

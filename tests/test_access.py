@@ -110,7 +110,8 @@ def test_the_owner_logs_in_stays_in_and_logs_out(app):
     again = owner.post("/login", data={"password": PASSWORD, "next": "https://elsewhere.example/"})
     assert again.headers["Location"] == "/"
 
-    owner.post("/logout")
+    # Logged out, the device is a visitor's, on Home.
+    assert owner.post("/logout").headers["Location"] == "/"
     assert owner.get("/dashboard/").status_code == 302
 
 
