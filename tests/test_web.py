@@ -437,7 +437,7 @@ def test_app_can_be_installed_from_its_manifest(client):
 
     assert manifest.mimetype == "application/manifest+json"
     data = manifest.get_json()
-    assert (data["display"], data["start_url"], data["scope"]) == ("standalone", "/browse", "/")
+    assert (data["display"], data["start_url"], data["scope"]) == ("standalone", "/", "/")
     assert {icon["sizes"] for icon in data["icons"]} == {"192x192", "512x512"}
     assert any(icon["purpose"] == "maskable" for icon in data["icons"])
     # Every icon the manifest and the page name is really there.

@@ -28,7 +28,7 @@ def manifest():
         name="Sleeve & Shelf",
         short_name="Sleeve & Shelf",
         description=_("Your vinyl collection, in the order of your shelves."),
-        start_url=url_for("browse.browse"),
+        start_url=url_for("home.index"),
         scope=url_for("home.index"),
         display="standalone",
         background_color=BACKGROUND,
