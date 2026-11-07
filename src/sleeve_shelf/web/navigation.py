@@ -25,6 +25,11 @@ class Tab:
     help: str | None = None
 
 
+# The two blocks of the menu: looking things up, and keeping the collection up to date.
+LOOK_UP = "look up"
+MANAGE = "manage"
+
+
 @dataclass(frozen=True)
 class Section:
     """A section of the menu.
@@ -35,6 +40,7 @@ class Section:
         tabs: Its tabs.
         other_pages: Pages that belong to the section without having a tab of their own.
         help: Where the user guide explains it.
+        block: The block of the menu it stands in: LOOK_UP or MANAGE.
     """
 
     key: str
@@ -42,24 +48,41 @@ class Section:
     tabs: tuple[Tab, ...]
     other_pages: tuple[str, ...] = ()
     help: str | None = None
+    block: str = LOOK_UP
 
 
+# Looking up and finding something to play, then the upkeep of the collection (decided by Mark
+# 2026-11-07); a visitor sees only the first block.
 SECTIONS = (
     Section("home", _("Home"), (Tab("home.index", _("Home"), ("home",), help="user/#home"),)),
-    Section("overview", _("Dashboard"), (Tab("dashboard.index", _("Dashboard"), ("dashboard",), help="user/#a-typical-round"),)),
     Section(
-        "collection",
-        _("Collection"),
-        (
-            Tab("browse.browse", _("Browse / Search"), ("browse.browse",), help="user/browsing/#browse-and-search"),
-            Tab("connections.index", _("Connections"), ("connections",), help="user/connections/#connections"),
-            Tab("stats.index", _("Statistics"), ("stats",), help="user/connections/#statistics"),
-            Tab("browse.unplaced", _("Unplaced"), ("browse.unplaced",), "unplaced", "user/browsing/#albums-without-a-place"),
-            Tab("discogs.index", _("Discogs sync"), ("discogs", "setup"), "discogs", "user/discogs/"),
-        ),
-        # An album's page is reached from Browse and from the unplaced albums.
+        "browse",
+        _("Browse / Search"),
+        (Tab("browse.browse", _("Browse / Search"), ("browse.browse",), help="user/browsing/#browse-and-search"),),
+        # An album's page is reached from Browse more than from anywhere else.
         other_pages=("albums.detail",),
         help="user/albums-and-artists/#an-albums-page",
+    ),
+    Section(
+        "connections",
+        _("Connections"),
+        (Tab("connections.index", _("Connections"), ("connections",), help="user/connections/#connections"),),
+    ),
+    Section("stats", _("Statistics"), (Tab("stats.index", _("Statistics"), ("stats",), help="user/connections/#statistics"),)),
+    Section(
+        "worklist",
+        _("Worklist"),
+        (
+            Tab("dashboard.index", _("Dashboard"), ("dashboard",), help="user/#a-typical-round"),
+            Tab(
+                "browse.unplaced",
+                _("Unplaced"),
+                ("browse.unplaced", "browse.place_all"),
+                "unplaced",
+                "user/browsing/#albums-without-a-place",
+            ),
+        ),
+        block=MANAGE,
     ),
     Section(
         "shelves",
@@ -72,6 +95,7 @@ SECTIONS = (
             Tab("versions.index", _("Versions"), ("versions",), help="user/shelves/#versions"),
             Tab("storage.index", _("Cabinets"), ("storage", "albums.widths"), "storage", "user/shelves/#cabinets-and-shelves"),
         ),
+        block=MANAGE,
     ),
     Section(
         "sorting",
@@ -83,8 +107,20 @@ SECTIONS = (
             Tab("clusters.index", _("Clusters"), ("clusters",), help="user/sorting/#clusters"),
             Tab("rules.index", _("Rules"), ("rules",), "rules", "user/sorting/#location-rules"),
         ),
+        block=MANAGE,
     ),
-    Section("settings", _("Settings"), (Tab("settings.index", _("Settings"), ("settings",), help="user/settings/#settings"),)),
+    Section(
+        "discogs",
+        _("Discogs"),
+        (Tab("discogs.index", _("Discogs sync"), ("discogs", "setup"), "discogs", "user/discogs/"),),
+        block=MANAGE,
+    ),
+    Section(
+        "settings",
+        _("Settings"),
+        (Tab("settings.index", _("Settings"), ("settings",), help="user/settings/#settings"),),
+        block=MANAGE,
+    ),
 )
 
 

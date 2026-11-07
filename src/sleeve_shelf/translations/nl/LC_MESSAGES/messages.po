@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-07 20:34+0100\n"
+"POT-Creation-Date: 2026-11-07 20:48+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -93,15 +93,6 @@ msgid "Home"
 msgstr "Thuis"
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Dashboard"
-msgstr "Overzicht"
-
-#: src/sleeve_shelf/web/navigation.py
-msgid "Collection"
-msgstr "Collectie"
-
-#: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/browse/results.html
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 msgid "Browse / Search"
@@ -123,6 +114,15 @@ msgid "Statistics"
 msgstr "Statistieken"
 
 #: src/sleeve_shelf/web/navigation.py
+msgid "Worklist"
+msgstr "Werklijst"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Dashboard"
+msgstr "Overzicht"
+
+#: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/_album_row.html
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
@@ -132,12 +132,6 @@ msgstr "Statistieken"
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Unplaced"
 msgstr "Zonder plek"
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs sync"
-msgstr "Discogs-sync"
 
 #: src/sleeve_shelf/web/navigation.py
 msgid "Shelves"
@@ -205,6 +199,19 @@ msgstr "Clusters"
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Rules"
 msgstr "Regels"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Discogs"
+msgstr "Discogs"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Discogs sync"
+msgstr "Discogs-sync"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -654,12 +661,6 @@ msgid "Show the cover larger"
 msgstr "De hoes groter tonen"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-msgid "Discogs"
-msgstr "Discogs"
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Stands in"
 msgstr "Staat in"
 
@@ -729,11 +730,6 @@ msgstr "Delen van deze pagina"
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Album"
 msgstr "Album"
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Manage"
-msgstr "Beheren"
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -1292,13 +1288,18 @@ msgstr "Zoeken…"
 
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/browse/_search.html
-#: src/sleeve_shelf/web/templates/home/index.html
 msgid "Search by artist, album or song"
 msgstr "Zoek op artiest, album of nummer"
 
 #: src/sleeve_shelf/web/templates/base.html
 msgid "Open menu"
 msgstr "Menu openen"
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/base.html
+msgid "Manage"
+msgstr "Beheren"
 
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/dashboard/index.html
@@ -1324,7 +1325,6 @@ msgid "How this screen works"
 msgstr "Hoe dit scherm werkt"
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
-#: src/sleeve_shelf/web/templates/home/index.html
 msgid "Search by artist, album or song…"
 msgstr "Zoek op artiest, album of nummer…"
 

@@ -4,7 +4,9 @@ Sleeve & Shelf keeps track of where every record in your collection stands, and 
 
 ## 🏠 Home
 
-The app opens on **Home**: a search field for an artist, album or song, and something to play.
+![Home: a search field, an album from the shelf today, and what came out fifty years ago](../images/screens/home.png)
+
+The app opens on **Home**: a search field for an artist, album or song, and something to play. Typing shows the results in its place; emptying the field brings Home back.
 
 - **From the shelf today** — one album from your shelves, the same all day; **Another one** picks a different one.
 - **From 50 years ago** — albums from your collection that came out fifty years ago this year.
@@ -18,13 +20,19 @@ When something waits for a decision, a line at the bottom says how many things, 
 
 Each section of the menu opens on its first screen; the other screens of a section are tabs at the top of the page.
 
+The menu has two blocks. The first is for looking things up and finding something to play; the second, under **Manage**, is for keeping the collection up to date. Visitors see only the first.
+
 | Section | Screens | What you do there |
 | --- | --- | --- |
 | **Home** | Home | Search, and find something to play |
-| **Dashboard** | Dashboard | See what is waiting for you, and the steps towards a new layout |
-| **Collection** | Browse / Search · Connections · Statistics · Unplaced · Discogs sync | Look up records and how their artists hang together, place the ones without a spot, bring the collection in from Discogs |
+| **Browse / Search** | Browse / Search | Walk along your shelves, or search by artist, album or song |
+| **Connections** | Connections | See how the artists hang together |
+| **Statistics** | Statistics | See who and what keeps coming back |
+| *Manage* | | |
+| **Worklist** | Dashboard · Unplaced | See what is waiting for you and the steps towards a new layout; place the albums without a spot |
 | **Shelves** | Layout · Move · Proposal · Showcase · Versions · Cabinets | Rearrange the shelves, move an album, artist, family or cluster at once, let the app propose a layout, manage top-loaders, go back to an earlier layout, describe your cabinets |
 | **Organise** | Artists · Families · Clusters · Rules | Decide what belongs together and where: an artist's cluster and start year, which artists stand together, the order of the clusters, and fixed places |
+| **Discogs** | Discogs sync | Bring the collection in from Discogs, and fetch styles, years and covers |
 | **Settings** | Settings | Width estimates, the Discogs token, light or dark |
 
 A number next to a section or tab tells you how many things wait there for a decision — matches to confirm, suggested families, albums without a place, shelves that are too full.

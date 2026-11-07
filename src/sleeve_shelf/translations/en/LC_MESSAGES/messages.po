@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-07 20:34+0100\n"
+"POT-Creation-Date: 2026-11-07 20:48+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -93,15 +93,6 @@ msgid "Home"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/dashboard/index.html
-msgid "Dashboard"
-msgstr ""
-
-#: src/sleeve_shelf/web/navigation.py
-msgid "Collection"
-msgstr ""
-
-#: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/browse/results.html
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 msgid "Browse / Search"
@@ -123,6 +114,15 @@ msgid "Statistics"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
+msgid "Worklist"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Dashboard"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/_album_row.html
 #: src/sleeve_shelf/web/templates/albums/detail.html
 #: src/sleeve_shelf/web/templates/artists/edit.html
@@ -131,12 +131,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/discogs/remove.html
 #: src/sleeve_shelf/web/templates/stats/index.html
 msgid "Unplaced"
-msgstr ""
-
-#: src/sleeve_shelf/web/navigation.py
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/discogs/index.html
-msgid "Discogs sync"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -204,6 +198,19 @@ msgstr ""
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Rules"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/settings/index.html
+msgid "Discogs"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/discogs/index.html
+msgid "Discogs sync"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
@@ -654,12 +661,6 @@ msgid "Show the cover larger"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-#: src/sleeve_shelf/web/templates/settings/index.html
-msgid "Discogs"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
 msgid "Stands in"
 msgstr ""
 
@@ -728,11 +729,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/moving/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Album"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/albums/detail.html
-#: src/sleeve_shelf/web/templates/artists/edit.html
-msgid "Manage"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/albums/detail.html
@@ -1292,12 +1288,17 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
 #: src/sleeve_shelf/web/templates/browse/_search.html
-#: src/sleeve_shelf/web/templates/home/index.html
 msgid "Search by artist, album or song"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
 msgid "Open menu"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/albums/detail.html
+#: src/sleeve_shelf/web/templates/artists/edit.html
+#: src/sleeve_shelf/web/templates/base.html
+msgid "Manage"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/base.html
@@ -1324,7 +1325,6 @@ msgid "How this screen works"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/_search.html
-#: src/sleeve_shelf/web/templates/home/index.html
 msgid "Search by artist, album or song…"
 msgstr ""
 

@@ -41,6 +41,10 @@
     <nav id="main-nav" class="ss-nav collapse d-lg-flex">
       {% block nav %}
       {% for section in nav_sections %}
+      {# The upkeep stands apart from looking things up, under a heading of its own. #}
+      {% if section.block == 'manage' and (loop.first or loop.previtem.block != 'manage') %}
+      <div class="ss-nav-block" role="presentation">{{ _('Manage') }}</div>
+      {% endif %}
       {% set count = section_count(section, menu_counts) %}
       <a href="{{ url_for(section.tabs[0].endpoint) }}" class="{{ 'active' if section == nav_section }}">
         <svg class="ss-nav-icon" width="18" height="18" aria-hidden="true"><use href="{{ url_for('static', filename='vendor/menu-icons.svg') }}#{{ section.key }}"></use></svg>

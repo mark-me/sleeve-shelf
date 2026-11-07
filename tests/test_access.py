@@ -74,10 +74,14 @@ def test_a_visitor_may_look_the_collection_up_and_nothing_more(app):
     assert visitor.post("/settings/password", data={"action": "remove"}).status_code == 403
     assert has_password(app.config["DATA_DIR"])
 
-    # What a visitor sees: Browse and Help in the menu, no actions on the pages.
+    # What a visitor sees: the block for looking things up and Help in the menu, without the
+    # upkeep or its heading, and no actions on the pages.
     browse = visitor.get("/browse").text
     menu = browse[browse.index('id="main-nav"'):browse.index("</nav>")]
-    assert "<span>Collection</span>" in menu and "<span>Shelves</span>" not in menu and "Log in" in menu
+    for name in ("Home", "Browse / Search", "Connections", "Statistics"):
+        assert f"<span>{name}</span>" in menu, name
+    assert "<span>Worklist</span>" not in menu and "<span>Shelves</span>" not in menu and "Log in" in menu
+    assert "ss-nav-block" not in menu
     assert "/unplaced" not in browse and "ss-nav-count" not in browse
     album = visitor.get("/albums/1").text
     assert 'id="listen"' in album and "/move/" not in album and "Measured width" not in album

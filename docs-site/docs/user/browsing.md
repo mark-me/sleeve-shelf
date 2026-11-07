@@ -18,7 +18,7 @@ Every word you type has to be in the artist and title, or in the artist, title a
 
 ![Placing all at once: each album at its suggested spot](../images/screens/place-all.png)
 
-**Unplaced** lists the LPs that stand on no shelf yet — new purchases, and albums a proposal had no room for. For each one the app suggests a spot in your shelves as they stand now: the shelf, the two albums it would go between, and whether it fits. *Put it there* places it; nothing else moves.
+**Unplaced** (under Worklist) lists the LPs that stand on no shelf yet — new purchases, and albums a proposal had no room for. For each one the app suggests a spot in your shelves as they stand now: the shelf, the two albums it would go between, and whether it fits. *Put it there* places it; nothing else moves.
 
 Not the spot you had in mind? When the artist has no cluster of its own yet, the spot only follows what its styles point to, and the row says so. **Other spots** leads to the album's page, which offers a spot in each of the next clusters its styles point to — each with *Put it there* and a ticked **Also put … in …** that gives the artist that cluster. **Somewhere else…** opens Move with the album chosen, to put it right before or after any album you pick.
 
