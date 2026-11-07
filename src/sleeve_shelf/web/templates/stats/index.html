@@ -101,7 +101,7 @@
     <div class="ss-card ss-card-body">
       <div class="ss-bars">
         {% set largest = figures.clusters | map(attribute='albums') | max %}
-        {% for cluster in figures.clusters %}{{ bar(cluster.name or _('no cluster yet'), cluster.albums, largest, url_for('artists.index', cluster=cluster.cluster_id) if cluster.cluster_id else none) }}{% endfor %}
+        {% for cluster in figures.clusters %}{{ bar(cluster.name or _('no cluster yet'), cluster.albums, largest, url_for('artists.index', cluster=cluster.cluster_id) if cluster.cluster_id and is_owner else none) }}{% endfor %}
       </div>
     </div>
   </section>

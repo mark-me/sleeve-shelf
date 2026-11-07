@@ -1,11 +1,14 @@
 """Tests for the owner's login: what a visitor may do, logging in, and the password."""
 
 import io
+import re
 
 import pytest
 from openpyxl import Workbook
 
 from sleeve_shelf.cli import main
+from sleeve_shelf.domain import Album
+from sleeve_shelf.persistence import JsonStore
 
 from sleeve_shelf.web.app import create_app
 from sleeve_shelf.access import (
@@ -293,3 +296,23 @@ def test_a_login_holds_a_random_key_that_each_new_password_replaces(app):
 
     remove_password(data_dir)
     assert load_settings(data_dir).owner_login_key is None
+
+
+def test_every_link_a_visitor_is_shown_opens_without_the_login(app):
+    set_password(app.config["DATA_DIR"], PASSWORD)
+    visitor = app.test_client()
+    store = JsonStore(app.config["DATA_DIR"])
+    album = store.load(Album)[0]
+
+    shown = set()
+    for page in ("/", "/browse", "/connections/", "/statistics/", f"/albums/{album.id}", f"/artists/{album.artist_id}"):
+        text = visitor.get(page).text
+        shown |= set(re.findall(r'href="(/[^"#]*)', text))
+    # The help, the app's own files and logging in are not pages of the collection.
+    links = {link.replace("&amp;", "&") for link in shown if not link.startswith(("/help/", "/static/", "/login"))}
+
+    assert links
+    for link in sorted(links):
+        answer = visitor.get(link)
+        assert not answer.headers.get("Location", "").startswith("/login"), link
+        assert answer.status_code in (200, 302, 304), link
