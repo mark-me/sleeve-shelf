@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-07 20:48+0100\n"
+"POT-Creation-Date: 2026-11-08 23:13+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -359,6 +359,14 @@ msgstr ""
 msgid "Many previews were played from here just now; try again in a few minutes"
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/_recognise_form.html
+msgid "Looking at the photo…"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/_recognise_form.html
+msgid "Recognise"
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/_rules_and_move.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Location rules"
@@ -416,6 +424,7 @@ msgid "between"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/_spot.html
+#: src/sleeve_shelf/web/templates/recognise/result.html
 msgid "and"
 msgstr ""
 
@@ -2608,6 +2617,11 @@ msgid "Add"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/home/index.html
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Which one is this?"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/home/index.html
 msgid "From the shelf today"
 msgstr ""
 
@@ -3072,6 +3086,62 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "no width set"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "That is no photo that can be read. Take one with the camera, as a JPEG, PNG or WebP."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "As you chose."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Where it goes back"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Between"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Right after"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Right before"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Show it on the shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "This album has no place on the shelves yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Its page"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Not sure which one it is. Is it one of these?"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "This one"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "No sleeve of your collection recognised on this photo."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "It goes best with the whole front of the sleeve on the photo, straight on, in good light and out of a top-loader."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Another photo"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html

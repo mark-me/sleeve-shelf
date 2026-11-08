@@ -35,6 +35,7 @@ blueprint = Blueprint("login", __name__)
 VISITOR_PAGES = frozenset(
     {
         "home.index",
+        "recognise.where",
         "stats.index",
         "browse.browse",
         "connections.index",
@@ -65,6 +66,10 @@ VISITOR_LISTEN_SECONDS = 600
 # seconds, far more than anyone browsing by hand opens, so nobody can keep the app busy.
 VISITOR_PAGES_PER_WINDOW = 300
 VISITOR_PAGE_SECONDS = 60
+# A visitor's photo of a sleeve costs the server half a second or so: at most this many per
+# address in this many seconds, far more than anyone standing at a cabinet takes.
+VISITOR_PHOTOS = 20
+VISITOR_PHOTO_SECONDS = 60
 # Not counted: files, as a shelf alone shows a hundred covers and sending a file costs little;
 # and the login, which has a limit of its own, so the owner can always log in.
 _NOT_COUNTED = frozenset({"static", "covers.file", "artists.picture", "albums.own_cover", "help.page", "pwa.manifest", "login.page"})
@@ -105,6 +110,7 @@ class _Window:
 _failures: dict[str, tuple[int, float]] = {}
 _listens = _Window(lambda: (VISITOR_LISTENS, VISITOR_LISTEN_SECONDS))
 _pages = _Window(lambda: (VISITOR_PAGES_PER_WINDOW, VISITOR_PAGE_SECONDS))
+_photos = _Window(lambda: (VISITOR_PHOTOS, VISITOR_PHOTO_SECONDS))
 # When each address was last reported as held up, so the log names it once per window.
 _reported: dict[str, float] = {}
 
@@ -156,8 +162,9 @@ def guard():
         if request.endpoint in VISITOR_PAGES:
             return None
         return redirect(url_for("login.page", next=request.full_path))
-    # What a visitor may send: the password, and the language for the device.
-    if request.endpoint in ("login.page", "language.choose"):
+    # What a visitor may send: the password, the language for the device, and a photo of a
+    # sleeve to recognise, which is never kept.
+    if request.endpoint in ("login.page", "language.choose", "recognise.photo"):
         return None
     abort(403)
 
@@ -182,6 +189,15 @@ def visitor_may_listen() -> bool:
         True when it does.
     """
     return is_owner() or _listens.allow(_address())
+
+
+def visitor_may_recognise() -> bool:
+    """Whether a visitor's next photo stays within the limit; the owner always may.
+
+    Returns:
+        True when it does.
+    """
+    return is_owner() or _photos.allow(_address())
 
 
 def _address() -> str:

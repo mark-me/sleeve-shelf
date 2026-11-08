@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Which one is this?') }}{% endblock %}
+
+{% from "_album_row.html" import album_row %}
+{% from "_recognise_form.html" import recognise_form %}
+{% from "_cover.html" import cover %}
+
+{% macro neighbour(row) %}<a href="{{ url_for('albums.detail', album_id=row.album_id) }}">{{ row.artist }} &ndash; {{ row.title }}</a>{% endmacro %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 860px;">
+  <h1>{{ _('Which one is this?') }}</h1>
+
+  {% if unreadable %}
+  <div class="ss-alert mt-3">{{ _('That is no photo that can be read. Take one with the camera, as a JPEG, PNG or WebP.') }}</div>
+
+  {% elif album %}
+  {% if not recognised %}<p class="ss-muted mt-1 mb-0">{{ _('As you chose.') }}</p>{% endif %}
+  <div class="ss-card mt-3">{{ album_row(album) }}</div>
+  {% if album.shelf_id is not none %}
+  <section class="mt-4" id="where">
+    <h2>{{ _('Where it goes back') }}</h2>
+    <p class="fs-5 mb-1"><a href="{{ url_for('browse.browse', shelf=album.shelf_id) }}#album-{{ album.album_id }}">{{ album.cabinet }} &rsaquo; {{ album.shelf }}</a></p>
+    <p class="mb-0">
+      {% if before and after %}{{ _('Between') }} {{ neighbour(before) }} {{ _('and') }} {{ neighbour(after) }}
+      {% elif before %}{{ _('Right after') }} {{ neighbour(before) }}
+      {% elif after %}{{ _('Right before') }} {{ neighbour(after) }}{% endif %}
+    </p>
+    <p class="small mt-2 mb-0"><a href="{{ url_for('browse.browse', shelf=album.shelf_id) }}#album-{{ album.album_id }}">{{ _('Show it on the shelf') }}</a></p>
+  </section>
+  {% else %}
+  <div class="ss-alert mt-3">{{ _('This album has no place on the shelves yet.') }} <a href="{{ url_for('albums.detail', album_id=album.album_id, tab='manage' if is_owner else none) }}">{{ _('Its page') }}</a></div>
+  {% endif %}
+
+  {% elif choices %}
+  <p class="mt-1">{{ _('Not sure which one it is. Is it one of these?') }}</p>
+  <div class="ss-card mt-2">
+    {% for row in choices %}
+    <div class="ss-row">
+      <a class="ss-row-link" href="{{ url_for('recognise.where', album_id=row.album_id) }}">
+        {{ cover(row.cover_url, true, 120) }}
+        <div class="ss-row-text">
+          <span class="ss-row-artist">{{ row.artist }}</span>
+          <span class="ss-row-title">{{ row.title }}{% if row.year %} &middot; {{ row.year }}{% endif %}</span>
+        </div>
+        <span class="ss-row-place">{{ _('This one') }}</span>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="ss-alert mt-3">{{ _('No sleeve of your collection recognised on this photo.') }}</div>
+  {% endif %}
+
+  {% if not album %}
+  <p class="ss-muted small mt-3 mb-0">{{ _('It goes best with the whole front of the sleeve on the photo, straight on, in good light and out of a top-loader.') }}</p>
+  {% endif %}
+
+  <div class="mt-4">{{ recognise_form(_('Another photo')) }}</div>
+</div>
+{% endblock %}

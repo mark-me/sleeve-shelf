@@ -758,3 +758,11 @@ html[data-browse-view="grid"] .ss-album-rows a.ss-row-place { justify-content: f
 /* The play button lies on the cover. */
 html[data-browse-view="grid"] .ss-album-rows .ss-play { position: absolute; top: 6px; right: 6px; z-index: 1; }
 
+
+/* Which one is this: the camera button, and what it says while the photo is looked at. */
+.ss-recognise { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.ss-recognise-button { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; }
+.ss-recognise-button svg { fill: currentColor; }
+.ss-recognise-busy { display: none; }
+.ss-recognise.is-busy .ss-recognise-busy { display: inline; }
+.ss-recognise.is-busy .ss-recognise-button { opacity: 0.6; pointer-events: none; }

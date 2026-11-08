@@ -12,6 +12,8 @@ The app opens on **Home**: a search field for an artist, album or song, and some
 - **From 50 years ago** — albums from your collection that came out fifty years ago this year.
 - **Recently added** — the albums a Discogs sync or import brought in last.
 
+**Which one is this?** opens your phone's camera. Take a photo of a sleeve, and the app tells you which album it is and where it goes back: the cabinet and shelf, and between which two albums. When it isn't sure — two volumes of a series with the same sleeve, say — it shows the albums it may be, with their covers; tap the right one. It works best with the whole front of the sleeve on the photo, straight on, in good light and out of a top-loader. The photo is not kept. Visitors may use it too.
+
 When something waits for a decision, a line at the bottom says how many things, and leads to the Dashboard. Visitors see Home too, without that line.
 
 ## 🗺️ The sections

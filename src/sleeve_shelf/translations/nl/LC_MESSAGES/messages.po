@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-07 20:48+0100\n"
+"POT-Creation-Date: 2026-11-08 23:13+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -360,6 +360,14 @@ msgstr "Fragmenten hebben een internetverbinding nodig"
 msgid "Many previews were played from here just now; try again in a few minutes"
 msgstr "Er zijn hier net veel fragmenten afgespeeld; probeer het over een paar minuten opnieuw"
 
+#: src/sleeve_shelf/web/templates/_recognise_form.html
+msgid "Looking at the photo…"
+msgstr "De foto wordt bekeken…"
+
+#: src/sleeve_shelf/web/templates/_recognise_form.html
+msgid "Recognise"
+msgstr "Herkennen"
+
 #: src/sleeve_shelf/web/templates/_rules_and_move.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Location rules"
@@ -417,6 +425,7 @@ msgid "between"
 msgstr "tussen"
 
 #: src/sleeve_shelf/web/templates/_spot.html
+#: src/sleeve_shelf/web/templates/recognise/result.html
 msgid "and"
 msgstr "en"
 
@@ -2609,6 +2618,11 @@ msgid "Add"
 msgstr "Toevoegen"
 
 #: src/sleeve_shelf/web/templates/home/index.html
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Which one is this?"
+msgstr "Welke is dit?"
+
+#: src/sleeve_shelf/web/templates/home/index.html
 msgid "From the shelf today"
 msgstr "Vandaag uit de kast"
 
@@ -3074,6 +3088,62 @@ msgstr "Vakken die een voorstel overslaat"
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "no width set"
 msgstr "geen breedte ingesteld"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "That is no photo that can be read. Take one with the camera, as a JPEG, PNG or WebP."
+msgstr "Dat is geen foto die gelezen kan worden. Maak er een met de camera, als JPEG, PNG of WebP."
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "As you chose."
+msgstr "Zoals je koos."
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Where it goes back"
+msgstr "Waar hij terug moet"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Between"
+msgstr "Tussen"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Right after"
+msgstr "Direct na"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Right before"
+msgstr "Direct voor"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Show it on the shelf"
+msgstr "Toon hem in het vak"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "This album has no place on the shelves yet."
+msgstr "Dit album heeft nog geen plek in de vakken."
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Its page"
+msgstr "De albumpagina"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Not sure which one it is. Is it one of these?"
+msgstr "Niet zeker welke het is. Is het een van deze?"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "This one"
+msgstr "Deze"
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "No sleeve of your collection recognised on this photo."
+msgstr "Op deze foto is geen hoes uit je collectie herkend."
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "It goes best with the whole front of the sleeve on the photo, straight on, in good light and out of a top-loader."
+msgstr "Het lukt het best met de hele voorkant van de hoes op de foto, recht van voren, in goed licht en uit de toplader."
+
+#: src/sleeve_shelf/web/templates/recognise/result.html
+msgid "Another photo"
+msgstr "Nog een foto"
 
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "A rule binds a cluster, a family, an artist, or a single album to a cabinet. A sorting proposal then places it there and nowhere else — and keeps everything without a rule out of that cabinet."

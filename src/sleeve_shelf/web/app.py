@@ -31,6 +31,7 @@ from sleeve_shelf.web import (
     moving,
     navigation,
     pwa,
+    recognise,
     rules,
     security,
     settings,
@@ -52,7 +53,7 @@ MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 # The blueprints whose screens need a collection; the others work without one (the wizard,
 # cabinets and shelves, Discogs, families, rules, settings, and the files the pages use).
 NEEDS_COLLECTION = frozenset(
-    {"albums", "artists", "browse", "clusters", "connections", "dashboard", "home", "layout", "moving", "proposal", "showcase", "stats", "versions"}
+    {"albums", "artists", "browse", "clusters", "connections", "dashboard", "home", "layout", "recognise", "moving", "proposal", "showcase", "stats", "versions"}
 )
 
 
@@ -128,6 +129,7 @@ def create_app(data_dir: str | Path | None = None) -> Flask:
     app.register_blueprint(stats.blueprint)
     app.register_blueprint(language.blueprint)
     app.register_blueprint(home.blueprint)
+    app.register_blueprint(recognise.blueprint)
     app.add_template_filter(covers.local_cover, "local_cover")
     app.add_template_filter(language.decimal, "decimal")
     app.add_template_filter(language.editable, "editable")
