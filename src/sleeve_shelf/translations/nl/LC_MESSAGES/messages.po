@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-08 23:13+0100\n"
+"POT-Creation-Date: 2026-11-11 00:04+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -154,6 +154,11 @@ msgstr "Verplaatsen"
 #: src/sleeve_shelf/web/navigation.py
 msgid "Proposal"
 msgstr "Voorstel"
+
+#: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Reorganise"
+msgstr "Reorganiseren"
 
 #: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/settings/index.html
@@ -335,6 +340,7 @@ msgstr "Albums per jaar, van %(first)s tot %(last)s"
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/reorganising/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
 #, python-format
@@ -1818,6 +1824,7 @@ msgid "Undo"
 msgstr "Ongedaan maken"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/reorganising/index.html
 #, python-format
 msgid "of %(total)d"
 msgstr "van %(total)d"
@@ -1854,6 +1861,15 @@ msgid "%(num)d single or EP is kept outside the layout."
 msgid_plural "%(num)d singles and EPs are kept outside the layout."
 msgstr[0] "%(num)d single of EP blijft buiten de indeling."
 msgstr[1] "%(num)d singles en EP’s blijven buiten de indeling."
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "A reorganisation is running: %(moved)d of %(total)d albums are in their new place."
+msgstr "Er loopt een reorganisatie: %(moved)d van %(total)d albums staan op hun nieuwe plek."
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Go on"
+msgstr "Ga verder"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Browse the shelves"
@@ -3026,16 +3042,20 @@ msgid "Adjust by hand"
 msgstr "Met de hand aanpassen"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Accept: make this my layout"
-msgstr "Accepteren: maak dit mijn indeling"
+msgid "Reorganise: carry it out step by step"
+msgstr "Reorganiseren: stap voor stap uitvoeren"
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Accept at once"
+msgstr "In één keer accepteren"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Generate again"
 msgstr "Opnieuw maken"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Accepting saves the result as a new version; albums that do not fit become unplaced. “Generate again” takes changes to families, clusters, storage and widths into account."
-msgstr "Accepteren slaat het resultaat op als nieuwe versie; albums die niet passen, komen zonder plek. “Opnieuw maken” houdt rekening met wijzigingen in families, clusters, kasten en breedtes."
+msgid "Reorganising takes your shelves there a table full at a time: each step you tick off changes the layout, and you can stop after any round. Accepting at once makes the proposal your layout straight away, for a small change or when the shelves were rearranged by hand already. Either way a version is saved first, and albums that do not fit end up without a place. “Generate again” takes changes to families, clusters, storage and widths into account."
+msgstr "Reorganiseren brengt je vakken daar met een tafel vol tegelijk: elke stap die je afvinkt verandert de indeling, en na elke ronde kun je stoppen. In één keer accepteren maakt het voorstel meteen je indeling, voor een kleine wijziging of als je de vakken al met de hand hebt omgezet. In beide gevallen wordt eerst een versie bewaard, en albums die niet passen komen zonder plek. „Opnieuw maken” houdt rekening met wijzigingen in families, clusters, opstelling en breedtes."
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Now"
@@ -3106,6 +3126,7 @@ msgid "Between"
 msgstr "Tussen"
 
 #: src/sleeve_shelf/web/templates/recognise/result.html
+#: src/sleeve_shelf/web/templates/reorganising/index.html
 msgid "Right after"
 msgstr "Direct na"
 
@@ -3144,6 +3165,140 @@ msgstr "Het lukt het best met de hele voorkant van de hoes op de foto, recht van
 #: src/sleeve_shelf/web/templates/recognise/result.html
 msgid "Another photo"
 msgstr "Nog een foto"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "Take out of %(shelf)s"
+msgstr "Haal uit %(shelf)s"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Take from the albums without a place"
+msgstr "Pak uit de albums zonder plek"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Take back what you set aside"
+msgstr "Pak terug wat je opzij legde"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "Put on %(shelf)s"
+msgstr "Zet in %(shelf)s"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Set aside for now"
+msgstr "Leg voorlopig opzij"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Keep apart: no place in the new layout"
+msgstr "Houd apart: geen plek in de nieuwe indeling"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "The shelves changed meanwhile, so nothing was ticked off. This is the plan as they stand now."
+msgstr "De vakken zijn intussen veranderd, dus er is niets afgevinkt. Dit is het plan zoals ze nu staan."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "The reorganisation has ended. What you ticked off stands; the rest stays where it is."
+msgstr "De reorganisatie is beëindigd. Wat je afvinkte blijft staan; de rest blijft waar het is."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Carrying out a sorting proposal on your shelves, a table full of records at a time: steps to tick off on your phone, in rounds that each end with an empty table, so you can stop after any round and go on another day."
+msgstr "Een sorteervoorstel uitvoeren in je vakken, met een tafel vol platen tegelijk: stappen om af te vinken op je telefoon, in rondes die elk eindigen met een lege tafel, zodat je na elke ronde kunt stoppen en een andere dag verder kunt gaan."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Reorganise: carry out the proposal"
+msgstr "Reorganiseren: voer het voorstel uit"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Look at the proposal first"
+msgstr "Bekijk eerst het voorstel"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "There is nothing to carry out yet."
+msgstr "Er is nog niets om uit te voeren."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Make a sorting proposal"
+msgstr "Maak een sorteervoorstel"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "All done: your shelves are as in the proposal."
+msgstr "Klaar: je vakken staan zoals in het voorstel."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Finish"
+msgstr "Afronden"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "albums in their new place"
+msgstr "albums op hun nieuwe plek"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "on the table"
+msgstr "op tafel"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "round to go"
+msgid_plural "rounds to go"
+msgstr[0] "ronde te gaan"
+msgstr[1] "rondes te gaan"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "%(num)d album is set aside, to be taken back when there is room."
+msgid_plural "%(num)d albums are set aside, to be taken back when there is room."
+msgstr[0] "%(num)d album ligt opzij, om terug te pakken als er ruimte is."
+msgstr[1] "%(num)d albums liggen opzij, om terug te pakken als er ruimte is."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "Round %(number)d"
+msgstr "Ronde %(number)d"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "At the front of the shelf"
+msgstr "Vooraan in het vak"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "in this order:"
+msgstr "in deze volgorde:"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "As they stand, from left to right:"
+msgstr "Zoals ze staan, van links naar rechts:"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "The table is not enough here: these have nowhere to go yet. Put them somewhere else for now — a crate or an empty shelf will do; a later step takes them back."
+msgstr "De tafel is hier niet genoeg: deze kunnen nog nergens heen. Zet ze voorlopig ergens anders neer — een krat of een leeg vak volstaat; een latere stap pakt ze terug."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "The new layout has no room for these; they are listed among the albums without a place from now on."
+msgstr "De nieuwe indeling heeft geen ruimte voor deze; ze staan vanaf nu bij de albums zonder plek."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "Done: %(num)d album"
+msgid_plural "Done: %(num)d albums"
+msgstr[0] "Klaar: %(num)d album"
+msgstr[1] "Klaar: %(num)d albums"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Then, in this round"
+msgstr "Daarna, in deze ronde"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "End the reorganisation"
+msgstr "Reorganisatie beëindigen"
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "%(num)d album on the table will then have no place."
+msgid_plural "%(num)d albums on the table will then have no place."
+msgstr[0] "%(num)d album op tafel heeft dan geen plek."
+msgstr[1] "%(num)d albums op tafel hebben dan geen plek."
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "What you ticked off stands; the rest stays where it is."
+msgstr "Wat je afvinkte blijft staan; de rest blijft waar het is."
 
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "A rule binds a cluster, a family, an artist, or a single album to a cabinet. A sorting proposal then places it there and nowhere else — and keeps everything without a rule out of that cabinet."

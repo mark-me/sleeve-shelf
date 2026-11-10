@@ -76,7 +76,7 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
   - **Built** (2026-10-18). The tracklist comes with the release lookup the fetch run already makes for its styles, so a sync's new albums bring theirs without extra requests (decided by Mark: tracklists come with the sync). A release fetched before tracklists were kept is asked for once more, for its tracklist alone: its styles and year stay as they were, so nothing in the sorting moves because of it. A search result found by a song names the song (decided by Mark); the album's page shows its tracklist (see Browse/Search screen and Detail screen)
 - Additional language catalogs (e.g. Dutch) — the MVP ships `en` only, but is structured (Flask-Babel) so this is adding a catalog, not a rebuild
   - **Dutch built** (2026-10-18): the whole app is in Dutch as well as English; the help stays English for now. The pages follow the browser's language, and Settings can choose one for the device (see Language)
-- **Reorganising with a table full** (decided by Mark 2026-10-18; not built): with a large collection a reorganisation now means taking almost every record out — a fresh proposal for Mark's collection leaves 115 of 910 albums on their shelf, moves 371 to another shelf of the same cabinet and 424 to another cabinet, and 17 of 20 shelves lose most of what they hold, mainly because one change near the front pushes everything behind it along. Two parts, the first making the second lighter:
+- **Reorganising with a table full** (decided by Mark 2026-10-18; built 2026-11-11): with a large collection a reorganisation now means taking almost every record out — a fresh proposal for Mark's collection leaves 115 of 910 albums on their shelf, moves 371 to another shelf of the same cabinet and 424 to another cabinet, and 17 of 20 shelves lose most of what they hold, mainly because one change near the front pushes everything behind it along. Two parts, the first making the second lighter:
   - **A calmer proposal** (see Sorting logic §3, *Fewer moves*): the order of the albums stays exactly as good, but the boundaries between shelves are chosen so as many albums as possible stay on their shelf, and every shelf keeps some room free; the proposal says what carrying it out takes
   - **A plan to carry it out** (see Reorganisation screen): accepting a proposal starts a reorganisation — steps on the phone that never take more records out than fit on the table, in rounds that end with an empty table, so it can be spread over days
 - **Connections** (decided by Mark 2026-10-26): a screen next to Browse/Search that shows how the artists of the collection are tied together, as an interactive network (see Connections screen). Two steps:
@@ -220,6 +220,8 @@ erDiagram
 
     Album ||--o| Placement : "stands at"
     Album ||--o| ProposedPlacement : "would stand at"
+    Shelf ||--o{ TargetPlacement : "will hold"
+    Album ||--o| TargetPlacement : "goes to"
 
     ReleaseEnrichment |o..o{ Album : "release_id"
     MasterEnrichment |o..o{ Album : "master_id"
@@ -324,6 +326,23 @@ erDiagram
         int position "order within the shelf"
         string source "algorithm, manual or initial load"
     }
+    TargetPlacement {
+        int album_id FK
+        int shelf_id FK
+        int position "order within the shelf"
+        string source "algorithm, manual or initial load"
+    }
+    Reorganisation {
+        datetime started_at
+        int table_records "records out at once"
+        int to_move "albums to move at the start"
+        int moved
+        int rounds_done
+        int taken_in_round
+        int_list on_table "albums out, not yet put"
+        int_list set_aside "albums put elsewhere for now"
+        int_list left_out "albums without a place in the new layout"
+    }
     RuleSuggestionDismissal {
         string target_type "artist, alias group, cluster or album"
         int target_id FK
@@ -417,6 +436,8 @@ erDiagram
 
 - **Placement**: album_id, shelf_id, order position within the shelf, source (algorithm proposal, manually overridden, or initial load) — this is the one, canonical location, consuming shelf width (see Sorting logic §3). **A placement is always of one album**: the initial load, a proposal, and a move in Layout all place single albums, which is what lets an artist run on across shelves and one title be moved on its own. Until October 2026 the model also allowed a placement for a whole artist or era band; nothing ever wrote one, and that was removed. Files from before then name the album as `unit_id` and are still read
 - **ProposedPlacement**: the same fields as a Placement — where an album would stand in the sorting proposal that is waiting. Kept in a file of its own next to the current layout until the proposal is accepted, when it becomes the Placements, or discarded (see Sorting logic §4)
+- **TargetPlacement** (2026-11-11): the same fields as a Placement — where a running reorganisation takes an album: the proposal it carries out, kept from when it started (see Reorganisation screen)
+- **Reorganisation** (2026-11-11): the one reorganisation that runs, if any — when it started, the table it keeps to, how many albums had to move then and have reached their new place since, the rounds done and how many albums were taken out in the round at hand, the albums on the table and set aside, and those the new layout has no place for. Its steps are not kept: they are worked out each time from the shelves as they stand
 - **Showcase**: not an entity. A shelf marked `is_showcase` holds a sample, and an album on display has its one Placement there — it stands in the top-loader, not on the artist's shelf, so nothing is counted twice and no room is kept free for it elsewhere. The earlier design, a `ShowcaseFeature` pointing at a Placement elsewhere, was dropped (2026-10-09): albums are exchanged one for one between the showcase and the shelf, so both always hold as many albums as before
 
 ## Architecture, storage, and deployment
@@ -698,18 +719,24 @@ One screen that brings the collection in from Discogs and keeps it up to date (s
 
 ### Reorganisation screen
 
-Decided by Mark on 2026-10-18; not built. Carrying out a proposal on the real shelves, a table full at a time.
+Decided by Mark on 2026-10-18, built 2026-11-11 with his decisions of 2026-11-10. Carrying out a proposal on the real shelves, a table full at a time. A tab under Shelves, next to Proposal.
 
-- **Accepting a proposal starts a reorganisation**: the proposal becomes a plan of steps instead of the new layout at once. Accepting it directly stays possible — for a small change, or when the shelves were already rearranged by hand — but the plan is the default
+- **How the plan is worked out** (decided by Mark 2026-11-10: a heuristic is enough): an album that stands on its new shelf, in the longest run already in the new order there, is not touched; every other album passes over the table once. An album is taken out only when it can go somewhere — first those whose new shelf has room, a handful from one shelf at a time, the room counted down as they are chosen; else those that make room on a shelf the table waits for. Once a table full was taken in a round, only what empties the table is taken still. A shelf counts as at least as wide as what stands on it now and what it will hold, since a width from the workbook is an estimate. Measured on Mark's collection with its estimated widths (2026-11-11): 1,030 albums to move, 297 of which the proposal leaves out, in 16 rounds of a table of 50 that each pass 50 to 95 albums through one's hands while never more than 50 lie on the table, and nothing to set aside
+- **Changes meanwhile are not blocked** (decided by Mark 2026-11-10): the steps are worked out anew from the shelves as they stand each time the screen is opened, so a new purchase placed or an album moved by hand meanwhile is simply taken into account. A step ticked off is checked to be the one the plan still starts with; otherwise nothing happens and the screen says the shelves changed
+- **A step shows its albums so they are found quickly** (decided by Mark 2026-11-10): one step at a time, large, with each album's cover, artist and title — for taking out in the order they stand, from left to right; for putting on, after which album and in which order — and below it the rest of the round in short. How many records lie on the table, out of how many, stays in view
+- **The calmer proposal** is the proposal (decided 2026-10-19, confirmed by Mark 2026-11-10): there is no second one next to it
+
+- **Accepting a proposal starts a reorganisation**: the proposal becomes a plan of steps instead of the new layout at once — *Reorganise: carry it out step by step* is the first button on the proposal, and starting records the clusters and era bands it was sorted by, as accepting does. Accepting it directly stays possible — *Accept at once*, for a small change, or when the shelves were already rearranged by hand — and ends a reorganisation that runs
 - **The table** is a setting: how many records may be out of the cabinets at once, as a number of records (decided by Mark: a number, not cm), since that is what can be judged by eye. The plan never asks for more
 - **A step** is concrete and is ticked off on the phone: *take out of* a shelf, naming the albums, or *put on* a shelf after a named album, naming the albums
 - **Rounds**: steps are grouped into rounds that each end with an empty table — the natural points to stop and go on another day. Progress is kept
 - **Order of the work**: a run of shelves that shift along is done from the end of the cabinet where there is room, so hardly anything is held at once; albums that go round in a circle (A to B to C to A) need as much room as the smallest flow in that circle
-- **When the table is not enough**: whether there is room elsewhere — an empty crate, an empty shelf — is not known beforehand (Mark). The plan asks only when a step needs it: how many records more have to go somewhere, and whether there is a place for them
+- **When the table is not enough**: whether there is room elsewhere — an empty crate, an empty shelf — is not known beforehand (Mark). The plan asks only when a step needs it: a step *Set aside for now* names the albums that have nowhere to go yet, and a later step takes them back. An album the new layout has no place for is kept apart in a step of its own, and listed among the albums without a place from then on
 - **The layout follows each step** (decided by Mark, on advice): each ticked step updates the layout in the app, so stopping halfway leaves it right. Being findable during a reorganisation is not required, but this costs little
-- **Stopping**: a reorganisation can be ended at any time; what was ticked off stands as it is, the rest stays where it was. A version is saved when it starts
+- **Stopping**: a reorganisation can be ended at any time; what was ticked off stands as it is, the rest stays where it was, and albums still on the table or set aside are listed among the albums without a place. A version is saved when it starts. When everything is done the screen says so, and *Finish* ends it
+- **The Dashboard** says a reorganisation is running, how many albums are in their new place, and leads to it
 - **Small and large changes**: a few new purchases go to their suggested spot as now, and the room left on each shelf takes them in; a new cluster order or a regrouping goes through a calmer proposal and a reorganisation
-- To be added to the data model when built: the reorganisation (the proposal it carries out, the table size, when it started), its steps in order with their rounds, and which are done
+- **Kept** (see Data model): the reorganisation, and the layout it takes the shelves to (TargetPlacement); not its steps, which follow from the two and the shelves as they stand
 
 ### Artists screen
 
@@ -880,7 +907,7 @@ Phase 2 is closed (see Phase 2). What is left is work that waits for measurement
 - **Joint billings** (2026-10-19), chosen without asking: an artist in no family counts with every name that leads to it; a move is only suggested to a family the joint billing names, never to an artist on its own, and only from a family it names too — a family the owner made of unrelated names is not second-guessed; a suggestion is told apart from one from Discogs for the same family by its source
 - **Keeping the owner's order** (2026-10-19), chosen without asking: a unit's place is the middle of its albums that stand; a new unit or album goes before the first standing one the rule puts after it — with an order that is not the rule's, that is one choice among several; the room left free costs moves now (with shelves 50% wider: 700 albums kept in place without room, 461 with 10%), in return for calm when purchases come in
 - **The calmer proposal** (2026-10-19), chosen without asking: a table holds 50 records by default; the rounds are a plain count of the albums that move, not yet a worked-out plan; the room left free costs places where the shelves are tight (see the measurement under Sorting logic §3). Open: whether the order a proposal gives should stay closer to how the shelves stand now — that is where most of the moving comes from (see the same measurement)
-- **Reorganising** (2026-10-18, not built), still open: how the plan is worked out (a heuristic is enough, as long as it keeps to the table and says when it cannot); whether a running reorganisation blocks other changes to the layout or is worked out again after them; how a step shows its albums so they are found quickly (cover, spine order); whether the calmer proposal replaces the current one or is offered next to it
+- **Reorganising** (2026-11-11), Mark's decisions on how, the details chosen without asking: the Dutch name *Reorganiseren*, as the setting has; one step shown at a time; a round passes more than a table full through one's hands, as long as no more than a table full lies out at once; an album on the table counts as without a place until it is put back, so the Unplaced list and the menu count include it meanwhile; starting a new reorganisation while one runs takes over what lies on the table and was set aside; the number of rounds to go may change by one along the way, as the plan is worked out anew
 - **The Move screen** (2026-10-18), chosen without asking: of an artist, family or cluster only the albums on a sorted shelf move, so an artist's albums without a place no longer come along (they did with the artist's own form before); "Where it belongs" finds each album's place exactly as a suggested spot for a new purchase does, so a whole artist that is a cluster of its own goes by the order of the clusters, and albums that go to one place stand there together in sorting order; at the front of a showcase or a shelf without a width the albums are simply put in front, as nothing can run on by width there; the plan shown is worked out again when Move is pressed, so it always starts from the shelves as they are then; moving works on the shelves as they are, not on a proposal; the ⋮ on a block in Layout stays as it is
 - **Song search** (2026-10-18): every word of the search has to be in the artist, title and one song together — words spread over two songs do not count; a result names at most three songs and how many more; an album found by its artist and title names no song, even when one would match too; the tracklist on an album's page is shown to visitors as well
 

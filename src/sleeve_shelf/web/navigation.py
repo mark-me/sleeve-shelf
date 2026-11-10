@@ -91,6 +91,7 @@ SECTIONS = (
             Tab("layout.index", _("Layout"), ("layout",), help="user/shelves/#layout"),
             Tab("moving.index", _("Move"), ("moving",), help="user/shelves/#move"),
             Tab("proposal.index", _("Proposal"), ("proposal",), help="user/sorting/#the-sorting-proposal"),
+            Tab("reorganising.index", _("Reorganise"), ("reorganising",), help="user/sorting/#reorganising"),
             Tab("showcase.index", _("Showcase"), ("showcase",), help="user/shelves/#showcase"),
             Tab("versions.index", _("Versions"), ("versions",), help="user/shelves/#versions"),
             Tab("storage.index", _("Cabinets"), ("storage", "albums.widths"), "storage", "user/shelves/#cabinets-and-shelves"),

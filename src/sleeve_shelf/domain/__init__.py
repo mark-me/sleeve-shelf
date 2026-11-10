@@ -38,6 +38,8 @@ from sleeve_shelf.domain.placement import (
     Placement,
     PlacementSource,
     ProposedPlacement,
+    Reorganisation,
+    TargetPlacement,
 )
 from sleeve_shelf.domain.storage import (
     Cabinet,
@@ -75,6 +77,8 @@ __all__ = [
     "Placement",
     "PlacementSource",
     "ProposedPlacement",
+    "Reorganisation",
+    "TargetPlacement",
     "ReleaseEnrichment",
     "Shelf",
     "ShelfLayer",

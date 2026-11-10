@@ -54,7 +54,18 @@ The **Rules** screen also suggests rules from your layout as it stands: when eve
 
 ## 🎛️ The sorting proposal
 
-On the **Proposal** screen you generate a sorted layout. It stands next to your real layout: you can browse it, and adjust it in Layout, without anything changing on your shelves. **Accept** makes it your layout and saves it as a version; **Discard** leaves everything as it was.
+On the **Proposal** screen you generate a sorted layout. It stands next to your real layout: you can browse it, and adjust it in Layout, without anything changing on your shelves. **Reorganise** carries it out on your real shelves step by step (see below); **Accept at once** makes it your layout straight away, for a small change or when you already rearranged the shelves by hand. Either way a version is saved first. **Discard** leaves everything as it was.
+
+## ♻️ Reorganising
+
+A new layout can mean taking hundreds of records out. **Reorganise** (under Shelves) turns the proposal into steps for your phone, never asking for more records out of the cabinets than fit on your table — 50 by default, a setting.
+
+- **One step at a time**: *take out of* a shelf, with the albums in the order they stand from left to right; or *put on* a shelf, after which album and in which order. Each album shows its cover, artist and title. Tap **Done** and the layout in the app follows, so stopping halfway leaves it right.
+- **Rounds** end with an empty table: the moments to stop and go on another day. The screen shows how many albums are in their new place, how many lie on the table, and how many rounds are left.
+- **Albums that already stand right are left alone**: only those that change shelf, or stand out of order on their shelf, pass over the table.
+- **Changes meanwhile are fine**: place a new purchase or move an album by hand, and the next steps are worked out from the shelves as they stand. A step shown before such a change is not done; the screen says so and shows the plan as it is now.
+- **When the table is not enough**, a step asks you to set some albums aside for now — a crate or an empty shelf — and a later step takes them back. Albums the new layout has no room for are kept apart and end up without a place.
+- **End the reorganisation** at any time: what you ticked off stands, the rest stays where it is.
 
 ## 🆕 New purchases
 

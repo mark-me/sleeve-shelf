@@ -20,8 +20,10 @@ from sleeve_shelf.domain import (
     Placement,
     PlacementSource,
     ProposedPlacement,
+    Reorganisation,
     Shelf,
     Style,
+    TargetPlacement,
     WidthConstants,
     in_order,
 )
@@ -222,10 +224,29 @@ def accept_proposal(store: JsonStore) -> None:
         return
     proposed = store.load(ProposedPlacement)
     save_if_unsaved(store, "before proposal")
+    adopt_sorting(store)
+    store.save(
+        Placement,
+        [Placement(p.album_id, p.shelf_id, p.position, p.source) for p in proposed],
+    )
+    store.remove(ProposedPlacement)
+    # The layout is the proposal now: a reorganisation towards an earlier one has no point.
+    store.remove(Reorganisation)
+    store.remove(TargetPlacement)
+    save_version(store, "proposal accepted")
+
+
+def adopt_sorting(store: JsonStore) -> None:
+    """Record the clusters and era bands the proposal was sorted by, as accepting it does.
+
+    A cluster the engine proposed for an artist is recorded as such, unconfirmed.
+
+    Args:
+        store: The store of the collection.
+    """
     result = sort_collection(store)
     unit_of = {artist_id: unit for unit in result.units for artist_id in unit.artist_ids}
 
-    # A cluster the engine proposed for an artist is recorded as such: unconfirmed.
     assignments = [a for a in store.load(ArtistClusterAssignment) if a.confirmed]
     confirmed_ids = {a.artist_id for a in assignments}
     for artist_id, unit in unit_of.items():
@@ -251,12 +272,6 @@ def accept_proposal(store: JsonStore) -> None:
     store.save(ArtistClusterAssignment, assignments)
     store.save(EraBand, era_bands)
     store.save(Album, albums)
-    store.save(
-        Placement,
-        [Placement(p.album_id, p.shelf_id, p.position, p.source) for p in proposed],
-    )
-    store.remove(ProposedPlacement)
-    save_version(store, "proposal accepted")
 
 
 def proposal_overview(store: JsonStore) -> dict:
