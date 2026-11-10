@@ -74,7 +74,7 @@ def test_upload_previews_before_loading(client):
     assert client.get("/browse").headers["Location"] == "/setup/"
 
     assert client.post("/setup/confirm").headers["Location"] == "/browse"
-    assert client.get("/").headers["Location"] == "/dashboard/"
+    assert client.get("/").status_code == 200
 
 
 def test_browse_shows_a_shelf_in_row_order_with_neighbours(client):
@@ -392,29 +392,36 @@ def test_covers_show_in_browse_search_and_layout_once_albums_have_them(client):
     assert "nenette.jpeg" in artist and "ss-cover-empty" in artist
 
 
-def test_menu_has_five_sections_and_tabs_that_count_what_is_waiting(client):
+def test_menu_has_its_sections_and_tabs_that_count_what_is_waiting(client):
     _load(client, unplaced=[["Jazz", "Chet Baker", "Chet", 1]])
 
     page = client.get("/browse").text
 
     menu = page[page.index('id="main-nav"'):page.index("</nav>")]
-    sections = ["Dashboard", "Collection", "Shelves", "Organise", "Settings"]
-    assert [menu.index(f"<span>{name}</span>") for name in sections] == sorted(
-        menu.index(f"<span>{name}</span>") for name in sections
-    )
-    # Five sections, and Help apart at the end.
-    assert menu.count("<a ") == 6 and menu.rindex("<span>Help</span>") > menu.index("<span>Settings</span>")
-    # Browse belongs to Collection: that section is marked, and its screens are the tabs.
-    collection = menu[menu.rindex("<a ", 0, menu.index("<span>Collection</span>")):]
-    assert 'class="active"' in collection[: collection.index("</a>")]
-    # One LP has no place: Collection says so, and so does the tab it is on.
-    assert 'title="Waiting for you">1</span>' in collection[: collection.index("</a>")]
-    tabs = page[page.index('class="ss-section-tabs"'):]
+    looking_up = ["Home", "Browse / Search", "Connections", "Statistics"]
+    upkeep = ["Worklist", "Shelves", "Organise", "Discogs", "Settings"]
+    places = [menu.index(f"<span>{name}</span>") for name in looking_up + upkeep]
+    assert places == sorted(places)
+    # Looking things up first, then the upkeep under a heading of its own, and Help at the end.
+    heading = menu.index('class="ss-nav-block"')
+    assert menu.index("<span>Statistics</span>") < heading < menu.index("<span>Worklist</span>")
+    assert menu.count("<a ") == 10 and menu.rindex("<span>Help</span>") > menu.index("<span>Settings</span>")
+
+    def item(name):
+        start = menu.rindex("<a ", 0, menu.index(f"<span>{name}</span>"))
+        return menu[start : menu.index("</a>", start)]
+
+    # Browse is marked, and a section of one screen has no tabs.
+    assert 'class="active"' in item("Browse / Search")
+    assert 'class="ss-section-tabs"' not in page
+    # One LP has no place: the Worklist says so, and so does its tab.
+    assert 'title="Waiting for you">1</span>' in item("Worklist")
+    unplaced_page = client.get("/unplaced").text
+    tabs = unplaced_page[unplaced_page.index('class="ss-section-tabs"'):]
     tabs = tabs[: tabs.index("</nav>")]
-    assert ["Browse / Search" in tabs, "Unplaced" in tabs, "Discogs sync" in tabs] == [True] * 3
+    assert "Dashboard" in tabs and "Unplaced" in tabs
     unplaced = tabs[tabs.index("Unplaced"):]
     assert '<span class="ss-nav-count">1</span>' in unplaced[: unplaced.index("</a>")]
-    assert 'aria-current="page"' in tabs[: tabs.index("Unplaced")]
 
     # The other sections show their own screens as tabs.
     assert "Cabinets" in client.get("/layout/").text.split('class="ss-section-tabs"')[1]
@@ -430,7 +437,7 @@ def test_app_can_be_installed_from_its_manifest(client):
 
     assert manifest.mimetype == "application/manifest+json"
     data = manifest.get_json()
-    assert (data["display"], data["start_url"], data["scope"]) == ("standalone", "/browse", "/")
+    assert (data["display"], data["start_url"], data["scope"]) == ("standalone", "/", "/")
     assert {icon["sizes"] for icon in data["icons"]} == {"192x192", "512x512"}
     assert any(icon["purpose"] == "maskable" for icon in data["icons"])
     # Every icon the manifest and the page name is really there.

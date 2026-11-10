@@ -64,6 +64,15 @@ ENV SLEEVE_SHELF_VERSION=${APP_VERSION} \
     PATH=/app/.venv/bin:$PATH \
     PYTHONUNBUFFERED=1
 
+# Debian's security fixes, for when the Python image was not yet rebuilt with them (zlib in
+# November 2026). SECURITY_DAY is the day of the build: a new day runs this step again rather
+# than taking yesterday's packages from the build cache.
+ARG SECURITY_DAY=unset
+RUN echo "Debian updates of ${SECURITY_DAY}" \
+    && apt-get update \
+    && apt-get upgrade --yes --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 # pip is not needed to run the app (uv installed everything in the build stage), and the
 # packages it carries along would only be found by the image scan.
 RUN python -m pip uninstall --yes pip \

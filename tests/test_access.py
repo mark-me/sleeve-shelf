@@ -1,11 +1,14 @@
 """Tests for the owner's login: what a visitor may do, logging in, and the password."""
 
 import io
+import re
 
 import pytest
 from openpyxl import Workbook
 
 from sleeve_shelf.cli import main
+from sleeve_shelf.domain import Album
+from sleeve_shelf.persistence import JsonStore
 
 from sleeve_shelf.web.app import create_app
 from sleeve_shelf.access import (
@@ -51,7 +54,7 @@ def test_without_a_password_everyone_is_the_owner(app):
     client = app.test_client()
 
     assert client.get("/dashboard/").status_code == 200
-    assert client.get("/").headers["Location"] == "/dashboard/"
+    assert client.get("/").status_code == 200
     page = client.get("/settings/").text
     assert "The app is open" in page and "Log in" not in page
 
@@ -60,9 +63,8 @@ def test_a_visitor_may_look_the_collection_up_and_nothing_more(app):
     set_password(app.config["DATA_DIR"], PASSWORD)
     visitor = app.test_client()
 
-    # Looking up: the collection, an album, an artist, listening, the help.
-    assert visitor.get("/").headers["Location"] == "/browse"
-    for page in ("/browse", "/browse?q=closing", "/albums/1", "/artists/1"):
+    # Looking up: Home, the collection, an album, an artist, the statistics, listening, the help.
+    for page in ("/", "/browse", "/browse?q=closing", "/albums/1", "/artists/1", "/statistics/"):
         assert visitor.get(page).status_code == 200, page
     # The help is the built site, or GitHub Pages where none is built — never the login.
     help_page = visitor.get("/help/")
@@ -75,10 +77,14 @@ def test_a_visitor_may_look_the_collection_up_and_nothing_more(app):
     assert visitor.post("/settings/password", data={"action": "remove"}).status_code == 403
     assert has_password(app.config["DATA_DIR"])
 
-    # What a visitor sees: Browse and Help in the menu, no actions on the pages.
+    # What a visitor sees: the block for looking things up and Help in the menu, without the
+    # upkeep or its heading, and no actions on the pages.
     browse = visitor.get("/browse").text
     menu = browse[browse.index('id="main-nav"'):browse.index("</nav>")]
-    assert "<span>Collection</span>" in menu and "<span>Shelves</span>" not in menu and "Log in" in menu
+    for name in ("Home", "Browse / Search", "Connections", "Statistics"):
+        assert f"<span>{name}</span>" in menu, name
+    assert "<span>Worklist</span>" not in menu and "<span>Shelves</span>" not in menu and "Log in" in menu
+    assert "ss-nav-block" not in menu
     assert "/unplaced" not in browse and "ss-nav-count" not in browse
     album = visitor.get("/albums/1").text
     assert 'id="listen"' in album and "/move/" not in album and "Measured width" not in album
@@ -104,7 +110,8 @@ def test_the_owner_logs_in_stays_in_and_logs_out(app):
     again = owner.post("/login", data={"password": PASSWORD, "next": "https://elsewhere.example/"})
     assert again.headers["Location"] == "/"
 
-    owner.post("/logout")
+    # Logged out, the device is a visitor's, on Home.
+    assert owner.post("/logout").headers["Location"] == "/"
     assert owner.get("/dashboard/").status_code == 302
 
 
@@ -290,3 +297,23 @@ def test_a_login_holds_a_random_key_that_each_new_password_replaces(app):
 
     remove_password(data_dir)
     assert load_settings(data_dir).owner_login_key is None
+
+
+def test_every_link_a_visitor_is_shown_opens_without_the_login(app):
+    set_password(app.config["DATA_DIR"], PASSWORD)
+    visitor = app.test_client()
+    store = JsonStore(app.config["DATA_DIR"])
+    album = store.load(Album)[0]
+
+    shown = set()
+    for page in ("/", "/browse", "/connections/", "/statistics/", f"/albums/{album.id}", f"/artists/{album.artist_id}"):
+        text = visitor.get(page).text
+        shown |= set(re.findall(r'href="(/[^"#]*)', text))
+    # The help, the app's own files and logging in are not pages of the collection.
+    links = {link.replace("&amp;", "&") for link in shown if not link.startswith(("/help/", "/static/", "/login"))}
+
+    assert links
+    for link in sorted(links):
+        answer = visitor.get(link)
+        assert not answer.headers.get("Location", "").startswith("/login"), link
+        assert answer.status_code in (200, 302, 304), link

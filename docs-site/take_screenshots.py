@@ -123,6 +123,7 @@ def main() -> None:
                     " localStorage.setItem('sleeve-shelf-browse-view', 'grid'); } catch (e) {}"
                 )
                 page = context.new_page()
+                _shoot(page, taken, "/", "home")
                 _shoot(page, taken, "/dashboard/", "dashboard")
                 _shoot(page, taken, "/browse", "browse")
                 _shoot(page, taken, f"/albums/{album.id}", "album")

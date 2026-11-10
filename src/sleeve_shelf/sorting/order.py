@@ -64,6 +64,20 @@ def propose_cluster(albums: list[Album], styles: dict[int, Style]) -> int | None
     Returns:
         The cluster, or None when no style points anywhere.
     """
+    ranked = clusters_by_styles(albums, styles)
+    return ranked[0] if ranked else None
+
+
+def clusters_by_styles(albums: list[Album], styles: dict[int, Style]) -> list[int]:
+    """Every cluster the albums' styles point to, the one most of them point to first.
+
+    Args:
+        albums: The albums.
+        styles: The styles by id.
+
+    Returns:
+        The clusters; on a tie the one of the earliest album first.
+    """
     votes: Counter[int] = Counter()
     earliest: dict[int, int] = {}
     for album in albums:
@@ -73,9 +87,7 @@ def propose_cluster(albums: list[Album], styles: dict[int, Style]) -> int | None
                 cluster_id = styles[style_id].cluster_id
                 votes[cluster_id] += 1
                 earliest[cluster_id] = min(earliest.get(cluster_id, 9999), year)
-    if not votes:
-        return None
-    return min(votes, key=lambda cluster_id: (-votes[cluster_id], earliest[cluster_id], cluster_id))
+    return sorted(votes, key=lambda cluster_id: (-votes[cluster_id], earliest[cluster_id], cluster_id))
 
 
 def build_units(

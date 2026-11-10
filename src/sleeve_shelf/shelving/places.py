@@ -8,12 +8,14 @@ from sleeve_shelf.domain import (
     Cabinet,
     Cluster,
     LocationRuleTarget,
+    Placement,
     Shelf,
     in_order,
+    sort_name,
 )
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.shelving.placing import applicable_rules
-from sleeve_shelf.shelving.spots import suggested_spots
+from sleeve_shelf.shelving.spots import other_spots, suggested_spots
 
 
 def shelf_options(store: JsonStore) -> list[dict]:
@@ -31,6 +33,42 @@ def shelf_options(store: JsonStore) -> list[dict]:
         for cabinet in in_order(store.load(Cabinet))
         for shelf in in_order([s for s in shelves if s.cabinet_id == cabinet.id])
     ]
+
+
+def albums_to_stand_next_to(
+    store: JsonStore, text: str, leaving: frozenset[int] = frozenset(), limit: int = 12
+) -> list[dict]:
+    """Albums on a shelf whose artist and title hold every word of the text, in walking order.
+
+    Args:
+        store: The store of the collection.
+        text: What was typed: an artist, a title, or both.
+        leaving: Albums that are moved themselves, and so are left out.
+        limit: How many at most.
+
+    Returns:
+        One entry per album, with its artist, title, cabinet and shelf.
+    """
+    words = sort_name(text).split()
+    if not words:
+        return []
+    artists = {artist.id: artist.name for artist in store.load(Artist)}
+    albums = {album.id: album for album in store.load(Album)}
+    shelves = {option["id"]: (index, option) for index, option in enumerate(shelf_options(store))}
+    found = []
+    for placement in store.load(Placement):
+        album = albums.get(placement.album_id)
+        if album is None or album.id in leaving or placement.shelf_id not in shelves:
+            continue
+        artist = artists.get(album.artist_id, "")
+        name = sort_name(f"{artist} {album.title}")
+        if all(word in name for word in words):
+            index, option = shelves[placement.shelf_id]
+            found.append(((index, placement.position), {
+                "id": album.id, "artist": artist, "title": album.title,
+                "cabinet": option["cabinet"], "shelf": option["shelf"],
+            }))
+    return [entry for _, entry in sorted(found, key=lambda pair: pair[0])[:limit]]
 
 
 def described_rules(store: JsonStore, artist_id: int, album_id: int | None = None) -> list[dict]:
@@ -83,8 +121,32 @@ def _described_spots(store: JsonStore) -> dict[int, dict]:
     spots = suggested_spots(store, load_settings(store.data_dir).width_constants)
     if not spots:
         return {}
+    describe = _describer(store)
+    return {album_id: describe(spot) for album_id, spot in spots.items()}
+
+
+def described_other_spots(store: JsonStore, album_id: int) -> list[dict]:
+    """The spots in the other clusters the styles point to, for an album whose cluster is proposed.
+
+    Args:
+        store: The store of the collection.
+        album_id: The album.
+
+    Returns:
+        One entry per spot, for a template; none when the artist's cluster is confirmed.
+    """
+    spots = other_spots(store, album_id, load_settings(store.data_dir).width_constants)
+    if not spots:
+        return []
+    describe = _describer(store)
+    return [describe(spot) for spot in spots]
+
+
+def _describer(store: JsonStore):
+    """What a template shows of a spot: names rather than ids."""
     albums = {album.id: album for album in store.load(Album)}
     artists = {artist.id: artist.name for artist in store.load(Artist)}
+    clusters = {cluster.id: cluster.name for cluster in store.load(Cluster)}
 
     def named(album_id: int | None, shelf_id: int) -> dict | None:
         album = albums.get(album_id)
@@ -97,8 +159,9 @@ def _described_spots(store: JsonStore) -> dict[int, dict]:
             "shelf_id": shelf_id,
         }
 
-    return {
-        album_id: {
+    def describe(spot) -> dict:
+        album = albums.get(spot.suggestion.album_id)
+        return {
             "shelf_id": spot.shelf_id,
             "cabinet": spot.cabinet,
             "shelf": spot.shelf,
@@ -108,7 +171,11 @@ def _described_spots(store: JsonStore) -> dict[int, dict]:
             "room_cm": spot.room_cm,
             "width_measured": spot.width_measured,
             "by_rule": spot.by_rule,
+            "cluster_id": spot.cluster_id,
+            "cluster": clusters.get(spot.cluster_id),
+            "cluster_proposed": spot.cluster_proposed,
+            "artist_id": album.artist_id if album else None,
+            "artist": artists.get(album.artist_id, "") if album else "",
         }
-        for album_id, spot in spots.items()
-    }
 
+    return describe

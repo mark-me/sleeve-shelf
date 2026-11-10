@@ -34,7 +34,9 @@ blueprint = Blueprint("login", __name__)
 # What a visitor may open, to read only: looking the collection up, listening, the help.
 VISITOR_PAGES = frozenset(
     {
-        "index",
+        "home.index",
+        "recognise.where",
+        "stats.index",
         "browse.browse",
         "connections.index",
         "connections.data",
@@ -64,6 +66,10 @@ VISITOR_LISTEN_SECONDS = 600
 # seconds, far more than anyone browsing by hand opens, so nobody can keep the app busy.
 VISITOR_PAGES_PER_WINDOW = 300
 VISITOR_PAGE_SECONDS = 60
+# A visitor's photo of a sleeve costs the server half a second or so: at most this many per
+# address in this many seconds, far more than anyone standing at a cabinet takes.
+VISITOR_PHOTOS = 20
+VISITOR_PHOTO_SECONDS = 60
 # Not counted: files, as a shelf alone shows a hundred covers and sending a file costs little;
 # and the login, which has a limit of its own, so the owner can always log in.
 _NOT_COUNTED = frozenset({"static", "covers.file", "artists.picture", "albums.own_cover", "help.page", "pwa.manifest", "login.page"})
@@ -104,6 +110,7 @@ class _Window:
 _failures: dict[str, tuple[int, float]] = {}
 _listens = _Window(lambda: (VISITOR_LISTENS, VISITOR_LISTEN_SECONDS))
 _pages = _Window(lambda: (VISITOR_PAGES_PER_WINDOW, VISITOR_PAGE_SECONDS))
+_photos = _Window(lambda: (VISITOR_PHOTOS, VISITOR_PHOTO_SECONDS))
 # When each address was last reported as held up, so the log names it once per window.
 _reported: dict[str, float] = {}
 
@@ -155,8 +162,9 @@ def guard():
         if request.endpoint in VISITOR_PAGES:
             return None
         return redirect(url_for("login.page", next=request.full_path))
-    # What a visitor may send: the password, and the language for the device.
-    if request.endpoint in ("login.page", "language.choose"):
+    # What a visitor may send: the password, the language for the device, and a photo of a
+    # sleeve to recognise, which is never kept.
+    if request.endpoint in ("login.page", "language.choose", "recognise.photo"):
         return None
     abort(403)
 
@@ -181,6 +189,15 @@ def visitor_may_listen() -> bool:
         True when it does.
     """
     return is_owner() or _listens.allow(_address())
+
+
+def visitor_may_recognise() -> bool:
+    """Whether a visitor's next photo stays within the limit; the owner always may.
+
+    Returns:
+        True when it does.
+    """
+    return is_owner() or _photos.allow(_address())
 
 
 def _address() -> str:
@@ -227,7 +244,7 @@ def safe_next(target: str | None) -> str:
     Returns:
         Where to go.
     """
-    return target if _within(target) else url_for("index")
+    return target if _within(target) else url_for("home.index")
 
 
 def redirect_within(target: str | None, fallback: str) -> Response:
@@ -255,7 +272,7 @@ def redirect_within(target: str | None, fallback: str) -> Response:
 def page():
     """The login page."""
     if not has_password(current_app.config["DATA_DIR"]):
-        return redirect(url_for("index"))
+        return redirect(url_for("home.index"))
     target = safe_next(request.values.get("next"))
     error = None
     status = 200
@@ -270,7 +287,7 @@ def page():
             _failures.pop(address, None)
             remember_owner(verified)
             current_app.logger.info("Owner logged in from %s", address)
-            return redirect_within(target, url_for("index"))
+            return redirect_within(target, url_for("home.index"))
         else:
             count, _last = _failures.get(address, (0, 0.0))
             _failures[address] = (count + 1, time.monotonic())
@@ -285,4 +302,4 @@ def page():
 def logout():
     """Log this device out."""
     session.clear()
-    return redirect(url_for("browse.browse"))
+    return redirect(url_for("home.index"))

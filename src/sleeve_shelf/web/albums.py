@@ -25,12 +25,12 @@ from sleeve_shelf.ingestion.discogs_api import DiscogsClient
 from sleeve_shelf.fetching.listening import listening, turn_down
 from sleeve_shelf.insights.connections import album_songs_elsewhere
 from sleeve_shelf.persistence import BrowseQueries
-from sleeve_shelf.shelving.spots import place_at_spot
+from sleeve_shelf.shelving.spots import place_at_spot, place_in_cluster
 from sleeve_shelf.library.albums import OWN_COVER_DIR, album_details, remove_own_cover, set_own_cover
 from sleeve_shelf.library.taking_part import albums_taking_part
 from sleeve_shelf.web.context import get_store, parse_number
 from sleeve_shelf.web.login import is_owner, visitor_may_listen
-from sleeve_shelf.shelving.places import described_rules, described_spots
+from sleeve_shelf.shelving.places import described_other_spots, described_rules, described_spots
 from sleeve_shelf.library.widths import set_measured_width
 
 blueprint = Blueprint("albums", __name__, url_prefix="/albums")
@@ -73,7 +73,8 @@ def detail(album_id: int):
         album=album,
         elsewhere=elsewhere,
         attention=owner and details["takes_part"] and not details["is_placed"],
-        spot=described_spots(store).get(album_id) if not details["is_placed"] and tab == ("manage" if owner else "album") else None,
+        spot=(spot := described_spots(store).get(album_id) if not details["is_placed"] and tab == ("manage" if owner else "album") else None),
+        other_spots=described_other_spots(store, album_id) if owner and spot and spot["cluster_proposed"] else [],
         placed=request.args.get("placed"),
         rules=described_rules(store, album.artist_id, album_id) if tab == "manage" else [],
         moved=request.args.get("moved"),
@@ -185,7 +186,7 @@ def listen_not_this(album_id: int):
 
 @blueprint.post("/<int:album_id>/place")
 def place(album_id: int):
-    """Stand an album that waits for a place at its suggested spot.
+    """Stand an album that waits for a place at its suggested spot, or at one in another cluster.
 
     Args:
         album_id: The album.
@@ -193,7 +194,12 @@ def place(album_id: int):
     store = get_store()
     if all(album.id != album_id for album in store.load(Album)):
         abort(404)
-    spot = place_at_spot(store, album_id, load_settings(store.data_dir).width_constants)
+    constants = load_settings(store.data_dir).width_constants
+    cluster_id = request.form.get("cluster", type=int)
+    if cluster_id is None:
+        spot = place_at_spot(store, album_id, constants)
+    else:
+        spot = place_in_cluster(store, album_id, cluster_id, constants, bool(request.form.get("confirm_cluster")))
     back = request.form.get("back")
     if back == "list":
         return redirect(url_for("browse.unplaced", placed=album_id if spot else None))

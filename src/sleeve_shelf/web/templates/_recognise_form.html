@@ -1,0 +1,13 @@
+{# A photo of a sleeve, to find out which album it is and where it stands. On a phone the button
+   opens the camera; choosing the photo sends it (page.js), and a button does so without script. #}
+{% macro recognise_form(label) %}
+<form class="ss-recognise" method="post" action="{{ url_for('recognise.photo') }}" enctype="multipart/form-data" data-busy>
+  <label class="ss-button ss-button-primary ss-recognise-button">
+    <svg width="18" height="18" aria-hidden="true"><use href="{{ url_for('static', filename='vendor/menu-icons.svg') }}#camera"></use></svg>
+    <span>{{ label }}</span>
+    <input class="visually-hidden" type="file" name="photo" accept="image/jpeg,image/png,image/webp" capture="environment" data-submit-on-change required>
+  </label>
+  <span class="ss-muted small ss-recognise-busy" role="status">{{ _('Looking at the photo…') }}</span>
+  <noscript><button class="ss-button" type="submit">{{ _('Recognise') }}</button></noscript>
+</form>
+{% endmacro %}

@@ -59,13 +59,17 @@ def has_proposal(store: JsonStore) -> bool:
     return store.exists(ProposedPlacement)
 
 
-def sort_collection(store: JsonStore, unplaced: set[int] | frozenset[int] = frozenset()) -> Sorted:
+def sort_collection(
+    store: JsonStore, unplaced: set[int] | frozenset[int] = frozenset(), assumed: dict[int, int] | None = None
+) -> Sorted:
     """The albums in the order a proposal stands them in.
 
     Args:
         store: The store of the collection.
         unplaced: Albums sorted as if they stood nowhere yet — those being moved, whose place now is
             not the owner's choice.
+        assumed: Clusters by artist id, sorted by as if they were confirmed: to see where an album
+            would go in another cluster than the one proposed.
 
     Returns:
         The sorted collection.
@@ -76,7 +80,8 @@ def sort_collection(store: JsonStore, unplaced: set[int] | frozenset[int] = froz
     }
     albums = [album for album in store.load(Album) if takes_part(album, placed_ids)]
     # Only confirmed assignments are curated; a proposed cluster is worked out afresh.
-    confirmed = [a for a in store.load(ArtistClusterAssignment) if a.confirmed]
+    confirmed = [a for a in store.load(ArtistClusterAssignment) if a.confirmed and a.artist_id not in (assumed or {})]
+    confirmed += [ArtistClusterAssignment(artist_id, cluster_id, True) for artist_id, cluster_id in (assumed or {}).items()]
     # A loose connection is an indication for the user, not something to sort by.
     connected = {
         artist_id: hint.cluster_id

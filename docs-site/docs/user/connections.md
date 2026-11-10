@@ -35,9 +35,8 @@ While you type an artist in the search field, the artists of the network are off
 
 ## 📊 Statistics
 
-**Statistics** shows who and what keeps coming back in your collection. Open a line to see its albums and where each stands.
+**Statistics** shows who and what keeps coming back in your collection. Open a line to see its albums and where each stands. Visitors may open it too. Something to pull from the shelf is on [Home](index.md#home).
 
-- **From the shelf today**: an album to pull out, the same all day, with *Another one* for the next — and those from fifty years ago this year.
 - **Who holds your collection together**: the artists with the most ties by band, name, family or credit, and the longest way between two of them.
 - **Most on your records**: musicians and singers credited on the most albums of others — also those without an album of their own, the bassist on ten of your records. Producers don't count, nor does anyone named on the record itself, nor a member of the band on that band's albums.
 - **Most recorded songs**: the songs on albums of the most artists, told apart by who wrote them where Discogs says so.

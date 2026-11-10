@@ -54,6 +54,8 @@ HUBS = 10
 # How many albums "from this year, long ago" shows, and how long ago that is.
 LONG_AGO_ALBUMS = 6
 LONG_AGO_YEARS = 50
+# The albums a sync or import added last, on the home page.
+RECENT_ALBUMS = 6
 
 
 @dataclass(frozen=True, slots=True)
@@ -668,3 +670,18 @@ def from_the_shelf(store: JsonStore, day: date, turn: int = 0) -> tuple[int | No
     year = day.year - LONG_AGO_YEARS
     then = sorted(album.id for album in store.load(Album) if album.original_release_year == year)
     return pick, tuple(sorted(chance.sample(then, min(LONG_AGO_ALBUMS, len(then)))))
+
+
+def recently_added(store: JsonStore, limit: int = RECENT_ALBUMS) -> tuple[int, ...]:
+    """The albums a sync or import added last, the latest first.
+
+    Args:
+        store: The store of the collection.
+        limit: How many at most.
+
+    Returns:
+        The album ids; none for a collection that only came from a workbook.
+    """
+    added = [album for album in store.load(Album) if album.added_on is not None]
+    added.sort(key=lambda album: (album.added_on, album.id), reverse=True)
+    return tuple(album.id for album in added[:limit])

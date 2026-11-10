@@ -1,4 +1,5 @@
-<form method="get" action="{{ url_for('browse.browse') }}" role="search" data-live-search>
+{# empty_url: where an emptied field leads while typing; Browse's first shelf when not set. #}
+<form method="get" action="{{ url_for('browse.browse') }}" role="search" data-live-search{% if empty_url %} data-live-search-empty="{{ empty_url }}"{% endif %}>
   <label for="search" class="visually-hidden">{{ _('Search by artist, album or song') }}</label>
   <input id="search" class="ss-search" type="search" name="q" value="{{ search_text | default('') }}" placeholder="{{ _('Search by artist, album or song…') }}" autocomplete="off">
 </form>

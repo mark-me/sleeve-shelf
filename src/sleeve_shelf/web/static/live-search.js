@@ -16,8 +16,10 @@
     });
 
     async function search() {
-      const url = new URL(form.action, window.location.href);
-      const fields = new URLSearchParams(new FormData(form));
+      // An emptied field leads where the form says, if it does: Home, rather than Browse.
+      const empty = !input.value.trim() && form.dataset.liveSearchEmpty;
+      const url = new URL(empty || form.action, window.location.href);
+      const fields = new URLSearchParams(empty ? [] : new FormData(form));
       // An empty search leaves no "?q=" behind in the address.
       for (const [name, value] of Array.from(fields)) if (!value) fields.delete(name);
       url.search = fields.toString();
@@ -38,9 +40,21 @@
         return;
       }
       document.title = page.title;
+      markSection(page);
       history.replaceState(null, "", url);
     }
   });
+
+  // The menu marks the section of the page now shown: from Home, the results are Browse's.
+  function markSection(page) {
+    const nav = document.getElementById("main-nav");
+    const freshNav = page.getElementById("main-nav");
+    if (!nav || !freshNav) return;
+    nav.querySelectorAll(":scope > a").forEach(function (link) {
+      const fresh = freshNav.querySelector(':scope > a[href="' + link.getAttribute("href") + '"]');
+      if (fresh) link.className = fresh.className;
+    });
+  }
 
   // Replace everything in <main> except the form itself, level by level: at each level the
   // siblings before and after the form's branch come from the new page.
