@@ -37,6 +37,15 @@
       </div>
       <a class="ss-row-place" href="{{ url_for('moving.index', layout=layout) }}">{{ _('Choose something else') }}</a>
     </div>
+    {# Larger with one tap: what was chosen is part of an artist, a family and a cluster. #}
+    {% if larger %}
+    <div class="ss-card-body d-flex flex-wrap align-items-center gap-2 pt-2">
+      <span class="ss-muted small">{{ _('Larger:') }}</span>
+      {% for item in larger %}
+      <a class="ss-button ss-button-small" href="{{ url_for('moving.index', layout=layout, kind=item.kind.value, id=item.id) }}">{{ kind_name(item.kind) }}: {{ item.name }}&nbsp;<span class="ss-muted">&middot;&nbsp;{{ item.album_ids | length }}</span></a>
+      {% endfor %}
+    </div>
+    {% endif %}
     {% else %}
     <div class="ss-card-body">
       <form method="get" action="{{ url_for('moving.index', layout=layout) }}" role="search" data-live-search>

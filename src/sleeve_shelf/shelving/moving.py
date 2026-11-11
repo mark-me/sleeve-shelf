@@ -197,6 +197,44 @@ def selection(
     return Selection(kind, item_id, names[item_id], albums)
 
 
+def wider(store: JsonStore, chosen: Selection, layout: type[Placement] = Placement) -> list[Selection]:
+    """What the selection is part of, from small to large: its artist, its family, its cluster.
+
+    So one need not know beforehand whether to look for an album or a whole cluster: what was
+    chosen can be made larger with one tap.
+
+    Args:
+        store: The store of the collection.
+        chosen: What is chosen now.
+        layout: The layout the counts go by: the shelves or the proposal.
+
+    Returns:
+        The larger selections, each with the albums that would move; none for a cluster.
+    """
+    if chosen.kind is Kind.CLUSTER:
+        return []
+    artists = {artist.id: artist for artist in store.load(Artist)}
+    if chosen.kind is Kind.ALBUM:
+        album = find_by_id(store.load(Album), chosen.id)
+        artist_ids = [album.artist_id] if album else []
+    elif chosen.kind is Kind.ARTIST:
+        artist_ids = [chosen.id]
+    else:
+        artist_ids = [a.id for a in artists.values() if a.alias_group_id == chosen.id]
+    if not artist_ids or artist_ids[0] not in artists:
+        return []
+    artist = artists[artist_ids[0]]
+    unit = next((u for u in sort_collection(store).units if artist.id in u.artist_ids), None)
+    larger: list[tuple[Kind, int | None]] = []
+    if chosen.kind is Kind.ALBUM:
+        larger.append((Kind.ARTIST, artist.id))
+    if chosen.kind in (Kind.ALBUM, Kind.ARTIST):
+        larger.append((Kind.FAMILY, artist.alias_group_id))
+    larger.append((Kind.CLUSTER, unit.cluster_id if unit else None))
+    found = [selection(store, kind, item_id, layout) for kind, item_id in larger if item_id is not None]
+    return [item for item in found if item is not None]
+
+
 def find(
     store: JsonStore, text: str, limit: int = 8, layout: type[Placement] = Placement
 ) -> list[tuple[Kind, int, str, int]]:

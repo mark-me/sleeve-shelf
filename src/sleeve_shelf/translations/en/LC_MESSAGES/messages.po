@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 23:27+0100\n"
+"POT-Creation-Date: 2026-11-11 23:42+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -2755,7 +2755,15 @@ msgid "LPs without a place. Drag one to a shelf to place it, or drop an album he
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
-msgid "It goes to the end of the shelf you pick; drag it to its exact spot there."
+msgid "More ways to move…"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "The whole artist, its family or its cluster; right before or after an album; or where it belongs."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "Or pick a shelf: it goes to the end of it; drag it to its exact spot there."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
@@ -2841,6 +2849,10 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Choose something else"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Larger:"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html

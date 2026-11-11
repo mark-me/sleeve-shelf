@@ -18,6 +18,7 @@ from sleeve_shelf.shelving.moving import (
     find,
     plan,
     selection,
+    wider,
 )
 from sleeve_shelf.shelving.placing import ShelvesChanged
 from sleeve_shelf.shelving.proposal import has_proposal
@@ -101,6 +102,7 @@ def index():
         done_cabinet=request.args.get("cabinet", type=int),
         layout=layout_name,
         has_proposal=has_proposal(store),
+        larger=wider(store, chosen, layout) if chosen else [],
     )
 
 

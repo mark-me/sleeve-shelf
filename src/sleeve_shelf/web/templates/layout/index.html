@@ -4,7 +4,7 @@
 {% from "_cover.html" import cover %}
 {% macro block_list(blocks) %}
 {% for block in blocks %}
-<li class="ss-block" data-albums="{{ block.albums | map(attribute='album_id') | join(',') }}"
+<li class="ss-block" data-albums="{{ block.albums | map(attribute='album_id') | join(',') }}" data-artist="{{ block.artist_id }}"
     title="{{ [block.cluster, block.era_band] | select | join(' · ') }}&#10;{% for album in block.albums %}{{ album.title }}{% if album.year %} ({{ album.year }}){% endif %}&#10;{% endfor %}">
   {{ cover(block.albums[0].cover_url, block.albums[0].cover_url, 28) }}
   <a class="ss-block-name" href="{{ url_for('artists.edit', artist_id=block.artist_id) }}" draggable="false">{{ block.artist }}</a>
@@ -122,7 +122,9 @@
         <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
       </div>
       <div class="modal-body">
-        <p class="ss-muted small">{{ _('It goes to the end of the shelf you pick; drag it to its exact spot there.') }}</p>
+        <p class="mb-3"><a class="ss-button ss-button-small" id="send-more" href="{{ url_for('moving.index', layout=layout) }}" data-move-url="{{ url_for('moving.index', layout=layout) }}">{{ _('More ways to move…') }}</a>
+          <span class="ss-muted small d-block mt-1">{{ _('The whole artist, its family or its cluster; right before or after an album; or where it belongs.') }}</span></p>
+        <p class="ss-muted small">{{ _('Or pick a shelf: it goes to the end of it; drag it to its exact spot there.') }}</p>
         {% for entry in destinations %}
         <div class="ss-group">{{ entry.cabinet.name }}{% if entry.room and rooms %} &middot; {{ entry.room }}{% endif %}</div>
         {% for row in entry.shelves %}

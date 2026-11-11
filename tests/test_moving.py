@@ -232,3 +232,32 @@ def test_the_move_screen_switches_between_the_shelves_and_the_proposal(tmp_path)
     assert proposed[21] == 3
     # The proposal's second step leads here.
     assert "/move/?layout=proposal" in client.get("/proposal/").text
+
+
+# Larger with one tap
+
+
+def test_what_is_chosen_can_be_made_larger_up_to_its_cluster(tmp_path):
+    from sleeve_shelf.shelving.moving import wider
+
+    store = _collection(tmp_path)
+
+    album = selection(store, Kind.ALBUM, 11)
+    assert [(s.kind, s.id) for s in wider(store, album)] == [(Kind.ARTIST, 1), (Kind.FAMILY, 1), (Kind.CLUSTER, 1)]
+    # Miles Davis is in no family: the artist goes straight to its cluster.
+    assert [(s.kind, s.id) for s in wider(store, selection(store, Kind.ARTIST, 2))] == [(Kind.CLUSTER, 1)]
+    assert [(s.kind, s.id) for s in wider(store, selection(store, Kind.FAMILY, 1))] == [(Kind.CLUSTER, 1)]
+    assert wider(store, selection(store, Kind.CLUSTER, 1)) == []
+    # The cluster counts the albums that would move: the one in the showcase stays.
+    assert wider(store, album)[-1].album_ids == (11, 22, 21)
+
+
+def test_the_move_screen_offers_the_larger_choices_and_layout_leads_to_it(tmp_path):
+    _collection(tmp_path)
+    client = create_app(tmp_path).test_client()
+
+    page = client.get("/move/?kind=album&id=11").text
+    assert "Larger:" in page
+    assert "kind=artist&amp;id=1" in page and "kind=family&amp;id=1" in page and "kind=cluster&amp;id=1" in page
+    layout = client.get("/layout/").text
+    assert 'id="send-more"' in layout and 'data-move-url="/move/"' in layout and 'data-artist="1"' in layout

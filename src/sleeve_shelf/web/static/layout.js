@@ -165,6 +165,13 @@
     document.getElementById("send-what").textContent = title
       ? text.sendOne.replace("__artist__", artist).replace("__title__", title.textContent)
       : text.sendWhat.replace("__artist__", artist).replace("__num__", ids.length);
+    // More ways: the Move screen with this block chosen, an album on its own or else its artist.
+    const more = document.getElementById("send-more");
+    if (more) {
+      const base = more.dataset.moveUrl;
+      const chosen = ids.length === 1 || !block.dataset.artist ? "kind=album&id=" + ids[0] : "kind=artist&id=" + block.dataset.artist;
+      more.href = base + (base.includes("?") ? "&" : "?") + chosen;
+    }
     const here = block.closest(".ss-blocks").dataset.list;
     dialog.querySelectorAll(".ss-send-option").forEach(function (option) {
       const current = option.dataset.sendTo === here;
