@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 23:52+0100\n"
+"POT-Creation-Date: 2026-11-12 00:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -342,7 +342,6 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/families/index.html
-#: src/sleeve_shelf/web/templates/layout/_at_a_glance.html
 #: src/sleeve_shelf/web/templates/reorganising/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
@@ -2670,7 +2669,12 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/layout/_at_a_glance.html
-msgid "no cluster"
+msgid "Tap a colour to see which cluster it is and where else it stands."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/_at_a_glance.html
+#, python-format
+msgid "%(cluster)s · %(albums)s albums on %(shelves)s shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html

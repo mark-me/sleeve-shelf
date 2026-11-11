@@ -17,8 +17,9 @@ def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placem
         layout: The shelves (Placement) or the proposal (ProposedPlacement).
 
     Returns:
-        What the overview's template uses: the cabinets, the clusters in their order with their
-        place in it (which decides their colour), and the widest shelf, to draw all to one scale.
+        What the overview's template uses: the cabinets, each with its widest shelf to draw its
+        shelves to one scale, and the clusters in their order with their place in it (which
+        decides their colour).
     """
     widths = {album.id: album.width_cm or constants.base_per_disc for album in store.load(Album)}
     clusters = in_order(store.load(Cluster))
@@ -47,13 +48,11 @@ def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placem
                 }
             )
         if rows:
-            cabinets.append({"cabinet": cabinet, "shelves": rows})
-    widest = max(
-        (max(row["shelf"].width_cm or 0.0, row["filled_cm"]) for entry in cabinets for row in entry["shelves"]),
-        default=0.0,
-    )
+            # Each cabinet to its own scale: its shelves compare, and a long shelf elsewhere does
+            # not make every strip too short to read.
+            widest = max(max(row["shelf"].width_cm or 0.0, row["filled_cm"]) for row in rows)
+            cabinets.append({"cabinet": cabinet, "shelves": rows, "widest_cm": widest or 1.0})
     return {
         "cabinets": cabinets,
         "clusters": [{"name": cluster.name, "index": index} for index, cluster in enumerate(clusters)],
-        "widest_cm": widest or 1.0,
     }

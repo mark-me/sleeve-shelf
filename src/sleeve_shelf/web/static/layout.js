@@ -52,13 +52,55 @@
   const glanceBox = document.getElementById("layout-glance");
   if (glanceBox && window.matchMedia("(max-width: 600px)").matches) glanceBox.open = false;
 
+  // At a glance a cluster's name stands in its colour where there is room for it; a tap on a colour
+  // shows that cluster everywhere and says what it is, a second tap shows all again.
+  let chosenCluster = null;
+  function nameRuns() {
+    document.querySelectorAll(".ss-glance-run-name").forEach(function (name) {
+      name.hidden = false;
+      name.hidden = name.scrollWidth > name.parentElement.clientWidth;
+    });
+  }
+  function chooseCluster(cluster) {
+    const box = document.getElementById("layout-glance");
+    const caption = box && box.querySelector("[data-glance-caption]");
+    if (!box || !caption) return;
+    chosenCluster = cluster;
+    const runs = Array.from(box.querySelectorAll(".ss-glance-run"));
+    runs.forEach(function (run) { run.classList.toggle("is-chosen", cluster !== null && run.dataset.cluster === cluster); });
+    box.classList.toggle("is-choosing", cluster !== null);
+    caption.classList.toggle("is-chosen", cluster !== null);
+    if (cluster === null) {
+      caption.textContent = caption.dataset.hint;
+      return;
+    }
+    const mine = runs.filter(function (run) { return run.dataset.cluster === cluster; });
+    const albums = mine.reduce(function (sum, run) { return sum + Number(run.dataset.albums); }, 0);
+    const shelves = new Set(mine.map(function (run) { return run.dataset.glanceShelf; })).size;
+    caption.textContent = caption.dataset.template
+      .replace("{cluster}", cluster || "—").replace("{albums}", albums).replace("{shelves}", shelves);
+  }
+  document.addEventListener("click", function (event) {
+    const run = event.target.closest(".ss-glance-run");
+    if (!run) return;
+    chooseCluster(chosenCluster === run.dataset.cluster ? null : run.dataset.cluster);
+  });
+  const glanceDetails = document.getElementById("layout-glance");
+  if (glanceDetails) glanceDetails.addEventListener("toggle", nameRuns);
+  window.addEventListener("resize", nameRuns);
+  nameRuns();
+
   // All cabinets at a glance follows every move, so the whole stays in view.
   async function refreshGlance() {
     const holder = document.querySelector("[data-glance]");
     if (!holder || !root.dataset.glanceUrl) return;
     try {
       const response = await fetch(root.dataset.glanceUrl);
-      if (response.ok) holder.innerHTML = await response.text();
+      if (response.ok) {
+        holder.innerHTML = await response.text();
+        nameRuns();
+        if (chosenCluster !== null) chooseCluster(chosenCluster);
+      }
     } catch (error) {
       // The overview stays as it was; the shelves below are right.
     }

@@ -1,10 +1,11 @@
-{# All cabinets at a glance: per shelf its clusters, one colour each, to one scale. The light bar is
+{# All cabinets at a glance: per shelf its clusters, one colour each, each cabinet to its own scale. The light bar is
    the shelf's width; what stands beyond it is too much. Fetched anew after every move. #}
-{% set scale = 100 / glance.widest_cm %}
 {% macro colour(index) %}{% if index is none %}var(--ss-muted){% else %}hsl({{ ((index * 137.508) % 360) | round | int }}, 62%, {{ [38, 52, 66][index % 3] }}%){% endif %}{% endmacro %}
+<p class="ss-glance-caption" data-glance-caption data-hint="{{ _('Tap a colour to see which cluster it is and where else it stands.') }}" data-template="{{ _('%(cluster)s · %(albums)s albums on %(shelves)s shelves', cluster='{cluster}', albums='{albums}', shelves='{shelves}') }}">{{ _('Tap a colour to see which cluster it is and where else it stands.') }}</p>
 <div class="ss-glance-body">
   {% for entry in glance.cabinets %}
   <div class="ss-glance-cabinet">
+    {% set scale = 100 / entry.widest_cm %}
     <a class="ss-glance-name" href="{{ url_for('layout.go', to=entry.cabinet.id, layout=layout) }}">{{ entry.cabinet.name }}</a>
     {% for row in entry.shelves %}
     {% set shelf = row.shelf %}
@@ -13,14 +14,11 @@
       <div class="ss-glance-track">
         {% if shelf.width_cm %}<div class="ss-glance-width" style="width: {{ shelf.width_cm * scale }}%;"></div>{% endif %}
         <div class="ss-glance-runs">
-          {% for run in row.runs %}<span class="ss-glance-run" style="width: {{ run.cm * scale }}%; background: {{ colour(run.index) }};" title="{{ run.cluster or _('no cluster') }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', run.albums) }}"></span>{% endfor %}
+          {% for run in row.runs %}<span class="ss-glance-run" style="width: {{ run.cm * scale }}%; background: {{ colour(run.index) }};" data-cluster="{{ run.cluster or '' }}" data-albums="{{ run.albums }}" data-glance-shelf="{{ shelf.id }}"><span class="ss-glance-run-name">{{ run.cluster or '' }}</span></span>{% endfor %}
         </div>
       </div>
     </div>
     {% endfor %}
   </div>
   {% endfor %}
-  <div class="ss-glance-legend">
-    {% for cluster in glance.clusters %}<span><i style="background: {{ colour(cluster.index) }};"></i>{{ cluster.name }}</span>{% endfor %}
-  </div>
 </div>

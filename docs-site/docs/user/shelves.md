@@ -10,7 +10,7 @@ When your cabinets are spread over rooms, each room gets a tab. *Go to cabinet�
 
 ## 🔭 All cabinets at a glance
 
-At the top of Layout, **All cabinets at a glance** shows every cabinet with its shelves as strips, all to one scale: the light bar is the shelf's width, and on it the albums stand as runs of one colour per cluster. You see at once where each cluster runs and which shelves are full — over a measured width the shelf is marked red, over an estimate grey. It follows every move you make below, and shows the proposal when you work on the proposal. On a phone it starts folded; tap it to open.
+At the top of Layout, **All cabinets at a glance** shows every cabinet with its shelves as strips, each cabinet to its own scale: the light bar is the shelf's width, and on it the albums stand as runs of one colour per cluster, named where there is room. **Tap a colour** to see that cluster on every shelf, with its name and how many albums and shelves it has; tap again to see all. Over a measured width a shelf is marked red, over an estimate grey. It follows every move you make below, and shows the proposal when you work on the proposal. On a phone it starts folded; tap it to open.
 
 ## ✋ Dragging in Layout
 

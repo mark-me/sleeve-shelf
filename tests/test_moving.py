@@ -278,7 +278,7 @@ def test_every_shelf_shows_its_clusters_as_runs_to_one_scale(tmp_path):
     assert [(run["cluster"], run["albums"]) for run in shelf_b["runs"]] == [("Rock", 3), ("Jazz", 1)]
     assert shelf_b["filled_cm"] == pytest.approx(4 * CONSTANTS.base_per_disc)
     assert [c["name"] for c in glance["clusters"]] == ["Jazz", "Rock"]
-    assert glance["widest_cm"] >= 2.0
+    assert glance["cabinets"][0]["widest_cm"] >= 2.0
 
 
 def test_layout_shows_the_whole_and_gives_it_anew_after_a_move(tmp_path):
