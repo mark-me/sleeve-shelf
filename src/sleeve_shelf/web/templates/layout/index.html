@@ -23,7 +23,7 @@
 {% endmacro %}
 
 {% block content %}
-<div class="ss-page" id="layout" data-move-url="{{ url_for('layout.move', layout=layout) }}" data-send-url="{{ url_for('layout.send', layout=layout) }}" data-room="{{ room }}">
+<div class="ss-page" id="layout" data-move-url="{{ url_for('layout.move', layout=layout) }}" data-send-url="{{ url_for('layout.send', layout=layout) }}" data-glance-url="{{ url_for('layout.glance', layout=layout) }}" data-room="{{ room }}">
   <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
     <div>
       <h1>{{ _('Layout') }}</h1>
@@ -40,6 +40,11 @@
     </div>
     {% endif %}
   </div>
+
+  <details class="ss-glance mt-3" id="layout-glance" open>
+    <summary>{{ _('All cabinets at a glance') }}</summary>
+    <div data-glance>{% include "layout/_at_a_glance.html" %}</div>
+  </details>
 
   {% if layout %}
   <div class="ss-alert mt-3">{{ _('You are adjusting the proposal. Your shelves change only when you carry it out.') }} <a href="{{ url_for('proposal.index', _anchor='carry-out') }}">{{ _('Back to the proposal') }}</a></div>

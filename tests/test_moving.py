@@ -261,3 +261,32 @@ def test_the_move_screen_offers_the_larger_choices_and_layout_leads_to_it(tmp_pa
     assert "kind=artist&amp;id=1" in page and "kind=family&amp;id=1" in page and "kind=cluster&amp;id=1" in page
     layout = client.get("/layout/").text
     assert 'id="send-more"' in layout and 'data-move-url="/move/"' in layout and 'data-artist="1"' in layout
+
+
+# All cabinets at a glance
+
+
+def test_every_shelf_shows_its_clusters_as_runs_to_one_scale(tmp_path):
+    from sleeve_shelf.shelving.at_a_glance import at_a_glance
+
+    store = _collection(tmp_path)
+    glance = at_a_glance(store, CONSTANTS)
+
+    assert [entry["cabinet"].name for entry in glance["cabinets"]] == ["Kast", "Koffer"]
+    shelf_b = glance["cabinets"][0]["shelves"][1]
+    # Shelf b: three Tindersticks albums, then Round Midnight of Jazz.
+    assert [(run["cluster"], run["albums"]) for run in shelf_b["runs"]] == [("Rock", 3), ("Jazz", 1)]
+    assert shelf_b["filled_cm"] == pytest.approx(4 * CONSTANTS.base_per_disc)
+    assert [c["name"] for c in glance["clusters"]] == ["Jazz", "Rock"]
+    assert glance["widest_cm"] >= 2.0
+
+
+def test_layout_shows_the_whole_and_gives_it_anew_after_a_move(tmp_path):
+    _collection(tmp_path)
+    client = create_app(tmp_path).test_client()
+
+    page = client.get("/layout/").text
+    assert "All cabinets at a glance" in page and 'data-glance-url="/layout/glance"' in page
+    assert page.count('class="ss-glance-shelf') == 5
+    fragment = client.get("/layout/glance").text
+    assert "ss-glance-run" in fragment and "<html" not in fragment

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 23:42+0100\n"
+"POT-Creation-Date: 2026-11-11 23:52+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -343,6 +343,7 @@ msgstr "Albums per jaar, van %(first)s tot %(last)s"
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/layout/_at_a_glance.html
 #: src/sleeve_shelf/web/templates/reorganising/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
@@ -2669,6 +2670,10 @@ msgid_plural "%(num)d things wait for you"
 msgstr[0] "%(num)d ding wacht op je"
 msgstr[1] "%(num)d dingen wachten op je"
 
+#: src/sleeve_shelf/web/templates/layout/_at_a_glance.html
+msgid "no cluster"
+msgstr "geen cluster"
+
 #: src/sleeve_shelf/web/templates/layout/index.html
 #, python-format
 msgid "Split %(artist)s into single albums"
@@ -2712,6 +2717,10 @@ msgstr "Mijn kasten"
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "The proposal"
 msgstr "Het voorstel"
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "All cabinets at a glance"
+msgstr "Alle kasten in één blik"
 
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "You are adjusting the proposal. Your shelves change only when you carry it out."

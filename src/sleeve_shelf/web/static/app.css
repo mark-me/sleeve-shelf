@@ -771,4 +771,23 @@ html[data-browse-view="grid"] .ss-album-rows .ss-play { position: absolute; top:
 .ss-measure { align-items: center; }
 .ss-measure-entry { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .ss-measure-entry input { width: 6.5em; }
-.ss-measure-error [data-measure-status] { color: var(--ss-danger, #b42318); }
+.ss-measure-error [data-measure-status] { color: #D9534F; }
+
+/* All cabinets at a glance, on Layout: per shelf a strip of its clusters, to one scale. */
+.ss-glance { border: 1px solid var(--ss-border); border-radius: 8px; background: var(--ss-surface); padding: 8px 12px; }
+.ss-glance > summary { cursor: pointer; font-weight: 600; }
+.ss-glance-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px 20px; margin-top: 10px; }
+.ss-glance-cabinet { display: flex; flex-direction: column; gap: 3px; }
+.ss-glance-name { font-size: 0.8rem; font-weight: 600; margin-bottom: 2px; }
+.ss-glance-shelf { display: flex; align-items: center; gap: 6px; }
+.ss-glance-label { width: 3.2em; flex-shrink: 0; font-size: 0.72rem; color: var(--ss-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-glance-track { position: relative; flex: 1; height: 12px; }
+.ss-glance-width { position: absolute; inset: 0 auto 0 0; background: var(--ss-chip); border-radius: 2px; }
+.ss-glance-runs { position: absolute; inset: 1px auto 1px 0; display: flex; width: 100%; }
+.ss-glance-run { flex: none; height: 100%; border-right: 1px solid var(--ss-surface); }
+.ss-glance-shelf.is-over .ss-glance-label { color: #D9534F; font-weight: 600; }
+.ss-glance-shelf.is-over .ss-glance-width { box-shadow: inset -2px 0 0 #D9534F; }
+/* Over an estimated width says the shelf needs measuring, as elsewhere: grey, not red. */
+.ss-glance-shelf.is-over-estimate .ss-glance-width { box-shadow: inset -2px 0 0 var(--ss-muted); }
+.ss-glance-legend { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.72rem; color: var(--ss-muted); }
+.ss-glance-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }

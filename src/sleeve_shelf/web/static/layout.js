@@ -48,7 +48,24 @@
   const undoBar = document.getElementById("layout-undo");
   let undoing = null;
 
+  // On a phone the overview starts folded: it is long there, and the shelves are what is worked on.
+  const glanceBox = document.getElementById("layout-glance");
+  if (glanceBox && window.matchMedia("(max-width: 600px)").matches) glanceBox.open = false;
+
+  // All cabinets at a glance follows every move, so the whole stays in view.
+  async function refreshGlance() {
+    const holder = document.querySelector("[data-glance]");
+    if (!holder || !root.dataset.glanceUrl) return;
+    try {
+      const response = await fetch(root.dataset.glanceUrl);
+      if (response.ok) holder.innerHTML = await response.text();
+    } catch (error) {
+      // The overview stays as it was; the shelves below are right.
+    }
+  }
+
   function offerUndo(shelves) {
+    refreshGlance();
     undoing = shelves;
     undoBar.hidden = false;
   }

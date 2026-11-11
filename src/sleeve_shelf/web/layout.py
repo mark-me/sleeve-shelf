@@ -7,6 +7,8 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from sleeve_shelf.domain import Cabinet, Placement, ProposedPlacement, Shelf, in_order
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries
 from sleeve_shelf.shelving.placing import ShelvesChanged, contents_before, move_albums, rearrange_shelves
+from sleeve_shelf.config import load_settings
+from sleeve_shelf.shelving.at_a_glance import at_a_glance
 from sleeve_shelf.shelving.proposal import has_proposal
 from sleeve_shelf.web.context import get_store, shelf_fill
 
@@ -93,6 +95,19 @@ def index():
         has_proposal=has_proposal(store),
         rooms=rooms if len(rooms) > 1 else [],
         room=room,
+        glance=at_a_glance(store, load_settings(store.data_dir).width_constants, entity),
+    )
+
+
+@blueprint.get("/glance")
+def glance():
+    """All cabinets at a glance, alone: the page fetches it anew after every move."""
+    store = get_store()
+    entity, layout = _entity(store)
+    return render_template(
+        "layout/_at_a_glance.html",
+        glance=at_a_glance(store, load_settings(store.data_dir).width_constants, entity),
+        layout=layout,
     )
 
 

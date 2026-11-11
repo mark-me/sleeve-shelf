@@ -8,6 +8,10 @@
 
 When your cabinets are spread over rooms, each room gets a tab. *Go to cabinet…* at the top stays in view while you scroll and jumps to any cabinet, or to the albums not on a shelf.
 
+## 🔭 All cabinets at a glance
+
+At the top of Layout, **All cabinets at a glance** shows every cabinet with its shelves as strips, all to one scale: the light bar is the shelf's width, and on it the albums stand as runs of one colour per cluster. You see at once where each cluster runs and which shelves are full — over a measured width the shelf is marked red, over an estimate grey. It follows every move you make below, and shows the proposal when you work on the proposal. On a phone it starts folded; tap it to open.
+
 ## ✋ Dragging in Layout
 
 Drag a block to another spot on the same shelf, or to another shelf. Every move is saved at once; a bar then offers **Undo** for that move. A version of the layout from before you started is kept.

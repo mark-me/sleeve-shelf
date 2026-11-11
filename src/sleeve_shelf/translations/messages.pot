@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 23:42+0100\n"
+"POT-Creation-Date: 2026-11-11 23:52+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -342,6 +342,7 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/layout/_at_a_glance.html
 #: src/sleeve_shelf/web/templates/reorganising/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
@@ -2668,6 +2669,10 @@ msgid_plural "%(num)d things wait for you"
 msgstr[0] ""
 msgstr[1] ""
 
+#: src/sleeve_shelf/web/templates/layout/_at_a_glance.html
+msgid "no cluster"
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/layout/index.html
 #, python-format
 msgid "Split %(artist)s into single albums"
@@ -2710,6 +2715,10 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/layout/index.html
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "The proposal"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "All cabinets at a glance"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
