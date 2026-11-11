@@ -1,0 +1,8 @@
+{# What a shelf on the Measure screen says about its width: measured or an estimate, what it holds,
+   and the room left. Also sent alone, when a width was saved by the page's script. #}
+{% set shelf = row.shelf %}
+{% if shelf.width_cm is none %}<span class="ss-muted">{{ _('No width yet') }}</span>
+{% elif shelf.width_measured %}<strong>{{ shelf.width_cm | decimal }} cm</strong> <span class="ss-chip">{{ _('measured') }}</span>
+{% else %}<span class="ss-estimate">&asymp; {{ shelf.width_cm | decimal }} cm</span> <span class="ss-muted">{{ _('estimated') }}</span>{% endif %}
+<br><span class="ss-muted small">{{ ngettext('Holds %(num)d album', 'Holds %(num)d albums', row.albums) }}, {{ row.filled_cm | decimal }} cm{% if row.room_cm is not none %} &middot;
+{% if row.room_cm >= 0 %}{{ _('%(cm)s cm left', cm=row.room_cm | decimal) }}{% else %}<span class="{{ 'ss-over' if shelf.width_measured else 'ss-over-estimate' }}">{{ _('%(cm)s cm too full', cm=(-row.room_cm) | decimal) }}</span>{% endif %}{% endif %}</span>

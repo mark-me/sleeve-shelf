@@ -119,6 +119,12 @@ Everything the app needs to propose and maintain a layout itself. Builds on the 
 - **Figures and statistics** (2026-10-30), chosen without asking: the figures on an artist's page are for visitors too (the Statistics screen too since Mark's decision of 2026-11-07); bars are of one colour, checked with a validator for both themes; *Recurring on the records* counts producers, *Most on your records* does not; hover shows the count per year on a computer, and on a phone the album list beside it says the same. The bars of Per decade and Per cluster do not open to their albums, as those lists would hold the whole collection. The longest way goes by close ties only. The first list of labels that tie no one was drawn up from the largest of the collection without asking, for Mark to check under Settings; with it the same label ties 3,106 pairs of artists, Verve the most (630)
 - **Musicians without an album of their own** (2026-10-30), chosen without asking within Mark's decision: the five albums are a constant, not a setting; a musician is a diamond in the network, without a colour of its own; a musician's page is the Connections screen, with no artist page; they stay out of *Who holds your collection together* and the longest way, which are about artists
 
+### Phase 4 — Measuring and fine-tuning
+
+Started 2026-11-11, after Phase 3 was closed. What the built layout needs to work well on the real shelves.
+
+- **Measure shelves** (asked for by Mark 2026-11-11, built the same day): the widths from the workbook are estimates that come out too narrow, so a proposal leaves some 300 albums out and a reorganisation starts by keeping them apart. Measuring 24 shelves one form at a time is slow at the cabinet, so one page lists every shelf in walking order, per cabinet — top-loaders and showcases too (decided by Mark), and cabinets kept outside the sorting, marked as such. Each shelf shows its width, measured or an estimate (≈), what it holds and the room left or how much too full it is, and a field for its **inside width in cm** (decided by Mark: the inside measure, not a number of records). Saving records the width as measured; the row says the new room straight away, the count of shelves measured goes up, and the next shelf's field is ready to type in, without the page loading again — without script the page saves and comes back to that shelf. A decimal comma is accepted. Below the list, **Make a new proposal** uses the widths as they are then
+
 ### Non-functional requirements
 
 - Open source
@@ -839,6 +845,7 @@ A showcase is a top-loader that shows a sample of the well-represented artists, 
 - **Filled width** is the summed width of the albums standing on the shelf. **Measured or estimated** (decided 2026-10-15): per shelf the user ticks "I measured this width". An estimated width is shown as ≈ — every width from the workbook starts that way (see Sorting logic §3). A filled width above a measured width is marked in red and counts as waiting (Dashboard, menu); above an estimate it is only greyed, since it mostly says the shelf needs measuring. A suggested spot for an album says the same: over a measured width in red, over an estimate plainly. A shelf added by hand starts ticked, as it is usually measured when entered; clearing the width clears the tick
 - **Outside the sorting**: a cabinet is edited on its own page — name, room, and a switch that keeps it outside the sorting (see Sorting logic §3). Its shelves stay ordinary shelves everywhere else: they are browsed, searched, and filled by hand like any other, and Browse/Search says on such a shelf that it is outside the sorting
 - A shelf can only be removed once it holds no albums, a cabinet once it has no shelves — nothing is ever unplaced as a side effect of tidying the structure
+- **Measure shelves** (asked for by Mark 2026-11-11, built the same day; see Phase 4): a page of its own, reached from this screen, to enter the inside widths standing at the cabinets with a phone
 - **Order**: cabinets, and the shelves within a cabinet, stand in an order the user sets with up/down arrows. It is the order in which they are walked — by previous/next shelf in Browse/Search and by a sorting proposal, which fills the shelves in this order. Until moved, they keep the order they were added in; new cabinets and shelves are added at the end
 
 ### Clusters screen
@@ -919,7 +926,7 @@ Phase 2 is closed (see Phase 2). What is left is work that waits for measurement
 
 ### Chosen without asking, not yet looked at
 
-None since Phase 3 was closed (2026-11-11).
+- **Measure shelves** (2026-11-11), Mark's request and decisions on inside widths and top-loaders, the details chosen without asking: a page of its own under Cabinets rather than fields on the Cabinets screen; a shelf already measured shows its width in the field, an estimate leaves the field empty; a width saved is measured from then on, with no way back to an estimate on this page (the shelf's own page has the tick); the proposal is made again only on the button, not after each width; the name of Phase 4
 
 ### Parked ideas
 

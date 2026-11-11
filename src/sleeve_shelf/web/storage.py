@@ -1,6 +1,6 @@
 """Storage structure: managing the cabinets and their shelves."""
 
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 from flask_babel import gettext as _
 
 from sleeve_shelf.domain import (
@@ -14,6 +14,9 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.persistence import BrowseQueries
 from sleeve_shelf.shelving.storage import (
     StillInUse,
+    measure_shelf,
+    measured_row,
+    measuring,
     remove_cabinet,
     remove_shelf,
     save_cabinet,
@@ -166,6 +169,45 @@ def edit_shelf(shelf_id: int):
     store = get_store()
     shelf = _find(store.load(Shelf), shelf_id)
     return _shelf_form(_find(store.load(Cabinet), shelf.cabinet_id), shelf_id)
+
+
+@blueprint.get("/measure")
+def measure():
+    """The Measure shelves screen: every shelf in walking order, to enter its inside width."""
+    store = get_store()
+    fill = BrowseQueries(store).shelf_fill() if has_collection() else {}
+    return render_template(
+        "storage/measure.html", error=request.args.get("error"), **measuring(store, fill)
+    )
+
+
+@blueprint.post("/measure/<int:shelf_id>")
+def measure_one(shelf_id: int):
+    """Record a shelf's inside width as measured; the page's script asks for the new row alone.
+
+    Args:
+        shelf_id: The shelf.
+    """
+    store = get_store()
+    shelf = _find(store.load(Shelf), shelf_id)
+    width = _positive_number(request.form.get("width_cm", ""))
+    wants_row = request.headers.get("Accept") == "application/json"
+    if width is None:
+        message = _("The width has to be a number of centimetres above zero.")
+        if wants_row:
+            return jsonify(error=message), 400
+        return redirect(url_for("storage.measure", error=message, _anchor=f"shelf-{shelf_id}"))
+    measure_shelf(store, shelf_id, width)
+    if not wants_row:
+        return redirect(url_for("storage.measure", _anchor=f"shelf-{shelf_id}"))
+    cabinet = _find(store.load(Cabinet), shelf.cabinet_id)
+    fill = BrowseQueries(store).shelf_fill() if has_collection() else {}
+    overview = measuring(store, fill)
+    return jsonify(
+        status=render_template("storage/_measured.html", row=measured_row(_find(store.load(Shelf), shelf_id), cabinet, fill)),
+        measured=overview["measured_count"],
+        shelves=overview["shelf_count"],
+    )
 
 
 def _shelf_form(cabinet: Cabinet, shelf_id: int | None):

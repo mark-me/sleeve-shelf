@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 00:04+0100\n"
+"POT-Creation-Date: 2026-11-11 21:13+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -164,6 +164,7 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/settings/index.html
 #: src/sleeve_shelf/web/templates/showcase/index.html
 #: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 msgid "Showcase"
 msgstr ""
 
@@ -303,11 +304,11 @@ msgid "Remove the shelves of “%(name)s” before removing the cabinet."
 msgstr ""
 
 #: src/sleeve_shelf/web/storage.py
-msgid "Give the shelf a name."
+msgid "The width has to be a number of centimetres above zero."
 msgstr ""
 
 #: src/sleeve_shelf/web/storage.py
-msgid "The width has to be a number of centimetres above zero."
+msgid "Give the shelf a name."
 msgstr ""
 
 #: src/sleeve_shelf/web/storage.py
@@ -761,6 +762,7 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/settings/index.html
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Save"
 msgstr ""
@@ -1460,6 +1462,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 msgid "outside the sorting"
 msgstr ""
 
@@ -1825,6 +1828,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #: src/sleeve_shelf/web/templates/reorganising/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #, python-format
 msgid "of %(total)d"
 msgstr ""
@@ -3830,6 +3834,35 @@ msgstr ""
 msgid "Number of albums."
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "No width yet"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "measured"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "estimated"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "Holds %(num)d album"
+msgid_plural "Holds %(num)d albums"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "%(cm)s cm left"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "%(cm)s cm too full"
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 msgid "Cabinet"
 msgstr ""
@@ -3861,6 +3894,11 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Cabinets and shelves — width in cm determines how many records fit"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Measure shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
@@ -3906,13 +3944,14 @@ msgid "Reachability"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Front-loader"
+msgid "Top-loader"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Top-loader"
+msgid "Front-loader"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
@@ -3945,6 +3984,27 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "The arrows set the order in which cabinets and shelves are walked — in Browse and by a sorting proposal. A width marked ≈ is an estimate, as the widths taken from the workbook are; tick “I measured this width” on the shelf once you have. A filled width above a measured width is marked in red. A shelf can be removed once it is empty, a cabinet once it has no shelves."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Enter the inside width of each shelf, in cm, in the order you walk past them. A width from the workbook is an estimate that comes out too narrow; measured, a proposal can use the room there really is."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "shelves measured"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+#, python-format
+msgid "Inside width of %(shelf)s in cm"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Done measuring? A new proposal uses the widths as they are now."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Make a new proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html

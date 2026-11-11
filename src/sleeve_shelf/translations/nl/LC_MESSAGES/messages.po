@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 00:04+0100\n"
+"POT-Creation-Date: 2026-11-11 21:13+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -164,6 +164,7 @@ msgstr "Reorganiseren"
 #: src/sleeve_shelf/web/templates/settings/index.html
 #: src/sleeve_shelf/web/templates/showcase/index.html
 #: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 msgid "Showcase"
 msgstr "Uitstalling"
 
@@ -303,12 +304,12 @@ msgid "Remove the shelves of “%(name)s” before removing the cabinet."
 msgstr "Verwijder de vakken van “%(name)s” voordat je de kast verwijdert."
 
 #: src/sleeve_shelf/web/storage.py
-msgid "Give the shelf a name."
-msgstr "Geef het vak een naam."
-
-#: src/sleeve_shelf/web/storage.py
 msgid "The width has to be a number of centimetres above zero."
 msgstr "De breedte moet een aantal centimeters boven nul zijn."
+
+#: src/sleeve_shelf/web/storage.py
+msgid "Give the shelf a name."
+msgstr "Geef het vak een naam."
 
 #: src/sleeve_shelf/web/storage.py
 msgid "Reachability has to be a whole number, 1 being the easiest to reach."
@@ -761,6 +762,7 @@ msgstr "Gemeten breedte in cm"
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/settings/index.html
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Save"
 msgstr "Opslaan"
@@ -1460,6 +1462,7 @@ msgstr "vak %(number)d van %(total)d"
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 msgid "outside the sorting"
 msgstr "buiten het sorteren"
 
@@ -1825,6 +1828,7 @@ msgstr "Ongedaan maken"
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 #: src/sleeve_shelf/web/templates/reorganising/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #, python-format
 msgid "of %(total)d"
 msgstr "van %(total)d"
@@ -3830,6 +3834,35 @@ msgstr "Per cluster"
 msgid "Number of albums."
 msgstr "Aantal albums."
 
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "No width yet"
+msgstr "Nog geen breedte"
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "measured"
+msgstr "gemeten"
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "estimated"
+msgstr "geschat"
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "Holds %(num)d album"
+msgid_plural "Holds %(num)d albums"
+msgstr[0] "Bevat %(num)d album"
+msgstr[1] "Bevat %(num)d albums"
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "%(cm)s cm left"
+msgstr "%(cm)s cm over"
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "%(cm)s cm too full"
+msgstr "%(cm)s cm te vol"
+
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 msgid "Cabinet"
 msgstr "Kast"
@@ -3862,6 +3895,11 @@ msgstr "Een sorteervoorstel laat hem dan zoals hij is: wat hier staat blijft, en
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Cabinets and shelves — width in cm determines how many records fit"
 msgstr "Kasten en vakken — de breedte in cm bepaalt hoeveel platen erin passen"
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Measure shelves"
+msgstr "Vakken opmeten"
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "There are no cabinets yet."
@@ -3906,14 +3944,15 @@ msgid "Reachability"
 msgstr "Bereikbaarheid"
 
 #: src/sleeve_shelf/web/templates/storage/index.html
-#: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Front-loader"
-msgstr "Frontlader"
-
-#: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Top-loader"
 msgstr "Toplader"
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/shelf_form.html
+msgid "Front-loader"
+msgstr "Frontlader"
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
@@ -3946,6 +3985,27 @@ msgstr "Vak %(name)s omlaag"
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "The arrows set the order in which cabinets and shelves are walked — in Browse and by a sorting proposal. A width marked ≈ is an estimate, as the widths taken from the workbook are; tick “I measured this width” on the shelf once you have. A filled width above a measured width is marked in red. A shelf can be removed once it is empty, a cabinet once it has no shelves."
 msgstr "De pijlen bepalen de volgorde waarin kasten en vakken worden doorlopen — in Bladeren en door een sorteervoorstel. Een breedte met ≈ is een schatting, zoals de breedtes uit de werkmap; vink bij het vak “Ik heb deze breedte gemeten” aan als je dat hebt gedaan. Een gevulde breedte boven een gemeten breedte is rood gemarkeerd. Een vak kan worden verwijderd als het leeg is, een kast als hij geen vakken meer heeft."
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Enter the inside width of each shelf, in cm, in the order you walk past them. A width from the workbook is an estimate that comes out too narrow; measured, a proposal can use the room there really is."
+msgstr "Vul de binnenmaat van elk vak in, in cm, in de volgorde waarin je erlangs loopt. Een breedte uit de werkmap is een schatting die te krap uitvalt; gemeten kan een voorstel de ruimte gebruiken die er echt is."
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "shelves measured"
+msgstr "vakken gemeten"
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+#, python-format
+msgid "Inside width of %(shelf)s in cm"
+msgstr "Binnenmaat van %(shelf)s in cm"
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Done measuring? A new proposal uses the widths as they are now."
+msgstr "Klaar met meten? Een nieuw voorstel gebruikt de breedtes zoals ze nu zijn."
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Make a new proposal"
+msgstr "Maak een nieuw voorstel"
 
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Edit shelf"
