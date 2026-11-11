@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 21:13+0100\n"
+"POT-Creation-Date: 2026-11-11 22:52+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -2709,8 +2709,8 @@ msgid "The proposal"
 msgstr "Het voorstel"
 
 #: src/sleeve_shelf/web/templates/layout/index.html
-msgid "You are adjusting the proposal. Your shelves change only when you accept it."
-msgstr "Je past het voorstel aan. Je kasten veranderen pas als je het accepteert."
+msgid "You are adjusting the proposal. Your shelves change only when you carry it out."
+msgstr "Je past het voorstel aan. Je vakken veranderen pas als je het uitvoert."
 
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "Every move is saved at once; a version from before is kept."
@@ -2975,8 +2975,8 @@ msgid "Nothing would change: it stands there already."
 msgstr "Er zou niets veranderen: het staat er al."
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you accept."
-msgstr "De app sorteert je LP’s op cluster, era-band, artiestenfamilie, jaar en titel, en vult de vakken in de volgorde die onder Kasten & vakken is ingesteld. Er verandert niets in je kasten tot je accepteert."
+msgid "The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you carry it out."
+msgstr "De app sorteert je LP’s op cluster, era-band, artiestenfamilie, jaar en titel, en vult de vakken in de volgorde die onder Kasten & vakken is ingesteld. Er verandert niets in je kasten tot je het uitvoert."
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "albums to place"
@@ -3008,6 +3008,10 @@ msgstr "Een voorstel maken"
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "No shelf can be filled: give at least one shelf a width under Cabinets & shelves."
 msgstr "Er kan geen vak worden gevuld: geef onder Kasten & vakken minstens één vak een breedte."
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Look at it"
+msgstr "Bekijk het"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "albums placed"
@@ -3042,8 +3046,40 @@ msgid "Browse the proposal"
 msgstr "Door het voorstel bladeren"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Adjust by hand"
-msgstr "Met de hand aanpassen"
+msgid "What changes per shelf"
+msgstr "Wat er per vak verandert"
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "What does not fit"
+msgstr "Wat niet past"
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Adjust it, if you like"
+msgstr "Pas het aan, als je wilt"
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Drag albums and blocks in Layout as you would on your own shelves: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again."
+msgstr "Sleep albums en blokken in de Indeling zoals je dat in je eigen vakken zou doen: alleen het voorstel verandert. Of pas families, clusters, regels of breedtes aan en maak het voorstel opnieuw."
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Adjust by hand in Layout"
+msgstr "Met de hand aanpassen in de Indeling"
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Generate again"
+msgstr "Opnieuw maken"
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Generating again starts from your shelves as they are, so changes made by hand to the proposal are lost."
+msgstr "Opnieuw maken begint bij je vakken zoals ze nu staan, dus wat je met de hand aan het voorstel veranderde gaat verloren."
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Carry it out"
+msgstr "Voer het uit"
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Reorganising takes your shelves there a table full at a time: each step you tick off changes the layout, and you can stop after any round. Accepting at once makes the proposal your layout straight away, for a small change or when the shelves were rearranged by hand already. Either way a version is saved first, and albums that do not fit end up without a place."
+msgstr "Reorganiseren brengt je vakken daar met een tafel vol tegelijk: elke stap die je afvinkt verandert de indeling, en na elke ronde kun je stoppen. In één keer accepteren maakt het voorstel meteen je indeling, voor een kleine wijziging of als je de vakken al met de hand hebt omgezet. In beide gevallen wordt eerst een versie bewaard, en albums die niet passen komen zonder plek."
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Reorganise: carry it out step by step"
@@ -3052,14 +3088,6 @@ msgstr "Reorganiseren: stap voor stap uitvoeren"
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Accept at once"
 msgstr "In één keer accepteren"
-
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Generate again"
-msgstr "Opnieuw maken"
-
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Reorganising takes your shelves there a table full at a time: each step you tick off changes the layout, and you can stop after any round. Accepting at once makes the proposal your layout straight away, for a small change or when the shelves were rearranged by hand already. Either way a version is saved first, and albums that do not fit end up without a place. “Generate again” takes changes to families, clusters, storage and widths into account."
-msgstr "Reorganiseren brengt je vakken daar met een tafel vol tegelijk: elke stap die je afvinkt verandert de indeling, en na elke ronde kun je stoppen. In één keer accepteren maakt het voorstel meteen je indeling, voor een kleine wijziging of als je de vakken al met de hand hebt omgezet. In beide gevallen wordt eerst een versie bewaard, en albums die niet passen komen zonder plek. „Opnieuw maken” houdt rekening met wijzigingen in families, clusters, opstelling en breedtes."
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Now"
@@ -3094,8 +3122,8 @@ msgid "Do not fit"
 msgstr "Passen niet"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "No shelf had room left for these albums. Accepting leaves them unplaced."
-msgstr "Geen vak had nog ruimte voor deze albums. Accepteren laat ze zonder plek."
+msgid "No shelf had room left for these albums. Carried out, the proposal leaves them without a place."
+msgstr "Geen vak had nog ruimte voor deze albums. Als het voorstel wordt uitgevoerd, komen ze zonder plek."
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "on a shelf now"
@@ -3209,12 +3237,12 @@ msgid "Carrying out a sorting proposal on your shelves, a table full of records 
 msgstr "Een sorteervoorstel uitvoeren in je vakken, met een tafel vol platen tegelijk: stappen om af te vinken op je telefoon, in rondes die elk eindigen met een lege tafel, zodat je na elke ronde kunt stoppen en een andere dag verder kunt gaan."
 
 #: src/sleeve_shelf/web/templates/reorganising/index.html
-msgid "Reorganise: carry out the proposal"
-msgstr "Reorganiseren: voer het voorstel uit"
+msgid "A proposal is waiting. Look at it, adjust it if you like, and start reorganising from there."
+msgstr "Er wacht een voorstel. Bekijk het, pas het aan als je wilt, en start het reorganiseren van daaruit."
 
 #: src/sleeve_shelf/web/templates/reorganising/index.html
-msgid "Look at the proposal first"
-msgstr "Bekijk eerst het voorstel"
+msgid "To the proposal"
+msgstr "Naar het voorstel"
 
 #: src/sleeve_shelf/web/templates/reorganising/index.html
 msgid "There is nothing to carry out yet."

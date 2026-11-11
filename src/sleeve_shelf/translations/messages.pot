@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 21:13+0100\n"
+"POT-Creation-Date: 2026-11-11 22:52+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2708,7 +2708,7 @@ msgid "The proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
-msgid "You are adjusting the proposal. Your shelves change only when you accept it."
+msgid "You are adjusting the proposal. Your shelves change only when you carry it out."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
@@ -2974,7 +2974,7 @@ msgid "Nothing would change: it stands there already."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you accept."
+msgid "The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you carry it out."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -3006,6 +3006,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "No shelf can be filled: give at least one shelf a width under Cabinets & shelves."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Look at it"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -3041,7 +3045,39 @@ msgid "Browse the proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Adjust by hand"
+msgid "What changes per shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "What does not fit"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Adjust it, if you like"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Drag albums and blocks in Layout as you would on your own shelves: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Adjust by hand in Layout"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Generate again"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Generating again starts from your shelves as they are, so changes made by hand to the proposal are lost."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Carry it out"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Reorganising takes your shelves there a table full at a time: each step you tick off changes the layout, and you can stop after any round. Accepting at once makes the proposal your layout straight away, for a small change or when the shelves were rearranged by hand already. Either way a version is saved first, and albums that do not fit end up without a place."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -3050,14 +3086,6 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Accept at once"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Generate again"
-msgstr ""
-
-#: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Reorganising takes your shelves there a table full at a time: each step you tick off changes the layout, and you can stop after any round. Accepting at once makes the proposal your layout straight away, for a small change or when the shelves were rearranged by hand already. Either way a version is saved first, and albums that do not fit end up without a place. “Generate again” takes changes to families, clusters, storage and widths into account."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -3093,7 +3121,7 @@ msgid "Do not fit"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "No shelf had room left for these albums. Accepting leaves them unplaced."
+msgid "No shelf had room left for these albums. Carried out, the proposal leaves them without a place."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -3208,11 +3236,11 @@ msgid "Carrying out a sorting proposal on your shelves, a table full of records 
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/reorganising/index.html
-msgid "Reorganise: carry out the proposal"
+msgid "A proposal is waiting. Look at it, adjust it if you like, and start reorganising from there."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/reorganising/index.html
-msgid "Look at the proposal first"
+msgid "To the proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/reorganising/index.html

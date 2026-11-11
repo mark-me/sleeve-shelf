@@ -751,10 +751,11 @@ One screen that brings the collection in from Discogs and keeps it up to date (s
 
 - **Before generating**: how many albums are to be placed (those standing in a showcase or in a cabinet kept outside the sorting are not counted), how many shelves will be filled, and which shelves are skipped and why. If suggested artist families have not been looked at yet, the screen says so and links to them — families decide which artists stand together
 - **Generate a proposal** sorts the collection and fills the shelves (see Sorting logic); it takes well under a second
+- **Three steps, in the order they are gone through** (asked for by Mark 2026-11-11, who found himself sent straight on to reorganising without a look at the new layout): **1 · Look at it** — the counters, *Browse the proposal* as the first button, and links down to what changes per shelf and what does not fit; **2 · Adjust it, if you like** — Layout switched to the proposal, *Generate again* (saying that it starts from the shelves as they are, so changes by hand to the proposal are lost) and *Discard*; **3 · Carry it out** — *Reorganise* and *Accept at once*. The Reorganise screen does not start a proposal itself: while one waits it leads to the proposal, and Layout's notice on the proposal leads back to step 3
 - **The proposal**: counters for albums placed, albums that go to another shelf, albums that stay on their shelf, albums that do not fit, and about how many rounds of a table full carrying it out takes (2026-10-19). Per cabinet a table of its shelves with width, filled width now and proposed, and number of albums now and proposed, each shelf linking to its proposed contents
 - **Browse the proposal**: the proposal can be walked shelf by shelf exactly like the real shelves in Browse/Search, under a notice that it is the proposal; search stays on the current layout
 - **Do not fit**: the albums no shelf had room for, marking those that stand on a shelf now
-- **Accept**, **Generate again** (after changing families, clusters, storage, or widths), and **Discard**
+- **Reorganise** and **Accept at once** (see Reorganisation screen), **Generate again** (after changing families, clusters, storage, or widths), and **Discard**
 - Adjusting the proposal by hand — moving albums between and within shelves — is done on the Layout screen, switched to the proposal (see Layout screen)
 
 ### Reorganisation screen
@@ -926,6 +927,7 @@ Phase 2 is closed (see Phase 2). What is left is work that waits for measurement
 
 ### Chosen without asking, not yet looked at
 
+- **The proposal in three steps** (2026-11-11), Mark's request, the way it is done chosen without asking: three numbered cards at the top, the table per shelf and the albums that do not fit below them rather than inside step 1; the Reorganise screen without a running reorganisation only leads to the proposal
 - **Measure shelves** (2026-11-11), Mark's request and decisions on inside widths and top-loaders, the details chosen without asking: a page of its own under Cabinets rather than fields on the Cabinets screen; a shelf already measured shows its width in the field, an estimate leaves the field empty; a width saved is measured from then on, with no way back to an estimate on this page (the shelf's own page has the tick); the proposal is made again only on the button, not after each width; the name of Phase 4
 
 ### Parked ideas
