@@ -24,6 +24,9 @@
   <p class="ss-muted small mt-2">{{ ngettext('%(num)d single or EP is kept outside the layout.', '%(num)d singles and EPs are kept outside the layout.', single_count) }}</p>
   {% endif %}
 
+  {% if reorganisation %}
+  <div class="ss-alert mt-3" role="status">{{ _('A reorganisation is running: %(moved)d of %(total)d albums are in their new place.', moved=reorganisation.moved, total=reorganisation.to_move) }} <a href="{{ url_for('reorganising.index') }}">{{ _('Go on') }}</a></div>
+  {% endif %}
   <div class="d-flex flex-wrap gap-2 mt-3">
     <a class="ss-button ss-button-primary" href="{{ url_for('browse.browse') }}">{{ _('Browse the shelves') }}</a>
     <a class="ss-button" href="{{ url_for('layout.index') }}">{{ _('Layout') }}</a>

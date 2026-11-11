@@ -27,6 +27,8 @@ erDiagram
 
     Album ||--o| Placement : "stands at"
     Album ||--o| ProposedPlacement : "would stand at"
+    Shelf ||--o{ TargetPlacement : "will hold"
+    Album ||--o| TargetPlacement : "goes to"
 
     ReleaseEnrichment |o..o{ Album : "release_id"
     MasterEnrichment |o..o{ Album : "master_id"
@@ -131,6 +133,23 @@ erDiagram
         int position "order within the shelf"
         string source "algorithm, manual or initial load"
     }
+    TargetPlacement {
+        int album_id FK
+        int shelf_id FK
+        int position "order within the shelf"
+        string source "algorithm, manual or initial load"
+    }
+    Reorganisation {
+        datetime started_at
+        int table_records "records out at once"
+        int to_move "albums to move at the start"
+        int moved
+        int rounds_done
+        int taken_in_round
+        int_list on_table "albums out, not yet put"
+        int_list set_aside "albums put elsewhere for now"
+        int_list left_out "albums without a place in the new layout"
+    }
     RuleSuggestionDismissal {
         string target_type "artist, alias group, cluster or album"
         int target_id FK
@@ -193,7 +212,7 @@ erDiagram
 The core of it:
 
 - An **Artist** has **Albums**, belongs to one **Cluster** through an **ArtistClusterAssignment** (confirmed, or proposed by the app), and optionally to an **AliasGroup** — a family.
-- A **Cabinet** has **Shelves**. A **Placement** stands an album on a shelf at a position; a **ProposedPlacement** does the same for a proposal waiting for a decision.
+- A **Cabinet** has **Shelves**. A **Placement** stands an album on a shelf at a position; a **ProposedPlacement** does the same for a proposal waiting for a decision. While a proposal is carried out step by step, a **Reorganisation** keeps the table, the progress and what lies out, and its **TargetPlacements** the layout it goes to; the steps themselves are worked out each time (`sorting/reorganising.py`).
 - A **LocationRule** binds a cluster, family, artist or album to a cabinet.
 - **ReleaseEnrichment**, **MasterEnrichment** and **ArtistEnrichment** cache what the Discogs API returned, so it is never fetched twice. A release's **tracklist** is kept in its ReleaseEnrichment and searched from there (`BrowseQueries.search` unnests it); null marks a record from before tracklists were kept, which the fetch run asks for again for its tracklist alone. Each track carries its **writers** (Discogs artist ids; null for a track from before they were kept, which brings its release back into the fetch run the same way); Connections uses them to tell songs of the same title apart (`network.collection_songs`). A release's **credits** keep everyone it credits, whatever the role (null for a record from before, fetched again the same way); `network.on_the_record` chooses who counts as on the record for Connections. Its **labels** are those of this pressing, fetched the same way.
 

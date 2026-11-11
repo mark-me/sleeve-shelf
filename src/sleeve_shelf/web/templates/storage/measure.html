@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Measure shelves') }}{% endblock %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 720px;">
+  <h1>{{ _('Measure shelves') }}</h1>
+  <p class="ss-muted mt-1">{{ _('Enter the inside width of each shelf, in cm, in the order you walk past them. A width from the workbook is an estimate that comes out too narrow; measured, a proposal can use the room there really is.') }}</p>
+  {% if error %}<div class="ss-alert mt-3" role="alert">{{ error }}</div>{% endif %}
+
+  <div class="ss-stats mt-3">
+    <div class="ss-stat ss-stat-wide">
+      <div class="ss-stat-number"><span data-measured-count>{{ measured_count }}</span> <span class="ss-stat-of">{{ _('of %(total)d', total=shelf_count) }}</span></div>
+      <div class="ss-meter mt-2" aria-hidden="true"><div class="ss-meter-fill" data-measured-meter style="width: {{ (100 * measured_count / shelf_count) | round | int if shelf_count else 0 }}%;"></div></div>
+      <div class="ss-stat-label mt-1">{{ _('shelves measured') }}</div>
+    </div>
+  </div>
+
+  {% for item in cabinets %}
+  <section class="ss-card mt-4">
+    <div class="ss-card-head"><h2>{{ item.cabinet.name }}</h2>{% if item.cabinet.outside_sorting %} <span class="ss-chip">{{ _('outside the sorting') }}</span>{% endif %}</div>
+    {% for row in item.shelves %}
+    {% set shelf = row.shelf %}
+    <form class="ss-row ss-measure" id="shelf-{{ shelf.id }}" method="post" action="{{ url_for('storage.measure_one', shelf_id=shelf.id) }}" data-measure>
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ shelf.name }}{% if shelf.is_showcase %} <span class="ss-chip">{{ _('Showcase') }}</span>{% elif shelf.type == 'top_loader' %} <span class="ss-chip">{{ _('Top-loader') }}</span>{% endif %}</span>
+        <span class="ss-row-title" data-measure-status>{% include "storage/_measured.html" %}</span>
+      </div>
+      <div class="ss-measure-entry">
+        <label class="visually-hidden" for="width-{{ shelf.id }}">{{ _('Inside width of %(shelf)s in cm', shelf=shelf.name) }}</label>
+        <input class="form-control" id="width-{{ shelf.id }}" name="width_cm" type="text" inputmode="decimal" autocomplete="off" value="{{ shelf.width_cm | editable if shelf.width_measured and shelf.width_cm is not none else '' }}" placeholder="cm">
+        <button class="ss-button ss-button-small" type="submit">{{ _('Save') }}</button>
+      </div>
+    </form>
+    {% endfor %}
+  </section>
+  {% endfor %}
+
+  <section class="mt-4">
+    <p class="mb-2">{{ _('Done measuring? A new proposal uses the widths as they are now.') }}</p>
+    <form method="post" action="{{ url_for('proposal.generate') }}">
+      <button class="ss-button ss-button-primary" type="submit">{{ _('Make a new proposal') }}</button>
+    </form>
+  </section>
+</div>
+<script src="{{ url_for('static', filename='measure.js') }}"></script>
+{% endblock %}

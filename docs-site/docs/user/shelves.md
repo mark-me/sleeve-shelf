@@ -40,7 +40,9 @@ A shelf can only be removed once it is empty, and a cabinet once it has no shelv
 
 ## 📏 Measured or estimated widths
 
-How many records fit on a shelf depends on its width. Widths taken from a workbook are **estimates**, shown as ≈ — they tend to come out too narrow. Once you have measured a shelf, enter its width and tick **I measured this width**.
+How many records fit on a shelf depends on its width. Widths taken from a workbook are **estimates**, shown as ≈ — they tend to come out too narrow, so a proposal leaves albums out that would fit.
+
+**Measure shelves** (a button on *Cabinets & shelves*) is made for standing at the cabinets with your phone and a tape measure. Every shelf is listed in the order you walk past them, top-loaders too: type its **inside width** in cm and press Enter. The row shows the room there is now, and the next shelf's field is ready. When you are done, **Make a new proposal** uses the measured widths. You can also enter a width on a shelf's own page and tick **I measured this width**.
 
 Only a measured shelf that is too full is marked in red and counted as waiting on the Dashboard. A shelf over its estimated width is shown in grey: it mostly says the shelf needs measuring.
 

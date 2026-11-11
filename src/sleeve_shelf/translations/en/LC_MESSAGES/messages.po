@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-08 23:13+0100\n"
+"POT-Creation-Date: 2026-11-11 21:13+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -156,9 +156,15 @@ msgid "Proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Reorganise"
+msgstr ""
+
+#: src/sleeve_shelf/web/navigation.py
 #: src/sleeve_shelf/web/templates/settings/index.html
 #: src/sleeve_shelf/web/templates/showcase/index.html
 #: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 msgid "Showcase"
 msgstr ""
 
@@ -298,11 +304,11 @@ msgid "Remove the shelves of “%(name)s” before removing the cabinet."
 msgstr ""
 
 #: src/sleeve_shelf/web/storage.py
-msgid "Give the shelf a name."
+msgid "The width has to be a number of centimetres above zero."
 msgstr ""
 
 #: src/sleeve_shelf/web/storage.py
-msgid "The width has to be a number of centimetres above zero."
+msgid "Give the shelf a name."
 msgstr ""
 
 #: src/sleeve_shelf/web/storage.py
@@ -335,6 +341,7 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/connections/index.html
 #: src/sleeve_shelf/web/templates/families/index.html
+#: src/sleeve_shelf/web/templates/reorganising/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 #: src/sleeve_shelf/web/templates/setup/preview.html
 #, python-format
@@ -755,6 +762,7 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/artists/edit.html
 #: src/sleeve_shelf/web/templates/settings/index.html
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
 msgid "Save"
 msgstr ""
@@ -1454,6 +1462,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 msgid "outside the sorting"
 msgstr ""
 
@@ -1818,6 +1827,8 @@ msgid "Undo"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #, python-format
 msgid "of %(total)d"
 msgstr ""
@@ -1854,6 +1865,15 @@ msgid "%(num)d single or EP is kept outside the layout."
 msgid_plural "%(num)d singles and EPs are kept outside the layout."
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+#, python-format
+msgid "A reorganisation is running: %(moved)d of %(total)d albums are in their new place."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/dashboard/index.html
+msgid "Go on"
+msgstr ""
 
 #: src/sleeve_shelf/web/templates/dashboard/index.html
 msgid "Browse the shelves"
@@ -3026,7 +3046,11 @@ msgid "Adjust by hand"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Accept: make this my layout"
+msgid "Reorganise: carry it out step by step"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Accept at once"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -3034,7 +3058,7 @@ msgid "Generate again"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Accepting saves the result as a new version; albums that do not fit become unplaced. “Generate again” takes changes to families, clusters, storage and widths into account."
+msgid "Reorganising takes your shelves there a table full at a time: each step you tick off changes the layout, and you can stop after any round. Accepting at once makes the proposal your layout straight away, for a small change or when the shelves were rearranged by hand already. Either way a version is saved first, and albums that do not fit end up without a place. “Generate again” takes changes to families, clusters, storage and widths into account."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
@@ -3106,6 +3130,7 @@ msgid "Between"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/recognise/result.html
+#: src/sleeve_shelf/web/templates/reorganising/index.html
 msgid "Right after"
 msgstr ""
 
@@ -3143,6 +3168,140 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/recognise/result.html
 msgid "Another photo"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "Take out of %(shelf)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Take from the albums without a place"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Take back what you set aside"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "Put on %(shelf)s"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Set aside for now"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Keep apart: no place in the new layout"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "The shelves changed meanwhile, so nothing was ticked off. This is the plan as they stand now."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "The reorganisation has ended. What you ticked off stands; the rest stays where it is."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Carrying out a sorting proposal on your shelves, a table full of records at a time: steps to tick off on your phone, in rounds that each end with an empty table, so you can stop after any round and go on another day."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Reorganise: carry out the proposal"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Look at the proposal first"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "There is nothing to carry out yet."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Make a sorting proposal"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "All done: your shelves are as in the proposal."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Finish"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "albums in their new place"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "on the table"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "round to go"
+msgid_plural "rounds to go"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "%(num)d album is set aside, to be taken back when there is room."
+msgid_plural "%(num)d albums are set aside, to be taken back when there is room."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "Round %(number)d"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "At the front of the shelf"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "in this order:"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "As they stand, from left to right:"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "The table is not enough here: these have nowhere to go yet. Put them somewhere else for now — a crate or an empty shelf will do; a later step takes them back."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "The new layout has no room for these; they are listed among the albums without a place from now on."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "Done: %(num)d album"
+msgid_plural "Done: %(num)d albums"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "Then, in this round"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "End the reorganisation"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+#, python-format
+msgid "%(num)d album on the table will then have no place."
+msgid_plural "%(num)d albums on the table will then have no place."
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/reorganising/index.html
+msgid "What you ticked off stands; the rest stays where it is."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/rules/index.html
@@ -3675,6 +3834,35 @@ msgstr ""
 msgid "Number of albums."
 msgstr ""
 
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "No width yet"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "measured"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+msgid "estimated"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "Holds %(num)d album"
+msgid_plural "Holds %(num)d albums"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "%(cm)s cm left"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/_measured.html
+#, python-format
+msgid "%(cm)s cm too full"
+msgstr ""
+
 #: src/sleeve_shelf/web/templates/storage/cabinet_form.html
 msgid "Cabinet"
 msgstr ""
@@ -3706,6 +3894,11 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "Cabinets and shelves — width in cm determines how many records fit"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Measure shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
@@ -3751,13 +3944,14 @@ msgid "Reachability"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
+#: src/sleeve_shelf/web/templates/storage/measure.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Front-loader"
+msgid "Top-loader"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html
-msgid "Top-loader"
+msgid "Front-loader"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
@@ -3790,6 +3984,27 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/index.html
 msgid "The arrows set the order in which cabinets and shelves are walked — in Browse and by a sorting proposal. A width marked ≈ is an estimate, as the widths taken from the workbook are; tick “I measured this width” on the shelf once you have. A filled width above a measured width is marked in red. A shelf can be removed once it is empty, a cabinet once it has no shelves."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Enter the inside width of each shelf, in cm, in the order you walk past them. A width from the workbook is an estimate that comes out too narrow; measured, a proposal can use the room there really is."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "shelves measured"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+#, python-format
+msgid "Inside width of %(shelf)s in cm"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Done measuring? A new proposal uses the widths as they are now."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/storage/measure.html
+msgid "Make a new proposal"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/storage/shelf_form.html

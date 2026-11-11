@@ -35,6 +35,7 @@ from sleeve_shelf.domain import (
     Placement,
     PlacementSource,
     ProposedPlacement,
+    Reorganisation,
     ReleaseEnrichment,
     RuleSuggestionDismissal,
     Shelf,
@@ -43,6 +44,7 @@ from sleeve_shelf.domain import (
     Style,
     Credit,
     ReleaseLabel,
+    TargetPlacement,
     Track,
 )
 
@@ -281,6 +283,21 @@ _TABLES: dict[type, _Table] = {
         _PLACEMENT_COLUMNS,
         {"source": PlacementSource},
         _PLACEMENT_RENAMED,
+    ),
+    TargetPlacement: _Table("placement_target.json", _PLACEMENT_COLUMNS, {"source": PlacementSource}),
+    Reorganisation: _Table(
+        "reorganisation.json",
+        {
+            "started_at": "TIMESTAMP",
+            "table_records": "INTEGER",
+            "to_move": "INTEGER",
+            "moved": "INTEGER",
+            "rounds_done": "INTEGER",
+            "taken_in_round": "INTEGER",
+            "on_table": "INTEGER[]",
+            "set_aside": "INTEGER[]",
+            "left_out": "INTEGER[]",
+        },
     ),
 }
 

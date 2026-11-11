@@ -766,3 +766,9 @@ html[data-browse-view="grid"] .ss-album-rows .ss-play { position: absolute; top:
 .ss-recognise-busy { display: none; }
 .ss-recognise.is-busy .ss-recognise-busy { display: inline; }
 .ss-recognise.is-busy .ss-recognise-button { opacity: 0.6; pointer-events: none; }
+
+/* Measure shelves: the width field beside each shelf, wide enough for "123,4". */
+.ss-measure { align-items: center; }
+.ss-measure-entry { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ss-measure-entry input { width: 6.5em; }
+.ss-measure-error [data-measure-status] { color: var(--ss-danger, #b42318); }
