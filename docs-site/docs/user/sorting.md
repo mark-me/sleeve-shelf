@@ -57,7 +57,7 @@ The **Rules** screen also suggests rules from your layout as it stands: when eve
 On the **Proposal** screen you generate a sorted layout. It stands next to your real layout, and nothing on your shelves changes until you carry it out. The screen takes you through three steps:
 
 1. **Look at it**: how many albums move, stay or do not fit, and about how many rounds carrying it out takes. **Browse the proposal** walks it shelf by shelf like your real shelves; below the steps you see what changes per shelf and which albums do not fit.
-2. **Adjust it, if you like**: drag albums and blocks in Layout, switched to the proposal — only the proposal changes. Or change families, clusters, rules or widths and **Generate again**; that starts from your shelves as they are, so changes made by hand to the proposal are lost. **Discard** leaves everything as it was.
+2. **Adjust it, if you like**: drag albums and blocks in Layout, switched to the proposal, or **move a whole cluster, family or artist** at once on the Move screen, switched to the proposal — only the proposal changes. What should stay so in every proposal belongs in the order of the clusters or a location rule instead. Or change families, clusters, rules or widths and **Generate again**; that starts from your shelves as they are, so changes made by hand to the proposal are lost. **Discard** leaves everything as it was.
 3. **Carry it out**: **Reorganise** takes your shelves there step by step (see below); **Accept at once** makes it your layout straight away, for a small change or when you already rearranged the shelves by hand. Either way a version is saved first.
 
 ## ♻️ Reorganising

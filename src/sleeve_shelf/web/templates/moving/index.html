@@ -8,10 +8,21 @@
   <h1>{{ _('Move') }}</h1>
   <p class="ss-muted mt-1">{{ _('Move an album, an artist, a family or a whole cluster: to another shelf, right before or after an album, or to where it belongs. You see what changes before anything moves; to put albums in their exact spot, drag them in Layout.') }}</p>
 
+  {# Moving in the shelves, or in the proposal waiting, as Layout switches between them. #}
+  {% if has_proposal %}
+  <div class="d-flex gap-2 mt-3">
+    <a class="ss-button {{ 'ss-button-primary' if not layout }}" href="{{ url_for('moving.index', kind=chosen.kind.value if chosen else none, id=chosen.id if chosen else none) }}">{{ _('My shelves') }}</a>
+    <a class="ss-button {{ 'ss-button-primary' if layout }}" href="{{ url_for('moving.index', layout='proposal', kind=chosen.kind.value if chosen else none, id=chosen.id if chosen else none) }}">{{ _('The proposal') }}</a>
+  </div>
+  {% endif %}
+  {% if layout %}
+  <div class="ss-alert mt-3">{{ _('This changes only the proposal; your shelves stay as they are. Generating the proposal again starts from your shelves, so this is lost then. Should it always be so? Set the order of the clusters or a location rule instead.') }} <a href="{{ url_for('clusters.index') }}">{{ _('Clusters') }}</a> &middot; <a href="{{ url_for('rules.index') }}">{{ _('Rules') }}</a> &middot; <a href="{{ url_for('proposal.index', _anchor='adjust') }}">{{ _('Back to the proposal') }}</a></div>
+  {% endif %}
+
   {% if done is not none %}
   <div class="ss-alert mt-3" role="status">
-    {{ ngettext('%(num)d album moved.', '%(num)d albums moved.', done) }} {{ _('A version from before is kept under Versions.') }}
-    {% if done_cabinet %}<a href="{{ url_for('layout.go', to=done_cabinet) }}">{{ _('Layout') }}</a>{% endif %}
+    {{ ngettext('%(num)d album moved.', '%(num)d albums moved.', done) }} {% if layout %}{{ _('Only the proposal changed.') }}{% else %}{{ _('A version from before is kept under Versions.') }}{% endif %}
+    {% if done_cabinet %}<a href="{{ url_for('layout.go', to=done_cabinet, layout=layout) }}">{{ _('Layout') }}</a>{% endif %}
   </div>
   {% endif %}
 
@@ -24,17 +35,18 @@
         {% if chosen.kind == 'album' %}<a class="ss-row-artist" href="{{ url_for('albums.detail', album_id=chosen.id) }}">{{ chosen.name }}</a>{% else %}<span class="ss-row-artist">{{ chosen.name }}</span>{% endif %}
         <span class="ss-row-title">{{ kind_name(chosen.kind) }}{% if chosen.kind != 'album' %} &middot; {{ ngettext('%(num)d album on a shelf', '%(num)d albums on a shelf', chosen.album_ids | length) }}{% endif %}</span>
       </div>
-      <a class="ss-row-place" href="{{ url_for('moving.index') }}">{{ _('Choose something else') }}</a>
+      <a class="ss-row-place" href="{{ url_for('moving.index', layout=layout) }}">{{ _('Choose something else') }}</a>
     </div>
     {% else %}
     <div class="ss-card-body">
-      <form method="get" action="{{ url_for('moving.index') }}" role="search" data-live-search>
+      <form method="get" action="{{ url_for('moving.index', layout=layout) }}" role="search" data-live-search>
+        {% if layout %}<input type="hidden" name="layout" value="proposal">{% endif %}
         <label for="search" class="visually-hidden">{{ _('Search a cluster, family, artist or album') }}</label>
         <input id="search" class="ss-search" type="search" name="q" value="{{ search_text }}" placeholder="{{ _('Search a cluster, family, artist or album…') }}" autocomplete="off">
       </form>
     </div>
     {% for item in found %}
-    <a class="ss-row ss-row-link" href="{{ url_for('moving.index', kind=item.kind.value, id=item.id) }}">
+    <a class="ss-row ss-row-link" href="{{ url_for('moving.index', layout=layout, kind=item.kind.value, id=item.id) }}">
       <div class="ss-row-text">
         <span class="ss-row-artist">{{ item.name }}</span>
         <span class="ss-row-title">{{ kind_name(item.kind) }}{% if item.kind != 'album' %} &middot; {{ ngettext('%(num)d album on a shelf', '%(num)d albums on a shelf', item.albums) }}{% endif %}</span>
@@ -51,7 +63,8 @@
   {% if chosen.album_ids %}
   <section class="ss-card mt-4">
   <div class="ss-card-head"><h2>2 · {{ _('Where to') }}</h2></div>
-  <form method="get" action="{{ url_for('moving.index') }}">
+  <form method="get" action="{{ url_for('moving.index', layout=layout) }}">
+    {% if layout %}<input type="hidden" name="layout" value="proposal">{% endif %}
     <input type="hidden" name="kind" value="{{ chosen.kind.value }}">
     <input type="hidden" name="id" value="{{ chosen.id }}">
     <div class="ss-card-body d-flex flex-column gap-3">
@@ -78,7 +91,8 @@
     </div>
   </form>
   <div class="ss-card-body border-top" id="next-to">
-    <form method="get" action="{{ url_for('moving.index', _anchor='next-to') }}" role="search">
+    <form method="get" action="{{ url_for('moving.index', layout=layout, _anchor='next-to') }}" role="search">
+      {% if layout %}<input type="hidden" name="layout" value="proposal">{% endif %}
       <input type="hidden" name="kind" value="{{ chosen.kind.value }}">
       <input type="hidden" name="id" value="{{ chosen.id }}">
       <label for="near" class="form-label fw-semibold">{{ _('Right before or after an album') }}</label>
@@ -95,8 +109,8 @@
       <span class="ss-row-artist">{{ album.artist }}</span>
       <span class="ss-row-title">{{ album.title }} &middot; {{ album.cabinet }} &rsaquo; {{ album.shelf }}</span>
     </div>
-    <a class="ss-row-place" href="{{ url_for('moving.index', kind=chosen.kind.value, id=chosen.id, how='before', next_to=album.id, _anchor='plan') }}">{{ _('Before') }}</a>
-    <a class="ss-row-place" href="{{ url_for('moving.index', kind=chosen.kind.value, id=chosen.id, how='after', next_to=album.id, _anchor='plan') }}">{{ _('After') }}</a>
+    <a class="ss-row-place" href="{{ url_for('moving.index', layout=layout, kind=chosen.kind.value, id=chosen.id, how='before', next_to=album.id, _anchor='plan') }}">{{ _('Before') }}</a>
+    <a class="ss-row-place" href="{{ url_for('moving.index', layout=layout, kind=chosen.kind.value, id=chosen.id, how='after', next_to=album.id, _anchor='plan') }}">{{ _('After') }}</a>
   </div>
   {% else %}
   {% if near %}<div class="ss-card-body ss-muted">{{ _('No album on a shelf matches this search.') }}</div>{% endif %}
@@ -143,6 +157,7 @@
     </div>
     {% endif %}
     <form class="ss-card-body" method="post" action="{{ url_for('moving.move') }}">
+      {% if layout %}<input type="hidden" name="layout" value="proposal">{% endif %}
       <input type="hidden" name="kind" value="{{ plan.selection.kind.value }}">
       <input type="hidden" name="id" value="{{ plan.selection.id }}">
       <input type="hidden" name="how" value="{{ plan.how.value }}">
@@ -155,7 +170,7 @@
       </div>
       {% endif %}
       <button class="ss-button ss-button-primary" type="submit">{{ _('Move') }}</button>
-      <span class="ss-muted small ms-2">{{ _('The layout as it is now is kept as a version first.') }}</span>
+      <span class="ss-muted small ms-2">{% if layout %}{{ _('Only the proposal changes; your shelves stay as they are.') }}{% else %}{{ _('The layout as it is now is kept as a version first.') }}{% endif %}</span>
     </form>
     {% else %}
     <div class="ss-card-body ss-muted">{{ _('Nothing would change: it stands there already.') }}</div>

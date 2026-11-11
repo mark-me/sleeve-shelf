@@ -30,6 +30,8 @@ For a shelf far away, use the ⋮ on a block (or right-click it) and pick the sh
 
 To put albums in their exact spot on a shelf, drag them in Layout afterwards.
 
+While a sorting proposal waits, **My shelves** and **The proposal** switch what you move in, as in Layout. In the proposal nothing on your shelves changes; generating the proposal again starts from your shelves, so such a move is lost then.
+
 ## 🗄️ Cabinets and shelves
 
 **Cabinets** describes your storage: each cabinet with its room and its shelves, in the order you walk them — the order Browse follows and a proposal fills. The arrows change that order. A shelf has a name, a width, and optionally a type (top- or front-loader), a row (top or bottom), and a reachability score.

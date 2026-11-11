@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 22:52+0100\n"
+"POT-Creation-Date: 2026-11-11 23:27+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -198,10 +198,12 @@ msgstr "Families"
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/clusters/index.html
 #: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Clusters"
 msgstr "Clusters"
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/moving/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Rules"
 msgstr "Regels"
@@ -1452,6 +1454,7 @@ msgstr "Je bladert door het voorstel, niet door je kasten zoals ze nu zijn."
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Back to the proposal"
 msgstr "Terug naar het voorstel"
 
@@ -2701,10 +2704,12 @@ msgid "For a shelf far away, use the ⋮ on a block (or right-click it) and pick
 msgstr "Gebruik voor een vak ver weg de ⋮ op een blok (of klik er met rechts op) en kies het vak: het blok gaat naar het eind ervan en de pagina springt erheen, waar je het naar zijn precieze plek sleept."
 
 #: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "My shelves"
 msgstr "Mijn kasten"
 
 #: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "The proposal"
 msgstr "Het voorstel"
 
@@ -2809,11 +2814,19 @@ msgid "Move an album, an artist, a family or a whole cluster: to another shelf, 
 msgstr "Verplaats een album, een artiest, een familie of een heel cluster: naar een ander vak, direct voor of na een album, of naar waar het bij hoort. Je ziet wat er verandert voordat er iets verplaatst; sleep albums in Indeling naar hun precieze plek."
 
 #: src/sleeve_shelf/web/templates/moving/index.html
+msgid "This changes only the proposal; your shelves stay as they are. Generating the proposal again starts from your shelves, so this is lost then. Should it always be so? Set the order of the clusters or a location rule instead."
+msgstr "Dit verandert alleen het voorstel; je kasten blijven zoals ze zijn. Opnieuw maken begint bij je kasten, dus dan is dit weg. Moet het altijd zo? Stel dan de volgorde van de clusters of een locatieregel in."
+
+#: src/sleeve_shelf/web/templates/moving/index.html
 #, python-format
 msgid "%(num)d album moved."
 msgid_plural "%(num)d albums moved."
 msgstr[0] "%(num)d album verplaatst."
 msgstr[1] "%(num)d albums verplaatst."
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Only the proposal changed."
+msgstr "Alleen het voorstel is veranderd."
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "What"
@@ -2967,6 +2980,10 @@ msgid "Its cluster is now only proposed from its styles; without confirming it, 
 msgstr "Het cluster is nu alleen voorgesteld op grond van de stijlen; zonder het te bevestigen zet een sorteervoorstel het album daar weer terug."
 
 #: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Only the proposal changes; your shelves stay as they are."
+msgstr "Alleen het voorstel verandert; je kasten blijven zoals ze zijn."
+
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "The layout as it is now is kept as a version first."
 msgstr "De indeling zoals die nu is, wordt eerst als versie bewaard."
 
@@ -3058,12 +3075,16 @@ msgid "Adjust it, if you like"
 msgstr "Pas het aan, als je wilt"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Drag albums and blocks in Layout as you would on your own shelves: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again."
-msgstr "Sleep albums en blokken in de Indeling zoals je dat in je eigen vakken zou doen: alleen het voorstel verandert. Of pas families, clusters, regels of breedtes aan en maak het voorstel opnieuw."
+msgid "Drag albums and blocks in Layout as you would on your own shelves, or move a whole cluster, family or artist at once: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again."
+msgstr "Sleep albums en blokken in de Indeling zoals je dat in je eigen vakken zou doen, of verplaats een heel cluster, een familie of een artiest in één keer: alleen het voorstel verandert. Of pas families, clusters, regels of breedtes aan en maak het voorstel opnieuw."
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Adjust by hand in Layout"
 msgstr "Met de hand aanpassen in de Indeling"
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Move a cluster, family or artist"
+msgstr "Een cluster, familie of artiest verplaatsen"
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Generate again"

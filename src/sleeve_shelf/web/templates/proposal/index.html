@@ -48,9 +48,10 @@
   <section class="ss-card mt-3" id="adjust">
     <div class="ss-card-head"><h2>2 &middot; {{ _('Adjust it, if you like') }}</h2></div>
     <div class="ss-card-body">
-      <p class="mb-2">{{ _('Drag albums and blocks in Layout as you would on your own shelves: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again.') }}</p>
+      <p class="mb-2">{{ _('Drag albums and blocks in Layout as you would on your own shelves, or move a whole cluster, family or artist at once: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again.') }}</p>
       <div class="d-flex flex-wrap gap-2">
         <a class="ss-button" href="{{ url_for('layout.index', layout='proposal') }}">{{ _('Adjust by hand in Layout') }}</a>
+        <a class="ss-button" href="{{ url_for('moving.index', layout='proposal') }}">{{ _('Move a cluster, family or artist') }}</a>
         <form method="post" action="{{ url_for('proposal.generate') }}">
           <button class="ss-button" type="submit">{{ _('Generate again') }}</button>
         </form>

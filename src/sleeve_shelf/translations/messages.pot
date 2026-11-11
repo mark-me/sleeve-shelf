@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-11 22:52+0100\n"
+"POT-Creation-Date: 2026-11-11 23:27+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -197,10 +197,12 @@ msgstr ""
 #: src/sleeve_shelf/web/templates/clusters/edit.html
 #: src/sleeve_shelf/web/templates/clusters/index.html
 #: src/sleeve_shelf/web/templates/connections/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Clusters"
 msgstr ""
 
 #: src/sleeve_shelf/web/navigation.py
+#: src/sleeve_shelf/web/templates/moving/index.html
 #: src/sleeve_shelf/web/templates/rules/index.html
 msgid "Rules"
 msgstr ""
@@ -1451,6 +1453,7 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/browse/shelf.html
 #: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Back to the proposal"
 msgstr ""
 
@@ -2700,10 +2703,12 @@ msgid "For a shelf far away, use the ⋮ on a block (or right-click it) and pick
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "My shelves"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/layout/index.html
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "The proposal"
 msgstr ""
 
@@ -2808,11 +2813,19 @@ msgid "Move an album, an artist, a family or a whole cluster: to another shelf, 
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
+msgid "This changes only the proposal; your shelves stay as they are. Generating the proposal again starts from your shelves, so this is lost then. Should it always be so? Set the order of the clusters or a location rule instead."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
 #, python-format
 msgid "%(num)d album moved."
 msgid_plural "%(num)d albums moved."
 msgstr[0] ""
 msgstr[1] ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Only the proposal changed."
+msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "What"
@@ -2966,6 +2979,10 @@ msgid "Its cluster is now only proposed from its styles; without confirming it, 
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
+msgid "Only the proposal changes; your shelves stay as they are."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
 msgid "The layout as it is now is kept as a version first."
 msgstr ""
 
@@ -3057,11 +3074,15 @@ msgid "Adjust it, if you like"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
-msgid "Drag albums and blocks in Layout as you would on your own shelves: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again."
+msgid "Drag albums and blocks in Layout as you would on your own shelves, or move a whole cluster, family or artist at once: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html
 msgid "Adjust by hand in Layout"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/proposal/index.html
+msgid "Move a cluster, family or artist"
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/proposal/index.html

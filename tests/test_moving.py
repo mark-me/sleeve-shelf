@@ -187,3 +187,48 @@ def test_a_shelf_holds_at_least_what_stands_on_it_now_whatever_its_estimate_says
     # Kind of Blue goes in front; one album moves on to shelf c, not three.
     assert _shelves(store)[2] == [21, 34, 35, 36]
     assert _shelves(store)[3] == [22, 11]
+
+
+# Moving in the proposal
+
+
+def test_a_move_in_the_proposal_changes_only_the_proposal(tmp_path):
+    from sleeve_shelf.domain import ProposedPlacement
+    from sleeve_shelf.shelving.proposal import generate_proposal
+
+    store = _collection(tmp_path)
+    generate_proposal(store, CONSTANTS, 0)
+    shelves_before = _shelves(store)
+    jazz = selection(store, Kind.CLUSTER, 1, ProposedPlacement)
+
+    planned = plan(store, jazz, How.END, 3, CONSTANTS, layout=ProposedPlacement)
+    carry_out(store, planned, ProposedPlacement)
+
+    assert _shelves(store) == shelves_before
+    proposed = {p.album_id: p.shelf_id for p in store.load(ProposedPlacement)}
+    assert all(proposed[album] == 3 for album in jazz.album_ids)
+    assert all(isinstance(p, ProposedPlacement) for p in planned.placements)
+    assert list_versions(store) == []
+
+
+def test_the_move_screen_switches_between_the_shelves_and_the_proposal(tmp_path):
+    from sleeve_shelf.domain import ProposedPlacement
+    from sleeve_shelf.shelving.proposal import generate_proposal
+
+    store = _collection(tmp_path)
+    client = create_app(tmp_path).test_client()
+    assert "The proposal" not in client.get("/move/").text
+    generate_proposal(store, CONSTANTS, 0)
+    shelves_before = _shelves(store)
+
+    page = client.get("/move/?layout=proposal&kind=cluster&id=1").text
+    assert "This changes only the proposal" in page and 'href="/clusters/"' in page
+    assert 'name="layout" value="proposal"' in page and "layout=proposal" in page
+    answer = client.post("/move/", data={"layout": "proposal", "kind": "cluster", "id": "1", "how": "end", "shelf": "3"})
+    assert "layout=proposal" in answer.headers["Location"]
+    assert "Only the proposal changed" in client.get(answer.headers["Location"]).text
+    assert _shelves(store) == shelves_before
+    proposed = {p.album_id: p.shelf_id for p in store.load(ProposedPlacement)}
+    assert proposed[21] == 3
+    # The proposal's second step leads here.
+    assert "/move/?layout=proposal" in client.get("/proposal/").text

@@ -136,14 +136,16 @@ class Plan:
     next_to: int | None = None
 
 
-def _sorted_on_shelves(store: JsonStore) -> list[tuple[int, int, int | None, int | None]]:
+def _sorted_on_shelves(
+    store: JsonStore, layout: type[Placement] = Placement
+) -> list[tuple[int, int, int | None, int | None]]:
     """The albums that stand on a shelf a proposal fills, as (album, artist, family, cluster).
 
     In the order a proposal sorts them: by cluster, era band, artist (a family together), year. What
     stands in a showcase or a cabinet kept outside the sorting is left out.
     """
     kept = kept_shelf_ids(store)
-    shelf_of = {p.album_id: p.shelf_id for p in store.load(Placement)}
+    shelf_of = {p.album_id: p.shelf_id for p in store.load(layout)}
     family_of = {artist.id: artist.alias_group_id for artist in store.load(Artist)}
     result = sort_collection(store)
     return [
@@ -158,7 +160,9 @@ def _sorted_on_shelves(store: JsonStore) -> list[tuple[int, int, int | None, int
     ]
 
 
-def selection(store: JsonStore, kind: Kind, item_id: int) -> Selection | None:
+def selection(
+    store: JsonStore, kind: Kind, item_id: int, layout: type[Placement] = Placement
+) -> Selection | None:
     """The album, artist, family or cluster with this id, and the albums that would move.
 
     An album moves whatever it stands on. Of an artist, family or cluster the albums that stand on a
@@ -169,6 +173,7 @@ def selection(store: JsonStore, kind: Kind, item_id: int) -> Selection | None:
         store: The store of the collection.
         kind: What it is.
         item_id: Its id.
+        layout: The layout it moves in: the shelves (Placement) or the proposal (ProposedPlacement).
 
     Returns:
         The selection, or None when there is no such item.
@@ -188,17 +193,20 @@ def selection(store: JsonStore, kind: Kind, item_id: int) -> Selection | None:
     if item_id not in names:
         return None
     column = {Kind.ARTIST: 1, Kind.FAMILY: 2, Kind.CLUSTER: 3}[kind]
-    albums = tuple(row[0] for row in _sorted_on_shelves(store) if row[column] == item_id)
+    albums = tuple(row[0] for row in _sorted_on_shelves(store, layout) if row[column] == item_id)
     return Selection(kind, item_id, names[item_id], albums)
 
 
-def find(store: JsonStore, text: str, limit: int = 8) -> list[tuple[Kind, int, str, int]]:
+def find(
+    store: JsonStore, text: str, limit: int = 8, layout: type[Placement] = Placement
+) -> list[tuple[Kind, int, str, int]]:
     """Clusters, families, artists and albums whose name holds every word of the text.
 
     Args:
         store: The store of the collection.
         text: What was typed.
         limit: How many at most of each kind.
+        layout: The layout the counts go by: the shelves or the proposal.
 
     Returns:
         The matches as (kind, id, name, number of albums that would move), the broadest first.
@@ -214,7 +222,7 @@ def find(store: JsonStore, text: str, limit: int = 8) -> list[tuple[Kind, int, s
     artists = {artist.id: artist.name for artist in store.load(Artist)}
     found: list[tuple[Kind, int, str, int]] = []
     # How many albums each would move, from one sorting of the collection for all of them.
-    on_shelves = _sorted_on_shelves(store)
+    on_shelves = _sorted_on_shelves(store, layout)
     counts = {
         kind: Counter(row[column] for row in on_shelves)
         for kind, column in ((Kind.ARTIST, 1), (Kind.FAMILY, 2), (Kind.CLUSTER, 3))
@@ -293,6 +301,7 @@ def plan(
     shelf_id: int | None,
     constants: WidthConstants,
     next_to: int | None = None,
+    layout: type[Placement] = Placement,
 ) -> Plan:
     """Work out what moving the selection would do, without changing anything.
 
@@ -310,6 +319,7 @@ def plan(
         shelf_id: The shelf, or OFF_SHELF; not needed for where it belongs.
         constants: The width figures.
         next_to: The album to stand right before or after, for those ways; the shelf is then its own.
+        layout: The layout to move in: the shelves (Placement) or the proposal (ProposedPlacement).
 
     Returns:
         The plan.
@@ -320,7 +330,7 @@ def plan(
     """
     shelves = store.load(Shelf)
     by_id = {shelf.id: shelf for shelf in shelves}
-    placements = store.load(Placement)
+    placements = store.load(layout)
     shelf_id = _target_shelf(how, shelf_id, next_to, by_id, placements, chosen)
     rows: dict[int, list[int]] = {}
     for p in sorted(placements, key=lambda p: (p.shelf_id, p.position)):
@@ -355,7 +365,7 @@ def plan(
     else:
         _stand_in_front(store, by_id[shelf_id], moving, rows, new_rows, width)
 
-    worked_out = _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, placements, width)
+    worked_out = _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, placements, width, layout)
     return replace(worked_out, next_to=next_to if how in NEXT_TO else None)
 
 
@@ -414,7 +424,7 @@ def _placed_before(standing: int, album_id: int, moving: list[int]) -> bool:
     return moving.index(standing) < moving.index(album_id)
 
 
-def _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, placements, width) -> Plan:
+def _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, placements, width, layout=Placement) -> Plan:
     source = {p.album_id: p.source for p in placements}
     shelves = store.load(Shelf)
     cabinets = {cabinet.id: cabinet for cabinet in store.load(Cabinet)}
@@ -427,7 +437,7 @@ def _plan(store, chosen, how, shelf_id, rows, new_rows, moving, without_spot, pl
     leaving = set(moving)
     kept = [p for p in placements if p.shelf_id not in {shelf.id for shelf in changed}]
     rebuilt = [
-        Placement(
+        layout(
             album_id,
             shelf.id,
             position,
@@ -478,14 +488,18 @@ def plan_placing(store: JsonStore, album_ids: Iterable[int], constants: WidthCon
     return plan(store, Selection(Kind.ALBUM, 0, "", tuple(in_order)), How.BELONGS, None, constants)
 
 
-def carry_out(store: JsonStore, chosen: Plan) -> None:
-    """Make the planned move: the layout as it was is kept as a version first.
+def carry_out(store: JsonStore, chosen: Plan, layout: type[Placement] = Placement) -> None:
+    """Make the planned move: on the shelves the layout as it was is kept as a version first.
+
+    In the proposal nothing on the shelves changes, so no version is kept.
 
     Args:
         store: The store of the collection.
         chosen: The plan.
+        layout: The layout it was worked out on: the shelves or the proposal.
     """
     if not chosen.changes:
         return
-    save_if_unsaved(store, "before moving")
-    store.save(Placement, list(chosen.placements))
+    if layout is Placement:
+        save_if_unsaved(store, "before moving")
+    store.save(layout, list(chosen.placements))
