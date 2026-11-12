@@ -290,6 +290,8 @@ def test_layout_shows_the_whole_and_gives_it_anew_after_a_move(tmp_path):
     assert page.count('class="ss-glance-shelf') == 5
     fragment = client.get("/layout/glance").text
     assert "ss-glance-run" in fragment and "<html" not in fragment
+    # Should the overview fail to come up to date after a move, the page says so; hidden until then.
+    assert 'data-glance-stale role="status" hidden' in page and "could not be brought up to date" in page
 
 
 def test_a_move_meant_for_a_proposal_that_is_gone_changes_nothing(tmp_path):

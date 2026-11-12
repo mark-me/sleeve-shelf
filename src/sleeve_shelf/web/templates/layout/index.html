@@ -43,6 +43,7 @@
 
   <details class="ss-glance mt-3" id="layout-glance" open>
     <summary>{{ _('All cabinets at a glance') }}</summary>
+    <p class="ss-glance-stale" data-glance-stale role="status" hidden>{{ _('This overview could not be brought up to date: it shows the shelves from before your last move. Reload the page to see them as they are.') }}</p>
     <div data-glance>{% include "layout/_at_a_glance.html" %}</div>
   </details>
 

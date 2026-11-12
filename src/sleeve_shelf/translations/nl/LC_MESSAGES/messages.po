@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-13 00:11+0100\n"
+"POT-Creation-Date: 2026-11-13 00:32+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -2725,6 +2725,10 @@ msgstr "Het voorstel"
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "All cabinets at a glance"
 msgstr "Alle kasten in één blik"
+
+#: src/sleeve_shelf/web/templates/layout/index.html
+msgid "This overview could not be brought up to date: it shows the shelves from before your last move. Reload the page to see them as they are."
+msgstr "Dit overzicht kon niet worden bijgewerkt: het toont de vakken van vóór je laatste verplaatsing. Laad de pagina opnieuw om ze te zien zoals ze zijn."
 
 #: src/sleeve_shelf/web/templates/layout/index.html
 msgid "You are adjusting the proposal. Your shelves change only when you carry it out."

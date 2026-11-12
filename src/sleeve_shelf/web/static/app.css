@@ -795,3 +795,5 @@ html[data-browse-view="grid"] .ss-album-rows .ss-play { position: absolute; top:
 .ss-glance-shelf.is-over .ss-glance-width { box-shadow: inset -2px 0 0 #D9534F; }
 /* Over an estimated width says the shelf needs measuring, as elsewhere: grey, not red. */
 .ss-glance-shelf.is-over-estimate .ss-glance-width { box-shadow: inset -2px 0 0 var(--ss-muted); }
+.ss-glance-stale { margin: 8px 0 0; font-size: 0.8rem; color: #D9534F; }
+.ss-glance.is-stale [data-glance] { opacity: 0.45; }

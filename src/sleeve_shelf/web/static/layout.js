@@ -92,23 +92,42 @@
 
   // All cabinets at a glance follows every move, so the whole stays in view.
   // Moves in quick succession ask for it more than once; only the latest answer is shown, so an
-  // earlier one coming in last never replaces the newer overview.
+  // earlier one coming in last never replaces the newer overview. When it cannot be fetched it is
+  // tried once more; failing again, the overview says it is out of date rather than pretend.
   let glanceAsked = 0;
-  async function refreshGlance() {
+  const GLANCE_RETRY_MS = 2000;
+  async function refreshGlance(again) {
     const holder = document.querySelector("[data-glance]");
     if (!holder || !root.dataset.glanceUrl) return;
-    const asked = ++glanceAsked;
+    const asked = again ? glanceAsked : ++glanceAsked;
+    let html = null;
     try {
       const response = await fetch(root.dataset.glanceUrl);
-      if (!response.ok) return;
-      const html = await response.text();
-      if (asked !== glanceAsked) return;
-      holder.innerHTML = html;
-      nameRuns();
-      if (chosenCluster !== null) chooseCluster(chosenCluster);
+      if (response.ok) html = await response.text();
     } catch (error) {
-      // The overview stays as it was; the shelves below are right.
+      // Offline or the server gone for a moment: handled below like an error answer.
     }
+    if (asked !== glanceAsked) return;
+    if (html === null) {
+      if (!again) {
+        setTimeout(function () { refreshGlance(true); }, GLANCE_RETRY_MS);
+      } else {
+        showGlanceStale(true);
+      }
+      return;
+    }
+    holder.innerHTML = html;
+    showGlanceStale(false);
+    nameRuns();
+    if (chosenCluster !== null) chooseCluster(chosenCluster);
+  }
+
+  function showGlanceStale(stale) {
+    const box = document.getElementById("layout-glance");
+    const notice = box && box.querySelector("[data-glance-stale]");
+    if (!box || !notice) return;
+    notice.hidden = !stale;
+    box.classList.toggle("is-stale", stale);
   }
 
   function offerUndo(shelves) {
