@@ -523,6 +523,7 @@ erDiagram
 ### Configuration
 
 - `config.yaml`, kept in the data directory next to the JSON files, read and written with plain PyYAML — not through the DuckDB layer above, since this is scalar application settings, not queryable collection data
+- **Read as their kind** (2026-11-13): the file can be edited by hand, so a number or a yes/no written as text — `"0.5"` in quotes, `0,5` with a comma, `"no"` — is read as a number or a yes/no; a value that cannot be read keeps its default, and the log says which setting and what it held
 - Holds:
   - The width-estimation constants (base width, 180-gram surcharge, gatefold surcharge — see Sorting logic §3); the base width also turns the workbook's LP-unit capacity into an estimated shelf width
   - The Discogs personal access token

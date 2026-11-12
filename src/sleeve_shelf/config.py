@@ -1,5 +1,6 @@
 """Application settings, kept in config.yaml inside the data directory."""
 
+import logging
 import os
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
@@ -107,8 +108,41 @@ def load_settings(data_dir: str | Path) -> Settings:
     if not path.exists():
         return Settings()
     stored = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    defaults = Settings()
     known = {field.name for field in fields(Settings)}
-    return Settings(**{key: value for key, value in stored.items() if key in known})
+    return Settings(
+        **{key: _typed(key, value, getattr(defaults, key)) for key, value in stored.items() if key in known}
+    )
+
+
+def _typed(name: str, value, default):
+    """A setting as the kind its default is: a number or a yes/no written as text is read as one.
+
+    A file edited by hand may hold "0.5" in quotes, or 0,5 with a comma; used as text such a
+    width would break every page that adds widths. What cannot be read keeps the default, and the
+    log says so.
+    """
+    if value is None or isinstance(default, (str, list)) or default is None:
+        return value
+    try:
+        if isinstance(default, bool):
+            if isinstance(value, bool):
+                return value
+            text = str(value).strip().lower()
+            if text in ("true", "yes", "on", "1"):
+                return True
+            if text in ("false", "no", "off", "0"):
+                return False
+            raise ValueError(value)
+        number = float(str(value).strip().replace(",", ".")) if isinstance(value, str) else float(value)
+        if isinstance(default, int):
+            if number != int(number):
+                raise ValueError(value)
+            return int(number)
+        return number
+    except (TypeError, ValueError):
+        logging.getLogger(__name__).warning("config.yaml: %s is not a %s (%r); the default %r is used", name, type(default).__name__, value, default)
+        return default
 
 
 def save_settings(data_dir: str | Path, settings: Settings) -> None:
