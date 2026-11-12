@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-12 00:03+0100\n"
+"POT-Creation-Date: 2026-11-13 00:00+0100\n"
 "PO-Revision-Date: 2026-10-18 19:20+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: nl\n"
@@ -2837,6 +2837,10 @@ msgstr "Verplaats een album, een artiest, een familie of een heel cluster: naar 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "This changes only the proposal; your shelves stay as they are. Generating the proposal again starts from your shelves, so this is lost then. Should it always be so? Set the order of the clusters or a location rule instead."
 msgstr "Dit verandert alleen het voorstel; je kasten blijven zoals ze zijn. Opnieuw maken begint bij je kasten, dus dan is dit weg. Moet het altijd zo? Stel dan de volgorde van de clusters of een locatieregel in."
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "The proposal was accepted or discarded meanwhile, so nothing was moved. Your shelves are as they were."
+msgstr "Het voorstel is intussen geaccepteerd of verworpen, dus er is niets verplaatst. Je kasten zijn zoals ze waren."
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 #, python-format

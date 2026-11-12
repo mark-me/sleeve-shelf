@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-12 00:03+0100\n"
+"POT-Creation-Date: 2026-11-13 00:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2835,6 +2835,10 @@ msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "This changes only the proposal; your shelves stay as they are. Generating the proposal again starts from your shelves, so this is lost then. Should it always be so? Set the order of the clusters or a location rule instead."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "The proposal was accepted or discarded meanwhile, so nothing was moved. Your shelves are as they were."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html

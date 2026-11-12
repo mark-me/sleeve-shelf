@@ -19,6 +19,10 @@
   <div class="ss-alert mt-3">{{ _('This changes only the proposal; your shelves stay as they are. Generating the proposal again starts from your shelves, so this is lost then. Should it always be so? Set the order of the clusters or a location rule instead.') }} <a href="{{ url_for('clusters.index') }}">{{ _('Clusters') }}</a> &middot; <a href="{{ url_for('rules.index') }}">{{ _('Rules') }}</a> &middot; <a href="{{ url_for('proposal.index', _anchor='adjust') }}">{{ _('Back to the proposal') }}</a></div>
   {% endif %}
 
+  {% if gone %}
+  <div class="ss-alert mt-3" role="alert">{{ _('The proposal was accepted or discarded meanwhile, so nothing was moved. Your shelves are as they were.') }}</div>
+  {% endif %}
+
   {% if done is not none %}
   <div class="ss-alert mt-3" role="status">
     {{ ngettext('%(num)d album moved.', '%(num)d albums moved.', done) }} {% if layout %}{{ _('Only the proposal changed.') }}{% else %}{{ _('A version from before is kept under Versions.') }}{% endif %}

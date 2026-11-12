@@ -100,6 +100,7 @@ def index():
         titles=titles,
         done=request.args.get("done", type=int),
         done_cabinet=request.args.get("cabinet", type=int),
+        gone=request.args.get("gone"),
         layout=layout_name,
         has_proposal=has_proposal(store),
         larger=wider(store, chosen, layout) if chosen else [],
@@ -118,6 +119,9 @@ def _next_to_name(store, planned):
 def move():
     """Carry out the move as it is worked out now, on the shelves or the proposal as they stand."""
     store = get_store()
+    if request.form.get("layout") == "proposal" and not has_proposal(store):
+        # Meant for a proposal that was accepted or discarded meanwhile: never the shelves instead.
+        return redirect(url_for("moving.index", gone=1))
     layout, layout_name = _layout(store, request.form)
     chosen, how, shelf_id, next_to = _chosen(store, request.form, layout)
     if chosen is None or not _complete(how, shelf_id, next_to):

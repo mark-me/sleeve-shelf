@@ -290,3 +290,27 @@ def test_layout_shows_the_whole_and_gives_it_anew_after_a_move(tmp_path):
     assert page.count('class="ss-glance-shelf') == 5
     fragment = client.get("/layout/glance").text
     assert "ss-glance-run" in fragment and "<html" not in fragment
+
+
+def test_a_move_meant_for_a_proposal_that_is_gone_changes_nothing(tmp_path):
+    from sleeve_shelf.shelving.proposal import discard_proposal, generate_proposal
+
+    store = _collection(tmp_path)
+    client = create_app(tmp_path).test_client()
+    generate_proposal(store, CONSTANTS, 0)
+    page = client.get("/move/?layout=proposal&kind=cluster&id=1").text
+    assert 'name="layout" value="proposal"' in page
+    discard_proposal(store)
+    shelves_before = _shelves(store)
+
+    answer = client.post("/move/", data={"layout": "proposal", "kind": "cluster", "id": "1", "how": "end", "shelf": "3"})
+
+    assert answer.headers["Location"] == "/move/?gone=1"
+    assert "nothing was moved" in client.get(answer.headers["Location"]).text
+    assert _shelves(store) == shelves_before
+    assert list_versions(store) == []
+    # Layout's drags and its shelf list refuse likewise.
+    dragged = client.post("/layout/move?layout=proposal", json={"shelves": {"3": [11, 21]}})
+    sent = client.post("/layout/send?layout=proposal", json={"albums": [11], "shelf": 1})
+    assert dragged.status_code == 409 and sent.status_code == 409
+    assert _shelves(store) == shelves_before

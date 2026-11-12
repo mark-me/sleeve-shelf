@@ -2,7 +2,7 @@
 
 from itertools import groupby
 
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, abort, jsonify, redirect, render_template, request, url_for
 
 from sleeve_shelf.domain import Cabinet, Placement, ProposedPlacement, Shelf, in_order
 from sleeve_shelf.persistence import AlbumRow, BrowseQueries
@@ -19,9 +19,16 @@ TRAY = 0
 
 
 def _entity(store) -> tuple[type[Placement], str | None]:
-    """Which layout is shown and edited: the proposal when asked for and present."""
-    if request.values.get("layout") == "proposal" and has_proposal(store):
-        return ProposedPlacement, "proposal"
+    """Which layout is shown and edited: the proposal when asked for and present.
+
+    A change meant for a proposal that was accepted or discarded meanwhile is refused rather
+    than made to the shelves: the page then says it could not be saved.
+    """
+    if request.values.get("layout") == "proposal":
+        if has_proposal(store):
+            return ProposedPlacement, "proposal"
+        if request.method == "POST":
+            abort(409)
     return Placement, None
 
 
