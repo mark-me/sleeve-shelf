@@ -314,3 +314,50 @@ def test_a_move_meant_for_a_proposal_that_is_gone_changes_nothing(tmp_path):
     sent = client.post("/layout/send?layout=proposal", json={"albums": [11], "shelf": 1})
     assert dragged.status_code == 409 and sent.status_code == 409
     assert _shelves(store) == shelves_before
+
+
+def test_a_plan_for_a_proposal_discarded_meanwhile_does_not_bring_it_back(tmp_path):
+    from sleeve_shelf.domain import ProposedPlacement
+    from sleeve_shelf.shelving.placing import ProposalGone
+    from sleeve_shelf.shelving.proposal import discard_proposal, generate_proposal
+
+    store = _collection(tmp_path)
+    generate_proposal(store, CONSTANTS, 0)
+    jazz = selection(store, Kind.CLUSTER, 1, ProposedPlacement)
+    planned = plan(store, jazz, How.END, 3, CONSTANTS, layout=ProposedPlacement)
+    # Another request discards the proposal between working the plan out and saving it.
+    discard_proposal(store)
+
+    with pytest.raises(ProposalGone):
+        carry_out(store, planned, ProposedPlacement)
+    assert not store.exists(ProposedPlacement)
+
+
+def test_discarding_waits_while_the_proposal_is_being_changed(tmp_path):
+    import threading
+
+    from sleeve_shelf.domain import ProposedPlacement
+    from sleeve_shelf.shelving.placing import proposal_edit
+    from sleeve_shelf.shelving.proposal import discard_proposal, generate_proposal
+
+    store = _collection(tmp_path)
+    generate_proposal(store, CONSTANTS, 0)
+    holding, release = threading.Event(), threading.Event()
+
+    def change():
+        with proposal_edit(store):
+            holding.set()
+            release.wait(5)
+
+    changing = threading.Thread(target=change)
+    changing.start()
+    holding.wait(5)
+    discarding = threading.Thread(target=discard_proposal, args=(store,))
+    discarding.start()
+    discarding.join(0.3)
+    # While the change holds the proposal, discarding waits.
+    assert discarding.is_alive() and store.exists(ProposedPlacement)
+    release.set()
+    changing.join(5)
+    discarding.join(5)
+    assert not store.exists(ProposedPlacement)

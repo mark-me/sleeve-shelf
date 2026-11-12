@@ -32,6 +32,7 @@ from sleeve_shelf.sorting.order import OrderedAlbum, Unit, build_units, order_al
 from sleeve_shelf.sorting.placement import place
 from sleeve_shelf.library.taking_part import albums_taking_part, kept_shelf_ids, takes_part, usable_shelves
 from sleeve_shelf.library.versions import save_if_unsaved, save_version
+from sleeve_shelf.shelving.placing import proposal_changes
 
 
 @dataclass(frozen=True, slots=True)
@@ -133,44 +134,45 @@ def generate_proposal(store: JsonStore, constants: WidthConstants, room_percent:
         constants: The width figures.
         room_percent: Each shelf is filled to at most (100 - room_percent)% of its width.
     """
-    result = sort_collection(store)
-    usable, _skipped = usable_shelves(store)
-    cabinet_of = mandatory_cabinets(store, result)
-    # What stands in a showcase, or in a cabinet kept outside the sorting, is the user's
-    # own choice: it stays there, and is left out of the row that fills the other shelves.
-    kept_ids = kept_shelf_ids(store)
-    on_display = [p for p in store.load(Placement) if p.shelf_id in kept_ids]
-    displayed = {p.album_id for p in on_display}
-    # An album whose format is unknown is taken to be a single LP.
-    albums = [
-        (
-            o.album_id,
-            result.albums[o.album_id].width_cm or constants.base_per_disc,
-            cabinet_of.get(o.album_id),
-        )
-        for o in result.ordered
-        if o.album_id not in displayed
-    ]
-    share = (100 - room_percent) / 100
-    standing = {p.album_id: p.shelf_id for p in store.load(Placement)}
-    spots, _left_out = place(
-        albums,
-        [(shelf.id, shelf.cabinet_id, shelf.width_cm * share) for shelf in usable],
-        standing,
-    )
-    store.save(
-        ProposedPlacement,
-        [
-            ProposedPlacement(
-                spot.album_id, spot.shelf_id, spot.position, PlacementSource.ALGORITHM
+    with proposal_changes():
+        result = sort_collection(store)
+        usable, _skipped = usable_shelves(store)
+        cabinet_of = mandatory_cabinets(store, result)
+        # What stands in a showcase, or in a cabinet kept outside the sorting, is the user's
+        # own choice: it stays there, and is left out of the row that fills the other shelves.
+        kept_ids = kept_shelf_ids(store)
+        on_display = [p for p in store.load(Placement) if p.shelf_id in kept_ids]
+        displayed = {p.album_id for p in on_display}
+        # An album whose format is unknown is taken to be a single LP.
+        albums = [
+            (
+                o.album_id,
+                result.albums[o.album_id].width_cm or constants.base_per_disc,
+                cabinet_of.get(o.album_id),
             )
-            for spot in spots
+            for o in result.ordered
+            if o.album_id not in displayed
         ]
-        + [
-            ProposedPlacement(p.album_id, p.shelf_id, p.position, p.source)
-            for p in on_display
-        ],
-    )
+        share = (100 - room_percent) / 100
+        standing = {p.album_id: p.shelf_id for p in store.load(Placement)}
+        spots, _left_out = place(
+            albums,
+            [(shelf.id, shelf.cabinet_id, shelf.width_cm * share) for shelf in usable],
+            standing,
+        )
+        store.save(
+            ProposedPlacement,
+            [
+                ProposedPlacement(
+                    spot.album_id, spot.shelf_id, spot.position, PlacementSource.ALGORITHM
+                )
+                for spot in spots
+            ]
+            + [
+                ProposedPlacement(p.album_id, p.shelf_id, p.position, p.source)
+                for p in on_display
+            ],
+        )
 
 
 def mandatory_cabinets(store: JsonStore, result: Sorted) -> dict[int, int]:
@@ -211,7 +213,8 @@ def discard_proposal(store: JsonStore) -> None:
     Args:
         store: The store of the collection.
     """
-    store.remove(ProposedPlacement)
+    with proposal_changes():
+        store.remove(ProposedPlacement)
 
 
 def accept_proposal(store: JsonStore) -> None:
@@ -220,20 +223,21 @@ def accept_proposal(store: JsonStore) -> None:
     Args:
         store: The store of the collection.
     """
-    if not has_proposal(store):
-        return
-    proposed = store.load(ProposedPlacement)
-    save_if_unsaved(store, "before proposal")
-    adopt_sorting(store)
-    store.save(
-        Placement,
-        [Placement(p.album_id, p.shelf_id, p.position, p.source) for p in proposed],
-    )
-    store.remove(ProposedPlacement)
-    # The layout is the proposal now: a reorganisation towards an earlier one has no point.
-    store.remove(Reorganisation)
-    store.remove(TargetPlacement)
-    save_version(store, "proposal accepted")
+    with proposal_changes():
+        if not has_proposal(store):
+            return
+        proposed = store.load(ProposedPlacement)
+        save_if_unsaved(store, "before proposal")
+        adopt_sorting(store)
+        store.save(
+            Placement,
+            [Placement(p.album_id, p.shelf_id, p.position, p.source) for p in proposed],
+        )
+        store.remove(ProposedPlacement)
+        # The layout is the proposal now: a reorganisation towards an earlier one has no point.
+        store.remove(Reorganisation)
+        store.remove(TargetPlacement)
+        save_version(store, "proposal accepted")
 
 
 def adopt_sorting(store: JsonStore) -> None:

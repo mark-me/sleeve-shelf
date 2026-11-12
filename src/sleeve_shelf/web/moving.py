@@ -20,7 +20,7 @@ from sleeve_shelf.shelving.moving import (
     selection,
     wider,
 )
-from sleeve_shelf.shelving.placing import ShelvesChanged
+from sleeve_shelf.shelving.placing import ProposalGone, ShelvesChanged, proposal_edit
 from sleeve_shelf.shelving.proposal import has_proposal
 from sleeve_shelf.web.context import get_store
 from sleeve_shelf.shelving.places import albums_to_stand_next_to, shelf_options
@@ -119,10 +119,19 @@ def _next_to_name(store, planned):
 def move():
     """Carry out the move as it is worked out now, on the shelves or the proposal as they stand."""
     store = get_store()
-    if request.form.get("layout") == "proposal" and not has_proposal(store):
-        # Meant for a proposal that was accepted or discarded meanwhile: never the shelves instead.
-        return redirect(url_for("moving.index", gone=1))
-    layout, layout_name = _layout(store, request.form)
+    if request.form.get("layout") == "proposal":
+        # Worked out and saved while the proposal is held, so it is the proposal the plan was
+        # made on; one accepted or discarded meanwhile is refused, never the shelves instead.
+        try:
+            with proposal_edit(store):
+                return _carry_out(store, ProposedPlacement, "proposal")
+        except ProposalGone:
+            return redirect(url_for("moving.index", gone=1))
+    return _carry_out(store, Placement, None)
+
+
+def _carry_out(store, layout, layout_name):
+    """Work the move out from the form and make it, in the layout given."""
     chosen, how, shelf_id, next_to = _chosen(store, request.form, layout)
     if chosen is None or not _complete(how, shelf_id, next_to):
         abort(400)

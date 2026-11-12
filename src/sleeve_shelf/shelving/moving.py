@@ -24,7 +24,7 @@ from sleeve_shelf.domain import (
     sort_name,
 )
 from sleeve_shelf.persistence import JsonStore
-from sleeve_shelf.shelving.placing import ShelvesChanged
+from sleeve_shelf.shelving.placing import ShelvesChanged, proposal_edit
 from sleeve_shelf.shelving.proposal import sort_collection
 from sleeve_shelf.sorting.placement import TOLERANCE_CM, fill_shelves
 from sleeve_shelf.sorting.spots import SuggestedSpot
@@ -535,9 +535,16 @@ def carry_out(store: JsonStore, chosen: Plan, layout: type[Placement] = Placemen
         store: The store of the collection.
         chosen: The plan.
         layout: The layout it was worked out on: the shelves or the proposal.
+
+    Raises:
+        ProposalGone: A plan for the proposal, which was accepted or discarded meanwhile.
     """
     if not chosen.changes:
         return
     if layout is Placement:
         save_if_unsaved(store, "before moving")
-    store.save(layout, list(chosen.placements))
+        store.save(layout, list(chosen.placements))
+        return
+    # The proposal may have been accepted or discarded meanwhile: then it is not brought back.
+    with proposal_edit(store):
+        store.save(layout, list(chosen.placements))
