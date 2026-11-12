@@ -30,6 +30,7 @@ from sleeve_shelf.sorting.placement import TOLERANCE_CM, fill_shelves
 from sleeve_shelf.sorting.spots import SuggestedSpot
 from sleeve_shelf.shelving.spots import belonging
 from sleeve_shelf.library.taking_part import kept_shelf_ids, usable_shelves
+from sleeve_shelf.library.artists import set_cluster
 from sleeve_shelf.library.versions import save_if_unsaved
 
 # The target that takes albums off their shelf.
@@ -545,25 +546,36 @@ def plan_placing(store: JsonStore, album_ids: Iterable[int], constants: WidthCon
     return plan(store, Selection(Kind.ALBUM, 0, "", tuple(in_order)), How.BELONGS, None, constants)
 
 
-def carry_out(store: JsonStore, chosen: Plan, layout: type[Placement] = Placement) -> None:
+def carry_out(
+    store: JsonStore,
+    chosen: Plan,
+    layout: type[Placement] = Placement,
+    confirm: tuple[int, int] | None = None,
+) -> None:
     """Make the planned move: on the shelves the layout as it was is kept as a version first.
 
-    In the proposal nothing on the shelves changes, so no version is kept.
+    In the proposal nothing on the shelves changes, so no version is kept. A cluster confirmed with
+    the move is saved with it, and should either fail, neither stands.
 
     Args:
         store: The store of the collection.
         chosen: The plan.
         layout: The layout it was worked out on: the shelves or the proposal.
+        confirm: An artist and the cluster to put it in as confirmed, along with the move.
 
     Raises:
         ProposalGone: A plan for the proposal, which was accepted or discarded meanwhile.
     """
-    if not chosen.changes:
-        return
-    if layout is Placement:
+    if chosen.changes and layout is Placement:
         save_if_unsaved(store, "before moving")
-        store.save(layout, list(chosen.placements))
-        return
-    # The proposal may have been accepted or discarded meanwhile: then it is not brought back.
-    with proposal_edit(store):
-        store.save(layout, list(chosen.placements))
+    with store.together(layout, ArtistClusterAssignment, Cluster):
+        if chosen.changes:
+            if layout is Placement:
+                store.save(layout, list(chosen.placements))
+            else:
+                # The proposal may have been accepted or discarded meanwhile: then it is not
+                # brought back.
+                with proposal_edit(store):
+                    store.save(layout, list(chosen.placements))
+        if confirm is not None:
+            set_cluster(store, *confirm)

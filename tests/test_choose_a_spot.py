@@ -283,3 +283,18 @@ def test_in_the_proposal_confirming_the_cluster_is_offered_unticked(client, stor
     # Ticked on purpose, the cluster is confirmed for good.
     client.post("/move/", data={**moved, "next_to": "21", "confirm_cluster": "1"})
     assert _confirmed(store, 4) == 2
+
+
+def test_placing_in_another_cluster_is_undone_when_confirming_fails(store, monkeypatch):
+    from sleeve_shelf.shelving import spots
+
+    before = _shelves(store)
+
+    def failing(*args):
+        raise OSError("could not write")
+
+    monkeypatch.setattr(spots, "set_cluster", failing)
+    with pytest.raises(OSError):
+        place_in_cluster(store, 41, 2, CONSTANTS, confirm=True)
+
+    assert _shelves(store) == before and _confirmed(store, 4) is None

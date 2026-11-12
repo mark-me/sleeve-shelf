@@ -419,3 +419,42 @@ def test_moving_an_album_the_proposal_has_no_place_for_says_it_adds_it(tmp_path)
     # Moving it there adds it, and only to the proposal.
     client.post("/move/", data={"layout": "proposal", "kind": "album", "id": "22", "how": "end", "shelf": "3"})
     assert any(p.album_id == 22 and p.shelf_id == 3 for p in store.load(ProposedPlacement))
+
+
+def test_changes_saved_together_are_all_undone_when_one_fails(tmp_path):
+    from sleeve_shelf.domain import ArtistClusterAssignment, ProposedPlacement
+
+    store = _collection(tmp_path)
+    placements = (tmp_path / "placement_current.json").read_bytes()
+
+    with pytest.raises(RuntimeError):
+        with store.together(Placement, ArtistClusterAssignment, ProposedPlacement):
+            store.save(Placement, [])
+            store.save(ProposedPlacement, [Placement(11, 1, 0)])
+            raise RuntimeError("the disk is full")
+
+    assert (tmp_path / "placement_current.json").read_bytes() == placements
+    # A file that was not there before is gone again.
+    assert not store.exists(ProposedPlacement)
+
+
+def test_a_move_in_the_proposal_and_its_cluster_stand_or_fall_together(tmp_path, monkeypatch):
+    from sleeve_shelf.domain import ProposedPlacement
+    from sleeve_shelf.shelving import moving
+    from sleeve_shelf.shelving.proposal import generate_proposal
+
+    store = _collection(tmp_path)
+    generate_proposal(store, CONSTANTS, 0)
+    proposal = (tmp_path / "placement_proposal.json").read_bytes()
+    assignments = (tmp_path / "cluster_assignments.json").read_bytes()
+    planned = plan(store, selection(store, Kind.ALBUM, 41, ProposedPlacement), How.END, 3, CONSTANTS, layout=ProposedPlacement)
+
+    def failing(*args):
+        raise OSError("could not write")
+
+    monkeypatch.setattr(moving, "set_cluster", failing)
+    with pytest.raises(OSError):
+        carry_out(store, planned, ProposedPlacement, (4, 2))
+
+    assert (tmp_path / "placement_proposal.json").read_bytes() == proposal
+    assert (tmp_path / "cluster_assignments.json").read_bytes() == assignments

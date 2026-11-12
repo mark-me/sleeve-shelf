@@ -7,7 +7,6 @@ from flask import Blueprint, abort, redirect, render_template, request, url_for
 
 from sleeve_shelf.config import load_settings
 from sleeve_shelf.domain import Album, Placement, ProposedPlacement
-from sleeve_shelf.library.artists import set_cluster
 from sleeve_shelf.shelving.moving import (
     NEXT_TO,
     OFF_SHELF,
@@ -143,9 +142,7 @@ def _carry_out(store, layout, layout_name):
         abort(400)
     # Worked out before moving: afterwards the album stands where the cluster asks for already.
     offer = cluster_offer(store, chosen, planned.next_to) if request.form.get("confirm_cluster") else None
-    carry_out(store, planned, layout)
-    if offer is not None:
-        set_cluster(store, offer["artist_id"], offer["cluster_id"])
+    carry_out(store, planned, layout, (offer["artist_id"], offer["cluster_id"]) if offer else None)
     # Where it went: the first shelf it stands on now, in walking order.
     landed = next((change for change in planned.changes if change.after > change.before), None)
     return redirect(

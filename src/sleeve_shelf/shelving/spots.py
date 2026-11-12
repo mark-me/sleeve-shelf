@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from sleeve_shelf.domain import (
     Style,
     Album,
+    ArtistClusterAssignment,
     Cabinet,
+    Cluster,
     Placement,
     PlacementSource,
     Shelf,
@@ -284,7 +286,9 @@ def place_in_cluster(
         return None
     artist_ids, _ = _other_clusters(store, album_id)
     album = next((a for a in store.load(Album) if a.id == album_id), None)
-    spot = place_at_spot(store, album_id, constants, dict.fromkeys(artist_ids, cluster_id))
-    if spot is not None and confirm and album is not None:
-        set_cluster(store, album.artist_id, cluster_id)
+    # Standing it there and confirming its cluster stand or fall together.
+    with store.together(Placement, ArtistClusterAssignment, Cluster):
+        spot = place_at_spot(store, album_id, constants, dict.fromkeys(artist_ids, cluster_id))
+        if spot is not None and confirm and album is not None:
+            set_cluster(store, album.artist_id, cluster_id)
     return spot
