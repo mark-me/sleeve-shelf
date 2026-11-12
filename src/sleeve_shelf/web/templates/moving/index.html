@@ -178,8 +178,14 @@
       {% if plan.next_to is not none %}<input type="hidden" name="next_to" value="{{ plan.next_to }}">{% endif %}
       {% if cluster_offer %}
       <div class="form-check mb-3">
-        <input class="form-check-input" type="checkbox" name="confirm_cluster" value="1" id="confirm-cluster" checked>
+        {# In the proposal only the proposal changes, so a rule that lasts is never set unasked:
+           there the box starts unticked and says so (decided by Mark 2026-11-13). #}
+        <input class="form-check-input" type="checkbox" name="confirm_cluster" value="1" id="confirm-cluster" {{ 'checked' if not layout }}>
+        {% if layout %}
+        <label class="form-check-label" for="confirm-cluster">{{ _('Also put %(artist)s in %(cluster)s for good: that holds for every proposal to come, not only this one', artist=cluster_offer.artist, cluster=cluster_offer.cluster) }}<br><span class="ss-muted small">{{ _('Its cluster is now only proposed from its styles; without confirming it, generating the proposal again would take the album back there.') }}</span></label>
+        {% else %}
         <label class="form-check-label" for="confirm-cluster">{{ _('Also put %(artist)s in %(cluster)s', artist=cluster_offer.artist, cluster=cluster_offer.cluster) }}<br><span class="ss-muted small">{{ _('Its cluster is now only proposed from its styles; without confirming it, a sorting proposal would take the album back there.') }}</span></label>
+        {% endif %}
       </div>
       {% endif %}
       <button class="ss-button ss-button-primary" type="submit">{{ _('Move') }}</button>
