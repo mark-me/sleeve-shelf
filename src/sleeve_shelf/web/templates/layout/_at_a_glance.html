@@ -14,7 +14,7 @@
       <div class="ss-glance-track">
         {% if shelf.width_cm %}<div class="ss-glance-width" style="width: {{ shelf.width_cm * scale }}%;"></div>{% endif %}
         <div class="ss-glance-runs">
-          {% for run in row.runs %}<span class="ss-glance-run" style="width: {{ run.cm * scale }}%; background: {{ colour(run.index) }};" data-cluster="{{ run.cluster or '' }}" data-albums="{{ run.albums }}" data-glance-shelf="{{ shelf.id }}"><span class="ss-glance-run-name">{{ run.cluster or '' }}</span></span>{% endfor %}
+          {% for run in row.runs %}<span class="ss-glance-run" style="width: {{ run.cm * scale }}%; background: {{ colour(run.index) }};" data-cluster="{{ run.cluster_id if run.cluster_id is not none else '' }}" data-cluster-name="{{ run.cluster or '' }}" data-albums="{{ run.albums }}" data-glance-shelf="{{ shelf.id }}"><span class="ss-glance-run-name">{{ run.cluster or '' }}</span></span>{% endfor %}
         </div>
       </div>
     </div>

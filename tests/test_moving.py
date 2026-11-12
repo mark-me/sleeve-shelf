@@ -363,3 +363,19 @@ def test_discarding_waits_while_the_proposal_is_being_changed(tmp_path):
     changing.join(5)
     discarding.join(5)
     assert not store.exists(ProposedPlacement)
+
+
+def test_two_clusters_of_one_name_stay_two_at_a_glance(tmp_path):
+    from sleeve_shelf.library.clusters import rename_cluster
+    from sleeve_shelf.shelving.at_a_glance import at_a_glance
+
+    store = _collection(tmp_path)
+    # Renamed to the name of the other: nothing stops that.
+    rename_cluster(store, 2, "Jazz")
+
+    shelf_b = at_a_glance(store, CONSTANTS)["cabinets"][0]["shelves"][1]
+
+    assert [(run["cluster"], run["cluster_id"]) for run in shelf_b["runs"]] == [("Jazz", 2), ("Jazz", 1)]
+    assert shelf_b["runs"][0]["index"] != shelf_b["runs"][1]["index"]
+    fragment = create_app(tmp_path).test_client().get("/layout/glance").text
+    assert 'data-cluster="1" data-cluster-name="Jazz"' in fragment and 'data-cluster="2" data-cluster-name="Jazz"' in fragment

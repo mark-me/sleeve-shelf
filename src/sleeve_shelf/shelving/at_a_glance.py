@@ -23,7 +23,8 @@ def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placem
     """
     widths = {album.id: album.width_cm or constants.base_per_disc for album in store.load(Album)}
     clusters = in_order(store.load(Cluster))
-    order = {cluster.name: index for index, cluster in enumerate(clusters)}
+    # By id: two clusters may share a name, and are still two colours.
+    order = {cluster.id: index for index, cluster in enumerate(clusters)}
     on_shelf = BrowseQueries(store, layout).by_shelf()
     shelves = store.load(Shelf)
     cabinets = []
@@ -33,11 +34,19 @@ def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placem
             runs: list[dict] = []
             for album in on_shelf.get(shelf.id, []):
                 cm = widths.get(album.album_id, constants.base_per_disc)
-                if runs and runs[-1]["cluster"] == album.cluster:
+                if runs and runs[-1]["cluster_id"] == album.cluster_id:
                     runs[-1]["cm"] += cm
                     runs[-1]["albums"] += 1
                 else:
-                    runs.append({"cluster": album.cluster, "index": order.get(album.cluster), "cm": cm, "albums": 1})
+                    runs.append(
+                        {
+                            "cluster_id": album.cluster_id,
+                            "cluster": album.cluster,
+                            "index": order.get(album.cluster_id),
+                            "cm": cm,
+                            "albums": 1,
+                        }
+                    )
             filled = sum(run["cm"] for run in runs)
             rows.append(
                 {
@@ -54,5 +63,5 @@ def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placem
             cabinets.append({"cabinet": cabinet, "shelves": rows, "widest_cm": widest or 1.0})
     return {
         "cabinets": cabinets,
-        "clusters": [{"name": cluster.name, "index": index} for index, cluster in enumerate(clusters)],
+        "clusters": [{"id": cluster.id, "name": cluster.name, "index": index} for index, cluster in enumerate(clusters)],
     }

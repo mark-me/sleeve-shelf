@@ -77,8 +77,10 @@
     const mine = runs.filter(function (run) { return run.dataset.cluster === cluster; });
     const albums = mine.reduce(function (sum, run) { return sum + Number(run.dataset.albums); }, 0);
     const shelves = new Set(mine.map(function (run) { return run.dataset.glanceShelf; })).size;
+    // Chosen by id, as two clusters may share a name; the name is only what is shown.
+    const name = mine.length ? mine[0].dataset.clusterName : "";
     caption.textContent = caption.dataset.template
-      .replace("{cluster}", cluster || "—").replace("{albums}", albums).replace("{shelves}", shelves);
+      .replace("{cluster}", name || "—").replace("{albums}", albums).replace("{shelves}", shelves);
   }
   document.addEventListener("click", function (event) {
     const run = event.target.closest(".ss-glance-run");
