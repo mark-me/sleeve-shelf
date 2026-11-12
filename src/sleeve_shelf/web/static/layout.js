@@ -118,10 +118,17 @@
       }
       return;
     }
-    holder.innerHTML = html;
+    holder.replaceChildren(...fromServer(html));
     showGlanceStale(false);
     nameRuns();
     if (chosenCluster !== null) chooseCluster(chosenCluster);
+  }
+
+  // HTML the server made from its escaped templates, as nodes: parsed apart from the page, so
+  // nothing in it runs, and put in place without innerHTML.
+  function fromServer(html) {
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    return Array.from(parsed.body.childNodes, function (node) { return document.importNode(node, true); });
   }
 
   function showGlanceStale(stale) {
