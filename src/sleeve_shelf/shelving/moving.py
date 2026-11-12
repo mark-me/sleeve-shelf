@@ -197,6 +197,25 @@ def selection(
     return Selection(kind, item_id, names[item_id], albums)
 
 
+def stands_nowhere(store: JsonStore, chosen: Selection, layout: type[Placement] = Placement) -> bool:
+    """Whether an album chosen has no place in the layout yet, so moving it gives it one.
+
+    An album the proposal had no room for is not in it; moving it there adds it, as dragging it
+    from the tray in Layout does. The screen says so rather than leave it unsaid.
+
+    Args:
+        store: The store of the collection.
+        chosen: What is chosen.
+        layout: The shelves (Placement) or the proposal (ProposedPlacement).
+
+    Returns:
+        True for an album without a place there; False for one that has one, or anything larger.
+    """
+    if chosen.kind is not Kind.ALBUM:
+        return False
+    return all(p.album_id != chosen.id for p in store.load(layout))
+
+
 def wider(store: JsonStore, chosen: Selection, layout: type[Placement] = Placement) -> list[Selection]:
     """What the selection is part of, from small to large: its artist, its family, its cluster.
 

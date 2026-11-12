@@ -396,3 +396,26 @@ def test_an_artist_without_a_confirmed_cluster_shows_the_cluster_it_is_sorted_in
     shelf_d = at_a_glance(store, CONSTANTS)["cabinets"][1]["shelves"][0]
 
     assert [(run["cluster"], run["cluster_id"]) for run in shelf_d["runs"]] == [("Jazz", 1), ("Rock", 2)]
+
+
+def test_moving_an_album_the_proposal_has_no_place_for_says_it_adds_it(tmp_path):
+    from sleeve_shelf.domain import ProposedPlacement
+    from sleeve_shelf.shelving.moving import stands_nowhere
+    from sleeve_shelf.shelving.proposal import generate_proposal
+
+    store = _collection(tmp_path)
+    generate_proposal(store, CONSTANTS, 0)
+    # The proposal leaves one album out: as though it had no room for it.
+    proposed = [p for p in store.load(ProposedPlacement) if p.album_id != 22]
+    store.save(ProposedPlacement, proposed)
+    client = create_app(tmp_path).test_client()
+
+    assert stands_nowhere(store, selection(store, Kind.ALBUM, 22), ProposedPlacement)
+    assert not stands_nowhere(store, selection(store, Kind.ALBUM, 22))
+    assert not stands_nowhere(store, selection(store, Kind.ARTIST, 2), ProposedPlacement)
+    page = client.get("/move/?layout=proposal&kind=album&id=22").text
+    assert "no place in the proposal: it did not fit" in page
+    assert "no place in the proposal" not in client.get("/move/?layout=proposal&kind=album&id=21").text
+    # Moving it there adds it, and only to the proposal.
+    client.post("/move/", data={"layout": "proposal", "kind": "album", "id": "22", "how": "end", "shelf": "3"})
+    assert any(p.album_id == 22 and p.shelf_id == 3 for p in store.load(ProposedPlacement))

@@ -41,6 +41,10 @@
       </div>
       <a class="ss-row-place" href="{{ url_for('moving.index', layout=layout) }}">{{ _('Choose something else') }}</a>
     </div>
+    {# An album with no place in this layout gets one by moving it: said, not left unsaid. #}
+    {% if nowhere %}
+    <div class="ss-card-body pt-2 pb-0"><p class="ss-muted small mb-0">{% if layout %}{{ _('This album has no place in the proposal: it did not fit. Moving it gives it one there, as dragging it from the tray in Layout does.') }}{% else %}{{ _('This album has no place on your shelves yet. Moving it gives it one.') }}{% endif %}</p></div>
+    {% endif %}
     {# Larger with one tap: what was chosen is part of an artist, a family and a cluster. #}
     {% if larger %}
     <div class="ss-card-body d-flex flex-wrap align-items-center gap-2 pt-2">

@@ -18,6 +18,7 @@ from sleeve_shelf.shelving.moving import (
     find,
     plan,
     selection,
+    stands_nowhere,
     wider,
 )
 from sleeve_shelf.shelving.placing import ProposalGone, ShelvesChanged, proposal_edit
@@ -104,6 +105,7 @@ def index():
         layout=layout_name,
         has_proposal=has_proposal(store),
         larger=wider(store, chosen, layout) if chosen else [],
+        nowhere=stands_nowhere(store, chosen, layout) if chosen else False,
     )
 
 

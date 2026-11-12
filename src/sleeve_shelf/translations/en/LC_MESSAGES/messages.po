@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Sleeve & Shelf VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-13 00:32+0100\n"
+"POT-Creation-Date: 2026-11-13 00:50+0100\n"
 "PO-Revision-Date: 2026-10-08 23:54+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -2870,6 +2870,14 @@ msgstr[1] ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
 msgid "Choose something else"
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "This album has no place in the proposal: it did not fit. Moving it gives it one there, as dragging it from the tray in Layout does."
+msgstr ""
+
+#: src/sleeve_shelf/web/templates/moving/index.html
+msgid "This album has no place on your shelves yet. Moving it gives it one."
 msgstr ""
 
 #: src/sleeve_shelf/web/templates/moving/index.html
