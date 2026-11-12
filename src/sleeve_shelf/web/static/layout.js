@@ -91,16 +91,21 @@
   nameRuns();
 
   // All cabinets at a glance follows every move, so the whole stays in view.
+  // Moves in quick succession ask for it more than once; only the latest answer is shown, so an
+  // earlier one coming in last never replaces the newer overview.
+  let glanceAsked = 0;
   async function refreshGlance() {
     const holder = document.querySelector("[data-glance]");
     if (!holder || !root.dataset.glanceUrl) return;
+    const asked = ++glanceAsked;
     try {
       const response = await fetch(root.dataset.glanceUrl);
-      if (response.ok) {
-        holder.innerHTML = await response.text();
-        nameRuns();
-        if (chosenCluster !== null) chooseCluster(chosenCluster);
-      }
+      if (!response.ok) return;
+      const html = await response.text();
+      if (asked !== glanceAsked) return;
+      holder.innerHTML = html;
+      nameRuns();
+      if (chosenCluster !== null) chooseCluster(chosenCluster);
     } catch (error) {
       // The overview stays as it was; the shelves below are right.
     }
