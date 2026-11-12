@@ -379,3 +379,20 @@ def test_two_clusters_of_one_name_stay_two_at_a_glance(tmp_path):
     assert shelf_b["runs"][0]["index"] != shelf_b["runs"][1]["index"]
     fragment = create_app(tmp_path).test_client().get("/layout/glance").text
     assert 'data-cluster="1" data-cluster-name="Jazz"' in fragment and 'data-cluster="2" data-cluster-name="Jazz"' in fragment
+
+
+def test_an_artist_without_a_confirmed_cluster_shows_the_cluster_it_is_sorted_in(tmp_path):
+    from sleeve_shelf.domain import ArtistClusterAssignment, Style
+    from sleeve_shelf.shelving.at_a_glance import at_a_glance
+
+    store = _collection(tmp_path)
+    # Nobody Knows has no cluster of its own; its album's style points to Rock.
+    store.save(Style, [Style(1, "Indie Rock", 2)])
+    albums = store.load(Album)
+    next(a for a in albums if a.id == 41).style_ids = [1]
+    store.save(Album, albums)
+    assert all(a.artist_id != 4 for a in store.load(ArtistClusterAssignment))
+
+    shelf_d = at_a_glance(store, CONSTANTS)["cabinets"][1]["shelves"][0]
+
+    assert [(run["cluster"], run["cluster_id"]) for run in shelf_d["runs"]] == [("Jazz", 1), ("Rock", 2)]

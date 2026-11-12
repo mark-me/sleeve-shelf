@@ -6,6 +6,7 @@ up, which empty, and where each cluster runs.
 
 from sleeve_shelf.domain import Album, Cabinet, Cluster, Placement, Shelf, WidthConstants, in_order
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
+from sleeve_shelf.shelving.proposal import sort_collection
 
 
 def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placement] = Placement) -> dict:
@@ -25,6 +26,10 @@ def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placem
     clusters = in_order(store.load(Cluster))
     # By id: two clusters may share a name, and are still two colours.
     order = {cluster.id: index for index, cluster in enumerate(clusters)}
+    names = {cluster.id: cluster.name for cluster in clusters}
+    # The cluster each artist is sorted in, proposed or confirmed, as a proposal stands it; an
+    # artist the sorting leaves out keeps the cluster it was recorded in, if any.
+    sorted_in = _cluster_of_each_artist(store)
     on_shelf = BrowseQueries(store, layout).by_shelf()
     shelves = store.load(Shelf)
     cabinets = []
@@ -34,15 +39,16 @@ def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placem
             runs: list[dict] = []
             for album in on_shelf.get(shelf.id, []):
                 cm = widths.get(album.album_id, constants.base_per_disc)
-                if runs and runs[-1]["cluster_id"] == album.cluster_id:
+                cluster_id = sorted_in.get(album.artist_id, album.cluster_id)
+                if runs and runs[-1]["cluster_id"] == cluster_id:
                     runs[-1]["cm"] += cm
                     runs[-1]["albums"] += 1
                 else:
                     runs.append(
                         {
-                            "cluster_id": album.cluster_id,
-                            "cluster": album.cluster,
-                            "index": order.get(album.cluster_id),
+                            "cluster_id": cluster_id,
+                            "cluster": names.get(cluster_id),
+                            "index": order.get(cluster_id),
                             "cm": cm,
                             "albums": 1,
                         }
@@ -65,3 +71,17 @@ def at_a_glance(store: JsonStore, constants: WidthConstants, layout: type[Placem
         "cabinets": cabinets,
         "clusters": [{"id": cluster.id, "name": cluster.name, "index": index} for index, cluster in enumerate(clusters)],
     }
+
+
+def _cluster_of_each_artist(store: JsonStore) -> dict[int, int]:
+    """Per artist the cluster the sorting puts it in, kept until a data file changes (shared)."""
+
+    def work() -> dict[int, int]:
+        return {
+            artist_id: unit.cluster_id
+            for unit in sort_collection(store).units
+            if unit.cluster_id is not None
+            for artist_id in unit.artist_ids
+        }
+
+    return store.remembered("cluster of each artist", work)
