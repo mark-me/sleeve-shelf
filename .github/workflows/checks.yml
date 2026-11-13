@@ -1,0 +1,48 @@
+name: Checks
+
+# The checks every change passes: ruff, the tests and the documentation build. On a pull request,
+# and on a push to any branch but main and test, where the Docker workflow runs the same tests
+# before it builds an image and the documentation workflow builds the site.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main, test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request makes an older run pointless.
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  code:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Check the code
+        run: uv run --locked python -m ruff check src tests
+
+      # The documentation's own conventions (tests/test_docs.py) are among the tests.
+      - name: Run tests
+        run: uv run --locked python -m pytest
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+      - name: Build the documentation
+        working-directory: docs-site
+        run: uv run --locked python -m zensical build --strict

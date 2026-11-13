@@ -33,7 +33,7 @@ The [developer guide](https://mark-me.github.io/sleeve-shelf/developer/) explain
 
 ## Checks every change passes
 
-Run these before you open a pull request; they run again when a change reaches `main` or `test`, and a pull request is scanned for vulnerable dependencies:
+Run these before you open a pull request. They also run on every pull request (`.github/workflows/checks.yml`), and the dependencies are scanned for known vulnerabilities:
 
 ```sh
 uv run python -m pytest                            # the tests
