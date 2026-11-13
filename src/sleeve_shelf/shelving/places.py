@@ -36,7 +36,11 @@ def shelf_options(store: JsonStore) -> list[dict]:
 
 
 def albums_to_stand_next_to(
-    store: JsonStore, text: str, leaving: frozenset[int] = frozenset(), limit: int = 12
+    store: JsonStore,
+    text: str,
+    leaving: frozenset[int] = frozenset(),
+    limit: int = 12,
+    layout: type[Placement] = Placement,
 ) -> list[dict]:
     """Albums on a shelf whose artist and title hold every word of the text, in walking order.
 
@@ -45,6 +49,7 @@ def albums_to_stand_next_to(
         text: What was typed: an artist, a title, or both.
         leaving: Albums that are moved themselves, and so are left out.
         limit: How many at most.
+        layout: Where they stand: the shelves (Placement) or the proposal (ProposedPlacement).
 
     Returns:
         One entry per album, with its artist, title, cabinet and shelf.
@@ -56,7 +61,7 @@ def albums_to_stand_next_to(
     albums = {album.id: album for album in store.load(Album)}
     shelves = {option["id"]: (index, option) for index, option in enumerate(shelf_options(store))}
     found = []
-    for placement in store.load(Placement):
+    for placement in store.load(layout):
         album = albums.get(placement.album_id)
         if album is None or album.id in leaving or placement.shelf_id not in shelves:
             continue

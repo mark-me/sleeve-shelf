@@ -5,7 +5,8 @@ import os
 import re
 import shutil
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field, is_dataclass
 from datetime import date, datetime
 from enum import Enum
@@ -35,6 +36,7 @@ from sleeve_shelf.domain import (
     Placement,
     PlacementSource,
     ProposedPlacement,
+    Reorganisation,
     ReleaseEnrichment,
     RuleSuggestionDismissal,
     Shelf,
@@ -43,6 +45,7 @@ from sleeve_shelf.domain import (
     Style,
     Credit,
     ReleaseLabel,
+    TargetPlacement,
     Track,
 )
 
@@ -282,6 +285,21 @@ _TABLES: dict[type, _Table] = {
         {"source": PlacementSource},
         _PLACEMENT_RENAMED,
     ),
+    TargetPlacement: _Table("placement_target.json", _PLACEMENT_COLUMNS, {"source": PlacementSource}),
+    Reorganisation: _Table(
+        "reorganisation.json",
+        {
+            "started_at": "TIMESTAMP",
+            "table_records": "INTEGER",
+            "to_move": "INTEGER",
+            "moved": "INTEGER",
+            "rounds_done": "INTEGER",
+            "taken_in_round": "INTEGER",
+            "on_table": "INTEGER[]",
+            "set_aside": "INTEGER[]",
+            "left_out": "INTEGER[]",
+        },
+    ),
 }
 
 
@@ -448,6 +466,38 @@ class JsonStore:
             True when it has.
         """
         return (self.data_dir / _TABLES[entity].filename).exists()
+
+    @contextmanager
+    def together(self, *entities: type) -> Iterator[None]:
+        """Changes to these entities that stand or fall together: a failure undoes them all.
+
+        The files are one per entity and have no transactions, so a change saved to one and failing
+        before the next would leave half of it. Each file is remembered as it is, and should
+        anything in the block fail, put back exactly so — or removed again, if it was not there —
+        before the error goes on.
+
+        Args:
+            entities: The kinds of item the block changes.
+
+        Returns:
+            A context in which the changes stand or fall together.
+
+        Raises:
+            BaseException: Whatever the block raised, once the files are put back.
+        """
+        paths = [self.data_dir / _TABLES[entity].filename for entity in dict.fromkeys(entities)]
+        before = {path: path.read_bytes() if path.exists() else None for path in paths}
+        try:
+            yield
+        except BaseException:
+            for path, data in before.items():
+                if data is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    partial = path.with_name(path.name + ".part")
+                    partial.write_bytes(data)
+                    partial.replace(path)
+            raise
 
     def remove(self, entity: type) -> None:
         """Delete the entity's file, if it was written.

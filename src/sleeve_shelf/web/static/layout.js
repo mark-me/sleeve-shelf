@@ -48,7 +48,99 @@
   const undoBar = document.getElementById("layout-undo");
   let undoing = null;
 
+  // On a phone the overview starts folded: it is long there, and the shelves are what is worked on.
+  const glanceBox = document.getElementById("layout-glance");
+  if (glanceBox && window.matchMedia("(max-width: 600px)").matches) glanceBox.open = false;
+
+  // At a glance a cluster's name stands in its colour where there is room for it; a tap on a colour
+  // shows that cluster everywhere and says what it is, a second tap shows all again.
+  let chosenCluster = null;
+  function nameRuns() {
+    document.querySelectorAll(".ss-glance-run-name").forEach(function (name) {
+      name.hidden = false;
+      name.hidden = name.scrollWidth > name.parentElement.clientWidth;
+    });
+  }
+  function chooseCluster(cluster) {
+    const box = document.getElementById("layout-glance");
+    const caption = box && box.querySelector("[data-glance-caption]");
+    if (!box || !caption) return;
+    chosenCluster = cluster;
+    const runs = Array.from(box.querySelectorAll(".ss-glance-run"));
+    runs.forEach(function (run) { run.classList.toggle("is-chosen", cluster !== null && run.dataset.cluster === cluster); });
+    box.classList.toggle("is-choosing", cluster !== null);
+    caption.classList.toggle("is-chosen", cluster !== null);
+    if (cluster === null) {
+      caption.textContent = caption.dataset.hint;
+      return;
+    }
+    const mine = runs.filter(function (run) { return run.dataset.cluster === cluster; });
+    const albums = mine.reduce(function (sum, run) { return sum + Number(run.dataset.albums); }, 0);
+    const shelves = new Set(mine.map(function (run) { return run.dataset.glanceShelf; })).size;
+    // Chosen by id, as two clusters may share a name; the name is only what is shown.
+    const name = mine.length ? mine[0].dataset.clusterName : "";
+    caption.textContent = caption.dataset.template
+      .replace("{cluster}", name || "—").replace("{albums}", albums).replace("{shelves}", shelves);
+  }
+  document.addEventListener("click", function (event) {
+    const run = event.target.closest(".ss-glance-run");
+    if (!run) return;
+    chooseCluster(chosenCluster === run.dataset.cluster ? null : run.dataset.cluster);
+  });
+  const glanceDetails = document.getElementById("layout-glance");
+  if (glanceDetails) glanceDetails.addEventListener("toggle", nameRuns);
+  window.addEventListener("resize", nameRuns);
+  nameRuns();
+
+  // All cabinets at a glance follows every move, so the whole stays in view.
+  // Moves in quick succession ask for it more than once; only the latest answer is shown, so an
+  // earlier one coming in last never replaces the newer overview. When it cannot be fetched it is
+  // tried once more; failing again, the overview says it is out of date rather than pretend.
+  let glanceAsked = 0;
+  const GLANCE_RETRY_MS = 2000;
+  async function refreshGlance(again) {
+    const holder = document.querySelector("[data-glance]");
+    if (!holder || !root.dataset.glanceUrl) return;
+    const asked = again ? glanceAsked : ++glanceAsked;
+    let html = null;
+    try {
+      const response = await fetch(root.dataset.glanceUrl);
+      if (response.ok) html = await response.text();
+    } catch (error) {
+      // Offline or the server gone for a moment: handled below like an error answer.
+    }
+    if (asked !== glanceAsked) return;
+    if (html === null) {
+      if (!again) {
+        setTimeout(function () { refreshGlance(true); }, GLANCE_RETRY_MS);
+      } else {
+        showGlanceStale(true);
+      }
+      return;
+    }
+    holder.replaceChildren(...fromServer(html));
+    showGlanceStale(false);
+    nameRuns();
+    if (chosenCluster !== null) chooseCluster(chosenCluster);
+  }
+
+  // HTML the server made from its escaped templates, as nodes: parsed apart from the page, so
+  // nothing in it runs, and put in place without innerHTML.
+  function fromServer(html) {
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    return Array.from(parsed.body.childNodes, function (node) { return document.importNode(node, true); });
+  }
+
+  function showGlanceStale(stale) {
+    const box = document.getElementById("layout-glance");
+    const notice = box && box.querySelector("[data-glance-stale]");
+    if (!box || !notice) return;
+    notice.hidden = !stale;
+    box.classList.toggle("is-stale", stale);
+  }
+
   function offerUndo(shelves) {
+    refreshGlance();
     undoing = shelves;
     undoBar.hidden = false;
   }
@@ -165,6 +257,13 @@
     document.getElementById("send-what").textContent = title
       ? text.sendOne.replace("__artist__", artist).replace("__title__", title.textContent)
       : text.sendWhat.replace("__artist__", artist).replace("__num__", ids.length);
+    // More ways: the Move screen with this block chosen, an album on its own or else its artist.
+    const more = document.getElementById("send-more");
+    if (more) {
+      const base = more.dataset.moveUrl;
+      const chosen = ids.length === 1 || !block.dataset.artist ? "kind=album&id=" + ids[0] : "kind=artist&id=" + block.dataset.artist;
+      more.href = base + (base.includes("?") ? "&" : "?") + chosen;
+    }
     const here = block.closest(".ss-blocks").dataset.list;
     dialog.querySelectorAll(".ss-send-option").forEach(function (option) {
       const current = option.dataset.sendTo === here;

@@ -7,6 +7,7 @@ from sleeve_shelf.domain import (
     ShelfLayer,
     ShelfType,
     find_by_id,
+    in_order,
     move,
     settle_order,
 )
@@ -179,3 +180,73 @@ def _find[T: (Cabinet, Shelf)](items: list[T], item_id: int) -> T:
     if item is None:
         raise LookupError(item_id)
     return item
+
+
+def measure_shelf(store: JsonStore, shelf_id: int, width_cm: float) -> Shelf:
+    """Record the inside width of a shelf as measured.
+
+    Args:
+        store: The store of the collection.
+        shelf_id: The shelf.
+        width_cm: Its inside width, in cm, above zero.
+
+    Returns:
+        The shelf.
+
+    Raises:
+        ValueError: A width of zero or less.
+    """
+    if width_cm <= 0:
+        raise ValueError("A width has to be above zero")
+    shelves = store.load(Shelf)
+    shelf = _find(shelves, shelf_id)
+    shelf.width_cm = width_cm
+    shelf.width_measured = True
+    store.save(Shelf, shelves)
+    return shelf
+
+
+def measuring(store: JsonStore, fill: dict[int, tuple[int, float]]) -> dict:
+    """What the Measure shelves screen shows: every shelf in walking order, and how many are measured.
+
+    Args:
+        store: The store of the collection.
+        fill: The albums and cm each shelf holds, as BrowseQueries.shelf_fill gives it.
+
+    Returns:
+        What the screen's template uses, by name.
+    """
+    shelves = store.load(Shelf)
+    cabinets = [
+        {
+            "cabinet": cabinet,
+            "shelves": [measured_row(shelf, cabinet, fill) for shelf in in_order(shelves) if shelf.cabinet_id == cabinet.id],
+        }
+        for cabinet in in_order(store.load(Cabinet))
+    ]
+    return {
+        "cabinets": [c for c in cabinets if c["shelves"]],
+        "measured_count": sum(1 for shelf in shelves if shelf.width_measured),
+        "shelf_count": len(shelves),
+    }
+
+
+def measured_row(shelf: Shelf, cabinet: Cabinet, fill: dict[int, tuple[int, float]]) -> dict:
+    """One shelf as the Measure shelves screen shows it.
+
+    Args:
+        shelf: The shelf.
+        cabinet: Its cabinet.
+        fill: The albums and cm each shelf holds.
+
+    Returns:
+        Its width, whether measured, what it holds and the room left.
+    """
+    albums, filled_cm = fill.get(shelf.id, (0, 0.0))
+    return {
+        "shelf": shelf,
+        "outside": cabinet.outside_sorting,
+        "albums": albums,
+        "filled_cm": filled_cm,
+        "room_cm": None if shelf.width_cm is None else shelf.width_cm - filled_cm,
+    }

@@ -5,6 +5,7 @@ from sleeve_shelf.library.taking_part import albums_taking_part
 from sleeve_shelf.library.versions import list_versions
 from sleeve_shelf.persistence import JsonStore
 from sleeve_shelf.shelving.proposal import has_proposal
+from sleeve_shelf.shelving.reorganising import running
 
 
 def collection_figures(store: JsonStore) -> dict:
@@ -34,6 +35,7 @@ def collection_figures(store: JsonStore) -> dict:
         "to_fetch": len({a.release_id for a in albums if a.release_id is not None} - fetched),
         "unmeasured": sum(1 for s in shelves if not s.width_cm and not s.is_showcase),
         "has_proposal": has_proposal(store),
+        "reorganisation": running(store),
         "last_version": versions[0] if versions else None,
         "unsaved": not any(version.is_current for version in versions),
     }

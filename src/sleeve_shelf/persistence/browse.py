@@ -60,6 +60,7 @@ class AlbumRow:
         cover_url: The small cover.
         added_on: The day a sync or import added the album; None for one that came with the
             workbook.
+        cluster_id: The cluster, which tells two clusters of the same name apart.
         tracks: In search results: the songs that matched, as (position, title), when the artist and
             title alone did not.
     """
@@ -77,6 +78,7 @@ class AlbumRow:
     artist_id: int | None = None
     cover_url: str | None = None
     added_on: date | None = None
+    cluster_id: int | None = None
     tracks: tuple[tuple[str, str], ...] = ()
 
 
@@ -275,7 +277,7 @@ class BrowseQueries:
             {self._located_albums()}
             {songs}
             SELECT located.album_id, artist, title, year, cluster, era_band, shelf_id, cabinet,
-                   shelf, is_lp, artist_id, cover_url, added_on,
+                   shelf, is_lp, artist_id, cover_url, added_on, cluster_id,
                    {"found.tracks" if songs else "NULL"}
             FROM located
             {"LEFT JOIN found ON found.album_id = located.album_id" if songs else ""}
@@ -304,6 +306,7 @@ class BrowseQueries:
                        ) AS cover_url,
                        album.added_on,
                        album.original_release_year AS year, cluster.name AS cluster,
+                       cluster.id AS cluster_id,
                        era_band.label AS era_band, shelf.id AS shelf_id,
                        cabinet.id AS cabinet_id, cabinet.name AS cabinet, shelf.name AS shelf,
                        coalesce(cabinet.position, cabinet.id) AS cabinet_order,

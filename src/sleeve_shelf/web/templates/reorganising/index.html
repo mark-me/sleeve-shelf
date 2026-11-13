@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Reorganise') }}{% endblock %}
+
+{% from "_cover.html" import cover %}
+
+{# What a step asks, in a few words. #}
+{% macro what(step) %}
+{% if step.kind == 'take' and step.shelf %}{{ _('Take out of %(shelf)s', shelf=step.shelf) }}
+{% elif step.kind == 'take' %}{{ _('Take from the albums without a place') }}
+{% elif step.kind == 'take_back' %}{{ _('Take back what you set aside') }}
+{% elif step.kind == 'put' %}{{ _('Put on %(shelf)s', shelf=step.shelf) }}
+{% elif step.kind == 'set_aside' %}{{ _('Set aside for now') }}
+{% else %}{{ _('Keep apart: no place in the new layout') }}{% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="ss-page" style="max-width: 860px;">
+  <h1>{{ _('Reorganise') }}</h1>
+
+  {% if changed %}<div class="ss-alert mt-3" role="status">{{ _('The shelves changed meanwhile, so nothing was ticked off. This is the plan as they stand now.') }}</div>{% endif %}
+  {% if stopped %}<div class="ss-alert mt-3" role="status">{{ _('The reorganisation has ended. What you ticked off stands; the rest stays where it is.') }}</div>{% endif %}
+
+  {% if not running %}
+  <p class="ss-muted mt-1">{{ _('Carrying out a sorting proposal on your shelves, a table full of records at a time: steps to tick off on your phone, in rounds that each end with an empty table, so you can stop after any round and go on another day.') }}</p>
+  {% if has_proposal %}
+  {# A proposal is looked at, and adjusted if wanted, before it is carried out: that starts there. #}
+  <p class="mt-3 mb-2">{{ _('A proposal is waiting. Look at it, adjust it if you like, and start reorganising from there.') }}</p>
+  <a class="ss-button ss-button-primary" href="{{ url_for('proposal.index') }}">{{ _('To the proposal') }}</a>
+  {% else %}
+  <p class="mt-3 mb-0">{{ _('There is nothing to carry out yet.') }} <a href="{{ url_for('proposal.index') }}">{{ _('Make a sorting proposal') }}</a></p>
+  {% endif %}
+
+  {% elif done %}
+  <div class="ss-alert mt-3" role="status">{{ _('All done: your shelves are as in the proposal.') }}</div>
+  <form method="post" action="{{ url_for('reorganising.end') }}" class="mt-3">
+    <button class="ss-button ss-button-primary" type="submit">{{ _('Finish') }}</button>
+  </form>
+
+  {% else %}
+  <div class="ss-stats mt-3">
+    <div class="ss-stat ss-stat-wide">
+      <div class="ss-stat-number">{{ running.moved }} <span class="ss-stat-of">{{ _('of %(total)d', total=running.to_move) }}</span></div>
+      <div class="ss-meter mt-2" aria-hidden="true"><div class="ss-meter-fill" style="width: {{ (100 * running.moved / running.to_move) | round | int if running.to_move else 0 }}%;"></div></div>
+      <div class="ss-stat-label mt-1">{{ _('albums in their new place') }}</div>
+    </div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ on_table }} <span class="ss-stat-of">/ {{ running.table_records }}</span></div><div class="ss-stat-label">{{ _('on the table') }}</div></div>
+    <div class="ss-stat"><div class="ss-stat-number">{{ rounds_left }}</div><div class="ss-stat-label">{{ ngettext('round to go', 'rounds to go', rounds_left) }}</div></div>
+  </div>
+  {% if set_aside %}<p class="ss-muted small mt-2 mb-0">{{ ngettext('%(num)d album is set aside, to be taken back when there is room.', '%(num)d albums are set aside, to be taken back when there is room.', set_aside) }}</p>{% endif %}
+
+  <h2 class="mt-4">{{ _('Round %(number)d', number=round_number) }}</h2>
+  {% set first = steps[0] %}
+  <section class="ss-card mt-2" id="step">
+    <div class="ss-card-head"><h3 class="h5 mb-0">{{ what(first) }}</h3></div>
+    <div class="ss-card-body pb-0">
+      {% if first.kind == 'put' %}
+      <p class="mb-2">{% if first.after %}{{ _('Right after') }} <strong>{{ first.after.artist }} &ndash; {{ first.after.title }}</strong>{% else %}{{ _('At the front of the shelf') }}{% endif %}{{ ', ' }}{{ _('in this order:') }}</p>
+      {% elif first.kind == 'take' and first.shelf %}
+      <p class="mb-2">{{ _('As they stand, from left to right:') }}</p>
+      {% elif first.kind == 'set_aside' %}
+      <p class="mb-2">{{ _('The table is not enough here: these have nowhere to go yet. Put them somewhere else for now — a crate or an empty shelf will do; a later step takes them back.') }}</p>
+      {% elif first.kind == 'leave_out' %}
+      <p class="mb-2">{{ _('The new layout has no room for these; they are listed among the albums without a place from now on.') }}</p>
+      {% endif %}
+    </div>
+    {% for album in first.albums %}
+    <div class="ss-row">
+      {{ cover(album.cover_url, true, 56) }}
+      <div class="ss-row-text">
+        <span class="ss-row-artist">{{ album.artist }}</span>
+        <span class="ss-row-title">{{ album.title }}{% if album.year %} &middot; {{ album.year }}{% endif %}</span>
+      </div>
+    </div>
+    {% endfor %}
+    <form class="ss-card-body" method="post" action="{{ url_for('reorganising.step') }}">
+      <input type="hidden" name="step" value="{{ first.key }}">
+      <button class="ss-button ss-button-primary" type="submit">{{ ngettext('Done: %(num)d album', 'Done: %(num)d albums', first.albums | length) }}</button>
+    </form>
+  </section>
+
+  {% if steps | length > 1 %}
+  <h3 class="h6 mt-4">{{ _('Then, in this round') }}</h3>
+  <ol class="ss-muted small ps-3 mb-0">
+    {% for step in steps[1:] %}
+    <li>{{ what(step) }} &middot; {{ ngettext('%(num)d album', '%(num)d albums', step.albums | length) }}</li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('reorganising.end') }}" class="mt-5">
+    <button class="ss-button" type="submit">{{ _('End the reorganisation') }}</button>
+    <span class="ss-muted small ms-2">{% if on_table %}{{ ngettext('%(num)d album on the table will then have no place.', '%(num)d albums on the table will then have no place.', on_table) }}{% else %}{{ _('What you ticked off stands; the rest stays where it is.') }}{% endif %}</span>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
