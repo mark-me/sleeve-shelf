@@ -1,0 +1,24 @@
+name: Idea or feature request
+description: Suggest something the app could do, or do differently
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        What the app does, and deliberately does not do, is written down in [docs/requirements.md](https://github.com/mark-me/sleeve-shelf/blob/main/docs/requirements.md). Decisions on scope rest with the maintainer, so describing the problem behind an idea helps most.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you would like to do
+      description: The situation, at your shelves or in the app, where you miss something.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How it could work
+      description: Your idea of a solution, if you have one.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do now instead

@@ -1,13 +1,13 @@
 # Contributing to Sleeve & Shelf
 
-Thanks for your interest in Sleeve & Shelf. It is a personal, self-hosted app for organising a vinyl collection, built around one owner's real shelves — but bug reports, ideas and pull requests are welcome.
+Thanks for your interest in Sleeve & Shelf. It is a personal, self-hosted app for organising a vinyl collection, built around one owner's real shelves — but bug reports, ideas and pull requests are welcome. Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Before you start
 
 - **Found a bug?** Open an issue with what you did, what you expected and what happened instead. A screenshot and the browser you used help.
 - **Want a feature or a larger change?** Open an issue first to talk it through. What the app does — and deliberately does not do — is written down in [`docs/requirements.md`](docs/requirements.md), and decisions on scope rest with the maintainer, so agreeing on the idea first saves you work.
 - **Small fixes** (typos, an obvious bug, documentation) can go straight to a pull request.
-- **Security issues**: please do not open a public issue. Use GitHub's *Report a vulnerability* on the [Security tab](https://github.com/mark-me/sleeve-shelf/security) to report it privately.
+- **Security issues**: please do not open a public issue. See [SECURITY.md](SECURITY.md) for how to report one privately.
 
 ## Setting up
 
