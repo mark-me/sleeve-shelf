@@ -27,7 +27,11 @@
         form.querySelector("[data-measure-status]").textContent = answer.error;
         return;
       }
-      form.querySelector("[data-measure-status]").innerHTML = answer.status;
+      // The row as the server made it from its escaped template, parsed apart from the page.
+      const parsed = new DOMParser().parseFromString(answer.status, "text/html");
+      form.querySelector("[data-measure-status]").replaceChildren(
+        ...Array.from(parsed.body.childNodes, function (node) { return document.importNode(node, true); })
+      );
       document.querySelector("[data-measured-count]").textContent = answer.measured;
       document.querySelector("[data-measured-meter]").style.width =
         Math.round((100 * answer.measured) / answer.shelves) + "%";

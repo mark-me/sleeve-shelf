@@ -265,3 +265,36 @@ def test_a_cluster_further_down_the_styles_than_the_spots_offered_places_nothing
     assert place_in_cluster(store, 41, not_offered, CONSTANTS, confirm=True) is None
     assert _shelves(store) == before
     assert _confirmed(store, 4) is None
+
+
+def test_in_the_proposal_confirming_the_cluster_is_offered_unticked(client, store):
+    from sleeve_shelf.config import Settings
+    from sleeve_shelf.shelving.proposal import generate_proposal
+
+    generate_proposal(store, Settings().width_constants, 0)
+    page = client.get("/move/?layout=proposal&kind=album&id=41&how=after&next_to=22").text
+
+    assert _confirm_boxes(page) == ["unchecked"]
+    assert "for good: that holds for every proposal to come" in page
+    # Left unticked, the move changes the proposal alone.
+    moved = {"layout": "proposal", "kind": "album", "id": "41", "how": "after", "next_to": "22"}
+    assert "layout=proposal" in client.post("/move/", data=moved).headers["Location"]
+    assert _confirmed(store, 4) is None
+    # Ticked on purpose, the cluster is confirmed for good.
+    client.post("/move/", data={**moved, "next_to": "21", "confirm_cluster": "1"})
+    assert _confirmed(store, 4) == 2
+
+
+def test_placing_in_another_cluster_is_undone_when_confirming_fails(store, monkeypatch):
+    from sleeve_shelf.shelving import spots
+
+    before = _shelves(store)
+
+    def failing(*args):
+        raise OSError("could not write")
+
+    monkeypatch.setattr(spots, "set_cluster", failing)
+    with pytest.raises(OSError):
+        place_in_cluster(store, 41, 2, CONSTANTS, confirm=True)
+
+    assert _shelves(store) == before and _confirmed(store, 4) is None

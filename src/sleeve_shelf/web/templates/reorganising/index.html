@@ -23,10 +23,9 @@
   {% if not running %}
   <p class="ss-muted mt-1">{{ _('Carrying out a sorting proposal on your shelves, a table full of records at a time: steps to tick off on your phone, in rounds that each end with an empty table, so you can stop after any round and go on another day.') }}</p>
   {% if has_proposal %}
-  <form method="post" action="{{ url_for('reorganising.begin') }}" class="mt-3">
-    <button class="ss-button ss-button-primary" type="submit">{{ _('Reorganise: carry out the proposal') }}</button>
-    <a class="ms-2" href="{{ url_for('proposal.index') }}">{{ _('Look at the proposal first') }}</a>
-  </form>
+  {# A proposal is looked at, and adjusted if wanted, before it is carried out: that starts there. #}
+  <p class="mt-3 mb-2">{{ _('A proposal is waiting. Look at it, adjust it if you like, and start reorganising from there.') }}</p>
+  <a class="ss-button ss-button-primary" href="{{ url_for('proposal.index') }}">{{ _('To the proposal') }}</a>
   {% else %}
   <p class="mt-3 mb-0">{{ _('There is nothing to carry out yet.') }} <a href="{{ url_for('proposal.index') }}">{{ _('Make a sorting proposal') }}</a></p>
   {% endif %}

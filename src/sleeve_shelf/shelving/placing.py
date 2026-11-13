@@ -1,6 +1,8 @@
 """Application services for one album or artist: moving it by hand, and the rules that bind it."""
 
-from collections.abc import Iterable
+import threading
+from collections.abc import Iterable, Iterator
+from contextlib import contextmanager, nullcontext
 
 from sleeve_shelf.domain import (
     Album,
@@ -20,6 +22,53 @@ from sleeve_shelf.library.versions import keep_restore_point
 
 class ShelvesChanged(ValueError):
     """A move names albums or shelves that are not as the page showed them: nothing was moved."""
+
+
+class ProposalGone(ShelvesChanged):
+    """The proposal a change was meant for was accepted or discarded meanwhile: nothing changed."""
+
+
+# One change to the proposal at a time: making, accepting or discarding it, and adjusting it.
+# Without it a move worked out on the proposal could be saved after another request accepted or
+# discarded the proposal, and bring it back next to shelves that already changed. The app runs as
+# one process with several threads (waitress), so a lock in memory is enough. Re-entrant, as
+# accepting a proposal holds it while calling what holds it too.
+_PROPOSAL = threading.RLock()
+
+
+@contextmanager
+def proposal_changes() -> Iterator[None]:
+    """Hold the proposal for one change to it: a second change waits until the first is done.
+
+    Returns:
+        A context in which the proposal is held, until the block ends.
+    """
+    with _PROPOSAL:
+        yield
+
+
+@contextmanager
+def proposal_edit(store: JsonStore) -> Iterator[None]:
+    """Hold the proposal for adjusting it, refusing when there is none any more.
+
+    Args:
+        store: The store of the collection.
+
+    Returns:
+        A context in which the proposal is held, until the block ends.
+
+    Raises:
+        ProposalGone: The proposal was accepted or discarded meanwhile.
+    """
+    with _PROPOSAL:
+        if not store.exists(ProposedPlacement):
+            raise ProposalGone
+        yield
+
+
+def _held(store: JsonStore, entity: type):
+    """Holding the proposal while it is adjusted; the shelves as they are need nothing."""
+    return proposal_edit(store) if entity is ProposedPlacement else nullcontext()
 
 
 def move_albums(
@@ -44,24 +93,25 @@ def move_albums(
     Raises:
         ShelvesChanged: An album is named twice or is not there, or the shelf is not there.
     """
-    if (
-        len(album_ids) != len(set(album_ids))
-        or not set(album_ids) <= {album.id for album in store.load(Album)}
-        or (shelf_id is not None and shelf_id not in {shelf.id for shelf in store.load(Shelf)})
-    ):
-        raise ShelvesChanged
-    moving = set(album_ids)
-    placements = store.load(entity)
-    touched = {p.shelf_id for p in placements if p.album_id in moving} | {shelf_id} - {None}
-    kept = [p for p in placements if p.album_id not in moving]
-    if shelf_id is not None:
-        following = max((p.position for p in kept if p.shelf_id == shelf_id), default=-1) + 1
-        kept += [
-            entity(album_id, shelf_id, following + offset, PlacementSource.MANUAL)
-            for offset, album_id in enumerate(album_ids)
-        ]
-    _save(store, entity, kept)
-    return touched
+    with _held(store, entity):
+        if (
+            len(album_ids) != len(set(album_ids))
+            or not set(album_ids) <= {album.id for album in store.load(Album)}
+            or (shelf_id is not None and shelf_id not in {shelf.id for shelf in store.load(Shelf)})
+        ):
+            raise ShelvesChanged
+        moving = set(album_ids)
+        placements = store.load(entity)
+        touched = {p.shelf_id for p in placements if p.album_id in moving} | {shelf_id} - {None}
+        kept = [p for p in placements if p.album_id not in moving]
+        if shelf_id is not None:
+            following = max((p.position for p in kept if p.shelf_id == shelf_id), default=-1) + 1
+            kept += [
+                entity(album_id, shelf_id, following + offset, PlacementSource.MANUAL)
+                for offset, album_id in enumerate(album_ids)
+            ]
+        _save(store, entity, kept)
+        return touched
 
 
 def contents_before(
@@ -113,23 +163,24 @@ def rearrange_shelves(
     Raises:
         ShelvesChanged: The page did not show the shelves as they are, or an album would drop off.
     """
-    named = [album_id for ids in contents.values() for album_id in ids] + list(off_shelf)
-    placements = store.load(entity)
-    before = {p.album_id for p in placements if p.shelf_id in contents}
-    if (
-        len(named) != len(set(named))
-        or not set(named) <= {album.id for album in store.load(Album)}
-        or not set(contents) <= {shelf.id for shelf in store.load(Shelf)}
-        or not before <= set(named)
-    ):
-        raise ShelvesChanged
-    kept = [p for p in placements if p.shelf_id not in contents and p.album_id not in named]
-    moved = [
-        entity(album_id, shelf_id, position, PlacementSource.MANUAL)
-        for shelf_id, ids in contents.items()
-        for position, album_id in enumerate(ids)
-    ]
-    _save(store, entity, kept + moved)
+    with _held(store, entity):
+        named = [album_id for ids in contents.values() for album_id in ids] + list(off_shelf)
+        placements = store.load(entity)
+        before = {p.album_id for p in placements if p.shelf_id in contents}
+        if (
+            len(named) != len(set(named))
+            or not set(named) <= {album.id for album in store.load(Album)}
+            or not set(contents) <= {shelf.id for shelf in store.load(Shelf)}
+            or not before <= set(named)
+        ):
+            raise ShelvesChanged
+        kept = [p for p in placements if p.shelf_id not in contents and p.album_id not in named]
+        moved = [
+            entity(album_id, shelf_id, position, PlacementSource.MANUAL)
+            for shelf_id, ids in contents.items()
+            for position, album_id in enumerate(ids)
+        ]
+        _save(store, entity, kept + moved)
 
 
 def _save(store: JsonStore, entity: type, placements: list) -> None:

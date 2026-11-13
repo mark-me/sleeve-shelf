@@ -286,3 +286,16 @@ def test_accepting_a_proposal_at_once_ends_a_reorganisation(client, store):
     client.post("/proposal/accept")
 
     assert running(store) is None and not store.exists(TargetPlacement)
+
+
+def test_a_proposal_is_looked_at_and_adjusted_before_it_is_carried_out(client):
+    page = client.get("/proposal/").text
+
+    look, adjust, carry = page.index('id="look"'), page.index('id="adjust"'), page.index('id="carry-out"')
+    assert look < adjust < carry
+    assert page.index("/browse?layout=proposal") < adjust
+    assert adjust < page.index("/layout/?layout=proposal") < carry
+    assert carry < page.index('action="/reorganise/start"')
+    # Reorganise leads to the proposal rather than starting it unseen.
+    reorganise = client.get("/reorganise/").text
+    assert 'action="/reorganise/start"' not in reorganise and 'href="/proposal/"' in reorganise

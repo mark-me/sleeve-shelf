@@ -22,6 +22,7 @@ from sleeve_shelf.domain import (
 from sleeve_shelf.library.taking_part import kept_shelf_ids, usable_shelves
 from sleeve_shelf.library.versions import save_if_unsaved
 from sleeve_shelf.persistence import BrowseQueries, JsonStore
+from sleeve_shelf.shelving.placing import proposal_changes
 from sleeve_shelf.shelving.places import shelf_options
 from sleeve_shelf.shelving.proposal import adopt_sorting, has_proposal
 from sleeve_shelf.sorting.reorganising import Situation, Step, StepKind, carry_out, plan, to_move
@@ -54,33 +55,35 @@ def start(store: JsonStore, constants: WidthConstants) -> bool:
     Returns:
         False when there is no proposal to carry out.
     """
-    if not has_proposal(store):
-        return False
-    proposed = store.load(ProposedPlacement)
-    save_if_unsaved(store, "before reorganising")
-    adopt_sorting(store)
-    earlier = running(store)
-    taking_part = _shelves(store)
-    on_shelves = {p.album_id for p in store.load(Placement) if p.shelf_id in taking_part}
-    target = [
-        TargetPlacement(p.album_id, p.shelf_id, p.position, PlacementSource.ALGORITHM)
-        for p in proposed
-        if p.shelf_id in taking_part
-    ]
-    placed = {p.album_id for p in target}
-    store.save(TargetPlacement, target)
-    store.remove(ProposedPlacement)
-    reorganisation = Reorganisation(
-        started_at=datetime.now().replace(microsecond=0),
-        table_records=load_settings(store.data_dir).table_records,
-        to_move=0,
-        on_table=list(earlier.on_table) if earlier else [],
-        set_aside=list(earlier.set_aside) if earlier else [],
-        left_out=sorted(on_shelves - placed),
-    )
-    reorganisation.to_move = len(to_move(_situation(store, reorganisation, constants)))
-    store.save(Reorganisation, [reorganisation])
-    return True
+    # Held, so a proposal accepted, discarded or made anew meanwhile is not started half.
+    with proposal_changes():
+        if not has_proposal(store):
+            return False
+        proposed = store.load(ProposedPlacement)
+        save_if_unsaved(store, "before reorganising")
+        adopt_sorting(store)
+        earlier = running(store)
+        taking_part = _shelves(store)
+        on_shelves = {p.album_id for p in store.load(Placement) if p.shelf_id in taking_part}
+        target = [
+            TargetPlacement(p.album_id, p.shelf_id, p.position, PlacementSource.ALGORITHM)
+            for p in proposed
+            if p.shelf_id in taking_part
+        ]
+        placed = {p.album_id for p in target}
+        store.save(TargetPlacement, target)
+        store.remove(ProposedPlacement)
+        reorganisation = Reorganisation(
+            started_at=datetime.now().replace(microsecond=0),
+            table_records=load_settings(store.data_dir).table_records,
+            to_move=0,
+            on_table=list(earlier.on_table) if earlier else [],
+            set_aside=list(earlier.set_aside) if earlier else [],
+            left_out=sorted(on_shelves - placed),
+        )
+        reorganisation.to_move = len(to_move(_situation(store, reorganisation, constants)))
+        store.save(Reorganisation, [reorganisation])
+        return True
 
 
 def stop(store: JsonStore) -> None:

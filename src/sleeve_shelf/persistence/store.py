@@ -5,7 +5,8 @@ import os
 import re
 import shutil
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field, is_dataclass
 from datetime import date, datetime
 from enum import Enum
@@ -465,6 +466,38 @@ class JsonStore:
             True when it has.
         """
         return (self.data_dir / _TABLES[entity].filename).exists()
+
+    @contextmanager
+    def together(self, *entities: type) -> Iterator[None]:
+        """Changes to these entities that stand or fall together: a failure undoes them all.
+
+        The files are one per entity and have no transactions, so a change saved to one and failing
+        before the next would leave half of it. Each file is remembered as it is, and should
+        anything in the block fail, put back exactly so — or removed again, if it was not there —
+        before the error goes on.
+
+        Args:
+            entities: The kinds of item the block changes.
+
+        Returns:
+            A context in which the changes stand or fall together.
+
+        Raises:
+            BaseException: Whatever the block raised, once the files are put back.
+        """
+        paths = [self.data_dir / _TABLES[entity].filename for entity in dict.fromkeys(entities)]
+        before = {path: path.read_bytes() if path.exists() else None for path in paths}
+        try:
+            yield
+        except BaseException:
+            for path, data in before.items():
+                if data is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    partial = path.with_name(path.name + ".part")
+                    partial.write_bytes(data)
+                    partial.replace(path)
+            raise
 
     def remove(self, entity: type) -> None:
         """Delete the entity's file, if it was written.

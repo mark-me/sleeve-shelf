@@ -4,7 +4,7 @@
 {% block content %}
 <div class="ss-page" style="max-width: 900px;">
   <h1>{{ _('Sorting proposal') }}</h1>
-  <p class="ss-muted mt-1">{{ _('The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you accept.') }}</p>
+  <p class="ss-muted mt-1">{{ _('The app sorts your LPs by cluster, era band, artist family, year and title, and fills the shelves in the order set under Cabinets & shelves. Nothing changes on your shelves until you carry it out.') }}</p>
 
   {% if not has_proposal %}
   <div class="ss-stats mt-3">
@@ -25,33 +25,60 @@
   {% endif %}
 
   {% else %}
-  <div class="ss-stats mt-3">
-    <div class="ss-stat"><div class="ss-stat-number">{{ placed_count }}</div><div class="ss-stat-label">{{ _('albums placed') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ moved_count }}</div><div class="ss-stat-label">{{ _('go to another shelf') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ staying_count }}</div><div class="ss-stat-label">{{ _('stay on their shelf') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">{{ left_out | length }}</div><div class="ss-stat-label">{{ _('do not fit') }}</div></div>
-    <div class="ss-stat"><div class="ss-stat-number">&asymp; {{ rounds }}</div><div class="ss-stat-label">{{ ngettext('round of a table full (%(num)d records)', 'rounds of a table full (%(num)d records)', rounds, num=table_records) }}</div></div>
-  </div>
-  <p class="ss-muted small mt-2">{{ _('The order is the same as when every shelf is filled to the brim, but the shelf boundaries are chosen so as many albums as possible stay where they stand, and each shelf keeps %(percent)d%% of its width free for what comes later. Both figures are settings.', percent=room_percent) }} <a href="{{ url_for('settings.index') }}#reorganising">{{ _('Settings') }}</a></p>
+  {# Look first, adjust if wanted, then carry it out: the order in which a proposal is gone through. #}
+  <section class="ss-card mt-4" id="look">
+    <div class="ss-card-head"><h2>1 &middot; {{ _('Look at it') }}</h2></div>
+    <div class="ss-card-body">
+      <div class="ss-stats">
+        <div class="ss-stat"><div class="ss-stat-number">{{ placed_count }}</div><div class="ss-stat-label">{{ _('albums placed') }}</div></div>
+        <div class="ss-stat"><div class="ss-stat-number">{{ moved_count }}</div><div class="ss-stat-label">{{ _('go to another shelf') }}</div></div>
+        <div class="ss-stat"><div class="ss-stat-number">{{ staying_count }}</div><div class="ss-stat-label">{{ _('stay on their shelf') }}</div></div>
+        <div class="ss-stat"><div class="ss-stat-number">{{ left_out | length }}</div><div class="ss-stat-label">{{ _('do not fit') }}</div></div>
+        <div class="ss-stat"><div class="ss-stat-number">&asymp; {{ rounds }}</div><div class="ss-stat-label">{{ ngettext('round of a table full (%(num)d records)', 'rounds of a table full (%(num)d records)', rounds, num=table_records) }}</div></div>
+      </div>
+      <p class="ss-muted small mt-2">{{ _('The order is the same as when every shelf is filled to the brim, but the shelf boundaries are chosen so as many albums as possible stay where they stand, and each shelf keeps %(percent)d%% of its width free for what comes later. Both figures are settings.', percent=room_percent) }} <a href="{{ url_for('settings.index') }}#reorganising">{{ _('Settings') }}</a></p>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="ss-button ss-button-primary" href="{{ url_for('browse.browse', layout='proposal') }}">{{ _('Browse the proposal') }}</a>
+        <a class="ss-button" href="#per-shelf">{{ _('What changes per shelf') }}</a>
+        {% if left_out %}<a class="ss-button" href="#left-out">{{ _('What does not fit') }}</a>{% endif %}
+      </div>
+    </div>
+  </section>
 
-  <div class="d-flex flex-wrap gap-2 mt-3">
-    <a class="ss-button" href="{{ url_for('browse.browse', layout='proposal') }}">{{ _('Browse the proposal') }}</a>
-    <a class="ss-button" href="{{ url_for('layout.index', layout='proposal') }}">{{ _('Adjust by hand') }}</a>
-    <form method="post" action="{{ url_for('reorganising.begin') }}">
-      <button class="ss-button ss-button-primary" type="submit">{{ _('Reorganise: carry it out step by step') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('proposal.accept') }}">
-      <button class="ss-button" type="submit">{{ _('Accept at once') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('proposal.generate') }}">
-      <button class="ss-button" type="submit">{{ _('Generate again') }}</button>
-    </form>
-    <form method="post" action="{{ url_for('proposal.discard') }}">
-      <button class="ss-button" type="submit">{{ _('Discard') }}</button>
-    </form>
-  </div>
-  <p class="ss-muted small mt-2">{{ _('Reorganising takes your shelves there a table full at a time: each step you tick off changes the layout, and you can stop after any round. Accepting at once makes the proposal your layout straight away, for a small change or when the shelves were rearranged by hand already. Either way a version is saved first, and albums that do not fit end up without a place. “Generate again” takes changes to families, clusters, storage and widths into account.') }}</p>
+  <section class="ss-card mt-3" id="adjust">
+    <div class="ss-card-head"><h2>2 &middot; {{ _('Adjust it, if you like') }}</h2></div>
+    <div class="ss-card-body">
+      <p class="mb-2">{{ _('Drag albums and blocks in Layout as you would on your own shelves, or move a whole cluster, family or artist at once: only the proposal changes. Or change families, clusters, rules or widths and make the proposal again.') }}</p>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="ss-button" href="{{ url_for('layout.index', layout='proposal') }}">{{ _('Adjust by hand in Layout') }}</a>
+        <a class="ss-button" href="{{ url_for('moving.index', layout='proposal') }}">{{ _('Move a cluster, family or artist') }}</a>
+        <form method="post" action="{{ url_for('proposal.generate') }}">
+          <button class="ss-button" type="submit">{{ _('Generate again') }}</button>
+        </form>
+        <form method="post" action="{{ url_for('proposal.discard') }}">
+          <button class="ss-button" type="submit">{{ _('Discard') }}</button>
+        </form>
+      </div>
+      <p class="ss-muted small mt-2 mb-0">{{ _('Generating again starts from your shelves as they are, so changes made by hand to the proposal are lost.') }}</p>
+    </div>
+  </section>
 
+  <section class="ss-card mt-3" id="carry-out">
+    <div class="ss-card-head"><h2>3 &middot; {{ _('Carry it out') }}</h2></div>
+    <div class="ss-card-body">
+      <p class="mb-2">{{ _('Reorganising takes your shelves there a table full at a time: each step you tick off changes the layout, and you can stop after any round. Accepting at once makes the proposal your layout straight away, for a small change or when the shelves were rearranged by hand already. Either way a version is saved first, and albums that do not fit end up without a place.') }}</p>
+      <div class="d-flex flex-wrap gap-2">
+        <form method="post" action="{{ url_for('reorganising.begin') }}">
+          <button class="ss-button ss-button-primary" type="submit">{{ _('Reorganise: carry it out step by step') }}</button>
+        </form>
+        <form method="post" action="{{ url_for('proposal.accept') }}">
+          <button class="ss-button" type="submit">{{ _('Accept at once') }}</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <h2 class="mt-5" id="per-shelf">{{ _('What changes per shelf') }}</h2>
   {% for cabinet in cabinets %}
   <section class="ss-card mt-4">
     <div class="ss-card-head"><h2>{{ cabinet.name }}</h2></div>
@@ -92,9 +119,9 @@
   </section>
   {% endfor %}
 
-  <h2 class="mt-5">{{ _('Do not fit') }} ({{ left_out | length }})</h2>
+  <h2 class="mt-5" id="left-out">{{ _('Do not fit') }} ({{ left_out | length }})</h2>
   {% if left_out %}
-  <p class="ss-muted mt-1">{{ _('No shelf had room left for these albums. Accepting leaves them unplaced.') }}</p>
+  <p class="ss-muted mt-1">{{ _('No shelf had room left for these albums. Carried out, the proposal leaves them without a place.') }}</p>
   <div class="ss-card">
     {% for album in left_out %}
     <div class="ss-row">
