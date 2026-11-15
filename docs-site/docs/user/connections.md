@@ -15,7 +15,7 @@ How the artists in your collection hang together, and who and what recurs across
 | **In the name** | one name inside the other: *Chet Baker Quartet* and *Chet Baker*, *Duke Ellington & John Coltrane* and both. If that misleads — Moondog Jr. only took his name from Moondog — press **Not related** at that artist in the list; **Undo** below the list takes it back |
 | **Family** | both are in one [artist family](sorting.md#artist-families) |
 | **On the record** | one is credited on an album of the other as musician, singer, arranger, conductor or producer: Bud Powell on Charlie Parker's *Massey Hall* |
-| **Musician** | a musician or singer without an album of their own, on five or more of your albums: a diamond, with a line to the artist of each. Band members on their own band's albums and producers don't count |
+| **Musician** | a musician or singer without an album of their own, on five or more of your albums: a diamond, with a line to the artist of each, and a *band* line to every band of your collection they are a member of — Percy Heath to the Modern Jazz Quartet. Band members on their own band's albums and producers don't count as playing on it |
 | **Same label** | albums of both on one record label — of your own pressing, so a reissue label counts too. Starts switched off. Labels that reissue others' records tie no one; which those are is a list under [Settings](settings.md) |
 | **Same song** | albums of both have the same song — *Summertime*, *'Round Midnight*; the more songs, the thicker the line |
 

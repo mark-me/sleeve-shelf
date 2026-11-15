@@ -1,0 +1,49 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. For a **security problem**, please do not use this form: report it privately on the Security tab instead.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you do, and what happened then?
+      placeholder: "1. Went to Layout\n2. Dragged an artist to another shelf\n3. …"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The version shown under Settings, or the release or commit you run.
+    validations:
+      required: true
+  - type: dropdown
+    id: running
+    attributes:
+      label: How you run it
+      options:
+        - Docker image
+        - From the source with uv
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: "e.g. Firefox 140 on a laptop, Safari on an iPhone"
+  - type: textarea
+    id: more
+    attributes:
+      label: Screenshots, logs or anything else
+      description: Please leave out your Discogs token and anything else private.
