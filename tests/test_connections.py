@@ -436,6 +436,25 @@ def test_a_musician_is_tied_to_the_band_of_the_collection_they_are_a_member_of(t
     assert [point.artist_id for point, _ in way(shown, 3, 2, set(Tie))] == [3, -900, 2]
 
 
+def test_a_musician_is_tied_to_a_band_their_own_record_names(tmp_path):
+    store = _session_collection(tmp_path)
+    store.save(Artist, [*store.load(Artist), Artist(3, "The Modern Jazz Quartet", discogs_artist_id=103)])
+    store.save(Album, [*store.load(Album), Album(99, 3, "Lonely Woman")])
+    # The band's record names no members; the bassist's own record names the band.
+    store.save(
+        ArtistEnrichment,
+        [
+            *store.load(ArtistEnrichment),
+            ArtistEnrichment(103, None, None, FETCHED, member_ids=()),
+            ArtistEnrichment(900, None, None, FETCHED, group_ids=(103,)),
+        ],
+    )
+
+    ties = {(link.one, link.other): link.ties for link in network(store).links}
+
+    assert ties[(-900, 3)] == (Tie.MEMBER,)
+
+
 def test_a_musician_on_too_few_albums_is_no_point(tmp_path):
     shown = network(_session_collection(tmp_path, MUSICIAN_ALBUMS - 1))
 

@@ -332,17 +332,22 @@ def _tie_musicians_to_bands(
     """Tie a musician without an album to the bands of the collection Discogs lists them in.
 
     Percy Heath plays on a dozen albums of others and is a point of his own; through this he is
-    tied to the Modern Jazz Quartet as well, as two artists in a band together are.
+    tied to the Modern Jazz Quartet as well, as two artists in a band together are. Read from both
+    records, as ties between artists are: the band's members, and the musician's own groups when
+    their record is cached, since one may name what the other leaves out.
     """
     by_did = artist_ids_by_discogs_id(artists)
     points = {-point.artist_id for point in musicians}
     for record in artist_records:
         band = by_did.get(record.discogs_artist_id)
-        if band is None:
-            continue
-        for member in record.member_ids or ():
-            if member in points:
-                found.tie(-member, band, Tie.MEMBER)
+        if band is not None:
+            for member in record.member_ids or ():
+                if member in points:
+                    found.tie(-member, band, Tie.MEMBER)
+        if record.discogs_artist_id in points:
+            for group in record.group_ids or ():
+                if group in by_did:
+                    found.tie(-record.discogs_artist_id, by_did[group], Tie.MEMBER)
 
 
 def _tie_by_labels(

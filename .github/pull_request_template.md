@@ -7,7 +7,7 @@
 - [ ] `uv run python -m pytest` passes
 - [ ] `uv run python -m ruff check src tests` passes
 - [ ] `docs/requirements.md` describes the new behaviour, if behaviour changed
-- [ ] New or changed UI text has its Dutch in `translations/nl/LC_MESSAGES/messages.po`
+- [ ] New or changed UI text has its Dutch in `src/sleeve_shelf/translations/nl/LC_MESSAGES/messages.po`
 - [ ] The user guide is updated, if a screen changed (`cd docs-site && uv run python -m zensical build --strict` passes)
 
 ## Looked at by hand
